@@ -1,0 +1,657 @@
+{
+  "$meta": {
+    "source": {
+      "file": "Portfolio-2026",
+      "fileKey": "AWMKNoAFrxViMhBaGRfWbZ",
+      "frame": "Desktop - 23",
+      "frameNodeId": "177:111942",
+      "frameSize": {
+        "width": 1440,
+        "height": 4908
+      },
+      "url": "https://www.figma.com/design/AWMKNoAFrxViMhBaGRfWbZ/Portfolio-2026?node-id=177-111942"
+    },
+    "extractedAt": "2026-07-24",
+    "extractedVia": "Figma MCP — get_variable_defs + get_design_context",
+    "notes": [
+      "Every value here was read from Figma. Nothing is inferred.",
+      "Published text styles report lineHeight/letterSpacing as percentages. 'Display/Desktop - Headlines' letterSpacing 2 resolves to 0.8px at 40px (2%); lineHeight 100 means 100% (normal).",
+      "Colors are raw fills from the frame — this file has no published colour variables, so there is no semantic colour library to bind to.",
+      "The frame is a fixed 1440px desktop composition. It defines no responsive behaviour; breakpoints below 1440 remain an implementation decision."
+    ]
+  },
+  "publishedTextStyles": {
+    "Display/Desktop - Headlines": {
+      "fontFamily": "Playfair Display",
+      "style": "ExtraBold",
+      "fontWeight": 800,
+      "fontSize": 40,
+      "lineHeight": "100%",
+      "letterSpacing": "2%",
+      "letterSpacingPx": 0.8
+    },
+    "Desktop - Section titles": {
+      "fontFamily": "DM Sans",
+      "style": "Regular",
+      "fontWeight": 400,
+      "fontSize": 24,
+      "lineHeight": 28,
+      "letterSpacing": "6%",
+      "letterSpacingPx": 1.44
+    },
+    "Desktop - Section Label": {
+      "fontFamily": "Noto Sans",
+      "style": "SemiBold",
+      "fontWeight": 600,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0
+    },
+    "Desktop - Label": {
+      "fontFamily": "DM Sans",
+      "style": "Bold",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0
+    },
+    "Desktop - Body Copy": {
+      "fontFamily": "DM Sans",
+      "style": "Regular",
+      "fontWeight": 400,
+      "fontSize": 14,
+      "lineHeight": 22,
+      "letterSpacing": 0
+    },
+    "Desktop - Link": {
+      "fontFamily": "DM Sans",
+      "style": "ExtraBold",
+      "fontWeight": 800,
+      "fontSize": 12,
+      "lineHeight": "100%",
+      "letterSpacing": 0
+    },
+    "Meta data": {
+      "fontFamily": "DM Sans",
+      "style": "Regular",
+      "fontWeight": 400,
+      "fontSize": 12,
+      "lineHeight": 16,
+      "letterSpacing": 0
+    }
+  },
+  "roles": {
+    "nav.link": {
+      "nodeId": "177:111948",
+      "sampleText": "Home",
+      "fontFamily": "Airbnb Cereal",
+      "style": "Medium",
+      "fontSize": 12,
+      "lineHeight": 18,
+      "color": "#111111",
+      "gap": 32,
+      "align": "right",
+      "items": [
+        "Home",
+        "Work",
+        "Contact",
+        "Resume"
+      ],
+      "boundStyle": null,
+      "warning": "Uses Airbnb Cereal, which is NOT one of the three brief-specified families and is not a published style. Licensed font — see $audit.openQuestions."
+    },
+    "nav.rule": {
+      "nodeId": "177:111945",
+      "color": "#b0b0b0",
+      "offsetY": 50,
+      "width": 1344
+    },
+    "section.number": {
+      "nodeId": "177:111961",
+      "sampleText": "01",
+      "boundStyle": "Desktop - Section Label",
+      "fontFamily": "Noto Sans",
+      "fontWeight": 600,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "color": "#ef5c2d",
+      "columnWidth": 80,
+      "alsoAt": [
+        "177:112256"
+      ]
+    },
+    "section.title": {
+      "nodeId": "177:112118",
+      "sampleText": "Label Title",
+      "boundStyle": "Desktop - Section titles",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 24,
+      "lineHeight": 28,
+      "letterSpacing": 1.44,
+      "textTransform": "uppercase",
+      "color": "#686868",
+      "alsoAt": [
+        "177:112258",
+        "177:112232",
+        "177:111985"
+      ]
+    },
+    "section.headline": {
+      "nodeId": "177:112121",
+      "sampleText": "Experience",
+      "boundStyle": "Display/Desktop - Headlines",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 800,
+      "fontSize": 40,
+      "lineHeight": "normal",
+      "letterSpacing": 0.8,
+      "color": "#111111",
+      "containerHeight": 52
+    },
+    "hero.mark": {
+      "nodeId": "177:111965",
+      "sampleText": "Marc Favro",
+      "boundStyle": "Desktop - Section Label",
+      "fontFamily": "Noto Sans",
+      "fontWeight": 600,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0,
+      "textTransform": "none",
+      "color": "#000000",
+      "avatar": {
+        "nodeId": "177:111964",
+        "size": 24,
+        "shape": "ellipse"
+      },
+      "gap": 12
+    },
+    "hero.headline": {
+      "nodeId": "177:111968",
+      "sampleText": "Principal product designer",
+      "boundStyle": "Display/Desktop - Headlines",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 800,
+      "fontSize": 40,
+      "lineHeight": "normal",
+      "letterSpacing": 0.8,
+      "color": "#111111"
+    },
+    "hero.body": {
+      "nodeId": "177:111970",
+      "boundStyle": "Desktop - Body Copy",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 14,
+      "lineHeight": 22,
+      "letterSpacing": 0,
+      "color": "#444440",
+      "width": 392,
+      "gapFromHeadline": 112
+    },
+    "hero.image": {
+      "nodeId": "177:111971",
+      "width": 389,
+      "fill": "#eaeae5",
+      "border": "#d2d2d2",
+      "borderRadius": 4,
+      "position": "right of text, same row"
+    },
+    "work.company": {
+      "nodeId": "177:111990",
+      "sampleText": "Yahoo",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0,
+      "textTransform": "uppercase",
+      "color": "#444440"
+    },
+    "work.title": {
+      "nodeId": "177:111991",
+      "sampleText": "Partner Portal",
+      "boundStyle": "Display/Desktop - Headlines",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 800,
+      "fontSize": 40,
+      "lineHeight": "normal",
+      "letterSpacing": 0.8,
+      "color": "#111111"
+    },
+    "work.description": {
+      "nodeId": "177:111992",
+      "boundStyle": "Desktop - Body Copy",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 14,
+      "lineHeight": 22,
+      "letterSpacing": 0,
+      "color": "#444440",
+      "width": 375
+    },
+    "work.link": {
+      "nodeId": "177:111994",
+      "sampleText": "Case study",
+      "boundStyle": "Desktop - Link",
+      "fontFamily": "DM Sans",
+      "fontWeight": 800,
+      "fontSize": 12,
+      "lineHeight": "normal",
+      "letterSpacing": 0,
+      "textTransform": "uppercase",
+      "color": "#ef5c2d",
+      "icon": {
+        "nodeId": "177:111995",
+        "name": "DiagonalRightUp",
+        "size": 11
+      },
+      "gap": 6,
+      "treatment": "text + icon only — no border, no pill, no fill"
+    },
+    "work.image": {
+      "nodeId": "177:111999",
+      "width": 798,
+      "height": 402,
+      "fill": "#eaeae5",
+      "border": "#d2d2d2",
+      "borderRadius": 4
+    },
+    "work.subfeature.title": {
+      "nodeId": "177:112002",
+      "fontFamily": "DM Sans",
+      "style": "Medium",
+      "fontWeight": 500,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "color": "#000000",
+      "boundStyle": null
+    },
+    "work.subfeature.description": {
+      "nodeId": "177:112003",
+      "fontFamily": "DM Sans",
+      "style": "Light",
+      "fontWeight": 300,
+      "fontSize": 14,
+      "lineHeight": "normal",
+      "color": "#111111",
+      "boundStyle": null,
+      "columns": 3,
+      "columnGap": 19
+    },
+    "experience.index": {
+      "nodeId": "177:112140",
+      "sampleText": "02",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "textTransform": "uppercase",
+      "color": "#686868"
+    },
+    "experience.company": {
+      "nodeId": "177:112142",
+      "sampleText": "Headspace",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "textTransform": "uppercase",
+      "color": "#111111",
+      "note": "Company and role are one line, separated by a pipe. NOT a serif display treatment."
+    },
+    "experience.role": {
+      "nodeId": "177:112144",
+      "sampleText": "Senior product designer",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "textTransform": "uppercase",
+      "color": "#111111"
+    },
+    "experience.description": {
+      "nodeId": "177:112149",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 16,
+      "lineHeight": 22,
+      "color": "#444440",
+      "boundStyle": null,
+      "note": "16px, not the 14px Body Copy style."
+    },
+    "experience.tags": {
+      "nodeId": "177:112153",
+      "sampleText": "Relevant information",
+      "boundStyle": "Meta data",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 12,
+      "lineHeight": 16,
+      "color": "#444440",
+      "separator": {
+        "nodeId": "177:112154",
+        "glyph": "|",
+        "fontFamily": "Airbnb Cereal",
+        "fontSize": 12,
+        "color": "#111111"
+      },
+      "gap": 8,
+      "treatment": "plain inline text with pipe separators — no chips"
+    },
+    "experience.row": {
+      "nodeId": "177:112137",
+      "borderBottom": "#ffffff",
+      "paddingBottom": 24,
+      "columnGap": 54,
+      "chevron": {
+        "nodeId": "177:112158",
+        "size": 12
+      }
+    },
+    "panel.label": {
+      "nodeId": "177:112203",
+      "sampleText": "Tooling",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "letterSpacing": 0,
+      "textTransform": "uppercase",
+      "color": "#111111"
+    },
+    "panel.item": {
+      "nodeId": "177:112206",
+      "boundStyle": "Meta data",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 12,
+      "lineHeight": 16,
+      "color": "#686868",
+      "itemGap": 12
+    },
+    "panel.layout": {
+      "nodeId": "177:112200",
+      "columns": 2,
+      "columnNodeIds": [
+        "177:112201",
+        "177:112211"
+      ],
+      "columnWidth": 175.5,
+      "totalWidth": 495,
+      "verticalAlign": "bottom",
+      "note": "Bottom-aligned to the Experience list, persistent — not scoped to a row."
+    },
+    "contact.eyebrow": {
+      "nodeId": "177:112258",
+      "sampleText": "we should probably work together, right?",
+      "boundStyle": "Desktop - Section titles",
+      "fontFamily": "DM Sans",
+      "fontWeight": 400,
+      "fontSize": 24,
+      "lineHeight": 28,
+      "letterSpacing": 1.44,
+      "textTransform": "uppercase",
+      "color": "#686868"
+    },
+    "contact.headline": {
+      "nodeId": "177:112261",
+      "sampleText": "marcfavro@gmail.com",
+      "boundStyle": "Display/Desktop - Headlines",
+      "fontFamily": "Playfair Display",
+      "fontWeight": 800,
+      "fontSize": 40,
+      "lineHeight": "normal",
+      "letterSpacing": 0.8,
+      "color": "#111111"
+    },
+    "contact.phone": {
+      "nodeId": "177:112264",
+      "sampleText": "916-202-6702",
+      "boundStyle": "Desktop - Section Label",
+      "fontFamily": "Noto Sans",
+      "fontWeight": 600,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "textTransform": "none",
+      "color": "#686868"
+    },
+    "contact.link": {
+      "nodeId": "177:112266",
+      "sampleText": "Resume",
+      "boundStyle": "Desktop - Label",
+      "fontFamily": "DM Sans",
+      "fontWeight": 700,
+      "fontSize": 14,
+      "lineHeight": 18,
+      "textTransform": "uppercase",
+      "color": "#686868"
+    },
+    "contact.separator": {
+      "nodeId": "177:112265",
+      "glyph": "|",
+      "fontFamily": "Airbnb Cereal",
+      "fontSize": 12,
+      "color": "#111111",
+      "gap": 10
+    },
+    "contact.image": {
+      "nodeId": "177:112269",
+      "width": 389,
+      "fill": "#eaeae5",
+      "border": "#d2d2d2",
+      "borderRadius": 4
+    }
+  },
+  "color": {
+    "note": "No published colour variables exist in this file. These are raw fills observed on the frame.",
+    "ink": {
+      "value": "#111111",
+      "usedBy": [
+        "section.headline",
+        "hero.headline",
+        "work.title",
+        "contact.headline",
+        "experience.company",
+        "panel.label",
+        "nav.link",
+        "separators"
+      ]
+    },
+    "inkBody": {
+      "value": "#444440",
+      "usedBy": [
+        "hero.body",
+        "work.company",
+        "work.description",
+        "experience.description",
+        "experience.tags"
+      ]
+    },
+    "inkMuted": {
+      "value": "#686868",
+      "usedBy": [
+        "section.title",
+        "contact.eyebrow",
+        "contact.phone",
+        "contact.link",
+        "panel.item",
+        "experience.index"
+      ]
+    },
+    "black": {
+      "value": "#000000",
+      "usedBy": [
+        "hero.mark",
+        "work.subfeature.title"
+      ]
+    },
+    "accent": {
+      "value": "#ef5c2d",
+      "usedBy": [
+        "section.number",
+        "work.link"
+      ]
+    },
+    "surfacePlaceholder": {
+      "value": "#eaeae5",
+      "usedBy": [
+        "hero.image",
+        "work.image",
+        "contact.image"
+      ]
+    },
+    "borderPlaceholder": {
+      "value": "#d2d2d2",
+      "usedBy": [
+        "image blocks"
+      ]
+    },
+    "rule": {
+      "value": "#b0b0b0",
+      "usedBy": [
+        "nav.rule",
+        "section dividers"
+      ]
+    },
+    "rowDivider": {
+      "value": "#ffffff",
+      "usedBy": [
+        "experience.row"
+      ]
+    },
+    "background": {
+      "value": null,
+      "note": "Frame has no explicit fill in the returned context; page background not defined by this frame."
+    }
+  },
+  "layout": {
+    "frameWidth": 1440,
+    "containerWidth": 1344,
+    "containerInset": {
+      "x": 48,
+      "y": 32
+    },
+    "railWidth": 24,
+    "railToContentGap": 40,
+    "sectionNumberColumnWidth": 80,
+    "contentWidth": 1280,
+    "projectInfoColumnWidth": 392,
+    "projectBodyColumnWidth": 798,
+    "projectColumnGap": 24,
+    "sectionPaddingBottom": 48,
+    "borderRadius": 4,
+    "sideCircle": {
+      "size": 12,
+      "nodeIds": [
+        "177:111956",
+        "177:111957",
+        "177:111958"
+      ]
+    }
+  },
+  "displayScale": {
+    "status": "PROPOSED — awaiting sign-off, not yet implemented",
+    "rationale": "Figma's 40px is a wireframe-stage value on a fixed-1440 frame with no responsive rules. Ramp is ours; only the shape is designed here.",
+    "ratio": 1.25,
+    "ratioName": "major third",
+    "appliedFrom": "hero.headline, top-down",
+    "desktopCeiling": 76,
+    "mobileCompression": 1.75,
+    "mobileNote": "One uniform divisor, so the ramp keeps identical shape at both ends of the clamp.",
+    "tracking": {
+      "value": "-0.02em",
+      "note": "em-based, so it scales with size by construction. Verified: the four existing levels already computed to exactly -2.0% of their size — proportional, not eyeballed per level."
+    },
+    "maxReachedAtViewport": 1440,
+    "levels": {
+      "hero.headline": {
+        "desktopPx": 76,
+        "mobilePx": 44,
+        "vw": 5.28,
+        "css": "clamp(2.75rem, 5.28vw, 4.75rem)",
+        "currentPx": 76.8
+      },
+      "contact.headline": {
+        "desktopPx": 61,
+        "mobilePx": 35,
+        "vw": 4.24,
+        "css": "clamp(2.1875rem, 4.24vw, 3.8125rem)",
+        "currentPx": 58.88
+      },
+      "section.headline": {
+        "desktopPx": 49,
+        "mobilePx": 28,
+        "vw": 3.4,
+        "css": "clamp(1.75rem, 3.4vw, 3.0625rem)",
+        "currentPx": 51.2,
+        "warning": "Currently unused: section titles were demoted to the DM Sans label role. Figma's frame carries BOTH a label and a Playfair headline per section — see $audit.openQuestions."
+      },
+      "work.title": {
+        "desktopPx": 39,
+        "mobilePx": 22,
+        "vw": 2.71,
+        "css": "clamp(1.375rem, 2.71vw, 2.4375rem)",
+        "currentPx": 43.52,
+        "note": "Lands within 1px of Figma's literal 40px."
+      }
+    }
+  },
+  "applied": {
+    "date": "2026-07-25",
+    "decision": "tokens only — Figma families/weights/colors adopted, editorial display ramp retained",
+    "neutrals": {
+      "adopted": "Figma",
+      "verifiedAgainst": "#f3f0ea",
+      "ink": "#111111",
+      "body": "#444440",
+      "muted": "#686868",
+      "rule": "#b0b0b0",
+      "ruleSoft": "#d8d8d8",
+      "finding": "No chalkiness against the warm background. Decisive factor was contrast: Figma muted #686868 = 4.90:1 (passes WCAG AA); previous warm #7c7468 = 4.05:1 (failed). Chroma C* 0.0 vs 7.8.",
+      "backgroundNote": "#f3f0ea is ours, from the original brief. Figma defines no page background."
+    },
+    "roleFixes": {
+      "section.title": "Playfair 51.2 -> DM Sans 24/28 +1.44 uppercase #686868",
+      "contact.eyebrow": "Noto Sans 11 -> DM Sans 24/28 +1.44 uppercase #686868",
+      "experience.company": "Playfair ExtraBold 24 -> DM Sans Bold 14 uppercase, pipe + role on one line",
+      "hero.mark": "DM Sans 14 -> Noto Sans SemiBold 14, 24px accent dot",
+      "work.company": "Noto Sans 600 11 -> DM Sans Bold 14/18 uppercase #444440",
+      "panel.label": "Noto Sans 600 11 #7c7468 -> DM Sans Bold 14 uppercase #111",
+      "contact.phone": "DM Sans 14 -> Noto Sans SemiBold 14",
+      "hero.body": "20/32.5 -> 14/22",
+      "work.description": "15/26 -> 14/22",
+      "work.link": "bordered accent pill -> plain DM Sans ExtraBold 12 uppercase + exported arrow asset",
+      "experience.tags": "14 -> Meta data 12/16",
+      "section.number": "Noto Sans 12 +1.92 muted -> Noto Sans SemiBold 14/18 ls 0, accent"
+    },
+    "fontSubstitution": {
+      "from": "Airbnb Cereal",
+      "to": "DM Sans",
+      "affects": [
+        "nav.link",
+        "pipe separators"
+      ],
+      "reason": "Licensed Airbnb-internal font, not distributable. Closed out per decision 3.",
+      "sizeAdopted": "12/18 per Figma"
+    },
+    "assets": {
+      "work.link.icon": "public/icons/diagonal-right-up.svg — exported from Figma node 177:111995"
+    }
+  },
+  "$audit": {
+    "openQuestions": [
+      "Figma's frame gives every section BOTH a DM Sans uppercase label AND a Playfair 40px headline (e.g. 'Label Title' above 'Experience'). The build has only one line per section, now styled as the label. section.headline is therefore an orphan token until a second line and its copy are decided.",
+      "section.number is solid accent in Figma at all times. The build fades it 45% -> 100% as an active-section cue. Retained deliberately; flag if you want Figma's constant accent instead.",
+      "work.link sits top-right of the card in the build; in Figma it sits below the description inside the Project Info column. Left alone because the earlier audit marked the work blocks structurally faithful — say the word to move it."
+    ]
+  }
+}

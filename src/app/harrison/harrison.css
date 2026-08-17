@@ -1,0 +1,32 @@
+/* Harrison app — design tokens */
+.harrison-app {
+  --harrison-bg: #fcfdf0;
+  --harrison-text: #56440f;
+  --harrison-border: #d3d4c5;
+  --harrison-accent: #ffa11c;
+  --harrison-card-radius: 4px;
+  --harrison-font-ui: "Airbnb Cereal App", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+@font-face {
+  font-family: "Airbnb Cereal App";
+  src: local("Airbnb Cereal App Bold"), url("/harrison/fonts/AirbnbCereal-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.harrison-app {
+  background: var(--harrison-bg);
+  color: var(--harrison-text);
+  font-family: var(--harrison-font-ui);
+}
+
+.harrison-app .harrison-display {
+  font-family: "Airbnb Cereal App", var(--harrison-font-ui), sans-serif;
+  font-weight: 700;
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}

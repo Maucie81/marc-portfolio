@@ -1,0 +1,34 @@
+/* Harrison app — Figma design tokens */
+.harrison-app {
+  --harrison-bg: #fcfdf0;
+  --harrison-text: #56440f;
+  --harrison-border: #d3d4c5;
+  --harrison-accent: #ffa11c;
+  --harrison-card-radius: 4px;
+  --harrison-font-ui: "Airbnb Cereal App", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* Airbnb Cereal Bold for "Harrison!" — add AirbnbCereal-Bold.woff2 to /harrison/fonts/ */
+@font-face {
+  font-family: "Airbnb Cereal App";
+  src: local("Airbnb Cereal App Bold"), url("/harrison/fonts/AirbnbCereal-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+.harrison-app {
+  background: var(--harrison-bg);
+  color: var(--harrison-text);
+  font-family: var(--harrison-font-ui);
+}
+
+/* Header display text: Airbnb Cereal Bold, no serif */
+.harrison-app .harrison-display {
+  font-family: var(--harrison-font-ui);
+  font-weight: 700;
+}
+
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0);
+}
