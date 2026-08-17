@@ -1,26 +1,380 @@
 @import "tailwindcss";
 
+/* Neutrals are Figma's (Portfolio-2026 / Desktop - 23). They are true grays;
+   the warm background is ours, from the original brief — Figma defines none.
+   Verified against #f3f0ea before adopting: no chalkiness, and Figma's --muted
+   clears WCAG AA at 4.90:1 where the old warm value failed at 4.05:1. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #f3f0ea;
+  --bg-deep: #eae5db;
+  --surface: #fbf9f5;
+  --ink: #111111;
+  --ink-2: #444440;
+  --muted: #686868;
+  --line: #b0b0b0;
+  --line-soft: #d8d8d8;
+  /* Reserved for interactive elements and landmark moments only */
+  --accent: #ef5c2d;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-bg-deep: var(--bg-deep);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-accent: var(--accent);
+
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body), var(--font-alt), system-ui, sans-serif;
+  --font-alt: var(--font-alt), system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* Scoped to the homepage on purpose: a global `scroll-behavior: smooth`
+   fights ScrollTrigger's pinning on the case-study page. */
+html:has(#home) {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body), var(--font-alt), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ---------- Shared type helpers ---------- */
+
+.display {
+  font-family: var(--font-display), Georgia, serif;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.04;
+}
+
+/* Case-study pages and placeholder frames only. That surface isn't part of the
+   Portfolio-2026 homepage frame, so it keeps its own eyebrow treatment. */
+.eyebrow {
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ---------- Type roles (from design/design-system.json) ----------
+   Each class maps to a role in that file; the Figma node ID is noted so the
+   value is traceable. Sizes here are Figma's literal values — only the four
+   display levels use a responsive ramp. */
+
+/* Desktop - Section titles · 244:16203
+   DM Sans Bold 14/18, letter-spacing 0, accent orange.
+   Only show on desktop; mobile/tablet uses sec-num-label instead. */
+.t-section-title {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 0 0 3rem;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .t-section-title {
+    display: block;
+    padding-top: 5px;
+  }
+}
+
+/* Desktop - Label · 177:111990 */
+.t-label {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+/* Desktop - Section Label · 177:111965 */
+.t-mark {
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  letter-spacing: 0;
+}
+
+/* Desktop - Body Copy · 177:111970 */
+.t-body {
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  letter-spacing: 0;
+}
+
+/* Meta data · 177:112153 */
+.t-meta {
+  font-size: 0.75rem;
+  line-height: 1rem;
+  letter-spacing: 0;
+}
+
+/* Shared display level for work project titles (177:111991) and the interest
+   category tabs (177:112235). Use with `.display`. One definition so the two
+   can't drift apart. */
+.t-title {
+  font-size: clamp(1.5rem, 2.71vw, 2.4375rem);
+}
+
+/* Desktop - Link · 177:111994 — text + icon only, never a pill */
+.t-link {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 800;
+  font-size: 0.75rem;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* ---------- Homepage numbered sections ---------- */
+
+.sec {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
+@media (min-width: 1024px) {
+  /* 177:111959 — rail 24 · 40 gap · number column 80 · content.
+     The gap lives as padding on the number column so content still starts at
+     144, matching the frame exactly. */
+  .sec {
+    grid-template-columns: 1.5rem 7.5rem 1fr;
+    gap: 0;
+  }
+
+  /* Circle, number and section title share one vertical centre — the title
+     is 14/18 now too (matches the number), so both take the same offset from
+     the circle's stretched top. */
+  .sec-num {
+    padding-left: 40px;
+    padding-top: 5px;
+  }
+}
+
+/* 177:111956 — stroke-only, never filled. The solid accent dot beside the
+   hero mark is a different element (177:111964). */
+.rail-dot {
+  display: block;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  border: 1px solid var(--muted);
+}
+
+/* Desktop - Section Label · 177:111961 — accent at rest in Figma, so the
+   active state is a fade up from muted rather than a colour change. */
+.sec-num {
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.125rem;
+  letter-spacing: 0;
+  color: var(--accent);
+  opacity: 0.45;
+  transition: opacity 300ms ease;
+  align-self: start;
+}
+
+.sec-num[data-active="true"] {
+  opacity: 1;
+}
+
+.sec-num-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.sec-num-bar {
+  display: none;
+}
+
+.sec-num-label {
+  display: inline;
+}
+
+@media (min-width: 1024px) {
+  .sec-num-inner {
+    position: sticky;
+    top: 6.5rem;
+  }
+
+  .sec-num-bar,
+  .sec-num-label {
+    display: none;
+  }
+}
+
+/* ---------- Case study: horizontal track ---------- */
+
+.cs-progress {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  background: var(--line-soft);
+  z-index: 60;
+  opacity: 0;
+  transition: opacity 260ms ease;
+  pointer-events: none;
+}
+
+.cs-progress[data-visible="true"] {
+  opacity: 1;
+}
+
+.cs-progress-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.cs-caption {
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--muted);
+  margin-top: 0.875rem;
+  max-width: 36rem;
+}
+
+.cs-frame {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  box-shadow: 0 18px 40px -28px rgba(25, 23, 19, 0.45);
+}
+
+.cs-frame img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 4px;
+}
+
+/* Horizontal mode. Threshold matches HorizontalTrack.tsx's own
+   gsap.matchMedia() breakpoint (901px) — that JS decides whether to pin
+   and scroll-drive the track at all, so this CSS must switch at the exact
+   same width or the two disagree about which mode is active. The page's
+   own `lg:` classes are remapped to `min-[901px]:` for the same reason
+   (see yahoo-partner-portal/page.tsx) rather than moving Tailwind's global
+   `lg` breakpoint, which would also affect the homepage. */
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .cs-pin {
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* --cs-scale multiplies the 1440px-baseline geometry (spacing, media
+     placeholder, rail/quote columns — never typography). Held at 1 across
+     the whole horizontal-mode range: 1440px is the intended viewing width,
+     so nothing should visibly change between it and the 901px floor where
+     horizontal mode itself switches off. Inherits from .cs-track down to
+     every block, since custom properties cascade. Revisit this value (or
+     reintroduce a tier) only if the 901px floor itself moves. */
+  .cs-track {
+    --cs-scale: 1;
+  }
+
+  .cs-track {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 100vh;
+    /* 1440px-baseline values: gap resolved from the old clamp(7rem,10vw,13rem)
+       at 1440px (144px); padding-left/right resolved from the old 9vw/18vw
+       at 1440px (129.6px/259.2px). */
+    gap: calc(144px * var(--cs-scale));
+    padding-left: calc(129.6px * var(--cs-scale));
+    padding-right: calc(259.2px * var(--cs-scale));
+    /* Clears the fixed top bar so content never starts underneath it. */
+    padding-top: calc(72px * var(--cs-scale));
+    will-change: transform;
+  }
+
+  .cs-block {
+    flex: 0 0 auto;
+    width: var(--w, 26rem);
+  }
+
+  /* Anchors a block's title to the same viewport position every numbered
+     section lands on via track-centering (see the header-alignment work in
+     SectionBlock) — independent of the block's own content height, which
+     varies with quote/text length. Defined only in this desktop-only media
+     query on purpose: inline-styling this on the element directly would
+     also apply on mobile, where blocks should just follow normal top-to-
+     bottom flow with .cs-track's own gap instead. */
+  .cs-anchor-687 {
+    align-self: flex-start;
+    margin-top: calc((100vh - (72px + 687.3px) * var(--cs-scale, 1)) / 2);
+  }
+
+  /* The Problem's horizontal inset — desktop only, for the same reason. */
+  .cs-problem-inset {
+    margin-left: calc(200px * var(--cs-scale, 1));
+    margin-right: calc(300px * var(--cs-scale, 1));
+  }
+
+  .cs-only-vertical {
+    display: none;
+  }
+}
+
+/* Vertical fallback: small screens + reduced motion. Threshold matches the
+   horizontal-mode query above (901px) so there's no gap between the two. */
+@media (max-width: 900px), (prefers-reduced-motion: reduce) {
+  .cs-track {
+    display: flex;
+    flex-direction: column;
+    gap: 4.5rem;
+    /* Top padding clears the fixed back-link. */
+    padding: 6.5rem 1.25rem 6rem;
+    max-width: 44rem;
+    margin: 0 auto;
+  }
+
+  .cs-block {
+    width: 100%;
+  }
+
+  .cs-progress {
+    display: none;
+  }
+
+  .cs-only-horizontal {
+    display: none;
+  }
 }
