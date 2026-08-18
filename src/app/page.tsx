@@ -312,8 +312,17 @@ export default function Home() {
       </main>
 
       <footer className="mx-auto max-w-[88rem] border-t border-line px-6 py-10 lg:px-10">
-        <p className="text-xs tracking-wide text-muted">
+        <p className="t-mark flex flex-wrap items-center justify-end gap-1.5 text-ink">
           Built &amp; designed using Claude Code in Brooklyn, New York
+          <span aria-hidden className="text-xs">
+            🕺
+          </span>
+          <span aria-hidden className="text-xs">
+            🪩
+          </span>
+          <span aria-hidden className="text-xs">
+            🤦‍♂️
+          </span>
         </p>
       </footer>
     </div>

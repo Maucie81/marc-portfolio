@@ -47,50 +47,54 @@ export const projects: Project[] = [
     ],
   },
   {
-    company: "Headspace",
-    title: "Admin Portal Redesign",
+    company: "Airbnb",
+    title: "Account Creation & Onboarding",
     description:
-      "Rebuilding the internal portal the care and operations teams work in every day, around the workflows they actually run rather than the database beneath them.",
-    href: null,
+      "Lead designer on hotel partner onboarding — a six-step manual, sales-assisted process redesigned into a self-service flow built on existing Airbnb infrastructure. Launched Q1 2020; vertical deprioritized after COVID-19.",
+    href: "/work/airbnb-hotels",
     image: null,
     imageLabel: "",
-    draft: true,
     subFeatures: [
       {
-        title: "Workflow-first IA",
-        description: "Placeholder — the structural idea the redesign turned on.",
+        title: "Systems audit",
+        description:
+          "Found Airbnb Signup, Luxury Retreats onboarding, and Hubble as reusable infrastructure — no net-new systems required.",
       },
       {
-        title: "Operational tooling",
-        description: "Placeholder — what the internal teams gained day to day.",
+        title: "Three rounds of testing",
+        description:
+          "5–10 hotels per round across multiple cities and roles — Revenue Managers, Front Desk Agents, Marketing Managers.",
       },
       {
-        title: "System foundations",
-        description: "Placeholder — the components and patterns it established.",
+        title: "Honest outcome",
+        description:
+          "Launched on schedule. COVID-19 hit. Hotels team deprioritized. No post-launch usage data collected.",
       },
     ],
   },
   {
-    company: "Airbnb",
-    title: "Account Creation & Onboarding",
+    company: "Headspace",
+    title: "Admin Portal Redesign",
     description:
-      "Reworking the first run of the product — the sign-up and onboarding path that every subsequent experience depends on.",
-    href: null,
+      "A research-driven proposal for the next phase of Headspace's B2B Admin Portal — a prioritized roadmap and wireframe explorations built on 17 stakeholder interviews and a 147-respondent Admin survey, presented to leadership in Q1 2022.",
+    href: "/work/headspace-admin-portal",
     image: null,
     imageLabel: "",
-    draft: true,
     subFeatures: [
       {
-        title: "Sign-up paths",
-        description: "Placeholder — how the entry points were consolidated.",
+        title: "17-stakeholder research",
+        description:
+          "12 interviews spanning Admins, PSMs, Engineering, Data/Analytics, and Ginger — 167 discrete data points logged and cross-checked.",
       },
       {
-        title: "Progressive onboarding",
-        description: "Placeholder — what moved out of the critical path.",
+        title: "The first direct Admin survey",
+        description:
+          "700 Admins surveyed, 147 responses — a strong rate for an unincentivized survey, broken out by company size with a Kano-style framework.",
       },
       {
-        title: "Trust & verification",
-        description: "Placeholder — the identity work behind the flow.",
+        title: "Honest outcome",
+        description:
+          "Presented to leadership Q1 2022, well received. Phase 0 began rolling out after — but this was a roadmap and wireframe deliverable, not a shipped product.",
       },
     ],
   },
