@@ -12,12 +12,13 @@ export default function Placeholder({
   ratio?: string;
   className?: string;
 }) {
-  // Figma image placeholders: fill #eaeae5, border #d2d2d2, radius 4
-  // (177:111971, 177:111999, 177:112269).
+  // Figma image placeholders: fill #eaeae5, radius 4 (177:111971, 177:111999,
+  // 177:112269). Border merged onto --line-soft rather than kept as its own
+  // literal #d2d2d2 — the two were a near-duplicate neutral-gray pair.
   if (!label) {
     return (
       <div
-        className={`rounded-[4px] border border-[#d2d2d2] bg-[#eaeae5] ${className}`}
+        className={`rounded-[4px] border border-line-soft bg-[#eaeae5] ${className}`}
         style={{ aspectRatio: ratio }}
       />
     );
@@ -25,7 +26,7 @@ export default function Placeholder({
 
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden rounded-[4px] border border-[#d2d2d2] bg-[#eaeae5] ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden rounded-[4px] border border-line-soft bg-[#eaeae5] ${className}`}
       style={{ aspectRatio: ratio }}
     >
       <div

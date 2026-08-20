@@ -9,9 +9,11 @@ import { useEffect, useRef, useState } from "react";
 export default function SectionNumber({
   number,
   label,
+  className = "",
 }: {
   number: string;
   label: string;
+  className?: string;
 }) {
   const ref = useRef<HTMLDivElement | null>(null);
   const [active, setActive] = useState(false);
@@ -29,7 +31,7 @@ export default function SectionNumber({
   }, []);
 
   return (
-    <div ref={ref} className="sec-num" data-active={active}>
+    <div ref={ref} className={`sec-num ${className}`} data-active={active}>
       <div className="sec-num-inner">
         <span>{number}</span>
         <span aria-hidden className="sec-num-bar" />

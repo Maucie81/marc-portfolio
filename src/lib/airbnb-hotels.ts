@@ -75,7 +75,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "02",
-    eyebrow: "THE INHERITED FLOW, STEP BY STEP",
+    eyebrow: "The inherited flow, step by step",
     title: "Six Steps, All Manual",
     body: "Every hotel went through the same sequence before a single room could be booked. Each step required a human handoff — a different person, a different tool, a separate action on Airbnb's side.",
     bullets: [
@@ -137,7 +137,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "03",
-    eyebrow: "GROUNDING THE WORK",
+    eyebrow: "Grounding the work",
     title: "Research",
     body: "Three parallel workstreams informed the redesign: a competitive audit to understand the market baseline, a systems audit to find reusable Airbnb infrastructure, and three rounds of user testing with hotels across multiple cities.",
     bullets: [
@@ -195,7 +195,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "05",
-    eyebrow: "CHOICES THAT SHAPED THE PRODUCT",
+    eyebrow: "Choices that shaped the product",
     title: "Key Decisions",
     body: "Four decisions defined the final shape of the flow — each a fork where a more obvious path existed and was set aside for a specific reason.",
     bullets: [

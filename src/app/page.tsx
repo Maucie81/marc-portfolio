@@ -2,6 +2,7 @@ import Link from "next/link";
 import SectionNumber from "@/components/site/SectionNumber";
 import SectionRail from "@/components/site/SectionRail";
 import Placeholder from "@/components/site/Placeholder";
+import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import Interests from "@/components/site/Interests";
 import {
@@ -16,69 +17,98 @@ import {
 export default function Home() {
   return (
     <div className="bg-bg">
-      <header className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
-        <span className="text-sm font-medium tracking-tight text-ink">
-          Marc Favro
-        </span>
-        <nav className="flex gap-8 text-xs leading-[18px] text-ink">
-          <a href="#hero" className="transition-colors hover:text-accent">
-            Home
-          </a>
-          <a href="#work" className="transition-colors hover:text-accent">
-            Work
-          </a>
-          <a href="#contact" className="transition-colors hover:text-accent">
-            Contact
-          </a>
-          <a
-            href={contact.resume}
-            target="_blank"
-            rel="noreferrer"
-            className="transition-colors hover:text-accent"
-          >
-            Resume
-          </a>
-        </nav>
+      <header className="sticky top-0 z-50 bg-bg">
+        <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
+          <span className="flex items-center gap-3 text-sm font-medium tracking-tight text-ink">
+            <span
+              aria-hidden
+              className="inline-block h-6 w-6 rounded-full bg-accent"
+            />
+            Marc Favro
+          </span>
+          <nav className="flex gap-8 text-xs leading-[18px] text-ink">
+            <a href="#hero" className="transition-colors hover:text-accent">
+              Home
+            </a>
+            <a href="#work" className="transition-colors hover:text-accent">
+              Work
+            </a>
+            <a href="#contact" className="transition-colors hover:text-accent">
+              Contact
+            </a>
+            <a
+              href={contact.resume}
+              target="_blank"
+              rel="noreferrer"
+              className="transition-colors hover:text-accent"
+            >
+              Resume
+            </a>
+          </nav>
+        </div>
       </header>
 
       <main id="home" className="mx-auto max-w-[88rem] px-6 lg:px-10">
         {/* 01 — Hero */}
-        <section id="hero" className="sec pb-12 pt-4">
-          <SectionRail />
-          <SectionNumber number="01" label="Intro" />
-          {/* Name is the small mark; the role is the headline. */}
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,21rem)] lg:items-start lg:gap-16">
-            <div>
-              <p className="t-mark flex items-center gap-3 text-ink">
-                <span
-                  aria-hidden
-                  className="inline-block h-6 w-6 rounded-full bg-accent"
-                />
-                Marc Favro
-              </p>
-              <h1 className="display mt-6 text-[clamp(2.5rem,6vw,5.25rem)] text-ink">
-                Principal product designer
-              </h1>
-              {/* 177:111966 — 48px between headline and body copy */}
-              <p className="t-body mt-12 max-w-[392px] text-ink-2">
-                I design enterprise ecosystems that scale — connecting partners,
-                products and people through systems built to last. My work
-                centers on partner portals, legacy modernization and the
-                organizational dynamics that come with designing for B2B at
-                scale.
-              </p>
-              <p className="t-body mt-5 max-w-[392px] text-muted">
-                Research-grounded and cross-functional, working across product,
-                engineering and business where the stakes are high and the
-                constraints are real.
-              </p>
+        <section id="hero" className="sec pb-8">
+          {/* Bespoke rail for this section only: dot 1 is pinned to "01"'s
+              vertical center (the tall portrait would otherwise pull the
+              standard evenly-spaced rail well past it), dot 3 stays at its
+              natural bottom position, and dot 2 sits at the exact midpoint
+              between them — equal gaps, same as the shared SectionRail. */}
+          <div
+            aria-hidden
+            className="relative hidden w-6 self-stretch py-2 lg:block"
+          >
+            <span
+              className="rail-dot absolute left-1/2 -translate-x-1/2"
+              style={{ top: "109px" }}
+            />
+            <span
+              className="rail-dot absolute left-1/2 -translate-x-1/2"
+              style={{ top: "237.5px" }}
+            />
+            <span
+              className="rail-dot absolute left-1/2 -translate-x-1/2"
+              style={{ top: "366px" }}
+            />
+          </div>
+          <SectionNumber number="01" label="Intro" className="lg:mt-[103.6px]" />
+          {/* Name is the small mark; the role is the headline. Eyebrow lives
+              in the text column, next to the (taller) portrait, rather than
+              spanning full width above it. Row is vertically centered so the
+              text lockup sits at the correct Figma position; the "01" marker
+              is nudged down to match it instead (see className above). */}
+          <div className="-ml-[36px] flex flex-col items-start gap-6 sm:flex-row sm:items-center">
+            {/* Illustrated portrait — cropped the same way as the Figma
+                source (132.49% width, offset -12.95%/0.26%) so it fills the
+                frame without distortion. */}
+            <div className="relative h-[386px] w-[290px] shrink-0 overflow-hidden rounded-[4px]">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/marc/hero-illustration.png"
+                alt="Illustrated portrait of Marc Favro"
+                className="absolute left-[-12.95%] top-[0.26%] h-[99.48%] w-[132.49%] max-w-none"
+              />
             </div>
 
-            {/* 177:111971 — blank box, nothing beneath it. Needs an explicit
-                width: an aspect-ratio-only div has no intrinsic width and
-                collapses to 0 when the grid item shrink-wraps. */}
-            <div className="w-full lg:justify-self-end">
-              <Placeholder ratio="389 / 288" className="w-full" />
+            <div className="flex flex-1 flex-col pt-12">
+              <p className="pb-2 text-sm font-semibold uppercase tracking-[0.56px] text-accent [font-family:var(--font-alt)]">
+                Welcome, I&apos;m Marc
+              </p>
+              <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)]">
+                I&apos;m a Principal
+                <br />
+                Product Designer
+              </h1>
+              {/* 16px between headline and body copy — matches the
+                  heading-to-body gap used by every other title lockup
+                  (Recent Work cards, Additional Work). Kept short on
+                  purpose — full background lives in About Me. */}
+              <p className="t-body mt-4 max-w-[392px] text-ink-2">
+                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
+                eiusmod tempor incididunt ut labore et dolore magna aliqua.
+              </p>
             </div>
           </div>
         </section>
@@ -99,7 +129,15 @@ export default function Home() {
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
                 const image = (
-                  <Placeholder label={project.imageLabel} ratio="798 / 402" />
+                  <div className="relative">
+                    <Placeholder label={project.imageLabel} ratio="798 / 402" />
+                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                      <CompanyLogo
+                        company={project.company}
+                        className="text-3xl md:text-4xl"
+                      />
+                    </div>
+                  </div>
                 );
 
                 return (
@@ -112,7 +150,7 @@ export default function Home() {
                       <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
                           <p className="t-label text-ink-2">{project.company}</p>
-                          <h3 className="display t-title text-ink">
+                          <h3 className="display t-title">
                             {project.title}
                           </h3>
                         </div>
@@ -162,12 +200,13 @@ export default function Home() {
                       <div className="grid gap-[19px] sm:grid-cols-3">
                         {project.subFeatures.map((feature) => (
                           <div key={feature.title} className="flex flex-col gap-1">
-                            {/* 177:112002 — DM Sans Medium 14/18 */}
-                            <h4 className="text-sm font-medium leading-[18px] text-ink">
-                              {feature.title}
-                            </h4>
-                            {/* 177:112003 — DM Sans Light 14 */}
-                            <p className="text-sm font-light leading-normal text-ink">
+                            {/* Meta Data Label role (Google Sans Flex Medium
+                                14/16, muted, uppercase) — same role as the
+                                case-study sidebar's group labels. */}
+                            <h4 className="cs-label">{feature.title}</h4>
+                            {/* Matches the Tooling/Category list copy in the
+                                Experience section (.t-meta, text-muted). */}
+                            <p className="t-meta">
                               {feature.description}
                             </p>
                           </div>
@@ -184,8 +223,8 @@ export default function Home() {
                 of small cards on the right. Label only, no serif title, no link. */}
             <div className="mt-24 grid gap-6 lg:mt-32 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
-                <h3 className="display text-[clamp(1.75rem,3.4vw,2.75rem)] text-ink">
-                  Additional work
+                <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
+                  Additional Work
                 </h3>
                 <p className="t-body max-w-[343px] text-ink-2">
                   {additionalWorkIntro}
@@ -193,23 +232,54 @@ export default function Home() {
               </div>
 
               <div className="grid gap-x-12 gap-y-12 sm:grid-cols-2">
-                {additionalWork.map((item) => (
-                  <div
-                    key={item.company + item.title}
-                    className="flex flex-col gap-3"
-                  >
-                    <Placeholder ratio="377 / 190" />
-                    {/* 177:112076 — company | title on one label line */}
-                    <p className="t-label text-ink">
-                      {item.company}
-                      <span aria-hidden className="px-2 font-normal text-muted">
-                        |
-                      </span>
-                      {item.title}
-                    </p>
-                    <p className="t-body text-ink-2">{item.description}</p>
-                  </div>
-                ))}
+                {additionalWork.map((item) => {
+                  // "Done" = real destination and not a placeholder — gets a
+                  // logo cue and becomes clickable. Draft/no-href entries stay
+                  // exactly as before: label only, no link (per 177:112062).
+                  const isDone = Boolean(item.href) && !item.draft;
+
+                  const content = (
+                    <>
+                      <div className="relative">
+                        <Placeholder ratio="377 / 190" />
+                        {isDone ? (
+                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                            <CompanyLogo
+                              company={item.company}
+                              className="text-xl md:text-2xl"
+                            />
+                          </div>
+                        ) : null}
+                      </div>
+                      {/* 177:112076 — company | title on one label line */}
+                      <p className="t-label text-ink">
+                        {item.company}
+                        <span aria-hidden className="px-2 font-normal text-muted">
+                          |
+                        </span>
+                        {item.title}
+                      </p>
+                      <p className="t-body text-ink-2">{item.description}</p>
+                    </>
+                  );
+
+                  return isDone ? (
+                    <Link
+                      key={item.company + item.title}
+                      href={item.href!}
+                      className="flex flex-col gap-3 transition-opacity hover:opacity-90"
+                    >
+                      {content}
+                    </Link>
+                  ) : (
+                    <div
+                      key={item.company + item.title}
+                      className="flex flex-col gap-3"
+                    >
+                      {content}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           </div>
@@ -227,7 +297,7 @@ export default function Home() {
                 "LABEL TITLE"; this wording is mine, swap it freely. */}
             <p className="t-section-title">Career history</p>
             {/* 177:112121 — Playfair headline */}
-            <h2 className="display text-[clamp(2rem,4vw,3.25rem)] text-ink">
+            <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
               Experience
             </h2>
             <div className="mt-8">
@@ -263,7 +333,7 @@ export default function Home() {
               <p className="t-section-title">
                 We should probably work together, right?
               </p>
-              <h2 className="display text-[clamp(1.75rem,4.6vw,3.75rem)] break-words text-ink">
+              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
                 <a
                   href={`mailto:${contact.email}`}
                   className="transition-colors hover:text-accent"
@@ -286,7 +356,7 @@ export default function Home() {
                   href={contact.resume}
                   target="_blank"
                   rel="noreferrer"
-                  className="uppercase transition-colors hover:text-accent"
+                  className="t-mark uppercase transition-colors hover:text-accent"
                 >
                   Resume
                 </a>
@@ -297,7 +367,7 @@ export default function Home() {
                   href={contact.linkedin}
                   target="_blank"
                   rel="noreferrer"
-                  className="uppercase transition-colors hover:text-accent"
+                  className="t-mark uppercase transition-colors hover:text-accent"
                 >
                   LinkedIn
                 </a>
@@ -312,7 +382,7 @@ export default function Home() {
       </main>
 
       <footer className="mx-auto max-w-[88rem] border-t border-line px-6 py-10 lg:px-10">
-        <p className="t-mark flex flex-wrap items-center justify-end gap-1.5 text-ink">
+        <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
           Built &amp; designed using Claude Code in Brooklyn, New York
           <span aria-hidden className="text-xs">
             🕺

@@ -92,7 +92,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "02",
-    eyebrow: "EMPATHY BEFORE IDEAS",
+    eyebrow: "Empathy before ideas",
     title: "Research",
     body: "Headspace's Hypothesis Driven Innovation framework starts with empathy-building before narrowing to ideas worth testing. The team began with a full journey map of the Admin Portal experience, then ran twelve interviews across every stakeholder group who touches it.",
     bullets: [
@@ -172,7 +172,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "04",
-    eyebrow: "NEED × IMPACT, NOT NEED ALONE",
+    eyebrow: "Need × impact, not need alone",
     title: "Synthesis",
     body: "Interview and survey findings were cross-checked against three more sources — customer feature requests, WCR tickets, and competitor examples partners raised directly — before the team gathered in LA for an in-person working session to turn all of it into a prioritization framework.",
     bullets: [
@@ -218,7 +218,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "05",
-    eyebrow: "TWO TOOLS, NOT ONE TANGLED ONE",
+    eyebrow: "Two tools, not one tangled one",
     title: "The Proposal",
     body: "The core recommendation: stop serving internal and external users out of the same tool. Split the Admin Portal into an external, Admin-facing product and an internal Implementation Portal — with Salesforce and Croc Pit as the systems of record they should have been pulling from all along.",
     bullets: [
@@ -261,7 +261,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "06",
-    eyebrow: "ILLUSTRATIVE CONCEPTS, NOT FINAL UI",
+    eyebrow: "Illustrative concepts, not final UI",
     title: "Wireframe Explorations",
     body: "To give leadership and cross-functional partners something concrete to react to, the proposal included wireframe explorations across six modules — built on Headspace's newly updated UI patterns rather than the portal's original 2017 styling. These are illustrative concepts, not final UI.",
     bullets: [

@@ -48,7 +48,7 @@ export const projects: Project[] = [
   },
   {
     company: "Airbnb",
-    title: "Account Creation & Onboarding",
+    title: "Account Creation & Onboarding",
     description:
       "Lead designer on hotel partner onboarding — a six-step manual, sales-assisted process redesigned into a self-service flow built on existing Airbnb infrastructure. Launched Q1 2020; vertical deprioritized after COVID-19.",
     href: "/work/airbnb-hotels",
@@ -129,11 +129,10 @@ export const additionalWork: SmallProject[] = [
   },
   {
     company: "Headspace",
-    title: "Design System Contributions",
+    title: "Unified Enrollment",
     description:
-      "Placeholder — the systems work that supported the wider product surface.",
-    href: null,
-    draft: true,
+      "The web enrollment experience for the first product shipped after the Headspace–Ginger acquisition — eligibility through a booked coaching session.",
+    href: "/work/headspace-health-umd",
   },
   {
     company: "StitchFix",
@@ -187,7 +186,7 @@ export const roles: Role[] = [
   {
     company: "Headspace",
     title: "Staff Product Designer",
-    period: "",
+    period: "2020 — 2023",
     intro:
       "Placeholder — one or two sentences that stand on their own with the row collapsed.",
     description:
@@ -200,7 +199,7 @@ export const roles: Role[] = [
   {
     company: "Airbnb",
     title: "Product Designer",
-    period: "",
+    period: "2019 — 2020",
     intro:
       "Placeholder — one or two sentences that stand on their own with the row collapsed.",
     description:
@@ -213,7 +212,7 @@ export const roles: Role[] = [
   {
     company: "Hotel Tonight",
     title: "Product Designer",
-    period: "",
+    period: "2017 — 2019",
     intro:
       "Placeholder — one or two sentences that stand on their own with the row collapsed.",
     description:
@@ -226,7 +225,7 @@ export const roles: Role[] = [
   {
     company: "StitchFix",
     title: "Product Designer",
-    period: "",
+    period: "2015 — 2017",
     intro:
       "Placeholder — one or two sentences that stand on their own with the row collapsed.",
     description:

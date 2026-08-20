@@ -37,8 +37,8 @@ export default function Interests({
               aria-selected={isActive}
               aria-controls="interest-panel"
               onClick={() => setActive(i)}
-              className={`display t-title transition-colors ${
-                isActive ? "text-ink" : "text-line hover:text-muted"
+              className={`display t-title transition-opacity ${
+                isActive ? "" : "opacity-40 hover:opacity-70"
               }`}
             >
               {category.name}

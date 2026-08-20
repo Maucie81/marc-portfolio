@@ -95,8 +95,7 @@ export type Block =
       heading: string;
       body: string[];
       stats: { value: string; label: string }[];
-    }
-  | { kind: "outro" };
+    };
 
 export type ImageSpec = {
   src: string;
@@ -135,7 +134,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "02",
-    eyebrow: "EVERY METRIC IN ONE PLACE",
+    eyebrow: "Every metric in one place",
     title: "Overview",
     body: "The legacy tool gave partners one number: page views. The Overview is the first thing partners see after login — eight KPI cards, each showing the current period and how it compares to the last one. For most partners, it was the first time they'd seen CTR, dwell, or reach without requesting it from a Yahoo contact.",
     bullets: [
@@ -179,7 +178,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "03",
-    eyebrow: "SEE WHAT'S WORKING, AND WHY",
+    eyebrow: "See what's working, and why",
     title: "Top Content",
     body: "Top Content was designed to answer the question partners asked most: which stories rose to the top, and what drove them there.",
     bullets: [
@@ -218,8 +217,8 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "04",
-    eyebrow: "FROM QUARTERLY BRIEFINGS TO ON-DEMAND ANSWERS",
-    title: "KPI Deep-Dives",
+    eyebrow: "From quarterly briefings to on-demand answers",
+    title: "KPI Deep‑Dives",
     body: "The previous portal gave partners one number: page views. CTR, reach, and dwell existed — but only in quarterly Yahoo briefings. KPI Deep-Dives make every metric self-service.",
     bullets: [
       {
@@ -249,7 +248,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "05",
-    eyebrow: "FEED HEALTH, IN THE OPEN",
+    eyebrow: "Feed health, in the open",
     title: "Content Vitals",
     body: "Feed Health was originally designed as a monitoring dashboard. Our research changed that framing entirely. Partners told us they didn't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a watch floor. Content Vitals was redesigned around that insight.",
     bullets: [
@@ -288,7 +287,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "06",
-    eyebrow: "TRACK ISSUES OVER TIME",
+    eyebrow: "Track issues over time",
     title: "Issue Trends",
     body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time — so partners can tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
     bullets: [
@@ -319,7 +318,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "07",
-    eyebrow: "THE EXACT WARNING, AND HOW TO FIX IT",
+    eyebrow: "The exact warning, and how to fix it",
     title: "Story Details",
     body: "Partners found out about content problems through emails from their Yahoo contact. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
     bullets: [
@@ -350,7 +349,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "08",
-    eyebrow: "FIND ANY STORY, ANY WAY YOU KNOW IT",
+    eyebrow: "Find any story, any way you know it",
     title: "Search",
     body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
     bullets: [
@@ -389,7 +388,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "09",
-    eyebrow: "FROM ONE-CLICK DELETE TO MEDIATED REQUEST",
+    eyebrow: "From one-click delete to mediated request",
     title: "Takedowns",
     body: "The original concept was instant self-service: one click, content gone. Partners loved it in research. Legal reality changed it — and that's a more honest design outcome than most case studies admit.",
     bullets: [
@@ -428,7 +427,7 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "10",
-    eyebrow: "MANAGE YOUR OWN TEAM, WITHOUT FILING A TICKET",
+    eyebrow: "Manage your own team, without filing a ticket",
     title: "User Management",
     body: "Adding a user to the legacy system required going through Yahoo. User Management gave that control to the partner organizations themselves — invite, assign, and scope brand access entirely self-serve.",
     bullets: [

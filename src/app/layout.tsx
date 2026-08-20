@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans, Noto_Sans } from "next/font/google";
+import localFont from "next/font/local";
+import { DM_Sans, Roboto_Mono } from "next/font/google";
+import PageTransition from "@/components/site/PageTransition";
 import "./globals.css";
 
-const playfair = Playfair_Display({
+// Google Sans Flex isn't in next/font/google's generated catalog yet, even
+// though the Google Fonts API now serves it — self-hosted here from the same
+// CDN (fonts.gstatic.com) instead. It's a true variable font (weight axis
+// 300–800 in one file), matching the Figma reference's GRAD/ROND/wdth axes.
+const googleSansFlex = localFont({
+  src: "./fonts/google-sans-flex.woff2",
   variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["700", "800"],
+  weight: "300 800",
   display: "swap",
 });
 
@@ -16,10 +22,10 @@ const dmSans = DM_Sans({
   display: "swap",
 });
 
-const notoSans = Noto_Sans({
+const robotoMono = Roboto_Mono({
   variable: "--font-alt",
   subsets: ["latin"],
-  weight: ["600"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 
@@ -37,9 +43,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${playfair.variable} ${dmSans.variable} ${notoSans.variable} antialiased`}
+        className={`${googleSansFlex.variable} ${dmSans.variable} ${robotoMono.variable} antialiased`}
       >
-        {children}
+        <PageTransition>{children}</PageTransition>
       </body>
     </html>
   );

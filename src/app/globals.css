@@ -3,14 +3,18 @@
 /* Neutrals are Figma's (Portfolio-2026 / Desktop - 23). They are true grays;
    the warm background is ours, from the original brief — Figma defines none.
    Verified against #f3f0ea before adopting: no chalkiness, and Figma's --muted
-   clears WCAG AA at 4.90:1 where the old warm value failed at 4.05:1. */
+   clears WCAG AA at 4.90:1 where the old warm value failed at 4.05:1.
+   --ink/--ink-2/--muted/--ink-strong match the Figma "Desktop System" color
+   legend exactly: Headlines/Top Nav, Navigation/Sub Headers/Body copy,
+   Company Names/Meta Data, and Quote/Stat emphasis, respectively. */
 :root {
   --bg: #f3f0ea;
   --bg-deep: #eae5db;
   --surface: #fbf9f5;
-  --ink: #111111;
+  --ink: #433835;
   --ink-2: #444440;
   --muted: #686868;
+  --ink-strong: #111111;
   --line: #b0b0b0;
   --line-soft: #d8d8d8;
   /* Reserved for interactive elements and landmark moments only */
@@ -24,6 +28,7 @@
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
   --color-muted: var(--muted);
+  --color-ink-strong: var(--ink-strong);
   --color-line: var(--line);
   --color-line-soft: var(--line-soft);
   --color-accent: var(--accent);
@@ -59,11 +64,20 @@ body {
 
 /* ---------- Shared type helpers ---------- */
 
-.display {
-  font-family: var(--font-display), Georgia, serif;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  line-height: 1.04;
+/* Layered (not plain, unlayered CSS) specifically so a Tailwind text-color
+   utility applied alongside .display — text-accent, text-ink, etc. — can
+   still override this default. Unlayered custom CSS always beats Tailwind's
+   own (layered) utilities regardless of source order, which was silently
+   breaking every accent-colored stat/heading pairing on the case-study
+   pages until this was caught. */
+@layer base {
+  .display {
+    font-family: var(--font-display), system-ui, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.04;
+    color: var(--ink);
+  }
 }
 
 /* Case-study pages and placeholder frames only. That surface isn't part of the
@@ -104,37 +118,43 @@ body {
   }
 }
 
-/* Desktop - Label · 177:111990 */
+/* Desktop - Label · 177:111990. Updated to match the Figma "Desktop Section
+   Titles and Links" role (16/24, SemiBold) — same role used by case-study
+   section numbers and kickers, see .cs-kicker/.cs-label below. */
 .t-label {
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
   text-transform: uppercase;
 }
 
-/* Desktop - Section Label · 177:111965 */
+/* Desktop - Section Label · 177:111965. Same role as .t-label above. */
 .t-mark {
   font-family: var(--font-alt), system-ui, sans-serif;
   font-weight: 600;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
 }
 
 /* Desktop - Body Copy · 177:111970 */
 .t-body {
+  font-family: var(--font-display), system-ui, sans-serif;
   font-size: 0.875rem;
-  line-height: 1.375rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
 }
 
-/* Meta data · 177:112153 */
+/* Meta data · 177:112153. Color baked in (like .cs-meta, the same role) since
+   every usage pairs it with --muted anyway. */
 .t-meta {
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   letter-spacing: 0;
+  color: var(--muted);
 }
 
 /* Shared display level for work project titles (177:111991) and the interest
@@ -144,12 +164,14 @@ body {
   font-size: clamp(1.5rem, 2.71vw, 2.4375rem);
 }
 
-/* Desktop - Link · 177:111994 — text + icon only, never a pill */
+/* Desktop - Link · 177:111994 — text + icon only, never a pill. Same
+   "Desktop Section Titles and Links" role as .t-label/.t-mark, at its
+   highlighted (accent) color rather than ink-2. */
 .t-link {
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 0.75rem;
-  line-height: 1;
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
   text-transform: uppercase;
   color: var(--accent);
 }
@@ -262,11 +284,84 @@ body {
 }
 
 .cs-caption {
-  font-size: 0.8125rem;
-  line-height: 1.55;
+  font-size: 0.75rem;
+  line-height: 1rem;
   color: var(--muted);
   margin-top: 0.875rem;
   max-width: 36rem;
+}
+
+/* ---------- Case-study type roles (Figma Desktop System, 467:102944) ----------
+   Roles not already covered by .display (Page Title / Desktop - Headlines,
+   both var(--ink)) or .t-body (Desktop - Body Copy). Shared across every
+   case-study page via components/case-study/CaseStudyPage.tsx so the roles
+   live in exactly one place. */
+
+/* Desktop Section Titles and Links · section numbers ("01"), cover kicker */
+.cs-kicker {
+  font-family: var(--font-alt), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+/* Meta Data Label · sidebar group labels ("Role", "Timeline", ...), company
+   names, and homepage sub-feature titles — set in whatever case the copy is
+   authored in, not forced uppercase. */
+.cs-label {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1rem;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+/* Meta Data · sidebar group values */
+.cs-meta {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* Case Study Section Title · the sentence-case line under a section H2
+   (e.g. "Every metric in one place" under "Overview"). Sentence case, not
+   an eyebrow, despite living in the `eyebrow` data field. */
+.cs-section-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.625rem;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+/* Quotes/Stats · stat call-out labels and pull-quote text */
+.cs-quote {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1.25rem;
+  line-height: 1.5rem;
+  letter-spacing: 0;
+  color: var(--ink-strong);
+}
+
+/* Sub Label · a title paired with a smaller description directly beneath it
+   — case-study section bullets, but also the homepage's Recent Work
+   sub-feature titles. Not scoped to case studies despite the prefix; kept
+   here with the rest of this role set rather than duplicated. */
+.cs-sub-label {
+  font-family: var(--font-body), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  color: var(--ink-2);
 }
 
 .cs-frame {
@@ -321,7 +416,7 @@ body {
     padding-left: calc(129.6px * var(--cs-scale));
     padding-right: calc(259.2px * var(--cs-scale));
     /* Clears the fixed top bar so content never starts underneath it. */
-    padding-top: calc(72px * var(--cs-scale));
+    padding-top: calc(68px * var(--cs-scale));
     will-change: transform;
   }
 
