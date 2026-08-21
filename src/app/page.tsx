@@ -196,19 +196,17 @@ export default function Home() {
                         image
                       )}
 
-                      {/* 177:112000 — three columns, 19px gutter */}
-                      <div className="grid gap-[19px] sm:grid-cols-3">
-                        {project.subFeatures.map((feature) => (
-                          <div key={feature.title} className="flex flex-col gap-1">
+                      {/* 177:112000 — four columns, 19px gutter */}
+                      <div className="grid gap-[19px] sm:grid-cols-4">
+                        {project.meta.map((item) => (
+                          <div key={item.label} className="flex flex-col gap-1">
                             {/* Meta Data Label role (Google Sans Flex Medium
                                 14/16, muted, uppercase) — same role as the
                                 case-study sidebar's group labels. */}
-                            <h4 className="cs-label">{feature.title}</h4>
+                            <h4 className="cs-label">{item.label}</h4>
                             {/* Matches the Tooling/Category list copy in the
                                 Experience section (.t-meta, text-muted). */}
-                            <p className="t-meta">
-                              {feature.description}
-                            </p>
+                            <p className="t-meta">{item.value}</p>
                           </div>
                         ))}
                       </div>

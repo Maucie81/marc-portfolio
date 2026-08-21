@@ -14,7 +14,7 @@
 export const meta = {
   title: "Yahoo Partner Portal",
   subtitle:
-    "Replacing a broken publisher-reporting tool with a self-service portal for 8,700+ media partners",
+    "Replacing a broken publisher-reporting tool with a self-service portal that puts control directly in partners' hands in order to track content performance, monitor feed health, simplify takedowns, and administer their own users - empowering them to deliver higher-quality content at higher volumes, maximize their success, and see the evidence.",
   company: "Yahoo",
   years: "2024 — 2026",
 };
@@ -23,13 +23,7 @@ export const sidebar = {
   groups: [
     {
       label: "Role",
-      items: [
-        "Product designer — sole design credit, from earliest concept work through launch",
-      ],
-    },
-    {
-      label: "Timeline",
-      items: ["Design began 2024", "Public launch June 3, 2026"],
+      items: ["Sole designer, concept through launch"],
     },
     {
       label: "Audience",
@@ -42,17 +36,16 @@ export const sidebar = {
       label: "Areas of influence",
       items: [
         "Scope & roadmap definition",
-        "Information architecture",
-        "Research program (2 phases, 11 partners)",
-        "Data visualization & charting stack",
-        "Design system on a shared CMS foundation",
+        "Wireframing & Information architecture",
+        "Research Program (2 phases, 11 partners)",
+        "Data visualization design system",
       ],
     },
   ],
   highlights: [
     "Retired two legacy systems on launch day",
-    "313 Yahoo Creator accounts backfilled the next day",
-    "Multi-select filtering shipped in the MVP — a direct research outcome",
+    "313 Yahoo Creator accounts migrated the following day",
+    "Multi-select filtering shipped in MVP",
   ],
 };
 
@@ -79,7 +72,7 @@ export type Block =
       eyebrow: string;
       title: string;
       subhead?: string;
-      body: string;
+      body: string | string[];
       bullets: Bullet[];
       caption: string;
       pullQuotes?: PullQuote[];
@@ -117,15 +110,15 @@ export const blocks: Block[] = [
     sectionNumber: "01",
     heading: "The Problem",
     body: [
-      "Yahoo syndicates content from over 8,700 media partners — Gannett, Business Insider, CNN, the New York Post, Apartment Therapy, BBC — across its own properties. The only tool those partners had to understand how their content was performing was a legacy system already in maintenance mode.",
-      "There was no self-service way to see if a story had published, understand why content was being rejected, or take something down without emailing a person and waiting. Partners were Googling their own headlines to find their content on Yahoo. Feed issues arrived as forwarded emails from a rep, days after the fact.",
+      "Yahoo syndicates content from over 8,700 media partners — Gannett, Business Insider, CNN, the New York Post, Apartment Therapy, BBC — across its own properties. The only tool partners had to understand how their content was performing on Yahoo was a legacy system already in maintenance mode.",
+      "There was no self-service way to see if a story had been published, understand why content was being rejected, or take content down without opening a support ticket. Partners were Googling their own content headlines to find where it lived on Yahoo. When a feed broke, partners found out through a forwarded email from their Yahoo rep, days after the fact.",
     ],
     stat: {
       value: "41%",
-      label: "Only 41% of publishers were satisfied with their Yahoo syndication experience",
+      label: "Only 41% of publishers were satisfied with their Yahoo syndication experience pre redesign.",
     },
     quote: {
-      text: "The disconnect between publisher portals massiveness and how absolutely crappy they usually are — it's just so insane to me.",
+      text: "The disconnect between publisher portals' massiveness and how absolutely crappy they usually are — it's just so insane to me.",
       attribution: "New York Post",
     },
   },
@@ -136,27 +129,27 @@ export const blocks: Block[] = [
     sectionNumber: "02",
     eyebrow: "Every metric in one place",
     title: "Overview",
-    body: "The legacy tool gave partners one number: page views. The Overview is the first thing partners see after login — eight KPI cards, each showing the current period and how it compares to the last one. For most partners, it was the first time they'd seen CTR, dwell, or reach without requesting it from a Yahoo contact.",
+    body: "Live Metrics gave partners one insight: page views. The Overview gives them eight — and for most, it was the first time they'd seen Click through Rate, dwell, or reach without asking a Yahoo contact.",
     bullets: [
       {
-        title: "Eight metrics, not one",
-        body: 'Views, reach, uniques, dwell, CTR, comments, video streams, and content volume — each as a card showing period-over-period change. Rick Suter at Gannett called it "a 180" and said seeing CTR at all felt "incredible."',
+        title: "Side-by-side, not siloed",
+        body: "Partners managing multiple brands could finally compare performance across them in one view — not by pulling separate reports and reconciling them manually.",
       },
       {
         title: "Set once, stays everywhere",
-        body: "Filters set on the Overview carry across every section of the portal. Partners managing dozens of brands don't re-apply the same date, region, and brand selections every time they navigate.",
+        body: "Filters set on the Overview page carry across every section of the portal. Partners managing dozens of brands no longer need to re-apply the same filters every time they navigate.",
       },
     ],
     caption:
       "Eight KPI cards — views, reach, uniques, dwell, CTR, comments, video streams, content volume — each with period-over-period movement.",
     expandedPoints: [
       {
-        label: "Eight metrics, not one",
-        text: 'Views, reach, uniques, dwell, CTR, comments, video streams, and content volume — each as a card showing period-over-period change. Rick Suter at Gannett called it "a 180" and said seeing CTR at all felt "incredible."',
+        label: "Side-by-side, not siloed",
+        text: "Partners managing multiple brands could finally compare performance across them in one view — not by pulling separate reports and reconciling them manually.",
       },
       {
         label: "Set once, stays everywhere",
-        text: "Filters set on the Overview carry across every section of the portal. Partners managing dozens of brands don't re-apply the same date, region, and brand selections every time they navigate.",
+        text: "Filters set on the Overview page carry across every section of the portal. Partners managing dozens of brands no longer need to re-apply the same filters every time they navigate.",
       },
     ],
     pullQuotes: [
@@ -178,9 +171,9 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "03",
-    eyebrow: "See what's working, and why",
+    eyebrow: "What's working, and why",
     title: "Top Content",
-    body: "Top Content was designed to answer the question partners asked most: which stories rose to the top, and what drove them there.",
+    body: "Partners were Googling their own headlines to find where their content lived on Yahoo. Top Content gives them ranked performance, placement data, and filtering to understand what drove every story.",
     bullets: [
       {
         title: "Sort in either direction",
@@ -217,16 +210,16 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "04",
-    eyebrow: "From quarterly briefings to on-demand answers",
+    eyebrow: "Trends and breakdowns",
     title: "KPI Deep‑Dives",
-    body: "The previous portal gave partners one number: page views. CTR, reach, and dwell existed — but only in quarterly Yahoo briefings. KPI Deep-Dives make every metric self-service.",
+    body: "The Overview cards show where you stand. KPI Deep-Dives let you interrogate any metric — historical trends, median and average breakdowns, sliced by content type, region, device, and category.",
     bullets: [
       {
-        title: "Median matters more than average",
+        title: "Median > average",
         body: "A single breakout story can make a struggling feed look healthy. Partners asked for median specifically — it tells you what a typical piece of content earns, not what your best one did.",
       },
       {
-        title: "Everything in the filtered view, not just the first page",
+        title: "Export everything",
         body: "Partners were downloading full content libraries and sorting them manually just to answer basic questions. The export returns every row, unpaginated — whatever filters you've set, that's what you get.",
       },
     ],
@@ -234,11 +227,11 @@ export const blocks: Block[] = [
       "Drill into any KPI with full historical trend lines, median and average breakdowns, and an export of every row in the filtered view.",
     expandedPoints: [
       {
-        label: "Median matters more than average",
+        label: "Median > average",
         text: "A single breakout story can make a struggling feed look healthy. Partners asked for median specifically — it tells you what a typical piece of content earns, not what your best one did.",
       },
       {
-        label: "Everything in the filtered view, not just the first page",
+        label: "Export everything",
         text: "Partners were downloading full content libraries and sorting them manually just to answer basic questions. The export returns every row, unpaginated — whatever filters you've set, that's what you get.",
       },
     ],
@@ -248,29 +241,29 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "05",
-    eyebrow: "Feed health, in the open",
+    eyebrow: "Reactive to self-service",
     title: "Content Vitals",
-    body: "Feed Health was originally designed as a monitoring dashboard. Our research changed that framing entirely. Partners told us they didn't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a watch floor. Content Vitals was redesigned around that insight.",
+    body: "Content Vitals started as a monitoring dashboard but research changed that. Partners don't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a command center.",
     bullets: [
       {
-        title: "Issues ranked by impact, not recency",
-        body: "A feed with 30 warnings isn't necessarily a crisis. A feed with 3 failures affecting your top brand is. Issues sort by articles affected so the most consequential problems surface first.",
+        title: "Your worst problems surface first",
+        body: "A feed with 30 warnings isn't necessarily a crisis. A feed with 3 failures affecting your top brand is.",
       },
       {
         title: "Code-level diagnostics",
-        body: 'When content fails validation, partners see exactly why — down to the highlighted code — with suggested fixes. Dotdash Meredith called it "extremely helpful and unique compared to MSN." Your developer knows exactly where to look.',
+        body: "When content fails validation, partners see exactly why. Highlighted code, issue specific error, and suggested fixes. Developers know exactly where to look.",
       },
     ],
     caption:
       "Monitor feed health in real time: success rate, uptime, latency, and the exact issues holding you back (low word count, duplicate photos, restricted words) with guidance on how to fix each one.",
     expandedPoints: [
       {
-        label: "Issues ranked by impact, not recency",
-        text: "A feed with 30 warnings isn't necessarily a crisis. A feed with 3 failures affecting your top brand is. Issues sort by articles affected so the most consequential problems surface first.",
+        label: "Your worst problems surface first",
+        text: "A feed with 30 warnings isn't necessarily a crisis. A feed with 3 failures affecting your top brand is.",
       },
       {
         label: "Code-level diagnostics",
-        text: 'When content fails validation, partners see exactly why — down to the highlighted code — with suggested fixes. Dotdash Meredith called it "extremely helpful and unique compared to MSN." Your developer knows exactly where to look.',
+        text: "When content fails validation, partners see exactly why. Highlighted code, issue specific error, and suggested fixes. Developers know exactly where to look.",
       },
     ],
     pullQuotes: [
@@ -289,27 +282,27 @@ export const blocks: Block[] = [
     sectionNumber: "06",
     eyebrow: "Track issues over time",
     title: "Issue Trends",
-    body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time — so partners can tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
+    body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time. Partners can now tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
     bullets: [
       {
-        title: "Trend over time, not just a current count",
+        title: "History, not just a snapshot",
         body: "Each issue shows frequency across its full history. A spike last Tuesday reads very differently from a problem that's been slowly growing for three weeks.",
       },
       {
-        title: "A list you can hand directly to a developer",
-        body: 'Affected content items export as CSV or JSON — partners described the drill-down as unlike anything available through MSN or other platforms: "removes the guesswork and directs us to the right teams."',
+        title: "Ready for handoff",
+        body: "Affected content items export as CSV or JSON — giving partners and their engineering teams exactly what they need to find the problem and fix it fast.",
       },
     ],
     caption:
       "Watch how specific issues trend across your entire feed over time, drill into affected content, and see the impact on performance.",
     expandedPoints: [
       {
-        label: "Trend over time, not just a current count",
+        label: "History, not just a snapshot",
         text: "Each issue shows frequency across its full history. A spike last Tuesday reads very differently from a problem that's been slowly growing for three weeks.",
       },
       {
-        label: "A list you can hand directly to a developer",
-        text: 'Affected content items export as CSV or JSON — partners described the drill-down as unlike anything available through MSN or other platforms: "removes the guesswork and directs us to the right teams."',
+        label: "Ready for handoff",
+        text: "Affected content items export as CSV or JSON — giving partners and their engineering teams exactly what they need to find the problem and fix it fast.",
       },
     ],
   },
@@ -318,17 +311,13 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "07",
-    eyebrow: "The exact warning, and how to fix it",
+    eyebrow: "The exact warning. The exact fix.",
     title: "Story Details",
-    body: "Partners found out about content problems through emails from their Yahoo contact. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
+    body: "Partners found out about content problems through emails from their Yahoo partner managers. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
     bullets: [
       {
         title: "Precise, not categorical",
         body: "Each affected item shows the specific issue — restricted word, low word count, duplicate photo — with a human-readable fix at the surface and the raw code detail one tap deeper for whoever needs to hand it to a developer.",
-      },
-      {
-        title: "A pleasant surprise",
-        body: 'Business Insider\'s Corina Pintado had asked for a search-based content lookup. Seeing story-level detail with performance, issues, and canonical URLs in one place gave her "a lot of happiness and excitement."',
       },
     ],
     caption:
@@ -338,10 +327,6 @@ export const blocks: Block[] = [
         label: "Precise, not categorical",
         text: "Each affected item shows the specific issue — restricted word, low word count, duplicate photo — with a human-readable fix at the surface and the raw code detail one tap deeper for whoever needs to hand it to a developer.",
       },
-      {
-        label: "A pleasant surprise",
-        text: 'Business Insider\'s Corina Pintado had asked for a search-based content lookup. Seeing story-level detail with performance, issues, and canonical URLs in one place gave her "a lot of happiness and excitement."',
-      },
     ],
   },
 
@@ -349,29 +334,21 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "08",
-    eyebrow: "Find any story, any way you know it",
+    eyebrow: "Find anything, any way",
     title: "Search",
-    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
+    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely. Results open straight to performance, metadata, and any active issues.",
     bullets: [
       {
-        title: "Five ways in, one result",
-        body: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
-      },
-      {
         title: "Straight to the data",
-        body: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
+        body: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. A direct link to any story's performance data replaces a whole category of back-and-forth with their Yahoo Partner Manager.",
       },
     ],
     caption:
       "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID, then jump straight to its performance data.",
     expandedPoints: [
       {
-        label: "Five ways in, one result",
-        text: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
-      },
-      {
         label: "Straight to the data",
-        text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
+        text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. A direct link to any story's performance data replaces a whole category of back-and-forth with their Yahoo Partner Manager.",
       },
     ],
     pullQuotes: [
@@ -388,68 +365,52 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "09",
-    eyebrow: "From one-click delete to mediated request",
+    eyebrow: "Mediated content requests",
     title: "Takedowns",
-    body: "The original concept was instant self-service: one click, content gone. Partners loved it in research. Legal reality changed it — and that's a more honest design outcome than most case studies admit.",
+    body: "The original concept was instant self-service: one click, content gone. Partners loved it, but Legal had other opinions. The result: a pre-filled takedown request, straight from the story, with full metadata. No back-and-forth required.",
     bullets: [
       {
-        title: "Why instant delete didn't ship",
-        body: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need; a different constraint determined the form.",
-      },
-      {
         title: "What shipped instead",
-        body: "A pre-filled request to Yahoo's takedown team with the content's full metadata already attached — specific enough to be processed without back-and-forth, but mediated rather than instant. Gated to warning-level issues only so the feature stays usable for the majority of requests without creating legal exposure on edge cases.",
+        body: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need — a different constraint determined the form.",
       },
     ],
     caption:
       "Request content removal directly from a story's details — include metadata, get confirmation, self-serve without support tickets.",
     expandedPoints: [
       {
-        label: "Why instant delete didn't ship",
-        text: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need; a different constraint determined the form.",
-      },
-      {
         label: "What shipped instead",
-        text: "A pre-filled request to Yahoo's takedown team with the content's full metadata already attached — specific enough to be processed without back-and-forth, but mediated rather than instant. Gated to warning-level issues only so the feature stays usable for the majority of requests without creating legal exposure on edge cases.",
+        text: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need — a different constraint determined the form.",
       },
     ],
-    pullQuotes: [
-      {
-        quote:
-          "I really like what you showed us. Almost like a product developers perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
-        attribution: "DotDash Meredith",
-      },
-    ],
-    pullQuotePosition: "middle",
   },
 
   // 11. User Management
   {
     kind: "section",
     sectionNumber: "10",
-    eyebrow: "Manage your own team, without filing a ticket",
+    eyebrow: "Manage your own team",
     title: "User Management",
-    body: "Adding a user to the legacy system required going through Yahoo. User Management gave that control to the partner organizations themselves — invite, assign, and scope brand access entirely self-serve.",
+    body: "Adding a user to the legacy system required going through Yahoo. User Management gives that control back to partners — invite, assign, and scope brand access without filing a ticket.",
     bullets: [
       {
-        title: "Role plus brand access",
-        body: "Admins assign a role and optionally scope it to a subset of their organization's brands — which mattered for publishers like Gannett managing dozens of distinct sites. One form, no Yahoo involvement.",
+        title: "Role based brand access",
+        body: "Admins assign a role and scope it to a subset of their organization's brands — one form, no Yahoo involvement.",
       },
       {
-        title: "Two tiers at launch, deliberately",
-        body: "Admin and Viewer shipped. More granular feature-scoped permissions were logged as deferred, not rejected — a deliberate scope call to avoid delaying launch on a feature that was already a significant step forward from what existed.",
+        title: "Two tiered management",
+        body: "Two roles at launch: Admin and Viewer. More granular permissions were scoped for a later release — a deliberate call to avoid delaying launch.",
       },
     ],
     caption:
       "Add and remove team members, assign roles, control brand access, and manage organizational permissions — all without involving Yahoo.",
     expandedPoints: [
       {
-        label: "Role plus brand access",
-        text: "Admins assign a role and optionally scope it to a subset of their organization's brands — which mattered for publishers like Gannett managing dozens of distinct sites. One form, no Yahoo involvement.",
+        label: "Role based brand access",
+        text: "Admins assign a role and scope it to a subset of their organization's brands — one form, no Yahoo involvement.",
       },
       {
-        label: "Two tiers at launch, deliberately",
-        text: "Admin and Viewer shipped. More granular feature-scoped permissions were logged as deferred, not rejected — a deliberate scope call to avoid delaying launch on a feature that was already a significant step forward from what existed.",
+        label: "Two tiered management",
+        text: "Two roles at launch: Admin and Viewer. More granular permissions were scoped for a later release — a deliberate call to avoid delaying launch.",
       },
     ],
   },
@@ -460,26 +421,10 @@ export const blocks: Block[] = [
     kind: "closing",
     heading: "Learnings",
     body: [
-      "We set publisher satisfaction as the primary success measure and support-ticket volume as the counter-metric. I left the project before the follow-up survey that would have measured either, so I can't point to a number.",
-      "What I can point to is the pattern the research left behind. The loudest, most consistent reaction — across both phases and again at launch — was relief at finally having visibility. The loudest complaint was just as consistent: everyone asked for revenue, and nobody got it in this release.",
-      "If I had to predict what a satisfaction survey found, that's the shape I'd expect: a real gain on the problem we solved, and an unmoved — maybe sharper — frustration on the one we knew about, explained, and still couldn't close. That's a testable prediction, not a result I'm claiming.",
+      "The portal launched June 3, 2026 to 8,700+ media partners, retiring two legacy systems on the same day. We set publisher satisfaction as the primary success metric and support-ticket volume as the counter-metric, but I left before a follow-up survey could be fielded, so those numbers don't exist yet.",
+      "What the research did leave behind was a clear pattern. The loudest, most consistent reaction across both phases and at launch was relief — partners finally had visibility into their own performance on Yahoo. The loudest complaint was just as consistent: revenue data didn't ship, and partners noticed immediately.",
+      "That gap pointed toward the next opportunity. Solving transparency created a new expectation for control. The portal successfully moved partners from opaque and manual to visible and partially self-service. What came next was clear: revenue reporting, direct content controls, and more complete self-service workflows.",
     ],
-    stats: [
-      {
-        value: "76%",
-        label:
-          "Percentage of publishers who were satisfied with their Yahoo syndication experience",
-      },
-      {
-        value: "8,700+",
-        label:
-          "Number of media partners who moved onto the new Yahoo Partner Platform",
-      },
-      {
-        value: "2",
-        label: "Number of legacy systems retired at launch of the new platform",
-      },
-      { value: "1", label: "Number of self-service partner platform" },
-    ],
+    stats: [],
   },
 ];

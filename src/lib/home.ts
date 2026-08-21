@@ -6,7 +6,7 @@
  * right shape and length — replace with real copy before this goes public.
  */
 
-export type SubFeature = { title: string; description: string };
+export type ProjectMeta = { label: string; value: string };
 
 export type Project = {
   company: string;
@@ -15,7 +15,7 @@ export type Project = {
   href: string | null;
   image: { src: string; alt: string; width: number; height: number } | null;
   imageLabel: string;
-  subFeatures: SubFeature[];
+  meta: ProjectMeta[];
   draft?: boolean;
 };
 
@@ -28,22 +28,11 @@ export const projects: Project[] = [
     href: "/work/yahoo-partner-portal",
     image: null,
     imageLabel: "",
-    subFeatures: [
-      {
-        title: "Content Vitals",
-        description:
-          "Feed health built for firefighting, not monitoring — warnings and failures sorted by impact, with drill-down to the exact item.",
-      },
-      {
-        title: "Multi-tenant rollups",
-        description:
-          "Business → brand → license navigation, including the license-level filter that came directly out of a partner research session.",
-      },
-      {
-        title: "Two-tier access",
-        description:
-          "Admin and read-only with identical data access. The difference is who can invite — enough to unblock self-serve invites at launch.",
-      },
+    meta: [
+      { label: "Role", value: "Principal Product Designer" },
+      { label: "Timeline", value: "2024–2026" },
+      { label: "Platform", value: "Web" },
+      { label: "Industry", value: "Media / Publishing" },
     ],
   },
   {
@@ -54,22 +43,11 @@ export const projects: Project[] = [
     href: "/work/airbnb-hotels",
     image: null,
     imageLabel: "",
-    subFeatures: [
-      {
-        title: "Systems audit",
-        description:
-          "Found Airbnb Signup, Luxury Retreats onboarding, and Hubble as reusable infrastructure — no net-new systems required.",
-      },
-      {
-        title: "Three rounds of testing",
-        description:
-          "5–10 hotels per round across multiple cities and roles — Revenue Managers, Front Desk Agents, Marketing Managers.",
-      },
-      {
-        title: "Honest outcome",
-        description:
-          "Launched on schedule. COVID-19 hit. Hotels team deprioritized. No post-launch usage data collected.",
-      },
+    meta: [
+      { label: "Role", value: "Experience Designer" },
+      { label: "Timeline", value: "2019–2020" },
+      { label: "Platform", value: "Web" },
+      { label: "Industry", value: "Hospitality / Travel" },
     ],
   },
   {
@@ -80,22 +58,11 @@ export const projects: Project[] = [
     href: "/work/headspace-admin-portal",
     image: null,
     imageLabel: "",
-    subFeatures: [
-      {
-        title: "17-stakeholder research",
-        description:
-          "12 interviews spanning Admins, PSMs, Engineering, Data/Analytics, and Ginger — 167 discrete data points logged and cross-checked.",
-      },
-      {
-        title: "The first direct Admin survey",
-        description:
-          "700 Admins surveyed, 147 responses — a strong rate for an unincentivized survey, broken out by company size with a Kano-style framework.",
-      },
-      {
-        title: "Honest outcome",
-        description:
-          "Presented to leadership Q1 2022, well received. Phase 0 began rolling out after — but this was a roadmap and wireframe deliverable, not a shipped product.",
-      },
+    meta: [
+      { label: "Role", value: "Senior Product Designer" },
+      { label: "Timeline", value: "2022" },
+      { label: "Platform", value: "Web" },
+      { label: "Industry", value: "Health & Wellness" },
     ],
   },
 ];

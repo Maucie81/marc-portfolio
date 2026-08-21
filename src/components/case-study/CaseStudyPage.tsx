@@ -22,7 +22,11 @@ export type Meta = {
 };
 
 export type SidebarGroup = { label: string; items: string[] };
-export type Sidebar = { groups: SidebarGroup[]; highlights: string[] };
+export type Sidebar = {
+  groups: SidebarGroup[];
+  highlights: string[];
+  highlightsLabel?: string;
+};
 
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
@@ -204,7 +208,7 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
             <div className="flex gap-[calc(21px*var(--cs-scale,1))]">
               <ArrowIcon />
               <div className="flex flex-1 flex-col gap-2">
-                <dt className="cs-label">Highlights</dt>
+                <dt className="cs-label">{sidebar.highlightsLabel ?? "Highlights"}</dt>
                 <dd className="flex flex-col gap-2 cs-meta">
                   {sidebar.highlights.map((h) => (
                     <p key={h}>{h}</p>
@@ -294,10 +298,15 @@ function ClosingBlock({
   body: string[];
   stats: { value: string; label: string }[];
 }) {
+  const hasStats = stats.length > 0;
   return (
     <div
       className="cs-block cs-anchor-687"
-      style={{ ["--w" as string]: "calc(134.8125rem * var(--cs-scale, 1))" }}
+      style={{
+        ["--w" as string]: hasStats
+          ? "calc(134.8125rem * var(--cs-scale, 1))"
+          : "calc(81.5rem * var(--cs-scale, 1))",
+      }}
     >
       <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(293px*var(--cs-scale,1))]">
         <div className="flex w-full flex-col gap-4 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
@@ -311,19 +320,21 @@ function ClosingBlock({
           </div>
         </div>
 
-        <div className="flex w-full flex-col gap-5 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          {stats.map((stat, i) => (
-            <div
-              key={stat.label}
-              className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
-            >
-              <p className="cs-quote flex-1">{stat.label}</p>
-              <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[78px]">
-                {stat.value}
-              </p>
-            </div>
-          ))}
-        </div>
+        {hasStats ? (
+          <div className="flex w-full flex-col gap-5 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+            {stats.map((stat, i) => (
+              <div
+                key={stat.label}
+                className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
+              >
+                <p className="cs-quote flex-1">{stat.label}</p>
+                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[78px]">
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : null}
 
         <div className="flex w-full flex-col min-[901px]:w-[calc(451px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pr-[calc(800px*var(--cs-scale,1))]">
           <div className="relative">
@@ -396,10 +407,10 @@ function IntroStackBlock({
         </div>
 
         <div className="flex items-center gap-6 border-y border-line py-5">
-          <p className="cs-quote flex-1">{stat.label}</p>
-          <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[78px]">
+          <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[78px]">
             {stat.value}
           </p>
+          <p className="cs-quote flex-1">{stat.label}</p>
         </div>
 
         <div className="flex flex-col gap-2">
@@ -429,7 +440,7 @@ function SectionBlock({
   eyebrow: string;
   title: string;
   subhead?: string;
-  body: string;
+  body: string | string[];
   bullets: { title: string; body: string }[];
   caption: string;
   pullQuotes?: { quote: string; attribution: string }[];
@@ -498,7 +509,11 @@ function SectionBlock({
             <p className="cs-section-title">{eyebrow}</p>
           </div>
           {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <p className="-mt-2 text-sm leading-[24px] text-ink-2">{body}</p>
+          <div className="-mt-2 flex flex-col gap-3 text-sm leading-[24px] text-ink-2">
+            {(Array.isArray(body) ? body : [body]).map((p, i) => (
+              <p key={i}>{p}</p>
+            ))}
+          </div>
           {expandedPoints ? (
             <ExpandCollapse points={expandedPoints} />
           ) : (
