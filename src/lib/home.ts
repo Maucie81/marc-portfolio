@@ -162,18 +162,16 @@ export const roles: Role[] = [
   {
     company: "Yahoo",
     title: "Principal Product Designer, Platform",
-    period: "2024 — 2026",
+    period: "2023 — 2026",
     intro:
-      "Sole design credit on Yahoo Partner Portal, from the earliest strategic deck through public launch to 8,700+ media partners in June 2026.",
+      "Sole design lead on Partner Portal redesign serving 8,700+ media partners — including enterprise publishers like Gannett, Business Insider, and Penske.",
     description:
-      "The brief was open-ended: imagine how the Yahoo brand could be expressed in a B2B context. Owned the scoping argument that cut a full self-service B2B platform down to an analytics dashboard, the information architecture that replaced a confusing four-level hierarchy with business → brand → source, and a two-phase research program with eleven publishers. Shipped on a unified codebase serving both external partners and internal Yahoo admins.",
+      "Owned the scoping argument that cut a full self-service platform down to a focused analytics dashboard, and conducted a two-phase UXR program with eleven publishers that directly reshaped roadmap priorities. Shipped differentiated capabilities competitors lacked: code-level feed diagnostics and discovery source overlays that let publishers pinpoint why content underperformed. Outcomes: satisfaction lifted from 22% to \"clean, intuitive, and massive improvement\"; support tickets reduced by ~70%; –42% CTR gap closed through research-backed design.",
     tags: [
       "B2B platform",
-      "Legacy modernization",
+      "Publisher tooling",
       "Data visualization",
-      "Multi-tenant",
-      "Research program",
-      "Design systems",
+      "Research",
     ],
     tooling: ["Figma", "ECharts", "Next.js", "Tailwind", "Auth0", "Confluence"],
     category: [
@@ -185,55 +183,57 @@ export const roles: Role[] = [
   },
   {
     company: "Headspace",
-    title: "Staff Product Designer",
-    period: "2020 — 2023",
+    title: "Senior Product Designer",
+    period: "2022 — 2023",
     intro:
-      "Placeholder — one or two sentences that stand on their own with the row collapsed.",
+      "Built retention and adoption into enterprise wellness products for Fortune 500 partners by translating partner and user research into scalable design solutions.",
     description:
-      "Placeholder — a paragraph on scope, the teams you worked across, the problems you owned and what changed as a result. Same shape as the Yahoo entry above.",
-    tags: ["Health & wellness", "Internal tooling", "Design systems"],
+      "Led UXR across 17 stakeholder interviews and a 147-respondent Admin survey that reshaped the product roadmap, and consolidated the design system across web and mobile to ensure consistency as the platform scaled. Outcomes: 15% increase in enterprise partner adoption; 8–12% retention lift in pilot rollouts; 25% reduction in support tickets through clearer onboarding and role-based access.",
+    tags: [
+      "B2B platform",
+      "Enterprise",
+      "Design systems",
+      "Retention",
+      "Research",
+    ],
     tooling: ["Figma", "Add tooling"],
     category: ["Consumer", "Internal admin"],
-    draft: true,
   },
   {
     company: "Airbnb",
-    title: "Product Designer",
+    title: "Experience Designer",
     period: "2019 — 2020",
     intro:
-      "Placeholder — one or two sentences that stand on their own with the row collapsed.",
+      "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality — redesigning a six-step, manual sales-assisted process into fully self-service.",
     description:
-      "Placeholder — scope, teams, problems owned, outcomes. Account creation and onboarding sat here.",
-    tags: ["Marketplace", "Onboarding", "Growth"],
+      "Audited legacy systems and reused existing Airbnb infrastructure rather than building new; conducted three rounds of user testing with boutique properties and 200+ room chains across NYC, LA, Vegas, and Mexico City. Launched Q1 2020. Outcomes: 30–40% reduction in setup time; ~25% fewer errors; ~15-point CSAT improvement from hotel partners during testing. Project was subsequently deprioritized post-COVID.",
+    tags: ["Onboarding", "Self-service", "Partnerships"],
     tooling: ["Figma", "Add tooling"],
     category: ["Consumer", "Identity & trust"],
-    draft: true,
   },
   {
     company: "Hotel Tonight",
     title: "Product Designer",
     period: "2017 — 2019",
     intro:
-      "Placeholder — one or two sentences that stand on their own with the row collapsed.",
+      "Sole product designer owning web and mobile design systems during a critical brand evolution.",
     description:
-      "Placeholder — scope, teams, problems owned, outcomes. Perks and the loyalty work sat here.",
-    tags: ["Travel", "Loyalty", "Mobile"],
+      "Led the iOS app redesign to reflect updated brand values, conducted user research to surface booking flow friction, and worked cross-functionally with Product and Engineering to deliver cohesive features. This role established my foundation in design systems thinking and cross-functional advocacy at scale across platforms.",
+    tags: ["Design systems", "Mobile", "Booking flows", "iOS", "Brand alignment"],
     tooling: ["Figma", "Add tooling"],
     category: ["Consumer", "Marketplace"],
-    draft: true,
   },
   {
-    company: "StitchFix",
-    title: "Product Designer",
+    company: "Stitch Fix",
+    title: "UX Designer",
     period: "2015 — 2017",
     intro:
-      "Placeholder — one or two sentences that stand on their own with the row collapsed.",
+      "Led referral program redesign that drove a 52% increase in referred customers.",
     description:
-      "Placeholder — scope, teams, problems owned, outcomes. Internal styling tools sat here.",
-    tags: ["Retail", "Internal tooling", "Operations"],
+      "Designed a \"Reason Codes\" system for Customer Care to systematically track subscription adjustments and cancellations, surfacing retention patterns that informed product strategy. Delivered production-ready designs across web and mobile, ensuring consistent brand experience across both customer and referrer journeys.",
+    tags: ["Growth", "Referral mechanics", "Retention tooling"],
     tooling: ["Sketch", "Add tooling"],
     category: ["E-commerce", "Internal admin"],
-    draft: true,
   },
 ];
 

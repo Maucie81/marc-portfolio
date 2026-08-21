@@ -163,7 +163,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
       <aside className="lg:self-start lg:pl-[136px] lg:pt-6">
         <dl className="grid grid-cols-2 gap-x-2">
           <dt className="cs-label pb-3">Tooling</dt>
-          <dt className="cs-label pb-3">Category</dt>
+          <dt className="cs-label pb-3">Focus areas</dt>
           <dd className="t-meta space-y-3">
             {tooling.map((t) => (
               <p key={t}>{t}</p>
