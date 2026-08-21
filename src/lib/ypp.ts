@@ -289,7 +289,7 @@ export const blocks: Block[] = [
     sectionNumber: "06",
     eyebrow: "Track issues over time",
     title: "Issue Trends",
-    body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time — so partners can tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
+    body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time — so partners can tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
     bullets: [
       {
         title: "Trend over time, not just a current count",
@@ -320,7 +320,7 @@ export const blocks: Block[] = [
     sectionNumber: "07",
     eyebrow: "The exact warning, and how to fix it",
     title: "Story Details",
-    body: "Partners found out about content problems through emails from their Yahoo contact. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
+    body: "Partners found out about content problems through emails from their Yahoo contact. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
     bullets: [
       {
         title: "Precise, not categorical",
@@ -351,7 +351,7 @@ export const blocks: Block[] = [
     sectionNumber: "08",
     eyebrow: "Find any story, any way you know it",
     title: "Search",
-    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
+    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
     bullets: [
       {
         title: "Five ways in, one result",
@@ -390,7 +390,7 @@ export const blocks: Block[] = [
     sectionNumber: "09",
     eyebrow: "From one-click delete to mediated request",
     title: "Takedowns",
-    body: "The original concept was instant self-service: one click, content gone. Partners loved it in research. Legal reality changed it — and that's a more honest design outcome than most case studies admit.",
+    body: "The original concept was instant self-service: one click, content gone. Partners loved it in research. Legal reality changed it — and that's a more honest design outcome than most case studies admit.",
     bullets: [
       {
         title: "Why instant delete didn't ship",

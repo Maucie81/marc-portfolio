@@ -498,7 +498,7 @@ function SectionBlock({
             <p className="cs-section-title">{eyebrow}</p>
           </div>
           {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <p className="text-sm leading-[24px] text-ink-2">{body}</p>
+          <p className="-mt-2 text-sm leading-[24px] text-ink-2">{body}</p>
           {expandedPoints ? (
             <ExpandCollapse points={expandedPoints} />
           ) : (
