@@ -26,7 +26,13 @@ export const projects: Project[] = [
     href: "/work/yahoo-partner-portal",
     image: null,
     imageLabel: "",
-    skills: ["B2B Platform", "Publisher Tooling", "Data Visualization", "Research"],
+    skills: [
+      "Publisher Tooling",
+      "Data Visualization",
+      "UX Research",
+      "Partner Ecosystems",
+      "AI Prototyping",
+    ],
   },
   {
     company: "Airbnb",
@@ -36,7 +42,12 @@ export const projects: Project[] = [
     href: "/work/airbnb-hotels",
     image: null,
     imageLabel: "",
-    skills: ["Onboarding", "Self-Service", "Partnerships"],
+    skills: [
+      "Onboarding Design",
+      "Design Systems",
+      "User Research/Testing",
+      "B2B Partnerships",
+    ],
   },
   {
     company: "Headspace",
@@ -46,7 +57,13 @@ export const projects: Project[] = [
     href: "/work/headspace-admin-portal",
     image: null,
     imageLabel: "",
-    skills: ["B2B Platform", "Enterprise", "Design Systems", "Retention", "Research"],
+    skills: [
+      "B2B Platform",
+      "Design Systems",
+      "Retention",
+      "UX Research",
+      "Roadmap Prioritization",
+    ],
   },
 ];
 
@@ -103,10 +120,28 @@ export type Role = {
   /** Revealed on expand (177:112150). */
   description: string;
   tags: string[];
-  tooling: string[];
-  category: string[];
   draft?: boolean;
 };
+
+/** Tooling/Skills panel pinned beside the Experience list (177:112200) — a
+ * fixed curated set, not derived from the roles below. */
+export const experienceTooling = [
+  "Cursor",
+  "Figma",
+  "GitHub",
+  "Vercel",
+  "Dscout",
+  "ECharts",
+];
+
+export const experienceSkills = [
+  "Design-to-Code Prototyping",
+  "User Research",
+  "Systems Design",
+  "Data Visualization",
+  "Design Systems",
+  "Roadmap Prioritization",
+];
 
 export const roles: Role[] = [
   {
@@ -114,21 +149,14 @@ export const roles: Role[] = [
     title: "Principal Product Designer, Platform",
     period: "2023 — 2026",
     intro:
-      "Sole design lead on Partner Portal redesign serving 8,700+ media partners — including enterprise publishers like Gannett, Business Insider, and Penske.",
+      "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude. Built 13 production-adjacent dashboard pages with real components, defined a four-tier AI maturity model for the org, and established a collaboration framework between design and engineering that had never existed before.",
     description:
-      "Owned the scoping argument that cut a full self-service platform down to a focused analytics dashboard, and conducted a two-phase UXR program with eleven publishers that directly reshaped roadmap priorities. Shipped differentiated capabilities competitors lacked: code-level feed diagnostics and discovery source overlays that let publishers pinpoint why content underperformed. Outcomes: satisfaction lifted from 22% to \"clean, intuitive, and massive improvement\"; support tickets reduced by ~70%; –42% CTR gap closed through research-backed design.",
+      "Sole design lead on the Partner Portal serving 8,700+ media partners including Gannett, Business Insider, and Penske. Ran two phases of publisher UXR that directly reshaped the roadmap, made the scoping call to focus a sprawling self-service platform into a targeted analytics product, and shipped capabilities competitors hadn't built: feed diagnostics and discovery source breakdowns that let publishers understand exactly why content underperformed.",
     tags: [
       "B2B platform",
       "Publisher tooling",
       "Data visualization",
       "Research",
-    ],
-    tooling: ["Figma", "ECharts", "Next.js", "Tailwind", "Auth0", "Confluence"],
-    category: [
-      "Enterprise B2B",
-      "Analytics & reporting",
-      "Publisher tooling",
-      "Internal admin",
     ],
   },
   {
@@ -136,9 +164,9 @@ export const roles: Role[] = [
     title: "Senior Product Designer",
     period: "2022 — 2023",
     intro:
-      "Built retention and adoption into enterprise wellness products for Fortune 500 partners by translating partner and user research into scalable design solutions.",
+      "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees actually needed to use it.",
     description:
-      "Led UXR across 17 stakeholder interviews and a 147-respondent Admin survey that reshaped the product roadmap, and consolidated the design system across web and mobile to ensure consistency as the platform scaled. Outcomes: 15% increase in enterprise partner adoption; 8–12% retention lift in pilot rollouts; 25% reduction in support tickets through clearer onboarding and role-based access.",
+      "Led a 17-interview stakeholder study and a 147-respondent Admin survey that both fed directly into the roadmap. Partner adoption up 15%, retention up 10%, support requests down 25%.",
     tags: [
       "B2B platform",
       "Enterprise",
@@ -146,44 +174,36 @@ export const roles: Role[] = [
       "Retention",
       "Research",
     ],
-    tooling: ["Figma", "Add tooling"],
-    category: ["Consumer", "Internal admin"],
   },
   {
     company: "Airbnb",
     title: "Experience Designer",
     period: "2019 — 2020",
     intro:
-      "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality — redesigning a six-step, manual sales-assisted process into fully self-service.",
+      "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality after the HotelTonight acquisition.",
     description:
-      "Audited legacy systems and reused existing Airbnb infrastructure rather than building new; conducted three rounds of user testing with boutique properties and 200+ room chains across NYC, LA, Vegas, and Mexico City. Launched Q1 2020. Outcomes: 30–40% reduction in setup time; ~25% fewer errors; ~15-point CSAT improvement from hotel partners during testing. Project was subsequently deprioritized post-COVID.",
+      "Three rounds of usability testing with properties from boutique hotels to 200+ room chains. Launched Q1 2020. Onboarding time down 30–40%, setup errors down ~25%, partner CSAT up ~15 points.",
     tags: ["Onboarding", "Self-service", "Partnerships"],
-    tooling: ["Figma", "Add tooling"],
-    category: ["Consumer", "Identity & trust"],
   },
   {
     company: "Hotel Tonight",
     title: "Product Designer",
     period: "2017 — 2019",
     intro:
-      "Sole product designer owning web and mobile design systems during a critical brand evolution.",
+      "Sole designer across web and mobile during a brand evolution that repositioned HotelTonight from a discount last-minute booking app toward a more premium experience.",
     description:
-      "Led the iOS app redesign to reflect updated brand values, conducted user research to surface booking flow friction, and worked cross-functionally with Product and Engineering to deliver cohesive features. This role established my foundation in design systems thinking and cross-functional advocacy at scale across platforms.",
+      "Led the iOS app redesign, conducted user research to surface booking flow friction, and maintained the design system across both platforms. This is where most of my consumer product instincts were built: tight feedback loops, opinionated visual design, and designing for someone making a fast personal decision rather than an administrative one.",
     tags: ["Design systems", "Mobile", "Booking flows", "iOS", "Brand alignment"],
-    tooling: ["Figma", "Add tooling"],
-    category: ["Consumer", "Marketplace"],
   },
   {
     company: "Stitch Fix",
     title: "UX Designer",
     period: "2015 — 2017",
     intro:
-      "Led referral program redesign that drove a 52% increase in referred customers.",
+      "Redesigned the referral program, driving a 52% increase in referred customers.",
     description:
-      "Designed a \"Reason Codes\" system for Customer Care to systematically track subscription adjustments and cancellations, surfacing retention patterns that informed product strategy. Delivered production-ready designs across web and mobile, ensuring consistent brand experience across both customer and referrer journeys.",
+      "Built a Reason Codes system for Customer Care that systematically tracked why customers paused or cancelled subscriptions, turning anecdotal support data into retention signal the product team could act on. Delivered across web and mobile with consistent brand execution throughout.",
     tags: ["Growth", "Referral mechanics", "Retention tooling"],
-    tooling: ["Sketch", "Add tooling"],
-    category: ["E-commerce", "Internal admin"],
   },
 ];
 

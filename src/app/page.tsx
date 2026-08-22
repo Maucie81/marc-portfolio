@@ -184,33 +184,36 @@ export default function Home() {
 
                     {/* Body · 177:111997 */}
                     <div className="flex flex-col gap-6">
-                      {isLinked ? (
-                        <Link
-                          href={project.href!}
-                          aria-label={`Open the ${project.title} case study`}
-                          className="block rounded-[4px] transition-opacity hover:opacity-90"
-                        >
-                          {image}
-                        </Link>
-                      ) : (
-                        image
-                      )}
+                      {/* Image and Skills row merged into one rounded card
+                          (488:48637) — overflow-hidden clips both to shared
+                          corners instead of rounding each piece separately. */}
+                      <div className="overflow-hidden rounded-[4px]">
+                        {isLinked ? (
+                          <Link
+                            href={project.href!}
+                            aria-label={`Open the ${project.title} case study`}
+                            className="block transition-opacity hover:opacity-90"
+                          >
+                            {image}
+                          </Link>
+                        ) : (
+                          image
+                        )}
 
-                      {/* 486:47082 — right-aligned Skills row, Roboto Mono. */}
-                      <div className="flex flex-wrap items-center justify-end gap-2.5 text-[10px] leading-5 [font-family:var(--font-alt)]">
-                        <span className="font-bold text-muted/70">Skills:</span>
-                        {project.skills.map((skill, i) => (
-                          <span key={skill} className="flex items-center gap-2.5">
-                            {i > 0 ? (
-                              <span aria-hidden="true" className="text-accent">
-                                •
+                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg pb-1 pl-5 pt-1 text-[10px] leading-5 [font-family:var(--font-alt)]">
+                          {project.skills.map((skill, i) => (
+                            <span key={skill} className="flex items-center gap-2.5">
+                              {i > 0 ? (
+                                <span aria-hidden="true" className="text-accent">
+                                  •
+                                </span>
+                              ) : null}
+                              <span className="whitespace-nowrap font-normal text-muted">
+                                {skill}
                               </span>
-                            ) : null}
-                            <span className="whitespace-nowrap font-normal text-muted/70">
-                              {skill}
                             </span>
-                          </span>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </article>

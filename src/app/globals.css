@@ -130,6 +130,15 @@ body {
   text-transform: uppercase;
 }
 
+/* Weight override for role titles in the Experience list — same .t-label
+   role otherwise, just Regular instead of SemiBold. Declared here (also
+   unlayered) rather than as a Tailwind utility since utilities live in a
+   lower-priority cascade layer and can't win against .t-label's plain
+   font-weight. */
+.t-label-regular {
+  font-weight: 400;
+}
+
 /* Desktop - Section Label · 177:111965. Same role as .t-label above. */
 .t-mark {
   font-family: var(--font-alt), system-ui, sans-serif;

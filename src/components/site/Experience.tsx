@@ -1,11 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Role } from "@/lib/home";
+import { experienceSkills, experienceTooling, type Role } from "@/lib/home";
 import ExpandGlyph, { spinExpandGlyph } from "./ExpandGlyph";
-
-/** Placeholder entries shouldn't leak into the aggregate panel. */
-const real = (values: string[]) => values.filter((v) => !/^add /i.test(v));
 
 /** Opening one row can close another (accordion behavior), and both
  * animate their height over 350ms — if a row above the clicked one
@@ -40,18 +37,16 @@ function holdScrollPosition(el: HTMLElement, duration = 400) {
  * Row grid is expand-icon · content — the icon leads on the left, at +6,
  * with the copy at +66 from the row's left edge. The intro paragraph stays
  * visible whether or not the row is open; expanding adds the longer
- * description and the pipe-separated tags.
+ * description.
  *
- * The Tooling/Category panel is pinned to the top of the section (177:112200)
- * and describes the whole list, so it neither moves nor changes when a row
- * opens or closes.
+ * The Tooling/Skills panel is pinned to the top of the section (177:112200)
+ * and is a fixed curated list (`experienceTooling`/`experienceSkills` in
+ * home.ts), not derived from the roles below, so it neither moves nor
+ * changes when a row opens or closes.
  */
 export default function Experience({ roles }: { roles: Role[] }) {
   const [open, setOpen] = useState(0);
   const glyphRefs = useRef<(HTMLSpanElement | null)[]>([]);
-
-  const tooling = [...new Set(roles.flatMap((r) => real(r.tooling)))];
-  const category = [...new Set(roles.flatMap((r) => real(r.category)))];
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_495px] lg:gap-0">
@@ -108,7 +103,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
                   <span aria-hidden className="t-meta">
                     |
                   </span>
-                  <span className="t-label text-ink">{role.title}</span>
+                  <span className="t-label t-label-regular text-ink">{role.title}</span>
                 </h3>
               </button>
 
@@ -137,20 +132,6 @@ export default function Experience({ roles }: { roles: Role[] }) {
                   <p className="mt-4 max-w-[604px] text-base leading-[22px] text-ink-2">
                     {role.description}
                   </p>
-
-                  {/* 177:112152 — plain pipe-separated text, no chips */}
-                  <p className="t-meta mt-4">
-                    {role.tags.map((tag, t) => (
-                      <span key={tag}>
-                        {t > 0 ? (
-                          <span aria-hidden className="px-2 text-muted">
-                            |
-                          </span>
-                        ) : null}
-                        {tag}
-                      </span>
-                    ))}
-                  </p>
                 </div>
               </div>
             </div>
@@ -163,15 +144,15 @@ export default function Experience({ roles }: { roles: Role[] }) {
       <aside className="lg:self-start lg:pl-[136px] lg:pt-6">
         <dl className="grid grid-cols-2 gap-x-2">
           <dt className="cs-label pb-3">Tooling</dt>
-          <dt className="cs-label pb-3">Focus areas</dt>
-          <dd className="t-meta space-y-3">
-            {tooling.map((t) => (
+          <dt className="cs-label pb-3">Skills</dt>
+          <dd className="t-meta space-y-1.5">
+            {experienceTooling.map((t) => (
               <p key={t}>{t}</p>
             ))}
           </dd>
-          <dd className="t-meta space-y-3">
-            {category.map((c) => (
-              <p key={c}>{c}</p>
+          <dd className="t-meta space-y-1.5">
+            {experienceSkills.map((s) => (
+              <p key={s}>{s}</p>
             ))}
           </dd>
         </dl>
