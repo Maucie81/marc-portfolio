@@ -6,8 +6,6 @@
  * right shape and length — replace with real copy before this goes public.
  */
 
-export type ProjectMeta = { label: string; value: string };
-
 export type Project = {
   company: string;
   title: string;
@@ -15,7 +13,7 @@ export type Project = {
   href: string | null;
   image: { src: string; alt: string; width: number; height: number } | null;
   imageLabel: string;
-  meta: ProjectMeta[];
+  skills: string[];
   draft?: boolean;
 };
 
@@ -28,12 +26,7 @@ export const projects: Project[] = [
     href: "/work/yahoo-partner-portal",
     image: null,
     imageLabel: "",
-    meta: [
-      { label: "Role", value: "Principal Designer" },
-      { label: "Timeline", value: "2024–2026" },
-      { label: "Platform", value: "Web" },
-      { label: "Industry", value: "Media / Publishing" },
-    ],
+    skills: ["B2B Platform", "Publisher Tooling", "Data Visualization", "Research"],
   },
   {
     company: "Airbnb",
@@ -43,12 +36,7 @@ export const projects: Project[] = [
     href: "/work/airbnb-hotels",
     image: null,
     imageLabel: "",
-    meta: [
-      { label: "Role", value: "Sr. Product Designer" },
-      { label: "Timeline", value: "2019–2020" },
-      { label: "Platform", value: "Web" },
-      { label: "Industry", value: "Hospitality / Travel" },
-    ],
+    skills: ["Onboarding", "Self-Service", "Partnerships"],
   },
   {
     company: "Headspace",
@@ -58,12 +46,7 @@ export const projects: Project[] = [
     href: "/work/headspace-admin-portal",
     image: null,
     imageLabel: "",
-    meta: [
-      { label: "Role", value: "Senior Product Designer" },
-      { label: "Timeline", value: "2022" },
-      { label: "Platform", value: "Web" },
-      { label: "Industry", value: "Health & Wellness" },
-    ],
+    skills: ["B2B Platform", "Enterprise", "Design Systems", "Retention", "Research"],
   },
 ];
 

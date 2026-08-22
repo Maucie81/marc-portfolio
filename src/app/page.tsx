@@ -196,18 +196,20 @@ export default function Home() {
                         image
                       )}
 
-                      {/* 177:112000 — four columns, 19px gutter */}
-                      <div className="grid gap-[19px] sm:grid-cols-4">
-                        {project.meta.map((item) => (
-                          <div key={item.label} className="flex flex-col gap-1">
-                            {/* Meta Data Label role (Google Sans Flex Medium
-                                14/16, muted, uppercase) — same role as the
-                                case-study sidebar's group labels. */}
-                            <h4 className="cs-label">{item.label}</h4>
-                            {/* Matches the Tooling/Category list copy in the
-                                Experience section (.t-meta, text-muted). */}
-                            <p className="t-meta">{item.value}</p>
-                          </div>
+                      {/* 486:47082 — right-aligned Skills row, Roboto Mono. */}
+                      <div className="flex flex-wrap items-center justify-end gap-2.5 text-[10px] leading-5 [font-family:var(--font-alt)]">
+                        <span className="font-bold text-muted/70">Skills:</span>
+                        {project.skills.map((skill, i) => (
+                          <span key={skill} className="flex items-center gap-2.5">
+                            {i > 0 ? (
+                              <span aria-hidden="true" className="text-accent">
+                                •
+                              </span>
+                            ) : null}
+                            <span className="whitespace-nowrap font-normal text-muted/70">
+                              {skill}
+                            </span>
+                          </span>
                         ))}
                       </div>
                     </div>

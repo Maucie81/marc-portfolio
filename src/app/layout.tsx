@@ -25,7 +25,7 @@ const dmSans = DM_Sans({
 const robotoMono = Roboto_Mono({
   variable: "--font-alt",
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
