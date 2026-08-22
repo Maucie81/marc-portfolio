@@ -263,24 +263,65 @@ body {
   left: 0;
   bottom: 0;
   width: 100%;
-  height: 3px;
-  background: var(--line-soft);
+  height: 32px;
+  background: var(--bg);
+  border-top: 1px solid var(--line);
   z-index: 60;
   opacity: 0;
   transition: opacity 260ms ease;
   pointer-events: none;
+  overflow: visible;
+  touch-action: none;
 }
 
 .cs-progress[data-visible="true"] {
   opacity: 1;
+  /* Only draggable once it's actually on screen — otherwise it'd swallow
+     clicks meant for whatever sits behind this fixed strip while hidden. */
+  pointer-events: auto;
 }
 
-.cs-progress-fill {
-  height: 100%;
-  width: 100%;
+/* Static comb of tick marks — evenly spaced regardless of viewport width. */
+.cs-progress-ticks {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding-top: 8px;
+}
+
+.cs-progress-tick {
+  flex: none;
+  width: 1px;
+  height: 14px;
+  background: var(--line-soft);
+}
+
+/* The moving marker: a taller accent line with a pin-shaped head that pokes
+   above the top rule. Animated via `left` (0%–100%), centered on its own
+   position with translateX(-50%) so it reads as a scrubber, not a fill. */
+.cs-progress-marker {
+  position: absolute;
+  top: 0;
+  left: 0%;
+  transform: translateX(-50%);
+  width: 2px;
+  height: 22px;
   background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: left center;
+}
+
+.cs-progress-marker::before {
+  content: "";
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 7px solid var(--accent);
 }
 
 .cs-caption {

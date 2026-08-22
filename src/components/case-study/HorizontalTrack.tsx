@@ -10,15 +10,22 @@ type Props = {
   children: React.ReactNode;
 };
 
+/** Tick count for the progress scrubber — dense enough to read as a comb,
+ * spaced evenly via `justify-content: space-between` so it never needs
+ * re-measuring on resize. */
+const PROGRESS_TICK_COUNT = 80;
+const PROGRESS_TICKS = Array.from({ length: PROGRESS_TICK_COUNT });
+
 /**
  * Pins the section and maps vertical scroll progress (0–1) continuously onto
  * horizontal position along one long track. No snap points: whatever falls at
  * the current progress mark is what's in view, even mid-element.
  *
- * The progress bar and the track transform are two tweens on the SAME timeline
- * at the same position with the same duration, so one value drives both. With
- * `scrub` smoothing, reading progress off the ScrollTrigger for the bar instead
- * would let it run ahead of the content during momentum — this can't drift.
+ * The progress marker and the track transform are two tweens on the SAME
+ * timeline at the same position with the same duration, so one value drives
+ * both. With `scrub` smoothing, reading progress off the ScrollTrigger for
+ * the marker instead would let it run ahead of the content during momentum —
+ * this can't drift.
  */
 export default function HorizontalTrack({ children }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
@@ -44,7 +51,7 @@ export default function HorizontalTrack({ children }: Props) {
 
         const tl = gsap.timeline({ defaults: { ease: "none" } });
         tl.fromTo(track, { x: 0 }, { x: () => -distance(), duration: 1 }, 0);
-        tl.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: 1 }, 0);
+        tl.fromTo(bar, { left: "0%" }, { left: "100%", duration: 1 }, 0);
 
         const st = ScrollTrigger.create({
           animation: tl,
@@ -63,6 +70,48 @@ export default function HorizontalTrack({ children }: Props) {
               self.isActive || self.progress >= 1 ? "true" : "false";
           },
         });
+
+        // --- Drag-to-scrub: grab the marker (or anywhere on the tick row)
+        // and drag left/right to move through the story directly, instead of
+        // scrolling. `tl.progress()` gives instant 1:1 feedback (bypassing
+        // the scrub smoothing lag); `st.scroll()` keeps the real page scroll
+        // position in sync so wheel/trackpad scrolling resumes from the
+        // right spot the moment the pointer is released.
+        let dragging = false;
+
+        const ratioFromEvent = (e: PointerEvent) => {
+          const rect = progress.getBoundingClientRect();
+          return gsap.utils.clamp(0, 1, (e.clientX - rect.left) / rect.width);
+        };
+
+        const scrubTo = (ratio: number) => {
+          tl.progress(ratio);
+          st.scroll(st.start + ratio * (st.end - st.start));
+        };
+
+        const onPointerDown = (e: PointerEvent) => {
+          dragging = true;
+          progress.setPointerCapture(e.pointerId);
+          progress.dataset.dragging = "true";
+          scrubTo(ratioFromEvent(e));
+        };
+        const onPointerMove = (e: PointerEvent) => {
+          if (!dragging) return;
+          scrubTo(ratioFromEvent(e));
+        };
+        const onPointerUp = (e: PointerEvent) => {
+          if (!dragging) return;
+          dragging = false;
+          progress.dataset.dragging = "false";
+          if (progress.hasPointerCapture(e.pointerId)) {
+            progress.releasePointerCapture(e.pointerId);
+          }
+        };
+
+        progress.addEventListener("pointerdown", onPointerDown);
+        progress.addEventListener("pointermove", onPointerMove);
+        progress.addEventListener("pointerup", onPointerUp);
+        progress.addEventListener("pointercancel", onPointerUp);
 
         // The track's own width never changes — only its scrollWidth does — so
         // a ResizeObserver on it would never fire. And if the horizontal CSS
@@ -92,6 +141,11 @@ export default function HorizontalTrack({ children }: Props) {
         return () => {
           if (rafId) cancelAnimationFrame(rafId);
           window.removeEventListener("load", refresh);
+          progress.removeEventListener("pointerdown", onPointerDown);
+          progress.removeEventListener("pointermove", onPointerMove);
+          progress.removeEventListener("pointerup", onPointerUp);
+          progress.removeEventListener("pointercancel", onPointerUp);
+          progress.dataset.dragging = "false";
           // `kill(true)` also unwraps the pin-spacer. Without it, resizing
           // down to the vertical fallback leaves a 100vh spacer behind that
           // clamps the stacked content.
@@ -99,7 +153,7 @@ export default function HorizontalTrack({ children }: Props) {
           tl.kill();
           progress.dataset.visible = "false";
           gsap.set(track, { clearProps: "transform" });
-          gsap.set(bar, { clearProps: "transform" });
+          gsap.set(bar, { clearProps: "left" });
           ScrollTrigger.refresh();
         };
       },
@@ -112,8 +166,18 @@ export default function HorizontalTrack({ children }: Props) {
 
   return (
     <>
-      <div ref={progressRef} className="cs-progress" data-visible="false">
-        <div ref={barRef} className="cs-progress-fill" />
+      <div
+        ref={progressRef}
+        className="cs-progress"
+        data-visible="false"
+        data-dragging="false"
+      >
+        <div className="cs-progress-ticks" aria-hidden="true">
+          {PROGRESS_TICKS.map((_, i) => (
+            <span key={i} className="cs-progress-tick" />
+          ))}
+        </div>
+        <div ref={barRef} className="cs-progress-marker" />
       </div>
 
       <section ref={sectionRef} className="cs-pin">

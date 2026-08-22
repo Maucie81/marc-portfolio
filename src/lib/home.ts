@@ -24,12 +24,12 @@ export const projects: Project[] = [
     company: "Yahoo",
     title: "Partner Portal",
     description:
-      "A self-service portal for 8,700+ media partners that replaced a legacy reporting tool and a manually-maintained spreadsheet. Sole design credit from the first concept deck through launch.",
+      'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
     href: "/work/yahoo-partner-portal",
     image: null,
     imageLabel: "",
     meta: [
-      { label: "Role", value: "Principal Product Designer" },
+      { label: "Role", value: "Principal Designer" },
       { label: "Timeline", value: "2024–2026" },
       { label: "Platform", value: "Web" },
       { label: "Industry", value: "Media / Publishing" },
@@ -39,12 +39,12 @@ export const projects: Project[] = [
     company: "Airbnb",
     title: "Account Creation & Onboarding",
     description:
-      "Lead designer on hotel partner onboarding — a six-step manual, sales-assisted process redesigned into a self-service flow built on existing Airbnb infrastructure. Launched Q1 2020; vertical deprioritized after COVID-19.",
+      "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
     image: null,
     imageLabel: "",
     meta: [
-      { label: "Role", value: "Experience Designer" },
+      { label: "Role", value: "Sr. Product Designer" },
       { label: "Timeline", value: "2019–2020" },
       { label: "Platform", value: "Web" },
       { label: "Industry", value: "Hospitality / Travel" },
@@ -54,7 +54,7 @@ export const projects: Project[] = [
     company: "Headspace",
     title: "Admin Portal Redesign",
     description:
-      "A research-driven proposal for the next phase of Headspace's B2B Admin Portal — a prioritized roadmap and wireframe explorations built on 17 stakeholder interviews and a 147-respondent Admin survey, presented to leadership in Q1 2022.",
+      "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
     image: null,
     imageLabel: "",
