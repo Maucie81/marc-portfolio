@@ -3,7 +3,7 @@ import { CaseStudyPage, type Brand } from "@/components/case-study/CaseStudyPage
 import { blocks, meta, sidebar } from "@/lib/ypp";
 
 export const metadata: Metadata = {
-  title: `${meta.title} — Marc Favro`,
+  title: `${meta.company} ${meta.title} — Marc Favro`,
   description: meta.subtitle,
 };
 

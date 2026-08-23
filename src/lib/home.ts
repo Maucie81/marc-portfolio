@@ -131,6 +131,7 @@ export const experienceSkills = [
   "Systems Design",
   "Data Visualization",
   "Design Systems",
+  "Onboarding Design",
   "Roadmap Prioritization",
 ];
 
@@ -138,7 +139,7 @@ export const roles: Role[] = [
   {
     company: "Yahoo",
     title: "Principal Product Designer, Platform",
-    period: "2023 — 2026",
+    period: "2024 — 2026",
     intro:
       "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude. Built 13 production-adjacent dashboard pages with real components, defined a four-tier AI maturity model for the org, and established a collaboration framework between design and engineering that had never existed before.",
     description:

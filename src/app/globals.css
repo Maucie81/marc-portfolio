@@ -1,17 +1,15 @@
 @import "tailwindcss";
 
-/* Neutrals are Figma's (Portfolio-2026 / Desktop - 23). They are true grays;
-   the warm background is ours, from the original brief — Figma defines none.
-   Verified against #f3f0ea before adopting: no chalkiness, and Figma's --muted
-   clears WCAG AA at 4.90:1 where the old warm value failed at 4.05:1.
-   --ink/--ink-2/--muted/--ink-strong match the Figma "Desktop System" color
-   legend exactly: Headlines/Top Nav, Navigation/Sub Headers/Body copy,
-   Company Names/Meta Data, and Quote/Stat emphasis, respectively. */
+/* Neutrals are Figma's (Portfolio-2026 / Final Homepage, 499:54149). --bg is
+   the frame's own fill (#e4e4df, confirmed via get_design_context) — not a
+   value from the older brief. --ink/--ink-2/--muted/--ink-strong match the
+   Figma "Desktop System" color legend: Headlines/Top Nav, Navigation/Sub
+   Headers/Body copy, Company Names/Meta Data, and Quote/Stat emphasis. */
 :root {
-  --bg: #f3f0ea;
+  --bg: #e4e4df;
   --bg-deep: #eae5db;
   --surface: #fbf9f5;
-  --ink: #433835;
+  --ink: #4f3f3b;
   --ink-2: #444440;
   --muted: #686868;
   --ink-strong: #111111;
@@ -45,10 +43,19 @@ html:has(#home) {
 }
 
 body {
+  /* Every text layer in Figma is Google Sans Flex — alias --font-alt to the
+     same font instead of loading a second (mono) typeface. Must be set here
+     (not :root) so var(--font-display) resolves against the value next/font
+     puts on this same element via its variable class. */
+  --font-alt: var(--font-display);
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-body), var(--font-alt), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  /* Matches every text node's explicit axis settings in the Figma file —
+     the variable font's default axis values render measurably wider
+     without this. */
+  font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
 }
 
 ::selection {
@@ -96,16 +103,17 @@ body {
    value is traceable. Sizes here are Figma's literal values — only the four
    display levels use a responsive ramp. */
 
-/* Desktop - Section titles · 244:16203
-   DM Sans Bold 14/18, letter-spacing 0, accent orange.
-   Only show on desktop; mobile/tablet uses sec-num-label instead. */
+/* Section titles · 499:54848 (and equivalents). Google Sans Flex SemiBold
+   16/24, letter-spacing 0, accent orange, sentence case (not uppercase —
+   the Figma source sets `capitalize`, which is a no-op on already-cased
+   copy like "Career history"). Only show on desktop; mobile/tablet uses
+   sec-num-label instead. */
 .t-section-title {
-  font-family: var(--font-body), system-ui, sans-serif;
-  font-weight: 700;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
-  text-transform: uppercase;
   color: var(--accent);
   margin: 0 0 3rem;
   display: none;
@@ -118,25 +126,16 @@ body {
   }
 }
 
-/* Desktop - Label · 177:111990. Updated to match the Figma "Desktop Section
-   Titles and Links" role (16/24, SemiBold) — same role used by case-study
-   section numbers and kickers, see .cs-kicker/.cs-label below. */
+/* Desktop - Label · 177:111990. Google Sans Flex SemiBold 16/24 — same role
+   used by case-study section numbers and kickers, see .cs-kicker/.cs-label
+   below. Sentence case: Figma sets `capitalize` on this role (e.g. "Yahoo",
+   "Yahoo | Principal Product Designer"), not uppercase. */
 .t-label {
   font-family: var(--font-alt), system-ui, sans-serif;
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.5rem;
   letter-spacing: 0;
-  text-transform: uppercase;
-}
-
-/* Weight override for role titles in the Experience list — same .t-label
-   role otherwise, just Regular instead of SemiBold. Declared here (also
-   unlayered) rather than as a Tailwind utility since utilities live in a
-   lower-priority cascade layer and can't win against .t-label's plain
-   font-weight. */
-.t-label-regular {
-  font-weight: 400;
 }
 
 /* Desktop - Section Label · 177:111965. Same role as .t-label above. */
@@ -166,6 +165,27 @@ body {
   color: var(--muted);
 }
 
+/* Meta Data Title · 499:54864 (Experience row dates: "2024 — 2026") — a
+   distinct, smaller-line-height role from .t-meta above; Figma's published
+   styles give the two different sizes even though both read as "meta". */
+.t-meta-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+/* Meta Data · 499:54925 (Experience Skills/Tooling list items). */
+.t-meta-sm {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
 /* Shared display level for work project titles (177:111991) and the interest
    category tabs (177:112235). Use with `.display`. One definition so the two
    can't drift apart. */
@@ -173,15 +193,14 @@ body {
   font-size: clamp(1.5rem, 2.71vw, 2.4375rem);
 }
 
-/* Desktop - Link · 177:111994 — text + icon only, never a pill. Same
-   "Desktop Section Titles and Links" role as .t-label/.t-mark, at its
-   highlighted (accent) color rather than ink-2. */
+/* Desktop - Link · 499:54561 ("Case study") — text + icon only, never a
+   pill. Same role as .t-label/.t-mark, at its highlighted (accent) color
+   rather than ink-2. Sentence case, not uppercase — see .t-label. */
 .t-link {
   font-family: var(--font-alt), system-ui, sans-serif;
   font-weight: 600;
   font-size: 1rem;
   line-height: 1.5rem;
-  text-transform: uppercase;
   color: var(--accent);
 }
 
@@ -202,9 +221,12 @@ body {
     gap: 0;
   }
 
-  /* Circle, number and section title share one vertical centre — the title
-     is 14/18 now too (matches the number), so both take the same offset from
-     the circle's stretched top. */
+  /* Circle, number and section title share one vertical centre. The 5px
+     top nudge isn't arbitrary — it's compensating for a real glyph-position
+     difference (measured via Range().getClientRects(), not just the box):
+     the number sits in a flex-centered row (tighter leading above the
+     glyph, ~2px) while the title is a block element with normal text
+     leading (~7px). Confirmed by measurement, not just eyeballed. */
   .sec-num {
     padding-left: 40px;
     padding-top: 5px;
@@ -221,22 +243,16 @@ body {
   border: 1px solid var(--muted);
 }
 
-/* Desktop - Section Label · 177:111961 — accent at rest in Figma, so the
-   active state is a fade up from muted rather than a colour change. */
+/* Section number · 499:54321 ("03") — always full accent color, matching
+   the static Figma file (no scroll-driven active/inactive state). */
 .sec-num {
   font-family: var(--font-alt), system-ui, sans-serif;
   font-weight: 600;
-  font-size: 0.875rem;
-  line-height: 1.125rem;
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
   color: var(--accent);
-  opacity: 0.45;
-  transition: opacity 300ms ease;
   align-self: start;
-}
-
-.sec-num[data-active="true"] {
-  opacity: 1;
 }
 
 .sec-num-inner {
@@ -254,11 +270,6 @@ body {
 }
 
 @media (min-width: 1024px) {
-  .sec-num-inner {
-    position: sticky;
-    top: 6.5rem;
-  }
-
   .sec-num-bar,
   .sec-num-label {
     display: none;

@@ -3,8 +3,8 @@
  * exact pixel positions within a 1196×297 reference frame (converted to
  * percentages here so it scales fluidly with the section's own column
  * width instead of a fixed px size). All ten are still placeholder boxes
- * in Figma itself — bg #eaeae5, border #5a5547, radius 2px, no image, no
- * label — swap the `src` in each tile once real photos are ready.
+ * in Figma itself — bg #eaeae5, border #b0b0b0 (--line), radius 2px, no
+ * image, no label — swap the `src` in each tile once real photos are ready.
  *
  * Below `lg` the collage would shrink past legibility (the frame is ~4:1),
  * so mobile/tablet gets a simple 2-column grid of the same tile styling
@@ -26,7 +26,7 @@ const TILES: Tile[] = [
   { left: 91.137, top: 39.057, width: 8.863, height: 60.943 },
 ];
 
-const TILE_STYLE = "absolute rounded-[2px] border border-[#5a5547] bg-[#eaeae5]";
+const TILE_STYLE = "absolute rounded-[2px] border border-line bg-[#eaeae5]";
 
 export default function InterestGallery() {
   return (

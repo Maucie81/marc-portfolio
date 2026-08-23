@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -33,7 +33,7 @@ export default function HorizontalTrack({ children }: Props) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
     const bar = barRef.current;
@@ -42,10 +42,24 @@ export default function HorizontalTrack({ children }: Props) {
 
     const mm = gsap.matchMedia();
 
-    mm.add(
-      "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
-      () => {
-        // Re-measured on every refresh (resize, font swap, image decode).
+    // PageTransition's route-change animation causes this component to
+    // genuinely mount, fully unmount, then mount again roughly 500ms later
+    // (confirmed by instrumenting the effect directly — a hard reload into
+    // this page mounts once and stays put; a client-side Link navigation
+    // reliably shows a real unmount ~510ms after the first mount, not just
+    // React's dev-only double-invoke, which is a separate <1ms blip on top
+    // of this). If setup runs on that first, transient mount, the resulting
+    // pin-spacer gets created and immediately torn down when it unmounts —
+    // the visible "presents, disappears, reappears" flash. A fixed 600ms
+    // floor (safely past the observed ~510ms gap) before even attempting
+    // setup means only the final, settled mount ever creates one.
+    const SETUP_DELAY_MS = 600;
+    const setupTimeoutId = window.setTimeout(() => {
+      mm.add(
+        "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
+        () => {
+        // Re-measured continuously via the function values below (resize,
+        // font swap, image decode all change this).
         const distance = () =>
           Math.max(0, track.scrollWidth - window.innerWidth);
 
@@ -53,30 +67,17 @@ export default function HorizontalTrack({ children }: Props) {
         tl.fromTo(track, { x: 0 }, { x: () => -distance(), duration: 1 }, 0);
         tl.fromTo(bar, { left: "0%" }, { left: "100%", duration: 1 }, 0);
 
-        const st = ScrollTrigger.create({
-          animation: tl,
-          trigger: section,
-          start: "top top",
-          end: () => "+=" + distance(),
-          pin: true,
-          anticipatePin: 1,
-          scrub: 0.6,
-          invalidateOnRefresh: true,
-          onToggle: (self) => {
-            // Keep the bar up at exactly progress 1 — the trigger reports
-            // inactive at that boundary, but it's the last frame of the
-            // sequence, not the end of it.
-            progress.dataset.visible =
-              self.isActive || self.progress >= 1 ? "true" : "false";
-          },
-        });
+        let st: ReturnType<typeof ScrollTrigger.create> | null = null;
+        let rafId = 0;
 
         // --- Drag-to-scrub: grab the marker (or anywhere on the tick row)
         // and drag left/right to move through the story directly, instead of
         // scrolling. `tl.progress()` gives instant 1:1 feedback (bypassing
         // the scrub smoothing lag); `st.scroll()` keeps the real page scroll
         // position in sync so wheel/trackpad scrolling resumes from the
-        // right spot the moment the pointer is released.
+        // right spot the moment the pointer is released. Guarded on `st`
+        // since these listeners are live before the trigger exists (see
+        // below) — before creation there's nothing to scrub yet.
         let dragging = false;
 
         const ratioFromEvent = (e: PointerEvent) => {
@@ -85,6 +86,7 @@ export default function HorizontalTrack({ children }: Props) {
         };
 
         const scrubTo = (ratio: number) => {
+          if (!st) return;
           tl.progress(ratio);
           st.scroll(st.start + ratio * (st.end - st.start));
         };
@@ -117,30 +119,62 @@ export default function HorizontalTrack({ children }: Props) {
         // a ResizeObserver on it would never fire. And if the horizontal CSS
         // hasn't applied at the moment ScrollTrigger first measures, distance
         // is 0, `end` resolves to "+=0", and the section pins with no scroll
-        // range and never recovers on its own. So watch the measured width
-        // directly and refresh whenever it moves, until it holds steady.
+        // range and never recovers on its own. So this waits for scrollWidth
+        // to hold steady BEFORE creating the trigger at all, rather than
+        // creating immediately and calling ScrollTrigger.refresh() to correct
+        // it afterward.
+        //
+        // That distinction matters: with `pin: true`, every refresh() briefly
+        // tears down and rebuilds the pin-spacer — visible as a flash — and
+        // images/fonts don't all land in the same frame, so scrollWidth
+        // typically ticks upward more than once as each one decodes. Correcting
+        // via refresh() (the previous version) meant one flash per tick. This
+        // waits out that settling period first and only creates once, with
+        // already-correct measurements, so there's nothing to correct after —
+        // no refresh, no flash, for the common case. If a resize or a very
+        // late-decoding asset changes the width after this point, ScrollTrigger
+        // still fires its own refresh via its resize listener as normal.
         let lastWidth = track.scrollWidth;
         let stableFrames = 0;
-        let rafId = requestAnimationFrame(function watchWidth() {
+        let framesElapsed = 0;
+        rafId = requestAnimationFrame(function waitForStableWidth() {
+          framesElapsed++;
           const width = track.scrollWidth;
           if (width !== lastWidth) {
             lastWidth = width;
             stableFrames = 0;
-            ScrollTrigger.refresh();
-          } else if (++stableFrames > 90) {
-            rafId = 0; // ~1.5s steady: stylesheet, fonts and images have landed
+          } else {
+            stableFrames++;
+          }
+          // Settle once width holds for ~100ms, or after ~1.5s regardless —
+          // stylesheet, fonts, and images should have landed by then even if
+          // something's still shifting layout marginally.
+          if (stableFrames > 6 || framesElapsed > 90) {
+            rafId = 0;
+            st = ScrollTrigger.create({
+              animation: tl,
+              trigger: section,
+              start: "top top",
+              end: () => "+=" + distance(),
+              pin: true,
+              anticipatePin: 1,
+              scrub: 0.6,
+              invalidateOnRefresh: true,
+              onToggle: (self) => {
+                // Keep the bar up at exactly progress 1 — the trigger reports
+                // inactive at that boundary, but it's the last frame of the
+                // sequence, not the end of it.
+                progress.dataset.visible =
+                  self.isActive || self.progress >= 1 ? "true" : "false";
+              },
+            });
             return;
           }
-          rafId = requestAnimationFrame(watchWidth);
+          rafId = requestAnimationFrame(waitForStableWidth);
         });
-
-        const refresh = () => ScrollTrigger.refresh();
-        window.addEventListener("load", refresh);
-        document.fonts?.ready.then(refresh).catch(() => {});
 
         return () => {
           if (rafId) cancelAnimationFrame(rafId);
-          window.removeEventListener("load", refresh);
           progress.removeEventListener("pointerdown", onPointerDown);
           progress.removeEventListener("pointermove", onPointerMove);
           progress.removeEventListener("pointerup", onPointerUp);
@@ -149,7 +183,7 @@ export default function HorizontalTrack({ children }: Props) {
           // `kill(true)` also unwraps the pin-spacer. Without it, resizing
           // down to the vertical fallback leaves a 100vh spacer behind that
           // clamps the stacked content.
-          st.kill(true);
+          st?.kill(true);
           tl.kill();
           progress.dataset.visible = "false";
           gsap.set(track, { clearProps: "transform" });
@@ -157,9 +191,12 @@ export default function HorizontalTrack({ children }: Props) {
           ScrollTrigger.refresh();
         };
       },
-    );
+      );
+    }, SETUP_DELAY_MS);
 
     return () => {
+      window.clearTimeout(setupTimeoutId);
+      // No-op if the timeout never fired (nothing registered yet).
       mm.revert();
     };
   }, []);

@@ -12,9 +12,9 @@
  */
 
 export const meta = {
-  title: "Yahoo Partner Portal",
+  title: "Partner Portal",
   subtitle:
-    "Replacing a broken publisher-reporting tool with a self-service portal that puts control directly in partners' hands in order to track content performance, monitor feed health, simplify takedowns, and administer their own users - empowering them to deliver higher-quality content at higher volumes, maximize their success, and see the evidence.",
+    'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode — no new investment, no roadmap, and 8,700+ media partners without the tools to understand how their content was performing on Yahoo. Partner Portal 2.0 set out to change that: self-service visibility, actionable diagnostics, and the administrative controls partners had been asking for.',
   company: "Yahoo",
   years: "2024 — 2026",
 };

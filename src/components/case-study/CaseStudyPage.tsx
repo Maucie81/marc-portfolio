@@ -2,6 +2,7 @@ import Link from "next/link";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
+import ArrowIcon from "@/components/site/ArrowIcon";
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 /**
@@ -147,14 +148,6 @@ function BottomRule() {
   return <div aria-hidden className="fixed inset-x-0 bottom-0 z-30 border-t border-line" />;
 }
 
-function ArrowIcon({ className = "text-muted" }: { className?: string }) {
-  return (
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden className={`mt-px shrink-0 ${className}`}>
-      <path d="M2 8h11M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 /** Small orange section number ("01", "02", ...) beside a section's title.
  * Positioned against the title's first line only via an explicit
  * `titleLineHeight`, not the ancestor's full height, so a two-line title
@@ -177,7 +170,13 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
         <div className="flex w-full flex-col gap-2 min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <div className="flex flex-col gap-2">
-            <p className="cs-kicker">{meta.years}</p>
+            {/* 503:55564 — company name, not the timeline. Its own styling
+                (14px/18px Bold), not the shared .cs-kicker role (16px/24px
+                SemiBold) also used by the "01"-style section numbers
+                elsewhere on this page — those weren't part of this spec. */}
+            <p className="text-[14px] font-bold uppercase leading-[18px] text-accent [font-family:var(--font-alt)]">
+              {meta.company}
+            </p>
             <h1 className="display text-[2.5rem] leading-[1.1] min-[901px]:text-[60px] min-[901px]:leading-[1.1]">
               {meta.title}
             </h1>
@@ -329,7 +328,7 @@ function ClosingBlock({
                 className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
               >
                 <p className="cs-quote flex-1">{stat.label}</p>
-                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[78px]">
+                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
                   {stat.value}
                 </p>
               </div>
@@ -388,7 +387,7 @@ function IntroStackBlock({
         </div>
 
         <div className="flex items-center gap-6 border-y border-line py-5">
-          <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[78px]">
+          <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[60px]">
             {stat.value}
           </p>
           <p className="cs-quote flex-1">{stat.label}</p>

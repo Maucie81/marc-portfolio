@@ -5,6 +5,7 @@ import Placeholder from "@/components/site/Placeholder";
 import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import InterestGallery from "@/components/site/InterestGallery";
+import ArrowIcon from "@/components/site/ArrowIcon";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -26,7 +27,7 @@ export default function Home() {
               aria-hidden
               className="inline-block size-[14px] shrink-0 rounded-full bg-accent"
             />
-            Welcome. I&apos;m Marc
+            Marc Favro
           </a>
           <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted">
             <a href="#hero" className="transition-colors hover:text-accent">
@@ -51,74 +52,47 @@ export default function Home() {
       </header>
 
       <main id="home" className="mx-auto max-w-[88rem] px-6 lg:px-10">
-        {/* 01 — Hero */}
-        <section id="hero" className="sec pb-8">
-          {/* Bespoke rail for this section only: dot 1 is pinned to "01"'s
-              vertical center (the tall portrait would otherwise pull the
-              standard evenly-spaced rail well past it), dot 3 stays at its
-              natural bottom position, and dot 2 sits at the exact midpoint
-              between them — equal gaps, same as the shared SectionRail. */}
-          <div
-            aria-hidden
-            className="relative hidden w-6 self-stretch py-2 lg:block"
-          >
-            <span
-              className="rail-dot absolute left-1/2 -translate-x-1/2"
-              style={{ top: "109px" }}
-            />
-            <span
-              className="rail-dot absolute left-1/2 -translate-x-1/2"
-              style={{ top: "237.5px" }}
-            />
-            <span
-              className="rail-dot absolute left-1/2 -translate-x-1/2"
-              style={{ top: "366px" }}
-            />
-          </div>
-          <SectionNumber number="01" label="Intro" className="lg:mt-[103.6px]" />
-          {/* Name is the small mark; the role is the headline. Eyebrow lives
-              in the text column, next to the (taller) portrait, rather than
-              spanning full width above it. Row is vertically centered so the
-              text lockup sits at the correct Figma position; the "01" marker
-              is nudged down to match it instead (see className above). */}
-          <div className="-ml-[36px] flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-            {/* Illustrated portrait — cropped the same way as the Figma
-                source (132.49% width, offset -12.95%/0.26%) so it fills the
-                frame without distortion. */}
-            <div className="relative h-[386px] w-[290px] shrink-0 overflow-hidden rounded-[4px]">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/marc/hero-illustration.png"
-                alt="Illustrated portrait of Marc Favro"
-                className="absolute left-[-12.95%] top-[0.26%] h-[99.48%] w-[132.49%] max-w-none"
-              />
-            </div>
-
-            <div className="flex flex-1 flex-col pt-12">
-              <p className="pb-2 text-sm font-semibold uppercase tracking-[0.56px] text-accent [font-family:var(--font-alt)]">
-                Welcome, I&apos;m Marc
-              </p>
-              <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)]">
-                I&apos;m a Principal
-                <br />
-                Product Designer
-              </h1>
-              {/* 16px between headline and body copy — matches the
-                  heading-to-body gap used by every other title lockup
-                  (Recent Work cards, Additional Work). Kept short on
-                  purpose — full background lives in About Me. */}
-              <p className="t-body mt-4 max-w-[392px] text-ink-2">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do
-                eiusmod tempor incididunt ut labore et dolore magna aliqua.
-              </p>
-            </div>
-          </div>
+        {/* Hero — per 499:54498. Figma leaves this unnumbered (numbering
+            starts at Recent Work, 01), and sets it as a single continuous
+            headline with the portrait absolutely positioned inside it,
+            overlapping "Marc" and "I'm" — not a label + two-line title +
+            side-by-side portrait. */}
+        <section id="hero" className="pb-8 pt-2 lg:pt-6">
+          <h1 className="display text-[clamp(1.75rem,3.5vw,3.25rem)] leading-[1.35] sm:leading-[1.15] lg:leading-[1.05]">
+            Welcome, I&apos;m Marc
+            {/* Portrait — cropped the same way as the Figma source
+                (132.49% width, offset -12.95%/0.26%) so it fills the frame
+                without distortion. The outer span is an inline-block "slot"
+                sized to the crop box, sitting in the text flow; the image
+                is absolutely positioned inside it so it interrupts the
+                headline rather than flowing with it. Tight margin (2px) —
+                Figma butts the image almost directly against the text.
+                Below lg it's a fixed fallback size; at lg+ its width scales
+                continuously with the same vw rate as the headline (not a
+                fixed size at the lg breakpoint) — a fixed size only stayed
+                in proportion at the one viewport width it was tuned for and
+                wrapped the headline to 3 lines at any other width. */}
+            <span className="relative mx-0.5 inline-block h-[168px] w-[126px] shrink-0 align-middle sm:h-[240px] sm:w-[180px] lg:h-auto lg:w-[clamp(11.5rem,18vw,16.75rem)] lg:aspect-[268/357]">
+              <span className="absolute inset-0 overflow-hidden rounded-[4px]">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/marc/hero-illustration.png"
+                  alt="Illustrated portrait of Marc Favro"
+                  className="absolute left-[-12.95%] top-[0.26%] h-[99.48%] w-[132.49%] max-w-none"
+                />
+              </span>
+            </span>
+            I&apos;m a Product Designer
+          </h1>
+          <p className="ml-auto mt-4 max-w-sm text-right text-sm leading-[32px] text-ink-2 [font-family:var(--font-display)]">
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
+          </p>
         </section>
 
-        {/* 02 — Recent Work */}
+        {/* 01 — Recent Work */}
         <section id="work" className="sec border-t border-line py-12">
           <SectionRail />
-          <SectionNumber number="02" label="Recent work" />
+          <SectionNumber number="01" label="Recent work" />
           <div>
             <h2 className="t-section-title">
               Recent work
@@ -145,7 +119,7 @@ export default function Home() {
                 return (
                   <article
                     key={project.company + project.title}
-                    className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)] lg:gap-10"
+                    className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]"
                   >
                     {/* Project Info · 177:111987 */}
                     <div className="flex flex-col gap-5 lg:pt-3">
@@ -202,7 +176,7 @@ export default function Home() {
                           image
                         )}
 
-                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg pb-1 pl-5 pt-1 text-[10px] leading-5 [font-family:var(--font-alt)]">
+                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg pb-0 pl-5 pr-1 pt-4 text-xs leading-5 [font-family:var(--font-alt)]">
                           {project.skills.map((skill, i) => (
                             <span key={skill} className="flex items-center gap-2.5">
                               {i > 0 ? (
@@ -222,11 +196,22 @@ export default function Home() {
                 );
               })}
             </div>
+          </div>
+        </section>
 
-            {/* Additional work · 492:49483 — deliberately lighter than the
-                primary case studies: headline + intro on the left, a plain
-                stacked list on the right. No images, label only, no link. */}
-            <div className="mt-24 grid gap-6 lg:mt-32 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
+        {/* 02 — Additional Work · 499:55119 — deliberately lighter than the
+            primary case studies: headline + intro on the left, a carousel
+            list on the right. No images, label only, no case-study link.
+            Its own numbered section per Figma, not folded into Recent Work. */}
+        <section id="additional-work" className="sec border-t border-line py-12">
+          <SectionRail />
+          <SectionNumber number="02" label="Additional work" />
+          <div>
+            {/* 499:55129 — small label above the headline, same pattern as
+                every other section (was missing here, which is why the
+                number never lined up with anything). */}
+            <h2 className="t-section-title">Additional work</h2>
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
                 <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
                   Additional Work
@@ -242,15 +227,28 @@ export default function Home() {
 
                   const content = (
                     <>
-                      {/* company | title on one label line */}
-                      <p className="t-label text-ink">
-                        {item.company}
-                        <span aria-hidden className="px-2 font-normal text-muted">
-                          |
+                      {/* company | title on one label line, trailing arrow —
+                          shared ArrowIcon, same style as the case-study
+                          "Back" link (rotated the other way). */}
+                      <p className="t-label inline-flex items-center gap-2.5 text-ink-2">
+                        <span>
+                          {item.company}
+                          <span aria-hidden className="px-2 font-normal text-muted">
+                            |
+                          </span>
+                          {item.title}
                         </span>
-                        {item.title}
+                        <ArrowIcon
+                          className={`text-ink-2${
+                            isDone
+                              ? " transition-transform group-hover:translate-x-0.5"
+                              : ""
+                          }`}
+                        />
                       </p>
-                      <p className="t-body text-ink-2">{item.description}</p>
+                      <p className="t-body max-w-[581px] text-muted">
+                        {item.description}
+                      </p>
                     </>
                   );
 
@@ -258,14 +256,14 @@ export default function Home() {
                     <Link
                       key={item.company + item.title}
                       href={item.href!}
-                      className="flex flex-col gap-2 transition-opacity hover:opacity-90"
+                      className="group flex flex-col gap-4 transition-opacity hover:opacity-90"
                     >
                       {content}
                     </Link>
                   ) : (
                     <div
                       key={item.company + item.title}
-                      className="flex flex-col gap-2"
+                      className="flex flex-col gap-4"
                     >
                       {content}
                     </div>
@@ -316,7 +314,7 @@ export default function Home() {
           {/* The email address is the headline. */}
           <div>
             <p className="t-section-title">
-              We should probably work together, right?
+              We should probably chat, right?
             </p>
             <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
               <a
@@ -341,7 +339,7 @@ export default function Home() {
                 href={contact.resume}
                 target="_blank"
                 rel="noreferrer"
-                className="t-mark uppercase transition-colors hover:text-accent"
+                className="t-mark transition-colors hover:text-accent"
               >
                 Resume
               </a>
@@ -352,7 +350,7 @@ export default function Home() {
                 href={contact.linkedin}
                 target="_blank"
                 rel="noreferrer"
-                className="t-mark uppercase transition-colors hover:text-accent"
+                className="t-mark transition-colors hover:text-accent"
               >
                 LinkedIn
               </a>

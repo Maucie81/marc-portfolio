@@ -4,33 +4,6 @@ import { useRef, useState } from "react";
 import { experienceSkills, experienceTooling, type Role } from "@/lib/home";
 import ExpandGlyph, { spinExpandGlyph } from "./ExpandGlyph";
 
-/** Opening one row can close another (accordion behavior), and both
- * animate their height over 350ms — if a row above the clicked one
- * collapses, the page reflows and the icon the user just clicked jumps
- * to a new spot. This holds `el` at its pre-click viewport position by
- * compensating scroll every frame for the duration of that reflow, so
- * the clicked icon stays put and everything else moves around it instead. */
-function holdScrollPosition(el: HTMLElement, duration = 400) {
-  const anchorTop = el.getBoundingClientRect().top;
-  const start = performance.now();
-
-  const tick = (now: number) => {
-    const drift = el.getBoundingClientRect().top - anchorTop;
-    if (Math.abs(drift) > 0.5) {
-      // behavior: "instant" is required here — the homepage sets
-      // `scroll-behavior: smooth` globally, which would otherwise turn
-      // every per-frame correction into its own lagging animated scroll,
-      // producing exactly the drift-then-catch-up motion this is meant
-      // to prevent.
-      window.scrollBy({ top: drift, left: 0, behavior: "instant" });
-    }
-    if (now - start < duration) {
-      requestAnimationFrame(tick);
-    }
-  };
-  requestAnimationFrame(tick);
-}
-
 /**
  * Experience rows, per Figma 177:112122–112220.
  *
@@ -67,7 +40,6 @@ export default function Experience({ roles }: { roles: Role[] }) {
                 type="button"
                 onClick={() => {
                   const clickedGlyph = glyphRefs.current[i];
-                  if (clickedGlyph) holdScrollPosition(clickedGlyph);
 
                   spinExpandGlyph(clickedGlyph, !isOpen);
                   if (!isOpen && open !== -1 && open !== i) {
@@ -79,59 +51,65 @@ export default function Experience({ roles }: { roles: Role[] }) {
                 aria-controls={panelId}
                 className="group grid w-full grid-cols-[44px_minmax(0,1fr)] items-start pt-6 text-left lg:grid-cols-[66px_minmax(0,1fr)]"
               >
-                {/* Expand control — leads the row (177:112158), centered
-                    against the title lockup's own line, not the button */}
+                {/* Expand control — leads the row (499:54855/499:54884),
+                    accent when open (matches the open row's "×" in Figma),
+                    ink at rest. Vertically centered on the date line
+                    specifically (measured via getClientRects, not eyeballed
+                    — the glyph's own line-height doesn't match the date's). */}
                 <ExpandGlyph
                   ref={(el) => {
                     glyphRefs.current[i] = el;
                   }}
                   expanded={isOpen}
-                  className={`ml-1.5 self-center ${
-                    isOpen ? "text-muted" : "text-ink group-hover:text-accent"
+                  className={`ml-1.5 mt-[-2.25px] self-start ${
+                    isOpen ? "text-accent" : "text-ink group-hover:text-accent"
                   }`}
                 />
 
-                {/* 177:112141 — company | role, 8px either side of the pipe */}
-                <h3 className="flex flex-wrap items-baseline gap-x-2">
-                  <span
-                    className={`t-label transition-colors ${
-                      isOpen ? "text-accent" : "text-ink group-hover:text-accent"
-                    }`}
-                  >
-                    {role.company}
-                  </span>
-                  <span aria-hidden className="t-meta">
-                    |
-                  </span>
-                  <span className="t-label t-label-regular text-ink">{role.title}</span>
-                </h3>
+                {/* 499:54859 — date leads, above the company | role line. */}
+                <div className="flex flex-col gap-2">
+                  {role.period ? <p className="t-meta-title">{role.period}</p> : null}
+                  <h3 className="flex flex-wrap items-baseline gap-x-2">
+                    <span className="t-label text-ink-2">{role.company}</span>
+                    <span aria-hidden className="t-meta-sm">
+                      |
+                    </span>
+                    <span className="t-label text-ink-2">{role.title}</span>
+                  </h3>
+                </div>
               </button>
 
-              {/* Copy aligns under the company name. */}
+              {/* Copy aligns under the date/title block. */}
               <div className="pb-6 pl-[44px] pt-3 lg:pl-[66px]">
-                {/* Dates and intro are visible whether or not the row is
-                    open — dates lead, above the intro blurb. */}
-                {role.period ? <p className="t-meta">{role.period}</p> : null}
-                <p className="mt-2 max-w-[604px] text-base leading-[22px] text-ink-2">
-                  {role.intro}
-                </p>
+                {/* Intro is visible whether or not the row is open;
+                    expanding adds the longer description below it. */}
+                <p className="t-body max-w-[604px] text-muted">{role.intro}</p>
 
-                {/* Same reveal as the case-study ExpandCollapse: a plain
-                    max-height/opacity CSS transition, not Framer Motion's
-                    measured height:auto — content stays mounted, just
-                    visually collapsed, so the two match exactly. */}
+                {/* Same reveal as the case-study ExpandCollapse: a
+                    grid-template-rows 0fr/1fr transition (not a fixed
+                    max-height) — content stays mounted, just visually
+                    collapsed, so the two match exactly. A fixed max-height
+                    (this used to animate to a flat 800px regardless of the
+                    real content height) makes the transition's easing run
+                    against an arbitrary distance instead of the content's
+                    actual height, which is what read as a glitch: short
+                    descriptions finished animating well before the curve
+                    did, long ones never really matched it either. 0fr→1fr
+                    always animates to the exact content height. */}
                 <div
                   id={panelId}
-                  className="overflow-hidden transition-[max-height,opacity] duration-[350ms] ease-out"
+                  className="grid overflow-hidden transition-[grid-template-rows,opacity] duration-[350ms] ease-out"
                   style={{
-                    maxHeight: isOpen ? "800px" : "0px",
+                    gridTemplateRows: isOpen ? "1fr" : "0fr",
                     opacity: isOpen ? 1 : 0,
                   }}
                 >
-                  {/* 177:112151 */}
-                  <p className="mt-4 max-w-[604px] text-base leading-[22px] text-ink-2">
-                    {role.description}
-                  </p>
+                  <div className="overflow-hidden">
+                    {/* 499:54867 */}
+                    <p className="t-body mt-4 max-w-[604px] text-muted">
+                      {role.description}
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -139,20 +117,21 @@ export default function Experience({ roles }: { roles: Role[] }) {
         })}
       </div>
 
-      {/* 177:112200 — pinned to the top of the section, inset 136px, two
-          175.5px columns. Constant regardless of which row is open. */}
+      {/* 177:112200 — pinned to the top of the section, inset 136px, a
+          single stacked column: Skills first, then Tooling below it.
+          Constant regardless of which row is open. */}
       <aside className="lg:self-start lg:pl-[136px] lg:pt-6">
-        <dl className="grid grid-cols-2 gap-x-2">
-          <dt className="cs-label pb-3">Tooling</dt>
+        <dl>
           <dt className="cs-label pb-3">Skills</dt>
-          <dd className="t-meta space-y-1.5">
-            {experienceTooling.map((t) => (
-              <p key={t}>{t}</p>
-            ))}
-          </dd>
-          <dd className="t-meta space-y-1.5">
+          <dd className="t-meta-sm space-y-1.5 pb-8">
             {experienceSkills.map((s) => (
               <p key={s}>{s}</p>
+            ))}
+          </dd>
+          <dt className="cs-label pb-3">Tooling</dt>
+          <dd className="t-meta-sm space-y-1.5">
+            {experienceTooling.map((t) => (
+              <p key={t}>{t}</p>
             ))}
           </dd>
         </dl>

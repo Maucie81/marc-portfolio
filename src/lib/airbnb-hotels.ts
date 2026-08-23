@@ -1,9 +1,9 @@
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 export const meta = {
-  title: "Airbnb Hotels",
+  title: "Account Creation & Onboarding",
   subtitle:
-    "Redesigning hotel partner onboarding from a six-step manual process into a scalable self-service flow",
+    "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for. What had been a six-step, sales-assisted process built on Google Forms was redesigned into a self-service flow built entirely on existing Airbnb infrastructure.",
   company: "Airbnb",
   years: "2019 — 2020",
 };
