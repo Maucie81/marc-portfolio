@@ -1,6 +1,7 @@
 import Link from "next/link";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
+import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 /**
@@ -304,8 +305,8 @@ function ClosingBlock({
       className="cs-block cs-anchor-687"
       style={{
         ["--w" as string]: hasStats
-          ? "calc(134.8125rem * var(--cs-scale, 1))"
-          : "calc(81.5rem * var(--cs-scale, 1))",
+          ? "calc(88.3125rem * var(--cs-scale, 1))"
+          : "calc(35rem * var(--cs-scale, 1))",
       }}
     >
       <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(293px*var(--cs-scale,1))]">
@@ -335,26 +336,6 @@ function ClosingBlock({
             ))}
           </div>
         ) : null}
-
-        <div className="flex w-full flex-col min-[901px]:w-[calc(451px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pr-[calc(800px*var(--cs-scale,1))]">
-          <div className="relative">
-            <p className="cs-kicker absolute bottom-full mb-2 whitespace-nowrap">The End</p>
-            <h2 className="display whitespace-nowrap text-[28px] leading-none min-[901px]:text-[40px]">
-              Thank you for reading.
-            </h2>
-          </div>
-          <div className="mt-4 flex flex-col gap-4 whitespace-nowrap text-xs font-extrabold uppercase text-ink-2">
-            <Link href="/" className="underline decoration-1 underline-offset-2 transition-colors hover:text-accent">
-              Back to homepage
-            </Link>
-            <a
-              href="mailto:marcfavro@gmail.com"
-              className="underline decoration-1 underline-offset-2 transition-colors hover:text-accent"
-            >
-              Get in touch
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -620,6 +601,7 @@ export function CaseStudyPage({
       <HorizontalTrack>
         <CoverBlock meta={meta} sidebar={sidebar} />
         {blocks.map((block, i) => renderBlock(block, i, brand))}
+        <CaseStudyClosing />
       </HorizontalTrack>
     </main>
   );

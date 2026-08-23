@@ -492,6 +492,19 @@ body {
     margin-right: calc(300px * var(--cs-scale, 1));
   }
 
+  /* Closing section · Figma 387:66552, frame height 518px. Fixes the block's
+     own height so its flex-1 middle group (see CaseStudyClosing) has real
+     free space to grow into, pinning "Get in touch" to the frame's bottom
+     edge exactly as in Figma — same trick as .cs-anchor-687, desktop-only
+     since the vertical/mobile fallback has no matching row to align to.
+     margin-left tops up .cs-track's own 144px block gap to 293px, matching
+     ClosingBlock's Learnings→stats column gap so the rhythm reads the same
+     going into the stats→Thank-you transition. */
+  .cs-closing-block {
+    height: calc(518px * var(--cs-scale, 1));
+    margin-left: calc(149px * var(--cs-scale, 1));
+  }
+
   .cs-only-vertical {
     display: none;
   }

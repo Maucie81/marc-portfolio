@@ -4,12 +4,11 @@ import SectionRail from "@/components/site/SectionRail";
 import Placeholder from "@/components/site/Placeholder";
 import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
-import Interests from "@/components/site/Interests";
+import InterestGallery from "@/components/site/InterestGallery";
 import {
   additionalWork,
   additionalWorkIntro,
   contact,
-  interestCategories,
   projects,
   roles,
 } from "@/lib/home";
@@ -17,23 +16,26 @@ import {
 export default function Home() {
   return (
     <div className="bg-bg">
-      <header className="sticky top-0 z-50 bg-bg">
+      <header className="sticky top-0 z-50 border-b border-line bg-bg">
         <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
-          <span className="flex items-center gap-3 text-sm font-medium tracking-tight text-ink">
+          <a
+            href="/"
+            className="flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent"
+          >
             <span
               aria-hidden
-              className="inline-block h-6 w-6 rounded-full bg-accent"
+              className="inline-block size-[14px] shrink-0 rounded-full bg-accent"
             />
-            Marc Favro
-          </span>
-          <nav className="flex gap-8 text-xs leading-[18px] text-ink">
+            Welcome. I&apos;m Marc
+          </a>
+          <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted">
             <a href="#hero" className="transition-colors hover:text-accent">
               Home
             </a>
             <a href="#work" className="transition-colors hover:text-accent">
               Work
             </a>
-            <a href="#contact" className="transition-colors hover:text-accent">
+            <a href="/contact" className="transition-colors hover:text-accent">
               Contact
             </a>
             <a
@@ -221,9 +223,9 @@ export default function Home() {
               })}
             </div>
 
-            {/* Additional work · 177:112062 — deliberately lighter than the
-                primary case studies: headline + intro on the left, a 2x2 grid
-                of small cards on the right. Label only, no serif title, no link. */}
+            {/* Additional work · 492:49483 — deliberately lighter than the
+                primary case studies: headline + intro on the left, a plain
+                stacked list on the right. No images, label only, no link. */}
             <div className="mt-24 grid gap-6 lg:mt-32 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
                 <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
@@ -234,27 +236,13 @@ export default function Home() {
                 </p>
               </div>
 
-              <div className="grid gap-x-12 gap-y-12 sm:grid-cols-2">
+              <div className="flex flex-col gap-12">
                 {additionalWork.map((item) => {
-                  // "Done" = real destination and not a placeholder — gets a
-                  // logo cue and becomes clickable. Draft/no-href entries stay
-                  // exactly as before: label only, no link (per 177:112062).
                   const isDone = Boolean(item.href) && !item.draft;
 
                   const content = (
                     <>
-                      <div className="relative">
-                        <Placeholder ratio="377 / 190" />
-                        {isDone ? (
-                          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                            <CompanyLogo
-                              company={item.company}
-                              className="text-xl md:text-2xl"
-                            />
-                          </div>
-                        ) : null}
-                      </div>
-                      {/* 177:112076 — company | title on one label line */}
+                      {/* company | title on one label line */}
                       <p className="t-label text-ink">
                         {item.company}
                         <span aria-hidden className="px-2 font-normal text-muted">
@@ -270,14 +258,14 @@ export default function Home() {
                     <Link
                       key={item.company + item.title}
                       href={item.href!}
-                      className="flex flex-col gap-3 transition-opacity hover:opacity-90"
+                      className="flex flex-col gap-2 transition-opacity hover:opacity-90"
                     >
                       {content}
                     </Link>
                   ) : (
                     <div
                       key={item.company + item.title}
-                      className="flex flex-col gap-3"
+                      className="flex flex-col gap-2"
                     >
                       {content}
                     </div>
@@ -310,18 +298,13 @@ export default function Home() {
         </section>
 
         {/* 04 — Personal Interests */}
-        <section
-          id="interests"
-          className="sec border-t border-line py-12"
-        >
+        <section id="interests" className="sec border-t border-line py-12">
           <SectionRail />
           <SectionNumber number="04" label="Interests" />
           <div>
-            <h2 className="t-section-title">
-              Personal interests
-            </h2>
-            <div>
-              <Interests categories={interestCategories} />
+            <p className="t-section-title">Personal interests</p>
+            <div className="mt-8">
+              <InterestGallery />
             </div>
           </div>
         </section>
@@ -331,55 +314,49 @@ export default function Home() {
           <SectionRail />
           <SectionNumber number="05" label="Contact" />
           {/* The email address is the headline. */}
-          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,19rem)] lg:items-stretch lg:gap-16">
-            <div>
-              <p className="t-section-title">
-                We should probably work together, right?
-              </p>
-              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
-                <a
-                  href={`mailto:${contact.email}`}
-                  className="transition-colors hover:text-accent"
-                >
-                  {contact.email}
-                </a>
-              </h2>
+          <div>
+            <p className="t-section-title">
+              We should probably work together, right?
+            </p>
+            <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
+              <a
+                href={`mailto:${contact.email}`}
+                className="transition-colors hover:text-accent"
+              >
+                {contact.email}
+              </a>
+            </h2>
 
-              <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tracking-wide text-ink-2">
-                <a
-                  href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
-                  className="t-mark transition-colors hover:text-accent"
-                >
-                  {contact.phone}
-                </a>
-                <span aria-hidden className="text-line">
-                  |
-                </span>
-                <a
-                  href={contact.resume}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="t-mark uppercase transition-colors hover:text-accent"
-                >
-                  Resume
-                </a>
-                <span aria-hidden className="text-line">
-                  |
-                </span>
-                <a
-                  href={contact.linkedin}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="t-mark uppercase transition-colors hover:text-accent"
-                >
-                  LinkedIn
-                </a>
-              </p>
-            </div>
-
-            <div className="lg:justify-self-end lg:w-full">
-              <Placeholder label="Contact image — to come" ratio="auto" className="h-full w-full" />
-            </div>
+            <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tracking-wide text-ink-2">
+              <a
+                href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
+                className="t-mark transition-colors hover:text-accent"
+              >
+                {contact.phone}
+              </a>
+              <span aria-hidden className="text-line">
+                |
+              </span>
+              <a
+                href={contact.resume}
+                target="_blank"
+                rel="noreferrer"
+                className="t-mark uppercase transition-colors hover:text-accent"
+              >
+                Resume
+              </a>
+              <span aria-hidden className="text-line">
+                |
+              </span>
+              <a
+                href={contact.linkedin}
+                target="_blank"
+                rel="noreferrer"
+                className="t-mark uppercase transition-colors hover:text-accent"
+              >
+                LinkedIn
+              </a>
+            </p>
           </div>
         </section>
       </main>

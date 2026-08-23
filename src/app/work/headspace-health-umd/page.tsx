@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
+import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import { context, meta, sidebar } from "@/lib/headspace-umd";
 
 export const metadata: Metadata = {
@@ -218,34 +219,6 @@ function PrototypeEmbedBlock({ href }: { href: string }) {
   );
 }
 
-function ThankYouBlock() {
-  return (
-    <div className="cs-block" style={{ ["--w" as string]: "26rem" }}>
-      <p className="cs-kicker">The End</p>
-      <h2
-        className="display mt-2 whitespace-nowrap text-[28px] leading-none min-[901px]:text-[40px]"
-        style={{ fontWeight: 700 }}
-      >
-        Thank you for reading.
-      </h2>
-      <div className="mt-6 flex flex-col gap-4 whitespace-nowrap text-xs font-extrabold uppercase text-ink-2">
-        <Link
-          href="/"
-          className="underline decoration-1 underline-offset-2 transition-colors hover:text-accent"
-        >
-          Back to homepage
-        </Link>
-        <a
-          href="mailto:marcfavro@gmail.com"
-          className="underline decoration-1 underline-offset-2 transition-colors hover:text-accent"
-        >
-          Get in touch
-        </a>
-      </div>
-    </div>
-  );
-}
-
 export default function HeadspaceUmdPage() {
   return (
     <main className="bg-bg">
@@ -259,7 +232,7 @@ export default function HeadspaceUmdPage() {
         <CoverBlock />
         <CopyBlock heading="Context" body={context} width="34rem" />
         <PrototypeEmbedBlock href={sidebar.prototype.href} />
-        <ThankYouBlock />
+        <CaseStudyClosing />
       </HorizontalTrack>
     </main>
   );

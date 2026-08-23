@@ -80,32 +80,23 @@ export const additionalWorkIntro =
 
 export const additionalWork: SmallProject[] = [
   {
-    company: "Hotel Tonight",
-    title: "Perks",
-    description:
-      "A loyalty and rewards layer for last-minute bookers, built to reward frequency without a points economy.",
-    href: "/case-studies/ht-perks",
-    draft: true,
-  },
-  {
     company: "Yahoo",
-    title: "Creator Onboarding",
+    title: "Data Viz & Design System",
     description:
-      "313 Yahoo Creator accounts brought onto the Partner Portal platform through a one-time backfill the day after launch.",
-    href: null,
+      "The charting and data visualization system built for the Partner Portal, along with the design system it runs on — built on a shared CMS foundation used across the platform.",
+    href: "/work/yahoo-partner-portal",
   },
   {
     company: "Headspace",
-    title: "Unified Enrollment",
+    title: "Unified Main Door",
     description:
-      "The web enrollment experience for the first product shipped after the Headspace–Ginger acquisition — eligibility through a booked coaching session.",
+      "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
     href: "/work/headspace-health-umd",
   },
   {
-    company: "StitchFix",
-    title: "Styling Tools",
-    description:
-      "Placeholder — internal tooling for the people doing the styling work.",
+    company: "Personal",
+    title: "Harrison's App",
+    description: "Placeholder — description for Harrison's App. Replace with real copy.",
     href: null,
     draft: true,
   },
@@ -204,45 +195,6 @@ export const roles: Role[] = [
     description:
       "Built a Reason Codes system for Customer Care that systematically tracked why customers paused or cancelled subscriptions, turning anecdotal support data into retention signal the product team could act on. Delivered across web and mobile with consistent brand execution throughout.",
     tags: ["Growth", "Referral mechanics", "Retention tooling"],
-  },
-];
-
-/**
- * 177:112231 — each category is a Playfair display tab; selecting one swaps
- * the body copy and its three image boxes. Category names and copy are mine;
- * Figma has four tabs all labelled "Category".
- */
-export type InterestCategory = {
-  name: string;
-  description: string;
-  /** Three boxes per category (177:112242, 112244, 112246). */
-  imageCount: number;
-};
-
-export const interestCategories: InterestCategory[] = [
-  {
-    name: "Photography",
-    description:
-      "Placeholder — a short paragraph on what draws you to this, and what you're usually shooting. Replace with real copy.",
-    imageCount: 3,
-  },
-  {
-    name: "Brooklyn",
-    description:
-      "Placeholder — a short paragraph on the neighbourhood and what keeps you there. Replace with real copy.",
-    imageCount: 3,
-  },
-  {
-    name: "Cooking",
-    description:
-      "Placeholder — a short paragraph on what you cook and why it matters to you. Replace with real copy.",
-    imageCount: 3,
-  },
-  {
-    name: "Cycling",
-    description:
-      "Placeholder — a short paragraph on the riding you do and where it takes you. Replace with real copy.",
-    imageCount: 3,
   },
 ];
 

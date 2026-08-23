@@ -425,6 +425,23 @@ export const blocks: Block[] = [
       "What the research did leave behind was a clear pattern. The loudest, most consistent reaction across both phases and at launch was relief — partners finally had visibility into their own performance on Yahoo. The loudest complaint was just as consistent: revenue data didn't ship, and partners noticed immediately.",
       "That gap pointed toward the next opportunity. Solving transparency created a new expectation for control. The portal successfully moved partners from opaque and manual to visible and partially self-service. What came next was clear: revenue reporting, direct content controls, and more complete self-service workflows.",
     ],
-    stats: [],
+    stats: [
+      {
+        value: "76%",
+        label: "Percentage of publishers who were satisfied with their Yahoo syndication experience",
+      },
+      {
+        value: "8,700+",
+        label: "Number of media partners who moved onto the new Yahoo Partner Platform",
+      },
+      {
+        value: "2",
+        label: "Number of legacy systems retired at launch of the new platform",
+      },
+      {
+        value: "1",
+        label: "Number of self-service partner platform",
+      },
+    ],
   },
 ];

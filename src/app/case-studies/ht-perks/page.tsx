@@ -1,3 +1,5 @@
+import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
+
 export default function HotelTonightPerksCaseStudy() {
   return (
     <div className="min-h-screen bg-zinc-50 px-6 py-12 text-zinc-900 dark:bg-black dark:text-zinc-50 sm:py-16">
@@ -295,6 +297,8 @@ export default function HotelTonightPerksCaseStudy() {
             </a>
           </div>
         </footer>
+
+        <CaseStudyClosing variant="column" />
       </main>
     </div>
   );
