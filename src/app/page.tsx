@@ -17,40 +17,8 @@ import {
 export default function Home() {
   return (
     <div className="bg-bg">
-      <header className="sticky top-0 z-50 border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
-          <a
-            href="/"
-            className="flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent"
-          >
-            <span
-              aria-hidden
-              className="inline-block size-[14px] shrink-0 rounded-full bg-accent"
-            />
-            Marc Favro
-          </a>
-          <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted">
-            <a href="#hero" className="transition-colors hover:text-accent">
-              Home
-            </a>
-            <a href="#work" className="transition-colors hover:text-accent">
-              Work
-            </a>
-            <a href="/contact" className="transition-colors hover:text-accent">
-              Contact
-            </a>
-            <a
-              href={contact.resume}
-              target="_blank"
-              rel="noreferrer"
-              className="transition-colors hover:text-accent"
-            >
-              Resume
-            </a>
-          </nav>
-        </div>
-      </header>
-
+      {/* Header now lives in the root layout as PersistentHeader, outside
+          PageTransition's fade — see that component for why. */}
       <main id="home" className="mx-auto max-w-[88rem] px-6 lg:px-10">
         {/* Hero — per 499:54498. Figma leaves this unnumbered (numbering
             starts at Recent Work, 01), and sets it as a single continuous

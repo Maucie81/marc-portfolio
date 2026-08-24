@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { DM_Sans } from "next/font/google";
 import PageTransition from "@/components/site/PageTransition";
+import PersistentHeader from "@/components/site/PersistentHeader";
 import "./globals.css";
 
 // Google Sans Flex isn't in next/font/google's generated catalog yet, even
@@ -41,6 +42,7 @@ export default function RootLayout({
       <body
         className={`${googleSansFlex.variable} ${dmSans.variable} antialiased`}
       >
+        <PersistentHeader />
         <PageTransition>{children}</PageTransition>
       </body>
     </html>

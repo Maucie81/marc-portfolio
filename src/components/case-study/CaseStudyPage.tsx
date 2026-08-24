@@ -1,4 +1,3 @@
-import Link from "next/link";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
@@ -37,9 +36,6 @@ export type Brand = {
   initials: string;
   color: string;
 };
-
-const RESUME_URL =
-  "https://drive.google.com/file/d/1eH-USxlLh24SYEIUtEZJGOLgwV_v7qrQ/view?usp=share_link";
 
 function Frame({ image }: { image: ImageSpec }) {
   return (
@@ -94,40 +90,6 @@ function MediaPlaceholder({
       </div>
       <div className="flex-1" />
     </div>
-  );
-}
-
-function TopBar({ title }: { title: string }) {
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-6 backdrop-blur min-[901px]:h-16 min-[901px]:px-8">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/#work"
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-2 transition-colors hover:text-accent"
-        >
-          <ArrowIcon className="mt-0 rotate-180 text-current" />
-          Back
-        </Link>
-        <span aria-hidden className="h-3 w-px bg-line" />
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-accent">
-          {title}
-        </span>
-      </div>
-      <nav className="hidden gap-8 text-xs leading-[18px] text-ink min-[901px]:flex">
-        <Link href="/#hero" className="transition-colors hover:text-accent">
-          Home
-        </Link>
-        <Link href="/#work" className="transition-colors hover:text-accent">
-          Work
-        </Link>
-        <Link href="/#contact" className="transition-colors hover:text-accent">
-          Contact
-        </Link>
-        <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
-          Resume
-        </a>
-      </nav>
-    </header>
   );
 }
 
@@ -594,7 +556,6 @@ export function CaseStudyPage({
 }) {
   return (
     <main className="bg-bg">
-      <TopBar title={navTitle} />
       <RailDots />
       <BottomRule />
       <HorizontalTrack>

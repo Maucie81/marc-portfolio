@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -33,6 +33,22 @@ export default function HorizontalTrack({ children }: Props) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
+  // PageTransition's wrapper is now instantly opaque on entry for every
+  // /work/ route (see instantEnterVariants there) — the shell (background,
+  // header, RailDots/BottomRule) shows up immediately, and this is the
+  // delayed reveal that's supposed to happen instead: cs-track sits at
+  // opacity 0 for ~400ms after mount, then fades in on its own. Completely
+  // independent of the GSAP setup below — the track is already correctly
+  // positioned (untransformed, showing the cover) before ScrollTrigger ever
+  // runs, so there's nothing to wait on. Plain useState/setTimeout rather
+  // than folding it into the GSAP effect: this only ever touches opacity,
+  // never transform, so it can't fight anything GSAP sets on the same node.
+  const [contentVisible, setContentVisible] = useState(false);
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => setContentVisible(true), 400);
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
   useEffect(() => {
     const section = sectionRef.current;
     const track = trackRef.current;
@@ -63,7 +79,22 @@ export default function HorizontalTrack({ children }: Props) {
         const distance = () =>
           Math.max(0, track.scrollWidth - window.innerWidth);
 
-        const tl = gsap.timeline({ defaults: { ease: "none" } });
+        // `paused: true` is load-bearing, not stylistic. This timeline is
+        // built in the longhand form — created here, handed to
+        // ScrollTrigger's `animation` option below — rather than the
+        // `gsap.timeline({ scrollTrigger: {...} })` shorthand that
+        // implicitly pauses playback until the trigger attaches. Without it,
+        // an unpaused timeline starts playing on GSAP's own ticker the
+        // instant it's created — fully independent of scroll — and keeps
+        // running for its full 1s duration until ScrollTrigger.create()
+        // below finally claims it. That claim is delayed behind the
+        // waitForStableWidth rAF loop just below, so whatever progress the
+        // untethered timeline reached in that gap is what showed up as a
+        // flash of a mid-story block before ScrollTrigger corrected it back
+        // to match scroll position. Pausing it means it just sits at its
+        // immediateRender'd from-state (track x:0, i.e. the cover) until
+        // ScrollTrigger takes over — nothing to flash.
+        const tl = gsap.timeline({ paused: true, defaults: { ease: "none" } });
         tl.fromTo(track, { x: 0 }, { x: () => -distance(), duration: 1 }, 0);
         tl.fromTo(bar, { left: "0%" }, { left: "100%", duration: 1 }, 0);
 
@@ -151,6 +182,18 @@ export default function HorizontalTrack({ children }: Props) {
           // something's still shifting layout marginally.
           if (stableFrames > 6 || framesElapsed > 90) {
             rafId = 0;
+            // ScrollTrigger reads whatever window.scrollY already is as the
+            // initial scrub progress — it doesn't assume a fresh page starts
+            // at 0. PageTransition resets scroll on mount, but that's ~600ms
+            // plus this stable-width wait before this point, which is enough
+            // time for stale scroll state (or a still-settling browser
+            // scroll-restoration) to reassert itself. Forcing it again right
+            // here, at the moment the trigger is actually created, is what
+            // guarantees the track always initializes at the cover block
+            // (progress 0) instead of wherever leftover scrollY happens to
+            // land — that leftover value is exactly what showed up as a
+            // mid-story panel dropping in instead of the cover.
+            window.scrollTo({ top: 0, left: 0, behavior: "instant" });
             st = ScrollTrigger.create({
               animation: tl,
               trigger: section,
@@ -168,6 +211,19 @@ export default function HorizontalTrack({ children }: Props) {
                   self.isActive || self.progress >= 1 ? "true" : "false";
               },
             });
+            // `pin: true` inflates the document from one viewport tall to the
+            // full story length (thousands of px) in this same tick — that's
+            // a big enough layout change that it's not safe to assume
+            // window.scrollY is still the 0 we just set two lines up by the
+            // time ScrollTrigger finishes its own initial measurement pass
+            // over the new, taller document. `st.scroll(st.start)` is
+            // ScrollTrigger's own API for putting scroll and scrub progress
+            // back in lockstep — the same method the drag-to-scrub handler
+            // above already uses — so this re-asserts position 0 through the
+            // mechanism ScrollTrigger itself considers authoritative, rather
+            // than trusting a raw scrollTo from before the layout settled.
+            st.scroll(st.start);
+            tl.progress(0);
             return;
           }
           rafId = requestAnimationFrame(waitForStableWidth);
@@ -206,7 +262,14 @@ export default function HorizontalTrack({ children }: Props) {
       <div
         ref={progressRef}
         className="cs-progress"
-        data-visible="false"
+        // Shell chrome, not content — renders at full opacity immediately on
+        // mount, same as PersistentHeader/RailDots/BottomRule, instead of
+        // waiting on GSAP setup (SETUP_DELAY_MS + the stable-width wait)
+        // before the onToggle callback below ever gets a chance to flip this
+        // to "true". The onToggle callback still owns hiding it again once
+        // scroll passes the end of the story — that's real scroll-driven
+        // state, not a mount reveal, so it's untouched.
+        data-visible="true"
         data-dragging="false"
       >
         <div className="cs-progress-ticks" aria-hidden="true">
@@ -218,7 +281,14 @@ export default function HorizontalTrack({ children }: Props) {
       </div>
 
       <section ref={sectionRef} className="cs-pin">
-        <div ref={trackRef} className="cs-track">
+        <div
+          ref={trackRef}
+          className="cs-track"
+          style={{
+            opacity: contentVisible ? 1 : 0,
+            transition: "opacity 400ms ease",
+          }}
+        >
           {children}
         </div>
       </section>
