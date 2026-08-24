@@ -7,12 +7,13 @@ import { contact } from "@/lib/home";
 
 /**
  * Renders whichever nav belongs to the current route, but lives in the root
- * layout — outside PageTransition's AnimatePresence — so it never fades
- * during a route change. Previously the home page's own <header> and each
- * case study's own <TopBar> were rendered as part of {children}, inside
- * PageTransition's animated motion.div; the nav disappearing along with the
- * rest of the page during every transition was the most visible part of the
- * blank-screen issue. Scoped to the three case studies that share
+ * layout as a sibling of PageTransition's {children}, not inside it.
+ * Previously the home page's own <header> and each case study's own
+ * <TopBar> were rendered as part of {children}, inside PageTransition's
+ * animated motion.div; the nav disappearing along with the rest of the page
+ * during every transition was the most visible part of a blank-screen issue
+ * that motivated removing that animation entirely (see PageTransition.tsx).
+ * Scoped to the three case studies that share
  * CaseStudyPage.tsx (Yahoo Partner Portal, Airbnb Hotels, Headspace Admin
  * Portal Redesign) plus the home page — headspace-health-umd and ht-perks
  * each keep their own separate, locally-defined header unchanged, since

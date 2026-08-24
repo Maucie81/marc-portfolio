@@ -33,16 +33,16 @@ export default function HorizontalTrack({ children }: Props) {
   const barRef = useRef<HTMLDivElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
 
-  // PageTransition's wrapper is now instantly opaque on entry for every
-  // /work/ route (see instantEnterVariants there) — the shell (background,
-  // header, RailDots/BottomRule) shows up immediately, and this is the
-  // delayed reveal that's supposed to happen instead: cs-track sits at
-  // opacity 0 for ~400ms after mount, then fades in on its own. Completely
-  // independent of the GSAP setup below — the track is already correctly
-  // positioned (untransformed, showing the cover) before ScrollTrigger ever
-  // runs, so there's nothing to wait on. Plain useState/setTimeout rather
-  // than folding it into the GSAP effect: this only ever touches opacity,
-  // never transform, so it can't fight anything GSAP sets on the same node.
+  // PageTransition no longer wraps route changes in any fade — navigation
+  // is instant, so the shell (background, header, RailDots/BottomRule,
+  // .cs-progress) shows up immediately on every route. This is the one
+  // deliberate reveal left on this page: cs-track sits at opacity 0 for
+  // ~400ms after mount, then fades in on its own. Completely independent of
+  // the GSAP setup below — the track is already correctly positioned
+  // (untransformed, showing the cover) before ScrollTrigger ever runs, so
+  // there's nothing to wait on. Plain useState/setTimeout rather than
+  // folding it into the GSAP effect: this only ever touches opacity, never
+  // transform, so it can't fight anything GSAP sets on the same node.
   const [contentVisible, setContentVisible] = useState(false);
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setContentVisible(true), 400);
