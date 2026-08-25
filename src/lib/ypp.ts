@@ -63,7 +63,7 @@ export type Block =
       kind: "intro-stack";
       heading: string;
       body: string[];
-      stat: { value: string; label: string };
+      stat?: { value: string; label: string };
       quote: { text: string; attribution: string };
       sectionNumber?: string;
     }
@@ -77,6 +77,7 @@ export type Block =
       caption: string;
       pullQuotes?: PullQuote[];
       pullQuotePosition?: "top" | "middle" | "bottom";
+      stats?: { value: string; label: string }[];
       sectionNumber?: string;
       expandedPoints?: Array<{
         label: string;

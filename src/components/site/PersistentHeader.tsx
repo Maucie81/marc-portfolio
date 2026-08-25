@@ -70,20 +70,19 @@ function HomeHeader() {
 function CaseStudyTopBar({ title }: { title: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-6 backdrop-blur min-[901px]:h-16 min-[901px]:px-8">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 min-[901px]:gap-[65px]">
         <Link
           href="/#work"
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-2 transition-colors hover:text-accent"
+          className="flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)]"
         >
           <ArrowIcon className="mt-0 rotate-180 text-current" />
           Back
         </Link>
-        <span aria-hidden className="h-3 w-px bg-line" />
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-accent">
+        <span className="text-sm font-medium leading-4 text-accent [font-family:var(--font-display)]">
           {title}
         </span>
       </div>
-      <nav className="hidden gap-8 text-xs leading-[18px] text-ink min-[901px]:flex">
+      <nav className="hidden gap-8 text-xs leading-4 text-ink-strong min-[901px]:flex">
         <Link href="/#hero" className="transition-colors hover:text-accent">
           Home
         </Link>

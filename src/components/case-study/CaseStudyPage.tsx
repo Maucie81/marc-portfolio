@@ -132,14 +132,17 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
         <div className="flex w-full flex-col gap-2 min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <div className="flex flex-col gap-2">
-            {/* 503:55564 — company name, not the timeline. Its own styling
-                (14px/18px Bold), not the shared .cs-kicker role (16px/24px
-                SemiBold) also used by the "01"-style section numbers
-                elsewhere on this page — those weren't part of this spec. */}
-            <p className="text-[14px] font-bold uppercase leading-[18px] text-accent [font-family:var(--font-alt)]">
+            {/* Company name, not the timeline. Matches the "Quotes/Stats"
+                type role (.cs-quote's values, applied directly rather than
+                via the class itself — .cs-quote is unlayered CSS and would
+                beat a Tailwind text-accent override regardless of source
+                order), not the shared .cs-kicker role (16px/24px SemiBold)
+                also used by the "01"-style section numbers elsewhere on
+                this page — those weren't part of this spec. */}
+            <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
               {meta.company}
             </p>
-            <h1 className="display text-[2.5rem] leading-[1.1] min-[901px]:text-[60px] min-[901px]:leading-[1.1]">
+            <h1 className="display text-[2.5rem] leading-none min-[901px]:text-[60px] min-[901px]:leading-none">
               {meta.title}
             </h1>
           </div>
@@ -324,7 +327,7 @@ function IntroStackBlock({
 }: {
   heading: string;
   body: string[];
-  stat: { value: string; label: string };
+  stat?: { value: string; label: string };
   quote: { text: string; attribution: string };
   sectionNumber?: string;
 }) {
@@ -348,12 +351,16 @@ function IntroStackBlock({
           </div>
         </div>
 
-        <div className="flex items-center gap-6 border-y border-line py-5">
-          <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[60px]">
-            {stat.value}
-          </p>
-          <p className="cs-quote flex-1">{stat.label}</p>
-        </div>
+        {stat ? (
+          <div className="flex items-center gap-6 border-y border-line py-5">
+            <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+              {stat.value}
+            </p>
+            <p className="cs-quote flex-1">{stat.label}</p>
+          </div>
+        ) : (
+          <div className="border-t border-line" />
+        )}
 
         <div className="flex flex-col gap-2">
           <blockquote>
@@ -375,6 +382,7 @@ function SectionBlock({
   caption,
   pullQuotes,
   pullQuotePosition,
+  stats,
   sectionNumber,
   expandedPoints,
   brand,
@@ -387,12 +395,15 @@ function SectionBlock({
   caption: string;
   pullQuotes?: { quote: string; attribution: string }[];
   pullQuotePosition?: "top" | "middle" | "bottom";
+  stats?: { value: string; label: string }[];
   sectionNumber?: string;
   expandedPoints?: { label: string; text: string }[];
   brand: Brand;
 }) {
   const position = pullQuotePosition ?? "bottom";
   const hasQuotes = Boolean(pullQuotes?.length);
+  const hasStats = Boolean(stats?.length);
+  const hasSidePanel = hasQuotes || hasStats;
 
   const renderQuotes = () =>
     pullQuotes?.map((pq) => (
@@ -405,6 +416,22 @@ function SectionBlock({
         </p>
       </div>
     ));
+
+  const renderStats = () => (
+    <div className="flex flex-col min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:ml-[calc(200px*var(--cs-scale,1))] min-[901px]:self-center">
+      {stats?.map((stat, i) => (
+        <div
+          key={stat.label}
+          className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
+        >
+          <p className="cs-quote flex-1">{stat.label}</p>
+          <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+            {stat.value}
+          </p>
+        </div>
+      ))}
+    </div>
+  );
 
   const justifyClass =
     position === "top" ? "justify-start" : position === "bottom" ? "justify-end" : "justify-center";
@@ -422,6 +449,8 @@ function SectionBlock({
           >
             {renderQuotes()}
           </div>
+        ) : hasStats ? (
+          renderStats()
         ) : null}
       </div>
       <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-scale,1))]">
@@ -434,7 +463,9 @@ function SectionBlock({
     <div
       className="cs-block cs-anchor-687"
       style={{
-        ["--w" as string]: hasQuotes
+        ["--w" as string]: hasStats
+          ? "calc(133.75rem * var(--cs-scale, 1))"
+          : hasQuotes
           ? "calc(121.25rem * var(--cs-scale, 1))"
           : "calc(108.75rem * var(--cs-scale, 1))",
       }}
@@ -471,7 +502,7 @@ function SectionBlock({
         </div>
 
         <div
-          className={`flex w-full flex-col gap-6 ${hasQuotes ? "min-[901px]:w-[calc(99.25rem*var(--cs-scale,1))]" : "min-[901px]:w-[calc(86.75rem*var(--cs-scale,1))]"}`}
+          className={`flex w-full flex-col gap-6 ${hasStats ? "min-[901px]:w-[calc(111.75rem*var(--cs-scale,1))]" : hasQuotes ? "min-[901px]:w-[calc(99.25rem*var(--cs-scale,1))]" : "min-[901px]:w-[calc(86.75rem*var(--cs-scale,1))]"}`}
         >
           {renderPanelArea()}
         </div>
@@ -530,6 +561,7 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           caption={block.caption}
           pullQuotes={block.pullQuotes}
           pullQuotePosition={block.pullQuotePosition}
+          stats={block.stats}
           sectionNumber={block.sectionNumber}
           expandedPoints={block.expandedPoints}
           brand={brand}
