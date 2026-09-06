@@ -29,6 +29,19 @@ export type Sidebar = {
   highlightsLabel?: string;
 };
 
+/** Standard media-area aspect ratio, shared by every placeholder and every
+ * real "plain" recording, so a section's shape doesn't shift the moment a
+ * placeholder gets swapped for real footage. Was 7:5 to match
+ * `MediaPlaceholder`'s old 857:609 (≈1.407, an arbitrary crop-derived
+ * fraction), but every real recording so far was captured at ~1440:905
+ * (≈1.59) — close to 857:609 in name only. 7:5 (1.4) cropped a real ~12%
+ * off each side of the actual footage (buttons and labels at the edges
+ * got cut off). 16:10 (1.6, also a standard, widely-held ratio — most
+ * laptop/monitor screens, which is what these were captured on) is a
+ * near-exact match to the real source instead, so object-cover barely
+ * crops anything. */
+const MEDIA_ASPECT = "aspect-[16/10]";
+
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
   bold: string;
@@ -65,7 +78,7 @@ function MediaPlaceholder({
 }) {
   return (
     <div
-      className={`flex aspect-[857/609] w-full flex-col overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
+      className={`flex ${MEDIA_ASPECT} w-full flex-col overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
     >
       <div className="flex shrink-0 items-center gap-3 border-b border-line/70 px-4 py-3">
         <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
@@ -89,6 +102,138 @@ function MediaPlaceholder({
         </div>
       </div>
       <div className="flex-1" />
+    </div>
+  );
+}
+
+/** A single interaction, staged on its own dark canvas — one component,
+ * generous negative space, no browser chrome. Same gallery move as
+ * `StepsPanel` (a dark card standing out against the light page) but for
+ * a recording instead of text; --ink is the site's warm near-black, not
+ * true black. Distinct from `MediaPlaceholder` (mock browser chrome) and
+ * `Frame` (bordered card + caption for standalone `image` blocks). */
+function IsolatedMedia({
+  image,
+  className = "",
+}: {
+  image: { src: string; alt: string };
+  className?: string;
+}) {
+  return (
+    <div
+      className={`flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 min-[901px]:px-14 min-[901px]:py-14 ${className}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={image.src}
+        alt={image.alt}
+        loading="eager"
+        decoding="async"
+        className="max-w-full rounded-md shadow-[0_18px_40px_-28px_rgba(0,0,0,0.6)]"
+      />
+    </div>
+  );
+}
+
+/** Full-bleed rounded image, just a drop shadow — no canvas, no chrome.
+ * Figma's Search treatment (node 302:51676): a large, already-dense
+ * recording reads fine on its own; it doesn't need the --ink pedestal
+ * `IsolatedMedia` gives a small/odd-shaped crop. */
+function PlainMedia({
+  image,
+  className = "",
+}: {
+  image: { src: string; alt: string };
+  className?: string;
+}) {
+  return (
+    <div
+      className={`${MEDIA_ASPECT} w-full overflow-hidden rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-cover" />
+    </div>
+  );
+}
+
+/** Dark step-by-step panel — Figma's "Steps" component (519:71878),
+ * replacing the media placeholder for sections with no product to show
+ * (e.g. the inherited manual flow, before any UI existed). Sized to match
+ * Figma exactly: 500px background, 100px padding each side, 300px content
+ * column (500 - 100*2 = 300, so content just fills the padded box rather
+ * than needing its own width). The list scrolls internally once it
+ * outgrows the panel — bounded to the same ~687px content-height budget
+ * every other section's media panel honors, so it never grows past what
+ * the pinned viewport actually shows. Relies on native scroll chaining (no
+ * custom wheel handling): the browser scrolls this element first and only
+ * hands scroll off to the page once this hits its own bottom, so the
+ * page's horizontal-scroll-jacking in HorizontalTrack is untouched. */
+function StepsPanel({ steps }: { steps: { title: string; body: string }[] }) {
+  return (
+    <div className="flex w-full flex-col gap-10 overflow-y-auto rounded-lg bg-ink/80 px-8 py-10 text-bg min-[901px]:w-[calc(500px*var(--cs-scale,1))] min-[901px]:max-h-[calc(687.3px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-16">
+      {steps.map((step) => (
+        <div key={step.title} className="flex flex-col gap-3">
+          <p className="text-xl font-semibold leading-[26px] [font-family:var(--font-display)]">{step.title}</p>
+          <p className="text-base leading-[27px]">{step.body}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** Full-bleed dark chapter panel — Figma's "Design Principles" section
+ * (518:70506). The whole block goes dark edge-to-edge (not just a media
+ * panel like `StepsPanel`), so it overrides `.cs-track`'s default
+ * vertical centering with `self-stretch` to fill the pinned viewport
+ * height, then paints that full height `bg-ink`. */
+function PrinciplesBlock({
+  sectionNumber,
+  heading,
+  intro,
+  items,
+}: {
+  sectionNumber?: string;
+  heading: string;
+  intro: string;
+  items: { number: string; title: string; body: string }[];
+}) {
+  return (
+    <div
+      className="cs-block cs-anchor-687 relative bg-ink"
+      style={{ ["--w" as string]: "calc(109.4375rem * var(--cs-scale, 1))" }}
+    >
+      {/* Extends the same dark fill to the full pinned-viewport height on
+          desktop, independent of cs-anchor-687's push-down — see globals.css. */}
+      <div aria-hidden className="cs-principles-bg bg-ink" />
+
+      <div className="relative flex w-full flex-col gap-10 px-6 py-14 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))] min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-0">
+        <div className="flex w-full flex-col gap-3 min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0">
+          <div className="relative">
+            {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" /> : null}
+            <h2 className="display text-[28px] leading-none text-bg min-[901px]:text-[40px]">{heading}</h2>
+          </div>
+          <p className="text-[20px] font-semibold leading-[26px] text-bg [font-family:var(--font-display)]">
+            {intro}
+          </p>
+        </div>
+
+        <div className="flex w-full flex-col min-[901px]:w-[calc(25.5rem*var(--cs-scale,1))]">
+          {items.map((item, i) => (
+            <div
+              key={item.title}
+              className={`flex gap-6 py-8 ${i < items.length - 1 ? "border-b border-bg/20" : ""}`}
+            >
+              <p className="display shrink-0 text-[40px] leading-none text-accent">{item.number}</p>
+              <div className="flex flex-col gap-3 pt-[10px]">
+                <p className="text-[20px] font-semibold leading-[26px] text-bg [font-family:var(--font-display)]">
+                  {item.title}
+                </p>
+                <p className="text-sm leading-[22px] text-bg/85">{item.body}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -146,7 +291,7 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
               {meta.title}
             </h1>
           </div>
-          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[24px] text-ink-2">
+          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
             {meta.subtitle}
           </p>
           <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
@@ -190,38 +335,84 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
 
 function CopyBlock({
   heading,
+  eyebrow,
   body,
   width,
   accent,
   sectionNumber,
 }: {
   heading?: string;
+  eyebrow?: string;
   body: string[];
   width?: string;
   accent?: boolean;
   sectionNumber?: string;
 }) {
+  // A sectionNumber means this copy block is standing in as a numbered
+  // section header (e.g. the Research/Key Decisions group heading) — give
+  // it the same cs-anchor-687 treatment and 40px title size every other
+  // numbered header uses, so titles land on the same row while scrolling.
   return (
     <div
-      className={`cs-block ${accent ? "border-l-2 border-accent pl-5" : ""}`}
+      className={`cs-block ${accent ? "border-l-2 border-accent pl-5" : ""} ${
+        sectionNumber ? "cs-anchor-687" : ""
+      }`}
       style={{ ["--w" as string]: width ?? "27rem" }}
     >
       {heading ? (
         <div className="relative mb-5">
           {sectionNumber ? (
-            <SectionNum number={sectionNumber} titleLineHeight="clamp(1.6rem, 2.4vw, 2.25rem) * 1.04" />
+            <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" />
           ) : null}
           <h2
-            className={`display text-[clamp(1.6rem,2.4vw,2.25rem)] ${accent ? "text-accent" : "text-ink"}`}
+            className={`display ${
+              sectionNumber ? "text-[2rem] min-[901px]:text-[40px]" : "text-[clamp(1.6rem,2.4vw,2.25rem)]"
+            } ${accent ? "text-accent" : "text-ink"}`}
           >
             {heading}
           </h2>
+          {eyebrow ? <p className="cs-section-title mt-2">{eyebrow}</p> : null}
         </div>
       ) : null}
-      <div className="space-y-4 text-sm leading-[24px] text-ink-2">
+      <div className="space-y-4 text-sm leading-[20px] text-ink-2">
         {body.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/** One numbered item in a repeating text+own-image group (Block kind
+ * "panel-item") — Figma's per-item panels in Research and Key Decisions. */
+function PanelItemBlock({
+  number,
+  title,
+  body,
+  caption,
+  brand,
+}: {
+  number: string;
+  title: string;
+  body: string;
+  caption: string;
+  brand: Brand;
+}) {
+  return (
+    <div className="cs-block" style={{ ["--w" as string]: "calc(81.25rem * var(--cs-scale, 1))" }}>
+      <div className="flex flex-col gap-6 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
+        <div className="flex w-full flex-col gap-[18px] min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0">
+          <p className="display text-[40px] leading-none text-accent">{number}</p>
+          <p className="cs-section-title">{title}</p>
+          <p className="text-sm leading-[20px] text-ink-2">{body}</p>
+        </div>
+        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(53.5rem*var(--cs-scale,1))]">
+          <MediaPlaceholder
+            brand={brand}
+            className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0"
+          />
+          <p className="cs-caption text-center">{caption}</p>
+        </div>
       </div>
     </div>
   );
@@ -246,7 +437,7 @@ function StatGroupBlock({ stats }: { stats: { value: string; label: string }[] }
         {stats.map((stat) => (
           <div key={stat.label}>
             <p className="display text-[clamp(2.25rem,4vw,3.5rem)] leading-none text-accent">{stat.value}</p>
-            <p className="mt-3 text-sm leading-[24px] text-ink-2">{stat.label}</p>
+            <p className="mt-3 text-sm leading-[20px] text-ink-2">{stat.label}</p>
           </div>
         ))}
       </div>
@@ -258,25 +449,31 @@ function ClosingBlock({
   heading,
   body,
   stats,
+  caption,
+  brand,
 }: {
   heading: string;
   body: string[];
   stats: { value: string; label: string }[];
+  caption?: string;
+  brand: Brand;
 }) {
   const hasStats = stats.length > 0;
+  const hasCaption = Boolean(caption);
   return (
     <div
       className="cs-block cs-anchor-687"
       style={{
-        ["--w" as string]: hasStats
-          ? "calc(88.3125rem * var(--cs-scale, 1))"
-          : "calc(35rem * var(--cs-scale, 1))",
+        ["--w" as string]:
+          hasStats || hasCaption
+            ? "calc(88.3125rem * var(--cs-scale, 1))"
+            : "calc(35rem * var(--cs-scale, 1))",
       }}
     >
       <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(293px*var(--cs-scale,1))]">
         <div className="flex w-full flex-col gap-4 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
-          <div className="flex flex-col text-sm leading-[24px] text-ink-2">
+          <div className="flex flex-col text-sm leading-[20px] text-ink-2">
             {body.map((p, i) => (
               <p key={i} className={i < body.length - 1 ? "mb-3" : ""}>
                 {p}
@@ -299,6 +496,11 @@ function ClosingBlock({
               </div>
             ))}
           </div>
+        ) : hasCaption ? (
+          <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+            <MediaPlaceholder brand={brand} />
+            <p className="cs-caption text-center">{caption}</p>
+          </div>
         ) : null}
       </div>
     </div>
@@ -312,7 +514,7 @@ function QuoteBlock({ text, attribution }: { text: string; attribution: string }
         <blockquote className="border-l-2 border-accent pl-6">
           <p className="cs-quote">{'"' + text + '"'}</p>
         </blockquote>
-        <figcaption className="mt-6 pl-6 text-sm leading-[24px] text-ink-2">{attribution}</figcaption>
+        <figcaption className="mt-6 pl-6 text-sm leading-[20px] text-ink-2">{attribution}</figcaption>
       </figure>
     </div>
   );
@@ -342,7 +544,7 @@ function IntroStackBlock({
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" /> : null}
             <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
           </div>
-          <div className="text-sm leading-[24px] text-ink-2">
+          <div className="text-sm leading-[20px] text-ink-2">
             {body.map((p, i) => (
               <p key={i} className={i === 0 ? "mb-4" : ""}>
                 {p}
@@ -366,7 +568,7 @@ function IntroStackBlock({
           <blockquote>
             <p className="cs-quote">{'"' + quote.text + '"'}</p>
           </blockquote>
-          <p className="text-sm leading-[24px] text-ink-2">— {quote.attribution}</p>
+          <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
         </div>
       </div>
     </div>
@@ -385,6 +587,8 @@ function SectionBlock({
   stats,
   sectionNumber,
   expandedPoints,
+  steps,
+  image,
   brand,
 }: {
   eyebrow: string;
@@ -398,12 +602,16 @@ function SectionBlock({
   stats?: { value: string; label: string }[];
   sectionNumber?: string;
   expandedPoints?: { label: string; text: string }[];
+  steps?: { title: string; body: string }[];
+  image?: { src: string; alt: string; frame?: "canvas" | "plain" };
   brand: Brand;
 }) {
   const position = pullQuotePosition ?? "bottom";
   const hasQuotes = Boolean(pullQuotes?.length);
   const hasStats = Boolean(stats?.length);
-  const hasSidePanel = hasQuotes || hasStats;
+  const hasSteps = Boolean(steps?.length);
+  const hasImage = Boolean(image);
+  const isPlainImage = hasImage && image!.frame === "plain";
 
   const renderQuotes = () =>
     pullQuotes?.map((pq) => (
@@ -411,7 +619,7 @@ function SectionBlock({
         <blockquote className="w-full border-l-2 border-accent pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
           <p className="cs-quote">{'"' + pq.quote + '"'}</p>
         </blockquote>
-        <p className="w-full pl-6 text-sm leading-[24px] text-ink-2 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
+        <p className="w-full pl-6 text-sm leading-[20px] text-ink-2 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
           — {pq.attribution}
         </p>
       </div>
@@ -436,28 +644,45 @@ function SectionBlock({
   const justifyClass =
     position === "top" ? "justify-start" : position === "bottom" ? "justify-end" : "justify-center";
 
-  const renderPanelArea = () => (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-6 min-[901px]:flex-row min-[901px]:items-stretch">
-        <MediaPlaceholder
-          brand={brand}
-          className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
-        />
-        {hasQuotes ? (
-          <div
-            className={`flex flex-col gap-10 min-[901px]:w-[calc(907px*var(--cs-scale,1))] min-[901px]:shrink-0 ${justifyClass}`}
-          >
-            {renderQuotes()}
-          </div>
-        ) : hasStats ? (
-          renderStats()
-        ) : null}
+  const renderPanelArea = () =>
+    hasSteps ? (
+      <StepsPanel steps={steps!} />
+    ) : (
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 min-[901px]:flex-row min-[901px]:items-stretch">
+          {hasImage ? (
+            isPlainImage ? (
+              <PlainMedia
+                image={image!}
+                className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+              />
+            ) : (
+              <IsolatedMedia
+                image={image!}
+                className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+              />
+            )
+          ) : (
+            <MediaPlaceholder
+              brand={brand}
+              className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+            />
+          )}
+          {hasQuotes ? (
+            <div
+              className={`flex flex-col gap-10 min-[901px]:w-[calc(907px*var(--cs-scale,1))] min-[901px]:shrink-0 ${justifyClass}`}
+            >
+              {renderQuotes()}
+            </div>
+          ) : hasStats ? (
+            renderStats()
+          ) : null}
+        </div>
+        <div className="flex w-full justify-center min-[901px]:w-[calc(1080px*var(--cs-scale,1))]">
+          <p className="cs-caption text-center">{caption}</p>
+        </div>
       </div>
-      <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-scale,1))]">
-        <p className="cs-caption text-center">{caption}</p>
-      </div>
-    </div>
-  );
+    );
 
   return (
     <div
@@ -482,19 +707,19 @@ function SectionBlock({
             <p className="cs-section-title">{eyebrow}</p>
           </div>
           {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <div className="-mt-2 flex flex-col gap-3 text-sm leading-[24px] text-ink-2">
+          <div className="-mt-2 flex flex-col gap-3 text-sm leading-[20px] text-ink-2">
             {(Array.isArray(body) ? body : [body]).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
-          {expandedPoints ? (
+          {hasSteps ? null : expandedPoints ? (
             <ExpandCollapse points={expandedPoints} />
           ) : (
             <div className="flex flex-col gap-4">
               {bullets.map((bullet) => (
                 <div key={bullet.title}>
                   <p className="cs-sub-label">{bullet.title}</p>
-                  <p className="mt-1 text-sm leading-[24px] text-ink-2">{bullet.body}</p>
+                  <p className="mt-1 text-sm leading-[20px] text-ink-2">{bullet.body}</p>
                 </div>
               ))}
             </div>
@@ -520,10 +745,22 @@ function renderBlock(block: Block, i: number, brand: Brand) {
         <CopyBlock
           key={i}
           heading={block.heading}
+          eyebrow={block.eyebrow}
           body={block.body}
           width={block.width}
           accent={block.accent}
           sectionNumber={block.sectionNumber}
+        />
+      );
+    case "panel-item":
+      return (
+        <PanelItemBlock
+          key={i}
+          number={block.number}
+          title={block.title}
+          body={block.body}
+          caption={block.caption}
+          brand={brand}
         />
       );
     case "stat":
@@ -564,11 +801,32 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           stats={block.stats}
           sectionNumber={block.sectionNumber}
           expandedPoints={block.expandedPoints}
+          steps={block.steps}
+          image={block.image}
           brand={brand}
         />
       );
     case "closing":
-      return <ClosingBlock key={i} heading={block.heading} body={block.body} stats={block.stats} />;
+      return (
+        <ClosingBlock
+          key={i}
+          heading={block.heading}
+          body={block.body}
+          stats={block.stats}
+          caption={block.caption}
+          brand={brand}
+        />
+      );
+    case "principles":
+      return (
+        <PrinciplesBlock
+          key={i}
+          sectionNumber={block.sectionNumber}
+          heading={block.heading}
+          intro={block.intro}
+          items={block.items}
+        />
+      );
   }
 }
 

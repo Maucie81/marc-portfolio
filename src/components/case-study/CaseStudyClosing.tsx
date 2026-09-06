@@ -54,7 +54,7 @@ export default function CaseStudyClosing({
         {/* 495:49633 — 16/24 SemiBold, was 20px/normal and (like the pill
             links below) on --font-body/DM Sans instead of Google Sans Flex. */}
         <p
-          className="text-[16px] font-semibold leading-[24px] text-ink [font-family:var(--font-display)]"
+          className="text-[16px] font-semibold leading-[20px] text-ink [font-family:var(--font-display)]"
           style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
         >
           Want to see more?
@@ -63,7 +63,7 @@ export default function CaseStudyClosing({
           <Link
             key={cs.slug}
             href={cs.href}
-            className="flex items-center justify-center border border-accent px-[8px] py-[2px] text-[12px] font-semibold leading-[24px] text-ink transition-opacity hover:opacity-90 [font-family:var(--font-display)]"
+            className="flex items-center justify-center border border-accent bg-accent px-[8px] py-[2px] text-[12px] font-semibold leading-[20px] text-bg transition-opacity hover:opacity-90 [font-family:var(--font-display)]"
             style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
           >
             {cs.closingLabel ?? cs.title}
@@ -73,7 +73,7 @@ export default function CaseStudyClosing({
 
       <Link
         href="/contact"
-        className="flex items-center gap-1 text-[16px] font-semibold leading-[24px] text-ink transition-colors hover:text-accent [font-family:var(--font-display)]"
+        className="flex items-center gap-1 text-[16px] font-semibold leading-[20px] text-ink transition-colors hover:text-accent [font-family:var(--font-display)]"
         style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
       >
         Get in touch

@@ -20,6 +20,16 @@
 }
 
 @theme inline {
+  /* The homepage hero reproduces a fixed-scale Figma frame and only holds
+     once the content box is its full 1328px (max-w-88rem minus px-10).
+     CAUTION: Tailwind emits this block BEFORE its built-in sm/md/lg/xl
+     utilities, so at equal specificity a built-in breakpoint wins over this
+     one no matter which has the larger min-width — `sm:h-[256px]` silently
+     beat `hero:h-[366px]` and rendered the hero portrait at the wrong size.
+     Don't set the same property with both a built-in breakpoint and `hero:`
+     on one element; give the sub-hero case a base/fluid value instead. */
+  --breakpoint-hero: 1408px;
+
   --color-bg: var(--bg);
   --color-bg-deep: var(--bg-deep);
   --color-surface: var(--surface);
@@ -147,11 +157,15 @@ body {
   letter-spacing: 0;
 }
 
-/* Desktop - Body Copy · 177:111970 */
+/* Desktop - Body Copy · 177:111970 (confirmed against 499:54547/499:54551,
+   the Yahoo case-study paragraph, via get_design_context): Roboto Mono
+   Regular 14/22, not Google Sans Flex — the one body-copy role that isn't
+   the display face. */
 .t-body {
-  font-family: var(--font-display), system-ui, sans-serif;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
   font-size: 0.875rem;
-  line-height: 1.5rem;
+  line-height: 1.375rem;
   letter-spacing: 0;
 }
 
@@ -177,13 +191,21 @@ body {
   color: var(--muted);
 }
 
-/* Meta Data · 499:54925 (Experience Skills/Tooling list items). */
+/* Meta Data · 499:54925 (Experience Skills/Tooling list items) and 543:114278
+   (Recent Work skill tags — same role, confirmed via get_design_context on
+   both). Roboto Mono Regular 12/20, not Google Sans Flex. Color is Figma's
+   literal rgba(104,104,104,0.9) — that's --muted itself (#686868 = rgb
+   104,104,104) at 90% opacity, not a different color, so expressed as a
+   mix rather than a new token. The orange "•" divider between tags is a
+   separate role (Google Sans Flex, 13px, accent) — not part of this class,
+   see its usage in page.tsx. */
 .t-meta-sm {
-  font-family: var(--font-display), system-ui, sans-serif;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
   font-size: 0.75rem;
   line-height: 1.25rem;
   letter-spacing: 0;
-  color: var(--muted);
+  color: color-mix(in srgb, var(--muted) 90%, transparent);
 }
 
 /* Shared display level for work project titles (177:111991) and the interest
@@ -234,13 +256,24 @@ body {
 }
 
 /* 177:111956 — stroke-only, never filled. The solid accent dot beside the
-   hero mark is a different element (177:111964). */
+   hero mark is a different element (177:111964).
+
+   Nudged 11.714px right by request: this rail's own column (177:111959) is
+   24px wide, centering the dot at x=12 from the shared left edge — but the
+   hero's registration marks (540:112714 etc., see page.tsx) sit in a 28-col
+   grid unrelated to this one, centered at x=23.714 (13.714px inset + half
+   the 20px mark). Two different Figma frames that happen to share a left
+   margin, so their marks read as one continuous vertical line only with
+   this correction. A transform, not a wider grid column, so the "01" number
+   and body copy that follow this rail keep their own frame's (177:xxx)
+   authoritative position instead of shifting with it. */
 .rail-dot {
   display: block;
   width: 12px;
   height: 12px;
   border-radius: 9999px;
   border: 1px solid var(--muted);
+  transform: translateX(11.714px);
 }
 
 /* Section number · 499:54321 ("03") — always full accent color, matching

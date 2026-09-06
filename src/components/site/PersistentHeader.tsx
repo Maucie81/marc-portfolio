@@ -30,12 +30,20 @@ const CASE_STUDY_TITLES: Record<string, string> = {
 };
 
 function HomeHeader() {
+  // No bottom border here: the hero grid draws its own top rule 1.375px
+  // below this, and the two together read as a doubled line.
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg">
-      <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
+    <header className="sticky top-0 z-50 bg-bg">
+      <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-6 pt-6 lg:px-10">
+        {/* ml-[16.714px]: nudges the whole lockup right so the dot's centre
+            (14px, no border → centre at x=7 from its own left edge) lands on
+            the hero's crosshair centre (x=23.714 from the shared left edge —
+            same 540:xxx grid as the rail-dot fix). Moved as one unit, not
+            just the dot, so the dot stays glued to "Marc Favro" via the
+            existing gap-3 rather than tearing away from it. */}
         <a
           href="/"
-          className="flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent"
+          className="ml-[16.714px] flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent"
         >
           <span
             aria-hidden

@@ -1,0 +1,37 @@
+/**
+ * PLATE SYSTEM — seeded palette, generated from a random 48-char seed
+ * (hashed, never logged) on 2026-09-02, biased toward the existing
+ * illustrated portrait's own ink (public/marc/portrait.webp): warm
+ * crosshatch in the skin reads toward rust/sienna, cool crosshatch in the
+ * hair reads toward dusty indigo. Four colors, no gradients, no fifth ink.
+ * Scoped under the `comix-` prefix so these tokens can't collide with the
+ * live site's own --color-ink/--color-bg tokens in globals.css — this
+ * system is isolated to /lab/comix, same convention as /lab/riso.
+ *
+ * This file carries its own `@import "tailwindcss"` rather than relying on
+ * globals.css's — a Tailwind v4 `@theme` block only feeds utility
+ * generation within the CSS file that itself pulls in the Tailwind engine,
+ * so a JS-level `import "./comix-theme.css"` into a file that never chains
+ * back to a `@import "tailwindcss"` produces no comix-* utility classes at
+ * all (confirmed: bg-comix-ink etc. rendered as no-ops before this fix).
+ * Keeping the import here, instead of adding it to the shared globals.css,
+ * keeps this system fully isolated to /lab/comix.
+ */
+@import "tailwindcss";
+
+@theme {
+  --color-comix-ink: #241d11;
+  --color-comix-paper: #eeece0;
+  --color-comix-rust: #ce532e;
+  --color-comix-indigo: #4d3f86;
+
+  /* Literal family names, not var(--font-comix-anton) indirection — Tailwind
+     v4's @theme silently drops a --font-* value that itself contains a
+     var() reference (confirmed: the color tokens above, plain hex, made it
+     into :root; this block didn't, until switched to literal strings).
+     next/font's generated @font-face rules key off these exact family
+     names regardless of which custom property points at them. */
+  --font-comix-display: "Anton", "Anton Fallback", "Arial Narrow", sans-serif;
+  --font-comix-hand: "Permanent Marker", "Permanent Marker Fallback", cursive;
+  --font-comix-body: "Barlow Condensed", "Barlow Condensed Fallback", "Helvetica Neue", sans-serif;
+}

@@ -54,7 +54,17 @@ export type PullQuote = { quote: string; attribution: string };
 
 export type Block =
   | { kind: "cover" }
-  | { kind: "copy"; heading?: string; body: string[]; width?: string; accent?: boolean; sectionNumber?: string }
+  | {
+      kind: "copy";
+      heading?: string;
+      /** Sentence-case line under the heading — Figma's "Case Study Section
+       * Title" role, same as `section`'s `eyebrow`. */
+      eyebrow?: string;
+      body: string[];
+      width?: string;
+      accent?: boolean;
+      sectionNumber?: string;
+    }
   | { kind: "stat"; value: string; label: string; note?: string }
   | { kind: "stat-group"; stats: { value: string; label: string }[] }
   | { kind: "quote"; text: string; attribution: string }
@@ -83,12 +93,48 @@ export type Block =
         label: string;
         text: string;
       }>;
+      /** Replaces the media placeholder with a dark step-by-step panel
+       * (Figma's "Steps" component) instead of an image + caption. */
+      steps?: Bullet[];
+      /** Replaces the media placeholder with a real, isolated interaction
+       * clip (gif) — one component cropped tight, no browser chrome, not
+       * a full-dashboard screenshot. `frame` picks the presentation:
+       * "canvas" (default) stages it on the dark --ink card for a small/
+       * odd-shaped crop; "plain" is a full-bleed rounded image with just a
+       * drop shadow, for a large, already self-contained recording (Figma
+       * node 302:51676's Search treatment). */
+      image?: { src: string; alt: string; frame?: "canvas" | "plain" };
     }
   | {
       kind: "closing";
       heading: string;
       body: string[];
       stats: { value: string; label: string }[];
+      /** Placeholder caption for the closing image slot (Figma's Outcome
+       * frame pairs the copy with its own media placeholder). */
+      caption?: string;
+    }
+  | {
+      /** One numbered item in a repeating text+own-image group — Figma's
+       * per-item panels in Research and Key Decisions (each item gets its
+       * own placeholder image, unlike `section`'s single shared one). Pair
+       * with a `copy` block (using `eyebrow`) for the group's heading. */
+      kind: "panel-item";
+      number: string;
+      title: string;
+      body: string;
+      caption: string;
+    }
+  | {
+      /** Full-bleed dark chapter panel — Figma's "Design Principles"
+       * treatment: title + intro on the left, a single stacked, numbered,
+       * divider-ruled list on the right. Distinct from `section` because
+       * the whole block goes dark edge-to-edge, not just a media panel. */
+      kind: "principles";
+      sectionNumber?: string;
+      heading: string;
+      intro: string;
+      items: { number: string; title: string; body: string }[];
     };
 
 export type ImageSpec = {
@@ -143,6 +189,11 @@ export const blocks: Block[] = [
     ],
     caption:
       "Eight KPI cards — views, reach, uniques, dwell, CTR, comments, video streams, content volume — each with period-over-period movement.",
+    image: {
+      src: "/ypp/Gifs/Overview.gif",
+      alt: "Filtering the Overview page and reading KPI cards and charts",
+      frame: "plain",
+    },
     expandedPoints: [
       {
         label: "Side-by-side, not siloed",
@@ -335,31 +386,22 @@ export const blocks: Block[] = [
   {
     kind: "section",
     sectionNumber: "08",
-    eyebrow: "Find anything, any way",
+    eyebrow: "Find any story, any way you know it",
     title: "Search",
-    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely. Results open straight to performance, metadata, and any active issues.",
+    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
     bullets: [
       {
+        title: "Five ways in, one result",
+        body: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
+      },
+      {
         title: "Straight to the data",
-        body: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. A direct link to any story's performance data replaces a whole category of back-and-forth with their Yahoo Partner Manager.",
+        body: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
       },
     ],
     caption:
       "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID, then jump straight to its performance data.",
-    expandedPoints: [
-      {
-        label: "Straight to the data",
-        text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. A direct link to any story's performance data replaces a whole category of back-and-forth with their Yahoo Partner Manager.",
-      },
-    ],
-    pullQuotes: [
-      {
-        quote:
-          "For something like the Oscars, I can pull a link to this story's performance and share it with my team. That makes it a lot easier than just giving them a breakdown.",
-        attribution: "Gannett",
-      },
-    ],
-    pullQuotePosition: "bottom",
+    image: { src: "/ypp/Gifs/Search.gif", alt: "Searching for a story and opening its Content Item Detail", frame: "plain" },
   },
 
   // 10. Takedowns

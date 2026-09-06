@@ -105,7 +105,7 @@ function CoverBlock() {
               {meta.title}
             </h1>
           </div>
-          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[24px] text-ink-2">
+          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
             {meta.subtitle}
           </p>
           <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
@@ -187,7 +187,7 @@ function CopyBlock({
           </h2>
         </div>
       ) : null}
-      <div className="space-y-4 text-sm leading-[24px] text-ink-2">
+      <div className="space-y-4 text-sm leading-[20px] text-ink-2">
         {body.map((p, i) => (
           <p key={i}>{p}</p>
         ))}

@@ -43,7 +43,7 @@ export default function ExpandCollapse({ points }: Props) {
             {points.map((point) => (
               <div key={point.label}>
                 <p className="cs-sub-label">{point.label}</p>
-                <p className="mt-1 text-sm leading-[24px] text-ink-2">
+                <p className="mt-1 text-sm leading-[20px] text-ink-2">
                   {point.text}
                 </p>
               </div>
