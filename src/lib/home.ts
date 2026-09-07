@@ -11,7 +11,31 @@ export type Project = {
   title: string;
   description: string;
   href: string | null;
-  image: { src: string; alt: string; width: number; height: number } | null;
+  image:
+    | {
+        src: string;
+        alt: string;
+        width: number;
+        height: number;
+        /** Inset of the device mockup within the outer #eaeae5 card, as a
+         * CSS `inset` value (top right bottom left) — pulled from each
+         * row's own Figma frame, not shared: Yahoo/Headspace's mockup box
+         * and Airbnb's aren't the same size in the design, and forcing
+         * Airbnb into a borrowed box is what caused the code-drawn shadow
+         * to sit around the wrong rectangle instead of the visible mockup
+         * (the asset's own aspect ratio matches its *own* Figma frame
+         * exactly, so using any other box re-introduces the mismatch). */
+        inset: string;
+        /** Draw the 8px #4f453b bezel + drop shadow around the inset
+         * image in code (raw screenshots, per Figma 643:52558/643:52618,
+         * shadow 19px/25px/26px #000 25%). False for an asset that already
+         * has its own border baked in from a Figma export (Airbnb's
+         * mockup, 643:52702) but still needs the shadow drawn in code
+         * (19px/14px/46px #000 25%) — object-contain so the baked-in
+         * frame never gets cropped. */
+        bezel: boolean;
+      }
+    | null;
   imageLabel: string;
   skills: string[];
   draft?: boolean;
@@ -24,7 +48,14 @@ export const projects: Project[] = [
     description:
       'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
     href: "/work/yahoo-partner-portal",
-    image: null,
+    image: {
+      src: "/ypp/thumbnail.webp",
+      alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard",
+      width: 1512,
+      height: 807,
+      inset: "15.92% 15.89% 15.42% 14.63%",
+      bezel: true,
+    },
     imageLabel: "",
     skills: [
       "Publisher Tooling",
@@ -35,27 +66,23 @@ export const projects: Project[] = [
     ],
   },
   {
-    company: "Airbnb",
-    title: "Account Creation & Onboarding",
-    description:
-      "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
-    href: "/work/airbnb-hotels",
-    image: null,
-    imageLabel: "",
-    skills: [
-      "Onboarding Design",
-      "Design Systems",
-      "User Research/Testing",
-      "B2B Partnerships",
-    ],
-  },
-  {
     company: "Headspace",
     title: "Admin Portal Redesign",
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
-    image: null,
+    // TEMPORARY placeholder: reusing the Yahoo Partner Portal thumbnail
+    // because no Headspace asset has been chosen yet. Not a finished
+    // decision — swap for a real Headspace screenshot/mockup once Marc
+    // picks one.
+    image: {
+      src: "/ypp/thumbnail.webp",
+      alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard",
+      width: 1512,
+      height: 807,
+      inset: "15.92% 15.89% 15.42% 14.63%",
+      bezel: true,
+    },
     imageLabel: "",
     skills: [
       "B2B Platform",
@@ -63,6 +90,35 @@ export const projects: Project[] = [
       "Retention",
       "UX Research",
       "Roadmap Prioritization",
+    ],
+  },
+  {
+    company: "Airbnb",
+    title: "Account Creation & Onboarding",
+    description:
+      "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
+    href: "/work/airbnb-hotels",
+    image: {
+      src: "/airbnb/thumbnail.png",
+      alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow",
+      width: 1014,
+      height: 612,
+      // 643:52618's own confirmed frame (100,50,507,306 within 713×402) —
+      // not Yahoo's box. Deliberately a different size/shape in Figma, and
+      // the cropped asset's aspect ratio matches this exactly.
+      inset: "12.44% 14.87% 11.44% 14.03%",
+      // Cropped from the Figma export (643:52702) to just the bordered
+      // mockup — the raw export baked in ~46px of drop-shadow bleed on a
+      // flattened card-color backdrop. Border is still baked in; the
+      // shadow is drawn in code instead (see `bezel` above).
+      bezel: false,
+    },
+    imageLabel: "",
+    skills: [
+      "Onboarding Design",
+      "Design Systems",
+      "User Research/Testing",
+      "B2B Partnerships",
     ],
   },
 ];
@@ -96,7 +152,8 @@ export const additionalWork: SmallProject[] = [
   {
     company: "Personal",
     title: "Harrison's App",
-    description: "Placeholder — description for Harrison's App. Replace with real copy.",
+    description:
+      "A post-op medication tracker I built for my dog using AI-assisted development. Because the timing logic was genuinely hard to get right by hand.",
     href: null,
     draft: true,
   },

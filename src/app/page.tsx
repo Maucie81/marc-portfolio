@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import SectionNumber from "@/components/site/SectionNumber";
 import SectionRail from "@/components/site/SectionRail";
@@ -19,91 +20,120 @@ export default function Home() {
     <div className="bg-bg">
       {/* Header now lives in the root layout as PersistentHeader, outside
           PageTransition's fade — see that component for why. */}
-      <main id="home" className="mx-auto max-w-[88rem] px-6 lg:px-10">
-        {/* Hero · 540:112651. Figma's frame is 1344×484: a 50px Nav (rendered
-            by PersistentHeader) plus a 434px body, anchored to this content
-            box, whose left edge is the nav's left edge exactly as Figma
-            anchors x=0. Coordinates come from get_metadata on the node.
+      <main
+        id="home"
+        className="mx-auto max-w-[88rem] px-6 [container-type:inline-size] lg:w-[calc(100%-4rem)] lg:px-8 lg:pt-[82px]"
+      >
+        {/* Hero · 627:46433 (supersedes the earlier 540:112651 spec — Figma
+            revised this frame to a denser grid). Figma's box is 1312×468,
+            built as a mosaic of 30px #e4e4df tiles on a #b0b0b0 background
+            with a 1px flex gap — the gap is the "grid line", still the same
+            --line color as before, just drawn as negative space instead of
+            a stroke. Tile + gap = 31px pitch, confirmed exact on both axes
+            (get_metadata's row/column coordinates land on exact multiples
+            of 31, no fractional drift this time).
 
-            The one place this departs from Figma's literal numbers is the
-            grid module. Figma's cells are 48 wide × 48.0694 tall — square in
-            intent, the .0694 being its own frame-fitting rounding — and 28 ×
-            48 = 1344 only tiles evenly because Figma's frame IS 1344. This
-            content box is 1328 (max-w-88rem minus px-10), so a literal 48px
-            module left a 32px stub column. The module is therefore 1328/28 =
-            47.428571px, applied to BOTH axes: 28 × 9 exactly-square cells
-            filling the box edge to edge, same cell count as Figma. The body
-            height follows from it (9 × 47.428571 = 426.857) rather than
-            Figma's 434.
+            Per spec this update is density- and radius-only: the box's own
+            outer width/height stay whatever this content box renders at
+            full size (1328×426.857, see the scale wrapper below for how
+            that survives narrower screens) rather than being re-derived to
+            tile the new pitch evenly — so the grid closes on a partial cell
+            at the right/bottom edges, same as it would in Figma at a
+            non-multiple width.
 
-            The fixed-scale composition is gated at min-[1408px] — the width
-            at which max-w-[88rem] is fully realised and the box is exactly
-            1328. Below that it was previously still applying at `lg`
-            (1024px), where the 912px headline overflowed a 1200px box and
-            forced a horizontal scrollbar on the whole page. */}
-        <section id="hero" className="relative hero:h-[426.857px]">
-          {/* Background grid · 540:112665. A painted element, not a layout
-              guide: Figma builds it as a #b0b0b0 fill masked by 29 vertical
-              and 10 horizontal 1px lines — i.e. 28 columns by 9 rows, closed
-              on all four edges. Both repeats are the same 47.428571px, which
-              is what makes the cells square. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0"
-            style={{
-              backgroundImage: [
-                "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 47.428571px)",
-                // Closing rules on the right and bottom edges: each repeat's
-                // final line falls exactly ON the edge and is clipped away,
-                // so the frame needs both to read as closed.
-                "linear-gradient(to left, var(--line) 0 1px, transparent 1px)",
-                "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 47.428571px)",
-                "linear-gradient(to top, var(--line) 0 1px, transparent 1px)",
-              ].join(","),
-              // No background-position offset. Shifting the horizontal layer
-              // down by Figma's 1.375px made the repeating tile wrap, painting
-              // a second line at y≈0 — that was the doubled top rule.
-            }}
-          />
+            The corner radius is 8px, confirmed via the corner tile's own
+            `rounded-tl-[8px]` in Figma's source and cross-checked against a
+            screenshot showing all four corners rounded — applied here via
+            `overflow-hidden rounded-[8px]` on this background layer.
 
-          {/* Registration marks · 540:112714 / :112718 / :112722 / :112726.
-              20×20, stroke #666666, centred in the four corner cells:
-              47.428571/2 − 10 = 13.714px in from every edge. Figma's own
-              14/13/17/15 insets were approximately centred against its 48px
-              cells; centring them exactly is the point of the frame. */}
-          {[
-            "left-[13.714px] top-[13.714px]",
-            "right-[13.714px] top-[13.714px]",
-            "left-[13.714px] bottom-[13.714px]",
-            "right-[13.714px] bottom-[13.714px]",
-          ].map((pos) => (
-            /* eslint-disable-next-line @next/next/no-img-element */
-            <img
-              key={pos}
-              src="/icons/crosshair.svg"
-              alt=""
+            The perimeter is a real `border`, not the old "closing rule"
+            background layers. Those were two flat linear-gradients pinned
+            to the right/bottom edges to fake a border without the `border`
+            property — fine on square corners, but a straight painted line
+            doesn't know about the corner radius, so it got clipped off
+            partway through the arc instead of curving with it, reading as
+            a chopped-off corner. An actual CSS border is drawn together
+            with border-radius and always follows the curve correctly, so
+            it replaces those two layers (the two repeating gradients stay,
+            for the internal grid lines only). */}
+        {/* Scaling strategy: below 1024px this is a normal stacked flow
+            layout (Figma has no small-viewport frame, so that treatment is
+            my own call). From 1024px up, every child below is positioned
+            with absolute pixel coordinates lifted straight from Figma's
+            1328×426.857 frame — there's no sensible way to "reflow" that,
+            so instead of jumping straight to full size at some arbitrary
+            width, the whole fixed layout is scaled down as one rigid unit
+            to fit anything from 1024px up to the frame's true 1328px, and
+            only reaches scale 1 (full size) once the content box is that
+            wide. That's what `hero-scale` is doing.
+
+            `--hero-scale` reads `100cqi` — the available content-box inline
+            size — rather than assuming a fixed viewport-minus-padding
+            formula, via `[container-type:inline-size]` on `<main>` above.
+            Querying the real rendered width instead of guessing at it means
+            this keeps working if the surrounding padding/max-width ever
+            changes, without a second number to keep in sync.
+
+            The container lives on `<main>`, not on this section: a query
+            container's own box is excluded from its own cqi (only
+            descendants can use it) — putting it here instead made `#hero`'s
+            *width*-derived transform resolve fine (its width comes from a
+            child, a true descendant) but its own *height* rule silently
+            fell back to some other containing block and came out wrong.
+
+            Box height is 434 (14 × 31), not the content's incidental
+            426.857 — that number was inherited from the OLD grid's row
+            count (9 × 47.428571) and left an unfinished 14th row (~22px)
+            sliced off at the bottom. 14 full rows is the nearest whole
+            multiple of 31 to the old height, so it grows the box by only
+            ~7px rather than resizing it to Figma's own 468 (15 rows), which
+            would've shifted everything below the hero more than this
+            content actually needed. */}
+        <section
+          id="hero"
+          className="relative hero:overflow-hidden hero:[--hero-scale:min(1,calc(100cqi/1328px))] hero:[height:calc(434px*var(--hero-scale))]"
+        >
+          {/* The fixed-size "canvas": Figma's exact 1328×434 box, scaled
+              down by --hero-scale (1 at full size, shrinking down to 1024px)
+              rather than resized — a transform keeps every child's absolute
+              coordinate correct relative to every other one, which resizing
+              the box itself wouldn't. Below 1024px this is a plain static
+              div (no absolute/transform), so it's a no-op wrapper around the
+              normal stacked flow. */}
+          <div className="hero:absolute hero:left-0 hero:top-0 hero:h-[434px] hero:w-[1328px] hero:origin-top-left hero:[transform:scale(var(--hero-scale))]">
+            {/* Background grid · 627:46434/46435-47051 (15 rows × 42 cols of
+                30px tiles). Reproduced as a painted layer rather than actual
+                tiles — same repeating-linear-gradient technique as before,
+                just at the new 31px pitch. */}
+            <div
               aria-hidden
-              width={20}
-              height={20}
-              className={`pointer-events-none absolute size-[20px] ${pos}`}
+              className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px] border border-line"
+              style={{
+                backgroundImage: [
+                  "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
+                  "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+                ].join(","),
+              }}
             />
-          ))}
 
-          {/* Below 1408px the portrait and the three text layers stack in
-              normal flow (Figma has no small-viewport frame, so that ramp is
-              my call); at and above it, each takes its Figma coordinate
-              inside the 426.857px body. */}
-          <div className="relative flex flex-col gap-6 py-10 hero:block hero:py-0">
-            {/* Portrait · 540:112713 — 274×366, Figma's x=64. Same asset and
-                the same inner crop offsets, untouched. Its top is 13.429
-                rather than Figma's 17 so the illustration's bottom — a hard
-                crop edge, unlike the soft hair at the top — lands on rule 8,
-                the same rule the subhead's baseline sits on. Figma had those
-                two within 2px of each other; this makes them exact. */}
+            {/* Below 1024px the portrait and the three text layers stack in
+                normal flow, centered (spacing between them is a first pass —
+                revisit once there's real content); at and above it, each
+                takes its Figma coordinate inside the 434px body (now reached
+                via the scale wrapper above rather than directly by the
+                viewport). */}
+            <div className="relative flex flex-col items-center gap-6 py-10 text-center hero:block hero:py-0 hero:text-left">
+            {/* Portrait · 685:67539 — 274×366, left is 116.5 (raw Figma,
+                never rule-derived, so the new grid doesn't touch it — this
+                frame moved the whole lockup right by ~2 rules from the
+                previous one's 55). Its top IS rule-derived: the hard crop
+                edge at the bottom lands on the same rule as the subhead's
+                baseline (31 × 12 = 372, unchanged from before), so
+                top = 372 − 366 = 6, also unchanged. */}
             {/* Sub-hero size is fluid rather than a `sm:` step: a built-in
                 breakpoint would override `hero:` on the same property (see
                 --breakpoint-hero in globals.css). */}
-            <span className="relative block aspect-[274/366] w-[clamp(143px,18vw,274px)] overflow-hidden hero:absolute hero:left-[64px] hero:top-[13.429px] hero:h-[366px] hero:w-[274px]">
+            <span className="relative block aspect-[274/366] w-[clamp(143px,18vw,274px)] overflow-hidden hero:absolute hero:left-[116.5px] hero:top-[6px] hero:h-[366px] hero:w-[274px]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/marc/hero-illustration.png"
@@ -113,49 +143,66 @@ export default function Home() {
             </span>
 
             {/* The three text layers are aligned by their INK, not their
-                boxes — this frame is a gridwork showcase, so the glyphs sit
-                on the 8th vertical rule. Figma encodes that as
-                `rule − side bearing`, which is why its node x values look
-                arbitrary and all differ: 382 (bearing 2) for the eyebrow,
-                371 (bearing 13) for the 217px headline, 381.977 (bearing
-                2.02) for the subhead, all targeting its rule at 384.
-                Two corrections are folded into the values below. The browser
-                shapes this font with wider bearings than Figma (3.46 / 16.05
-                / 2.49, measured via canvas actualBoundingBoxLeft), and the
-                8th rule now sits at 8 × 47.428571 = 379.4286, not 384. So
-                each `left` is 379.4286 − the browser's own bearing.
+                boxes. This frame (685:66888) shrinks only the headline —
+                eyebrow and subhead are byte-for-byte the same font-size/
+                leading/color as the previous frame — and shifts the whole
+                lockup (portrait included) right by ~2 grid rows. So:
 
-                Vertically the same idea: each `top` is set so the BASELINE
-                lands on a horizontal rule, rather than the box floating
-                between them with a rule striking through the letters. The
-                three baselines sit on rules 3 (142.2857), 7 (332) and 8
-                (379.4286) — four rows apart, then one. Tops were derived by
-                measuring the rendered baseline with a zero-height
-                vertical-align:baseline probe and subtracting the offset;
-                font-metric maths disagrees with actual layout often enough
-                not to trust it here.
+                Eyebrow and subhead keep their EXACT old baseline rule and
+                top (unchanged font ⇒ unchanged baseline-offset-from-top ⇒
+                no reason for top to move). Headline's font shrunk
+                (217.62→181.671 / 199.534→166.573 / −2.1762→−1.8167px, all
+                the same ~0.8347 ratio — it's a uniform scale-down, not a
+                new treatment), so its baseline-offset-from-top shrinks too;
+                re-measured live the same way as before (a zero-size
+                vertical-align:baseline probe) rather than trusting the
+                ratio, since the fallback stack's metrics don't necessarily
+                scale identically: 145px (was 173.5). Left ink bearing
+                re-measured the same way: 13.4px (was 16.05).
 
-                Re-measure both axes if the font file is ever updated; CSS has
-                no ink-edge or baseline alignment primitive to do this
-                declaratively. */}
+                Horizontal: all three ink-align to rule 14 (31 × 14 = 434,
+                was rule 12/372) — this frame's raw Figma x's (424–432)
+                cluster tightly around it, and the +2-row shift matches the
+                portrait's own move almost exactly (61.5px raw ≈ 2 × 31).
+                Each `left` is 434 − that element's bearing.
 
-            {/* Eyebrow · 540:112712 — 45.657/68.587 SemiBold #ef5c2d. */}
-            <p className="font-semibold text-accent [font-family:var(--font-display)] text-[clamp(1.5rem,4vw,2.85rem)] leading-[1.25] hero:absolute hero:left-[375.97px] hero:top-[92.786px] hero:whitespace-nowrap hero:text-[45.657px] hero:leading-[68.587px]">
+                Vertical: eyebrow stays on rule 5 (155, top 105.5, unchanged).
+                Headline stays on rule 11 (341) — SAME rule as before, only
+                its offset changed, confirmed by this frame's raw box
+                bottom (169 + 167 = 336) landing close to it; top =
+                341 − 145 = 196. Subhead stays on rule 12 (372, top 341,
+                unchanged) — this frame's raw y (342) lands almost exactly
+                on it once you add its own 31px offset back (342 + 31 ≈
+                372), so nothing here moved either.
+
+                Re-measure both probes if the font file is ever updated;
+                CSS has no ink-edge or baseline alignment primitive to do
+                this declaratively. */}
+
+            {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ef5c2d, font
+                unchanged from the previous frame. top = 105.5 (unchanged).
+                left = 434 − 3.46 = 430.54. */}
+            <p className="font-semibold text-accent [font-family:var(--font-display)] text-[clamp(1.5rem,4vw,2.85rem)] leading-[1.25] hero:absolute hero:left-[430.54px] hero:top-[105.5px] hero:whitespace-nowrap hero:text-[45.657px] hero:leading-[68.587px]">
               Hello and welcome
             </p>
 
-            {/* Headline · 540:112710 — 217.62/199.534 Bold #4f3f3b,
-                letter-spacing −2.1762px (that's −0.01em, so it has to
-                override .display's −0.02em). */}
-            <h1 className="display text-[clamp(3rem,11vw,8rem)] leading-[0.92] hero:absolute hero:left-[363.38px] hero:top-[158.5px] hero:whitespace-nowrap hero:text-[217.62px] hero:leading-[199.534px] hero:tracking-[-2.1762px]">
+            {/* Headline · 685:67537 — 181.671/166.573 Bold #4f3f3b,
+                letter-spacing −1.8167px (that's the same −0.01em ratio as
+                before, still has to override .display's −0.02em). Smaller
+                than the previous frame's 217.62/199.534/−2.1762 — same
+                relative treatment, uniformly scaled down ~0.8347×.
+                top = 341 − 145 = 196. left = 434 − 13.4 = 420.6. */}
+            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[420.6px] hero:top-[196px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
-            {/* Subhead · 540:112711 — 31.14/41.521 Regular #444440.
-                Placeholder copy, left as-is. */}
-            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[376.94px] hero:top-[348.429px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
+            {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
+                unchanged from the previous frame. Placeholder copy, left
+                as-is. top = 341 (unchanged). left = 434 − 2.49 = 431.51. */}
+            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[431.51px] hero:top-[341px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
               Lorem ipsum dolor sit amet consect
             </p>
+          </div>
           </div>
         </section>
 
@@ -175,7 +222,58 @@ export default function Home() {
             <div className="space-y-24 lg:space-y-32">
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
-                const image = (
+                const image = project.image ? (
+                  // Neutral card, per Figma 643:52558/643:52618: a 711×402
+                  // #eaeae5 card (border #d2d2d2, top corners radius 4)
+                  // with the device mockup inset at that row's own
+                  // confirmed box — Yahoo/Headspace and Airbnb aren't the
+                  // same size/shape in Figma, so each carries its own
+                  // `inset` rather than sharing one (a shared box left the
+                  // code-drawn shadow tracing a rectangle that didn't
+                  // match Airbnb's actual mockup bounds).
+                  <div
+                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
+                    style={{ aspectRatio: "711 / 402" }}
+                  >
+                    <div
+                      className={
+                        project.image.bezel
+                          ? "absolute overflow-hidden rounded-[12px] border-8 border-[#4f453b]"
+                          : // Asset already has its own border baked in
+                            // (Figma export, 643:52702) — inset only, no
+                            // second code-drawn border.
+                            "absolute overflow-hidden rounded-[12px]"
+                      }
+                      style={{
+                        inset: project.image.inset,
+                        // Drop shadow, read from Figma's own effect values
+                        // (SVG filter for 643:52558/643:52618's screenshot
+                        // frame; box-shadow for Airbnb's 643:52702) — kept
+                        // in code rather than baked into the asset so it
+                        // isn't clipped by the inset/overflow treatment.
+                        boxShadow: project.image.bezel
+                          ? "19px 25px 26px 0px rgba(0,0,0,0.25)"
+                          : "19px 14px 46px 0px rgba(0,0,0,0.25)",
+                      }}
+                    >
+                      <Image
+                        src={project.image.src}
+                        alt={project.image.alt}
+                        width={project.image.width}
+                        height={project.image.height}
+                        className={
+                          project.image.bezel
+                            ? "h-full w-full object-cover"
+                            : // object-contain: the asset's aspect ratio
+                              // matches this inset box almost exactly, but
+                              // contain guards against 1px rounding so the
+                              // baked-in border never gets clipped.
+                              "h-full w-full object-contain"
+                        }
+                      />
+                    </div>
+                  </div>
+                ) : (
                   <div className="relative">
                     <Placeholder label={project.imageLabel} ratio="798 / 402" />
                     <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
@@ -252,7 +350,7 @@ export default function Home() {
                             Tooling list, plus the orange "•" divider (Google
                             Sans Flex, 13px, accent — a separate role from the
                             mono tag text, not part of .t-meta-sm). */}
-                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg pb-0 pl-5 pr-1 pt-4">
+                        <div className="flex flex-wrap items-center justify-center gap-2.5 bg-bg pb-0 pl-5 pr-1 pt-4">
                           {project.skills.map((skill, i) => (
                             <span key={skill} className="flex items-center gap-2.5">
                               {i > 0 ? (
@@ -438,7 +536,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-[88rem] border-t border-line px-6 py-10 lg:px-10">
+      <footer className="mx-auto max-w-[88rem] border-t border-line px-6 py-10 lg:w-[calc(100%-4rem)] lg:px-8 lg:pb-8">
         <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
           Built &amp; designed using Claude Code in Brooklyn, New York
           <span aria-hidden className="text-xs">

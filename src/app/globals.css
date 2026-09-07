@@ -20,15 +20,23 @@
 }
 
 @theme inline {
-  /* The homepage hero reproduces a fixed-scale Figma frame and only holds
-     once the content box is its full 1328px (max-w-88rem minus px-10).
+  /* The homepage hero reproduces a fixed-scale Figma frame (1328px content
+     box). It used to only switch on at the frame's own full width (1408px),
+     which meant anything narrower — including ordinary 1280–1366px laptop
+     screens — fell all the way back to the mobile stacked layout. It now
+     switches on at 1024px (iPad landscape / Tailwind's own `lg`), and the
+     gap between 1024 and 1408 is covered by scaling the whole fixed layout
+     down as one rigid unit (see `#hero`'s `container-type` and `--hero-scale`
+     in page.tsx) rather than by reflowing it — those absolute pixel
+     positions have no other sensible fallback between "full size" and
+     "give up and stack it."
      CAUTION: Tailwind emits this block BEFORE its built-in sm/md/lg/xl
      utilities, so at equal specificity a built-in breakpoint wins over this
      one no matter which has the larger min-width — `sm:h-[256px]` silently
      beat `hero:h-[366px]` and rendered the hero portrait at the wrong size.
      Don't set the same property with both a built-in breakpoint and `hero:`
      on one element; give the sub-hero case a base/fluid value instead. */
-  --breakpoint-hero: 1408px;
+  --breakpoint-hero: 1024px;
 
   --color-bg: var(--bg);
   --color-bg-deep: var(--bg-deep);
@@ -206,6 +214,25 @@ body {
   line-height: 1.25rem;
   letter-spacing: 0;
   color: color-mix(in srgb, var(--muted) 90%, transparent);
+}
+
+/* Perimeter-frame nav/badge role · confirmed via get_design_context on
+   627:49704 ("Final Homepage - Cropped", fileKey AWMKNoAFrxViMhBaGRfWbZ) —
+   the frame chrome added after the original 499:54149 pass, which never had
+   this layer. Roboto Mono, 10/20, letter-spacing 0 (confirmed via
+   get_variable_defs — Figma's own "Desktop Section Titles and Links" style
+   sets letterSpacing 0, so no extra tracking is added despite reading as
+   letter-spaced due to the monospaced metrics alone), uppercase, pure black
+   (not --ink) — used by the nav bar, its logo, and the campaign badge.
+   font-weight is left to the caller (font-normal / font-semibold) since the
+   active nav item ("Home") is SemiBold and the rest Regular. */
+.t-frame-mono {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-size: 0.625rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: #000;
 }
 
 /* Shared display level for work project titles (177:111991) and the interest
