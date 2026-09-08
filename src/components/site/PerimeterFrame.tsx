@@ -109,13 +109,30 @@ function BandOrnaments() {
   );
 }
 
-/** Divider-tick pair flanking each crosshair — a small 8px gap after the
- * crosshair's own right/left edge (10+12=22px) before the tick pair starts. */
+/** Divider-tick pair flanking each crosshair. Unlike the crosshairs and
+ * rails (deliberately viewport-edge-relative — they're the outer print-
+ * registration border), these mark where the CONTENT COLUMN begins, so
+ * they need to track `<main>`'s own `max-w-[88rem] lg:w-[calc(100%-4rem)]`
+ * edge, not the raw viewport edge. Below the ~1472px width where that
+ * column still tracks `100%-4rem`, its edge sits at a constant 32px (the
+ * rail width) from the viewport, matching the plain pixel value; above it,
+ * the column freezes at 88rem centered, so the mark's viewport-relative
+ * offset has to grow via `max(fixedPx, calc((100%-88rem)/2 + gap))` or it
+ * drifts outward with the window instead of the content.
+ * Confirmed via get_metadata on fileKey AWMKNoAFrxViMhBaGRfWbZ, node
+ * 627:49704 (cross-checked against the bottom band's matching Line
+ * 190-195 cluster, which lands on the same x-values): left pair (Line
+ * 197/199) sits at absolute x=40/50 — 8px past the content edge (rail
+ * width 32, so 40-32=8). Right pair (Line 209/211) sits at absolute
+ * x=1415.5/1405.5 — 7.5px *before* the content edge (32-24.5=7.5), not a
+ * mirror of the left value; this file's left/right marks are consistently
+ * asymmetric (same pattern as the corner crosshairs), so each side is
+ * measured independently rather than assumed symmetric. */
 function BandTicks() {
   return (
     <>
-      <DividerTicks className="left-[30px]" />
-      <DividerTicks className="right-[30px]" />
+      <DividerTicks className="left-[max(40px,calc((100%-88rem)/2+8px))]" />
+      <DividerTicks className="right-[max(24.5px,calc((100%-88rem)/2-7.5px))]" />
     </>
   );
 }
