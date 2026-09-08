@@ -115,24 +115,27 @@ function BandOrnaments() {
  * they need to track `<main>`'s own `max-w-[88rem] lg:w-[calc(100%-4rem)]`
  * edge, not the raw viewport edge. Below the ~1472px width where that
  * column still tracks `100%-4rem`, its edge sits at a constant 32px (the
- * rail width) from the viewport, matching the plain pixel value; above it,
- * the column freezes at 88rem centered, so the mark's viewport-relative
- * offset has to grow via `max(fixedPx, calc((100%-88rem)/2 + gap))` or it
- * drifts outward with the window instead of the content.
- * Confirmed via get_metadata on fileKey AWMKNoAFrxViMhBaGRfWbZ, node
- * 627:49704 (cross-checked against the bottom band's matching Line
- * 190-195 cluster, which lands on the same x-values): left pair (Line
- * 197/199) sits at absolute x=40/50 — 8px past the content edge (rail
- * width 32, so 40-32=8). Right pair (Line 209/211) sits at absolute
- * x=1415.5/1405.5 — 7.5px *before* the content edge (32-24.5=7.5), not a
- * mirror of the left value; this file's left/right marks are consistently
- * asymmetric (same pattern as the corner crosshairs), so each side is
- * measured independently rather than assumed symmetric. */
+ * rail width) from the viewport; above it, the column freezes at 88rem
+ * centered, so the offset has to grow via `max(32px, calc((100%-88rem)/2))`
+ * or it drifts outward with the window instead of the content.
+ * The 32px itself is a true, single, mirrored value — not two guessed
+ * numbers: measured each tick's distance from its own crosshair's edge
+ * (not from any frame-width figure, which was inconsistent across pulls),
+ * using local coordinates shared with the crosshair so the parent offset
+ * cancels out. Left crosshair (node 751:48604, x=10, width=12) → right
+ * edge=22; Line 197 (627:51831, x=32) → distance=10. Right crosshair
+ * (751:48608, x=1418, width=12) → left edge=1418; Line 209 (627:51833)
+ * was x=1408.5 → distance=9.5, a 0.5px mismatch against the left side's
+ * clean 10; corrected to x=1408 so both distances equal 10 exactly.
+ * That confirmed 10px gap, applied to this component's own crosshair
+ * (left-[10px]/right-[10px], width 12 → edge at 22), lands the tick at
+ * 22+10=32 on both sides — which is also exactly the rail width, so the
+ * mark sits flush with the content edge at any viewport width. */
 function BandTicks() {
   return (
     <>
-      <DividerTicks className="left-[max(40px,calc((100%-88rem)/2+8px))]" />
-      <DividerTicks className="right-[max(24.5px,calc((100%-88rem)/2-7.5px))]" />
+      <DividerTicks className="left-[max(32px,calc((100%-88rem)/2))]" />
+      <DividerTicks className="right-[max(32px,calc((100%-88rem)/2))]" />
     </>
   );
 }
