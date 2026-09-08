@@ -56,19 +56,21 @@ function HomeHeader() {
                 unchanged (logo near the left rail, nav links near the
                 right, spreading further apart via
                 justify-between as the window widens) at any width. */}
-            {/* ml-[16.714px]: nudges the whole lockup right so the dot's
-                centre (14px, no border → centre at x=7 from its own left
-                edge) lands on the hero's crosshair centre (x=23.714 from the
-                shared left edge — same 540:xxx grid as the rail-dot fix).
-                Moved as one unit, not just the dot, so the dot stays glued
-                to "Marc Favro" via the existing gap-3 rather than tearing
-                away from it. Desktop typography (Roboto Mono, 10/20,
-                uppercase, black) confirmed via get_design_context on
-                627:49704/643:52825 — mobile keeps the original Google Sans
-                Flex treatment (no confirmed discrepancy there). */}
+            {/* ml-[0px]: aligns the logo lockup's own left edge flush
+                with the hero grid box's left edge (64px), per direct
+                pixel check — measured logo at 81px vs. hero box at 64px
+                (17px too far right), so the previous ml-[16.714px] (a
+                different, unrelated alignment target) is reduced by that
+                same 17px. Moved as one unit, not just the dot, so the dot
+                stays glued to "Marc Favro" via the existing gap-3 rather
+                than tearing away from it. Desktop typography (Roboto
+                Mono, 10/20, uppercase, black) confirmed via
+                get_design_context on 627:49704/643:52825 — mobile keeps
+                the original Google Sans Flex treatment (no confirmed
+                discrepancy there). */}
             <a
               href="/"
-              className="ml-[16.714px] flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]"
+              className="ml-[0px] flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]"
             >
               <span
                 aria-hidden

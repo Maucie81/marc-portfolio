@@ -213,15 +213,18 @@ export default function Home() {
                 before, still has to override .display's −0.02em). Smaller
                 than the previous frame's 217.62/199.534/−2.1762 — same
                 relative treatment, uniformly scaled down ~0.8347×.
-                top = 341 − 145 = 196. left = 434 − 13.4 = 420.6. */}
-            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[420.6px] hero:top-[196px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
+                top = 341 − 145 = 196, then shifted up one grid row (31px
+                pitch) to 165 per direct correction — kept 145px above the
+                subhead, matching its own shift. left = 434 − 13.4 = 420.6. */}
+            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[420.6px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
             {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
                 unchanged from the previous frame. Placeholder copy, left
-                as-is. top = 341 (unchanged). left = 434 − 2.49 = 431.51. */}
-            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[431.51px] hero:top-[341px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
+                as-is. top = 341, shifted up one grid row (31px pitch) to
+                310 per direct correction. left = 434 − 2.49 = 431.51. */}
+            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[431.51px] hero:top-[310px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
               Lorem ipsum dolor sit amet consect
             </p>
           </div>
@@ -558,7 +561,15 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="mx-auto border-t border-line px-6 py-10 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pb-8">
+      <footer className="mx-auto border-t border-line px-6 py-10 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pb-16">
+        {/* lg:pb-16 (64px): the fixed BottomBand (32px tall, position:fixed
+            so it doesn't occupy document flow) overlays the page's last
+            32px of padding rather than pushing content up above it — the
+            previous lg:pb-8 (32px) was entirely hidden underneath the
+            band, leaving 0px of actual visible clearance (confirmed via
+            direct measurement: text bottom and band top were flush, gap
+            0). 64px = 32px to clear the band + 32px of real breathing
+            room above it, per direct correction. */}
         <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
           Built &amp; designed using Claude Code in Brooklyn, New York
           <span aria-hidden className="text-xs">
