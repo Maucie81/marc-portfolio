@@ -95,7 +95,14 @@ export function DoubleLineIcon({ className = "" }: { className?: string }) {
  * Crosshair centered within the 32px-wide rail (left-[10px]: a 12px icon
  * centered in 32px sits at (32-12)/2=10px from the edge, true center at
  * x=16 — the rail's own midpoint), not just flush with an arbitrary
- * edge offset. */
+ * edge offset.
+ * left-[10px]/right-[10px]: briefly frozen at the 1440px design width to
+ * match the hero section, then reverted per direct correction — the
+ * white rails stay a fixed 32px wide forever (never capped, never
+ * growing), and the grey content area keeps growing with the viewport
+ * indefinitely instead of freezing. With content never frozen, these
+ * icons are correctly plain viewport-edge-relative again: the rail (and
+ * everything in it) never moves regardless of viewport width. */
 function BandOrnaments() {
   return (
     <>
@@ -109,15 +116,13 @@ function BandOrnaments() {
   );
 }
 
-/** Divider-tick pair flanking each crosshair. Unlike the crosshairs and
- * rails (deliberately viewport-edge-relative — they're the outer print-
- * registration border), these mark where the CONTENT COLUMN begins, so
- * they need to track `<main>`'s own `max-w-[88rem] lg:w-[calc(100%-4rem)]`
- * edge, not the raw viewport edge. Below the ~1472px width where that
- * column still tracks `100%-4rem`, its edge sits at a constant 32px (the
- * rail width) from the viewport; above it, the column freezes at 88rem
- * centered, so the offset has to grow via `max(32px, calc((100%-88rem)/2))`
- * or it drifts outward with the window instead of the content.
+/** Divider-tick pair flanking each crosshair — marks where the CONTENT
+ * COLUMN begins (rail width, 32px). Briefly frozen against the content
+ * column's own width so it wouldn't drift on wide screens — reverted per
+ * direct correction: the content column no longer freezes at all (it
+ * grows with the viewport indefinitely; only the 32px rails are fixed),
+ * so the content edge is always exactly 32px from the viewport edge and
+ * a plain fixed value is correct again, with zero drift risk.
  * The 32px itself is a true, single, mirrored value — not two guessed
  * numbers: measured each tick's distance from its own crosshair's edge
  * (not from any frame-width figure, which was inconsistent across pulls),
@@ -128,14 +133,14 @@ function BandOrnaments() {
  * was x=1408.5 → distance=9.5, a 0.5px mismatch against the left side's
  * clean 10; corrected to x=1408 so both distances equal 10 exactly.
  * That confirmed 10px gap, applied to this component's own crosshair
- * (left-[10px]/right-[10px], width 12 → edge at 22), lands the tick at
- * 22+10=32 on both sides — which is also exactly the rail width, so the
- * mark sits flush with the content edge at any viewport width. */
+ * (edge at 22), lands the tick at 22+10=32 on both sides — which is also
+ * exactly the rail width, so the mark sits flush with the content edge
+ * at any viewport width. */
 function BandTicks() {
   return (
     <>
-      <DividerTicks className="left-[max(32px,calc((100%-88rem)/2))]" />
-      <DividerTicks className="right-[max(32px,calc((100%-88rem)/2))]" />
+      <DividerTicks className="left-[32px]" />
+      <DividerTicks className="right-[32px]" />
     </>
   );
 }
@@ -165,16 +170,21 @@ function BandTicks() {
  * Moved back here, stacked below BandOrnaments/BandTicks in the same
  * white column (`left-2`/`right-2`, matching BandOrnaments' left/right
  * crosshairs' horizontal position), not registered to the hero box at
- * all. `top-[70px]` clears the crosshair's true bottom edge (31, see
- * above) by the same 6px gap BottomBand's crosshair keeps from its own
- * mark — mirrored, not re-guessed. */
+ * all. `top-[42px]` sits flush with the header's own bottom edge (its
+ * rendered height is exactly 42px) — per direct user correction, the
+ * mark should sit right at that boundary, not floated further down with
+ * a gap.
+ * left-2/right-2 (8px): briefly frozen at the 1440px design width, then
+ * reverted per direct correction — content no longer freezes at all, so
+ * plain viewport-edge-relative is correct again (the rail these marks
+ * sit in front of never moves). */
 export function TopBandChrome() {
   return (
     <>
       <BandOrnaments />
       <BandTicks />
-      <DoubleLineIcon className="top-[70px] left-2" />
-      <DoubleLineIcon className="top-[70px] right-2" />
+      <DoubleLineIcon className="top-[42px] left-2" />
+      <DoubleLineIcon className="top-[42px] right-2" />
     </>
   );
 }
@@ -203,7 +213,11 @@ export function BottomBand() {
         {/* Campaign badge — plain text, no card treatment (Figma: no
             border/bg on 627:51854), anchored left of the right crosshair.
             Single line per Figma node 752:48622 — "2026 get a new job
-            campaign • M.Favro / ... " joined with a bullet, not stacked. */}
+            campaign • M.Favro / ... " joined with a bullet, not stacked.
+            right-16 (64px): briefly frozen at the 1440px design width,
+            then reverted per direct correction — plain viewport-edge-
+            relative, since content no longer freezes and this badge sits
+            in the never-moving 32px rail's band. */}
         <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right">
           <span className="t-frame-mono whitespace-nowrap normal-case">
             2026 get a new job campaign • M.Favro / {contact.phone} /{" "}

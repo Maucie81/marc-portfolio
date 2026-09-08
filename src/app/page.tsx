@@ -17,22 +17,35 @@ import {
 
 export default function Home() {
   return (
-    <div className="bg-white">
+    <div className="bg-bg">
       {/* Header now lives in the root layout as PersistentHeader, outside
           PageTransition's fade — see that component for why.
-          bg-white here (not bg-bg): confirmed via get_design_context on
-          627:49704 by sampling the rendered screenshot directly — the
-          margin outside Container (x=32, width=1376, vs. the root frame's
-          full 1440) is pure white (255,255,255) at every y sampled from
-          top to bottom of the full 5641px-tall page, not just the hero.
-          bg-bg moves onto <main>/<footer> below (the actual content
-          column) so the margin outside max-w-[88rem] shows this white,
-          not grey, at any viewport width — including past where the
-          column freezes on wide screens. */}
+          bg-bg here (not bg-white): the grey needs to fill all space
+          between the two 32px white rails unconditionally, independent of
+          <main>'s own width — LeftRail/RightRail are opaque, fixed,
+          higher z-index, so they still paint white over their own 32px
+          regardless of what color sits behind them. Previously this
+          wrapper was white with grey moved onto <main> itself so the
+          grey could be capped separately from the white margin outside
+          it — but capping <main> also capped the actual CONTENT (hero
+          grid, work-card images), which must stay pinned at its real
+          design size, not grow. Splitting the concerns here (background
+          color vs. content sizing) fixes both without trading one bug
+          for the other. */}
       <main
         id="home"
-        className="mx-auto max-w-[88rem] bg-bg px-6 [container-type:inline-size] lg:w-[calc(100%-4rem)] lg:px-8 lg:pt-[82px]"
+        className="mx-auto px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pt-[82px]"
       >
+        {/* max-w equivalent via w-[min(1376px,...)], centered (mx-auto):
+            1376 = confirmed 1440px design width (get_metadata, node
+            627:49704) minus the 32px rail on each side. Below that width
+            the min() falls through to the fluid calc(100%-4rem) term
+            (unchanged, still shrinks with --hero-scale as before) — this
+            stops the CONTENT (not the grey background, which stays on
+            the outer wrapper and fills the full width regardless) from
+            growing past its real design size once the viewport exceeds
+            it, with mx-auto keeping it centered rather than pinned to
+            either rail. */}
         {/* Hero · 627:46433 (supersedes the earlier 540:112651 spec — Figma
             revised this frame to a denser grid). Figma's box is 1312×468,
             built as a mosaic of 30px #e4e4df tiles on a #b0b0b0 background
@@ -545,7 +558,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-[88rem] border-t border-line bg-bg px-6 py-10 lg:w-[calc(100%-4rem)] lg:px-8 lg:pb-8">
+      <footer className="mx-auto border-t border-line px-6 py-10 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pb-8">
         <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
           Built &amp; designed using Claude Code in Brooklyn, New York
           <span aria-hidden className="text-xs">

@@ -47,7 +47,15 @@ function HomeHeader() {
     <>
       <header className="sticky top-0 z-50 bg-bg lg:fixed lg:inset-x-0 lg:top-0 lg:bg-white">
         <div className="relative">
-          <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-6 pt-6 lg:h-[42px] lg:w-[calc(100%-4rem)] lg:px-8 lg:py-0">
+          <div className="mx-auto flex items-center justify-between px-6 pb-6 pt-6 lg:h-[42px] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-0">
+            {/* w-[min(1376px,...)], centered (mx-auto): content must not
+                grow past the confirmed 1440px design width (get_metadata,
+                node 627:49704) minus the 32px rail on each side —
+                matches <main>'s own treatment. Below that width the
+                min() falls through to the fluid calc(100%-4rem) term,
+                unchanged (logo near the left rail, nav links near the
+                right, spreading further apart via
+                justify-between as the window widens) at any width. */}
             {/* ml-[16.714px]: nudges the whole lockup right so the dot's
                 centre (14px, no border → centre at x=7 from its own left
                 edge) lands on the hero's crosshair centre (x=23.714 from the
