@@ -215,8 +215,14 @@ export default function Home() {
                 relative treatment, uniformly scaled down ~0.8347×.
                 top = 341 − 145 = 196, then shifted up one grid row (31px
                 pitch) to 165 per direct correction — kept 145px above the
-                subhead, matching its own shift. left = 434 − 13.4 = 420.6. */}
-            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[420.6px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
+                subhead, matching its own shift. left = 434 − 13.4 = 420.6,
+                then nudged to 430.87 per direct correction: measured each
+                line's actual rendered text-ink edge (Range.
+                getBoundingClientRect(), not the CSS box edge, since glyph
+                side-bearing scales with this element's much larger font
+                size and doesn't match the eyebrow/subhead's) — this line
+                sat 10.27px left of the eyebrow/subhead's shared edge. */}
+            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[430.87px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
