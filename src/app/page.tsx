@@ -7,6 +7,7 @@ import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import InterestGallery from "@/components/site/InterestGallery";
 import ArrowIcon from "@/components/site/ArrowIcon";
+import { DoubleLineIcon } from "@/components/site/PerimeterFrame";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -91,7 +92,7 @@ export default function Home() {
             content actually needed. */}
         <section
           id="hero"
-          className="relative hero:overflow-hidden hero:[--hero-scale:min(1,calc(100cqi/1328px))] hero:[height:calc(434px*var(--hero-scale))]"
+          className="relative hero:[--hero-scale:min(1,calc(100cqi/1328px))] hero:[height:calc(434px*var(--hero-scale))]"
         >
           {/* The fixed-size "canvas": Figma's exact 1328×434 box, scaled
               down by --hero-scale (1 at full size, shrinking down to 1024px)
@@ -101,6 +102,24 @@ export default function Home() {
               div (no absolute/transform), so it's a no-op wrapper around the
               normal stacked flow. */}
           <div className="hero:absolute hero:left-0 hero:top-0 hero:h-[434px] hero:w-[1328px] hero:origin-top-left hero:[transform:scale(var(--hero-scale))]">
+            {/* Corner tick marks · confirmed via get_metadata on fileKey
+                AWMKNoAFrxViMhBaGRfWbZ, node 627:49704: Line 196/198 (left)
+                sit at absolute x=32,y=58/68, the hero box's own top-left
+                corner (Container x=32 + hero-local x=32, y=42+40) at
+                absolute (64,82) — so the offset from that corner is
+                (-32,-24). The right pair (Line 210/208) sit at absolute
+                x=1423.5,y=59/69, and the hero box's top-right corner is at
+                (1376,82) — offset (+47.5,-23), measured independently
+                rather than mirrored (this file's left/right marks aren't
+                symmetric — confirmed separately for circle-crosshairs 20
+                vs 29). Rendered here (not in TopBandChrome) specifically so
+                they're descendants of the --hero-scale transform and shrink
+                with the hero box instead of staying pinned to static header
+                pixels. Needed dropping #hero's own overflow-hidden (see
+                above) since both marks render above the box's own top
+                edge, matching Figma exactly. */}
+            <DoubleLineIcon className="left-[-32px] top-[-24px]" />
+            <DoubleLineIcon className="left-[1375.5px] top-[-23px]" />
             {/* Background grid · 627:46434/46435-47051 (15 rows × 42 cols of
                 30px tiles). Reproduced as a painted layer rather than actual
                 tiles — same repeating-linear-gradient technique as before,

@@ -25,24 +25,21 @@ const CMYK_GROUPS = [
 ];
 const CMYK_OPACITIES = [1, 0.8, 0.6, 0.4, 0.2];
 
-export function Crosshair({ className = "" }: { className?: string }) {
+export function Crosshair({
+  className = "",
+  src = "/icons/crosshair.svg",
+}: {
+  className?: string;
+  src?: string;
+}) {
   return (
     <img
-      src="/icons/crosshair.svg"
+      src={src}
       alt=""
       aria-hidden
-      width={20}
-      height={20}
-      className={`pointer-events-none block h-5 w-5 ${className}`}
-    />
-  );
-}
-
-function Diamond({ className = "" }: { className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={`pointer-events-none block h-2.5 w-2.5 rotate-45 border border-line bg-white ${className}`}
+      width={12}
+      height={12}
+      className={`pointer-events-none block size-3 ${className}`}
     />
   );
 }
@@ -67,8 +64,11 @@ function DividerTicks({ className = "" }: { className?: string }) {
  * right under a crosshair, at the nav strip's own bottom edge (confirmed
  * via Line 174/196/198, same stroke as DividerTicks and the crosshair
  * icon itself). Figma only shows this under the top band's crosshairs
- * (it marks the nav-strip/page boundary, which only exists at the top). */
-function DoubleLineIcon({ className = "" }: { className?: string }) {
+ * (it marks the nav-strip/page boundary, which only exists at the top).
+ * Exported: the top band's pair now renders inside #hero's own scaled
+ * container (see page.tsx) instead of here, so it scales with
+ * --hero-scale — this component is shared across that boundary. */
+export function DoubleLineIcon({ className = "" }: { className?: string }) {
   return (
     <span
       aria-hidden
@@ -80,73 +80,106 @@ function DoubleLineIcon({ className = "" }: { className?: string }) {
   );
 }
 
-/** Center diamond + corner crosshairs, shared by the top and bottom bands.
+/** Center crosshair + corner crosshairs, shared by the top and bottom bands
+ * — all three are the same shared circle-crosshairs mark (confirmed via
+ * get_design_context on 499:54149: every registration mark in the file,
+ * center and corner alike, resolves to the same circle-crosshairs asset).
+ * The center mark uses a distinct center-mark.svg glyph (matches the rail
+ * treatment); the corner marks use the full circular crosshair.svg.
  * No continuous rule line here — real offset-print proofing marks are
  * short, isolated marks with clear white space on every side, never a
  * ruled line spanning the full band/rail. The earlier long inset-y-0
  * divider (and the rail borders, and the band's own top/bottom rules)
  * were exactly that mistake and have been removed; DividerTicks below is
  * the actual (short) divider mark.
- * Crosshair centered within the 32px-wide rail (left-[6px]: a 20px icon
- * centered in 32px sits at (32-20)/2=6px from the edge, true center at
+ * Crosshair centered within the 32px-wide rail (left-[10px]: a 12px icon
+ * centered in 32px sits at (32-12)/2=10px from the edge, true center at
  * x=16 — the rail's own midpoint), not just flush with an arbitrary
  * edge offset. */
 function BandOrnaments() {
   return (
     <>
-      <Diamond className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
-      <Crosshair className="absolute left-[6px] top-1/2 -translate-y-1/2" />
-      <Crosshair className="absolute right-[6px] top-1/2 -translate-y-1/2" />
+      <Crosshair
+        src="/icons/center-mark.svg"
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+      />
+      <Crosshair className="absolute left-[10px] top-1/2 -translate-y-1/2" />
+      <Crosshair className="absolute right-[10px] top-1/2 -translate-y-1/2" />
     </>
   );
 }
 
-/** Tick marks flanking each crosshair — a small 8px gap after the
- * crosshair's own right/left edge (26px) before the divider-tick pair
- * starts, and the double-line icon at whichever band edge borders the
- * page content (bottom edge for the top band, top edge for the bottom
- * band — that boundary line is what the double-line marks). */
-function BandTicks({ doubleLineEdge }: { doubleLineEdge: "top" | "bottom" }) {
+/** Divider-tick pair flanking each crosshair — a small 8px gap after the
+ * crosshair's own right/left edge (10+12=22px) before the tick pair starts. */
+function BandTicks() {
   return (
     <>
-      <DividerTicks className="left-[34px]" />
-      <DividerTicks className="right-[34px]" />
-      <DoubleLineIcon className={`${doubleLineEdge}-0 left-2`} />
-      <DoubleLineIcon className={`${doubleLineEdge}-0 right-2`} />
+      <DividerTicks className="left-[30px]" />
+      <DividerTicks className="right-[30px]" />
     </>
   );
 }
 
 /** Top band — 42px tall, full width, white. Nav content lives in
  * PersistentHeader.tsx (pathname-aware); this is just the ornamental
- * overlay decorating that same header shell. */
+ * overlay decorating that same header shell.
+ *
+ * The double-line mark was previously anchored flush to the band's own
+ * bottom edge (`bottom-0`), which put its first line at y=30 — but
+ * `/icons/crosshair.svg`'s own cross strokes are drawn full-bleed across
+ * the whole 20×20 viewBox (`M10 0V20`, `M0 10H20`), not just inside the
+ * circle, so the icon's real footprint (centered here, spans y=11–31)
+ * extends a few px past the circle on every side. y=30 lands inside that
+ * stroke, so the first line rendered directly on top of — indistinguishable
+ * from — the crosshair's own downward tick: only the second line ever
+ * read as a separate mark, which is what looked like a single line at
+ * every corner. Confirmed by cloning the rendered chrome into an isolated,
+ * scaled-up overlay and reading both elements' actual boundingClientRects
+ * side by side — not visible from the code diff alone.
+ * The two double-line marks that used to render here (`top-[70px] left-2`/
+ * `right-2`) have moved into #hero's own scaled container in page.tsx —
+ * they mark the hero box's own top-left/top-right corners (per Figma node
+ * 627:49704), so they need to scale with --hero-scale as the hero shrinks,
+ * which static header-relative pixels can't do. See page.tsx for the
+ * replacement, positioned relative to the hero box's corners directly. */
 export function TopBandChrome() {
   return (
     <>
       <BandOrnaments />
-      <BandTicks doubleLineEdge="bottom" />
+      <BandTicks />
     </>
   );
 }
 
-/** Bottom band — 32px tall, full width, white. Mirrors the top band's
- * tick/double-line marks (previously missing here). Campaign badge
- * anchored here (Figma: 627:51854, sits just left of the bottom-right
- * divider/crosshair) instead of floating mid-page. */
+/** Bottom band — 32px tall, full width, white. The double-line mark used
+ * to sit at `top-0` (flush with the band's own top edge), which — same
+ * root cause as TopBandChrome — put its second line at y=11, inside the
+ * crosshair's real 6–26 footprint (`/icons/crosshair.svg` draws its cross
+ * full-bleed across the 20×20 viewBox, not just inside the circle), so it
+ * rendered inside the crosshair's own ink instead of reading as a second,
+ * separate line. `-top-3` (-12px) moves the whole mark above the band
+ * instead, clearing the crosshair's true top edge (6) by the same 6px gap
+ * TopBandChrome now keeps below its crosshair — mirrored, not re-guessed.
+ * Confirmed by cloning the rendered band into an isolated, scaled-up
+ * overlay with the crosshair hidden, then shown, and comparing.
+ * Campaign badge anchored here (Figma: 627:51854, sits just left of the
+ * bottom-right divider/crosshair) instead of floating mid-page. */
 export function BottomBand() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 hidden lg:block">
       <div className="relative h-8 bg-white">
         <BandOrnaments />
-        <BandTicks doubleLineEdge="top" />
+        <BandTicks />
+        <DoubleLineIcon className="-top-3 left-2" />
+        <DoubleLineIcon className="-top-3 right-2" />
         {/* Campaign badge — plain text, no card treatment (Figma: no
-            border/bg on 627:51854), anchored left of the right crosshair. */}
-        <div className="pointer-events-none absolute right-16 top-1/2 flex -translate-y-1/2 flex-col items-end gap-0.5 text-right">
-          <span className="t-frame-mono whitespace-nowrap">
-            2026 get a new job campaign
-          </span>
+            border/bg on 627:51854), anchored left of the right crosshair.
+            Single line per Figma node 752:48622 — "2026 get a new job
+            campaign • M.Favro / ... " joined with a bullet, not stacked. */}
+        <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right">
           <span className="t-frame-mono whitespace-nowrap normal-case">
-            M.Favro / {contact.phone} / {contact.email}
+            2026 get a new job campaign • M.Favro / {contact.phone} /{" "}
+            {contact.email}
           </span>
         </div>
       </div>
@@ -156,11 +189,23 @@ export function BottomBand() {
 
 /** Left rail — 32px wide, full viewport height, white. Sits behind the
  * top/bottom bands (lower z-index, and the bands span the full width) so
- * the corners have no seam. Holds the CMYK strip, centered in the rail. */
+ * the corners have no seam. Holds the CMYK strip, anchored so its own
+ * bottom edge sits 32px above the top line of BottomBand's double-line
+ * mark (that mark's top line sits at -top-3/-12px above the 32px band,
+ * i.e. 44px above the viewport bottom — so the strip's bottom needs
+ * 44+32=76px clearance from the viewport bottom), not vertically centered. */
 export function LeftRail() {
   return (
-    <div className="fixed inset-y-0 left-0 z-40 hidden w-8 flex-col items-center justify-center bg-white lg:flex">
-      <div aria-hidden className="flex flex-col gap-2">
+    <div className="fixed inset-y-0 left-0 z-40 hidden w-8 bg-white lg:flex">
+      <img
+        src="/icons/center-mark.svg"
+        alt=""
+        aria-hidden
+        width={12}
+        height={12}
+        className="pointer-events-none absolute left-1/2 top-1/2 block size-3 -translate-x-1/2 -translate-y-1/2"
+      />
+      <div aria-hidden className="absolute inset-x-0 bottom-[76px] flex flex-col items-center gap-2">
         {CMYK_GROUPS.map((group) => (
           <div key={group.label} className="flex flex-col items-center gap-0.5">
             <span
@@ -173,7 +218,7 @@ export function LeftRail() {
               {CMYK_OPACITIES.map((opacity) => (
                 <span
                   key={opacity}
-                  className="block h-2.5 w-2.5"
+                  className="block size-2.5"
                   style={{ backgroundColor: group.color, opacity }}
                 />
               ))}
@@ -189,6 +234,15 @@ export function LeftRail() {
  * rail's frame treatment; no CMYK content (that's left-margin only). */
 export function RightRail() {
   return (
-    <div className="fixed inset-y-0 right-0 z-40 hidden w-8 bg-white lg:block" />
+    <div className="fixed inset-y-0 right-0 z-40 hidden w-8 bg-white lg:flex">
+      <img
+        src="/icons/center-mark.svg"
+        alt=""
+        aria-hidden
+        width={12}
+        height={12}
+        className="pointer-events-none absolute left-1/2 top-1/2 block size-3 -translate-x-1/2 -translate-y-1/2"
+      />
+    </div>
   );
 }
