@@ -66,7 +66,11 @@ body {
      (not :root) so var(--font-display) resolves against the value next/font
      puts on this same element via its variable class. */
   --font-alt: var(--font-display);
-  background: var(--bg);
+  /* White, not --bg: the page-level grey is now scoped to the content
+     column itself (<main>/<footer> in page.tsx) so the margin outside
+     max-w-[88rem] shows white, matching Figma's root frame fill
+     (confirmed by sampling the rendered design screenshot directly). */
+  background: #fff;
   color: var(--ink);
   font-family: var(--font-body), var(--font-alt), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;

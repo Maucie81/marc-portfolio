@@ -156,17 +156,25 @@ function BandTicks() {
  * every corner. Confirmed by cloning the rendered chrome into an isolated,
  * scaled-up overlay and reading both elements' actual boundingClientRects
  * side by side — not visible from the code diff alone.
- * The two double-line marks that used to render here (`top-[70px] left-2`/
- * `right-2`) have moved into #hero's own scaled container in page.tsx —
- * they mark the hero box's own top-left/top-right corners (per Figma node
- * 627:49704), so they need to scale with --hero-scale as the hero shrinks,
- * which static header-relative pixels can't do. See page.tsx for the
- * replacement, positioned relative to the hero box's corners directly. */
+ * The double-line marks moved to #hero's own scaled container for a
+ * while (registering them to the hero box's corners so they'd scale with
+ * --hero-scale), but that was wrong: they belong to the white margin
+ * column, not the hero box, and living inside #hero made them a
+ * descendant of <main> — which now carries the page's grey background
+ * (see page.tsx) — so they'd render on grey instead of the white margin.
+ * Moved back here, stacked below BandOrnaments/BandTicks in the same
+ * white column (`left-2`/`right-2`, matching BandOrnaments' left/right
+ * crosshairs' horizontal position), not registered to the hero box at
+ * all. `top-[70px]` clears the crosshair's true bottom edge (31, see
+ * above) by the same 6px gap BottomBand's crosshair keeps from its own
+ * mark — mirrored, not re-guessed. */
 export function TopBandChrome() {
   return (
     <>
       <BandOrnaments />
       <BandTicks />
+      <DoubleLineIcon className="top-[70px] left-2" />
+      <DoubleLineIcon className="top-[70px] right-2" />
     </>
   );
 }

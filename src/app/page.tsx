@@ -7,7 +7,6 @@ import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import InterestGallery from "@/components/site/InterestGallery";
 import ArrowIcon from "@/components/site/ArrowIcon";
-import { DoubleLineIcon } from "@/components/site/PerimeterFrame";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -18,12 +17,21 @@ import {
 
 export default function Home() {
   return (
-    <div className="bg-bg">
+    <div className="bg-white">
       {/* Header now lives in the root layout as PersistentHeader, outside
-          PageTransition's fade — see that component for why. */}
+          PageTransition's fade — see that component for why.
+          bg-white here (not bg-bg): confirmed via get_design_context on
+          627:49704 by sampling the rendered screenshot directly — the
+          margin outside Container (x=32, width=1376, vs. the root frame's
+          full 1440) is pure white (255,255,255) at every y sampled from
+          top to bottom of the full 5641px-tall page, not just the hero.
+          bg-bg moves onto <main>/<footer> below (the actual content
+          column) so the margin outside max-w-[88rem] shows this white,
+          not grey, at any viewport width — including past where the
+          column freezes on wide screens. */}
       <main
         id="home"
-        className="mx-auto max-w-[88rem] px-6 [container-type:inline-size] lg:w-[calc(100%-4rem)] lg:px-8 lg:pt-[82px]"
+        className="mx-auto max-w-[88rem] bg-bg px-6 [container-type:inline-size] lg:w-[calc(100%-4rem)] lg:px-8 lg:pt-[82px]"
       >
         {/* Hero · 627:46433 (supersedes the earlier 540:112651 spec — Figma
             revised this frame to a denser grid). Figma's box is 1312×468,
@@ -102,24 +110,6 @@ export default function Home() {
               div (no absolute/transform), so it's a no-op wrapper around the
               normal stacked flow. */}
           <div className="hero:absolute hero:left-0 hero:top-0 hero:h-[434px] hero:w-[1328px] hero:origin-top-left hero:[transform:scale(var(--hero-scale))]">
-            {/* Corner tick marks · confirmed via get_metadata on fileKey
-                AWMKNoAFrxViMhBaGRfWbZ, node 627:49704: Line 196/198 (left)
-                sit at absolute x=32,y=58/68, the hero box's own top-left
-                corner (Container x=32 + hero-local x=32, y=42+40) at
-                absolute (64,82) — so the offset from that corner is
-                (-32,-24). The right pair (Line 210/208) sit at absolute
-                x=1423.5,y=59/69, and the hero box's top-right corner is at
-                (1376,82) — offset (+47.5,-23), measured independently
-                rather than mirrored (this file's left/right marks aren't
-                symmetric — confirmed separately for circle-crosshairs 20
-                vs 29). Rendered here (not in TopBandChrome) specifically so
-                they're descendants of the --hero-scale transform and shrink
-                with the hero box instead of staying pinned to static header
-                pixels. Needed dropping #hero's own overflow-hidden (see
-                above) since both marks render above the box's own top
-                edge, matching Figma exactly. */}
-            <DoubleLineIcon className="left-[-32px] top-[-24px]" />
-            <DoubleLineIcon className="left-[1375.5px] top-[-23px]" />
             {/* Background grid · 627:46434/46435-47051 (15 rows × 42 cols of
                 30px tiles). Reproduced as a painted layer rather than actual
                 tiles — same repeating-linear-gradient technique as before,
@@ -555,7 +545,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="mx-auto max-w-[88rem] border-t border-line px-6 py-10 lg:w-[calc(100%-4rem)] lg:px-8 lg:pb-8">
+      <footer className="mx-auto max-w-[88rem] border-t border-line bg-bg px-6 py-10 lg:w-[calc(100%-4rem)] lg:px-8 lg:pb-8">
         <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
           Built &amp; designed using Claude Code in Brooklyn, New York
           <span aria-hidden className="text-xs">
