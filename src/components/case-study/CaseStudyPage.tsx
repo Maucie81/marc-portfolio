@@ -371,25 +371,25 @@ function CaseStudyHero({
             }}
           />
           <div
-            className="relative flex flex-col"
-            // Horizontal padding is symmetric (44.5 each side) so the whole
-            // lockup centers within the 714px canvas, per direct request —
-            // same total (89px) as the previous 62/27 split (itself Figma's
-            // 93/27 shifted left one 31px grid column), just rebalanced so
-            // left and right margins match instead of the block sitting
-            // left-heavy. Content width (625px) is unchanged either way.
-            //
-            // backgroundColor: #E4E4DF at 40% — this is genuinely in the Figma
-            // data (get_design_context on 679:61221 returned
-            // `bg-[rgba(228,228,223,0.4)]`, same on the nested Scroll div
-            // 594:122071), but Figma only applied it to the paragraph+scroll-
-            // hint group, not the eyebrow/title above it. Applied here across
-            // the whole padded block instead, per direct request just now to
-            // cover "all of this text" for legibility.
+            // width:fit-content shrinks this box to hug its widest child
+            // (the title, normally) instead of spanning the full 714px
+            // canvas; marginLeft/Right:auto then centers THAT shrunk box
+            // (the "green box") within the canvas (the "red box"). Every
+            // child stays left-aligned inside it — this replaces both the
+            // earlier symmetric-padding attempt (a full-width box, so
+            // ragged-right text still looked off-center) and the
+            // text-align:center attempt (centered each line's ink instead
+            // of leaving the block itself left-aligned, per direct
+            // correction).
+            className="relative flex w-fit flex-col"
             style={{
-              paddingLeft: 44.5,
               paddingTop: 250,
-              paddingRight: 44.5,
+              marginLeft: "auto",
+              marginRight: "auto",
+              // #E4E4DF at 40% — genuinely in the Figma data
+              // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
+              // though Figma only applied it to the paragraph+scroll-hint
+              // group; applied across the whole block per earlier request.
               backgroundColor: "rgba(228,228,223,0.4)",
             }}
           >
@@ -405,14 +405,7 @@ function CaseStudyHero({
                 used var(--font-body) (DM Sans) at 20px, matching the
                 unrelated .cs-quote role instead of this node's own spec. */}
             <p
-              // Center-aligned: with the box itself already centered (equal
-              // 44.5 padding), left-aligned ragged text still read as
-              // off-balance — every line sat flush at the box's left edge,
-              // so short lines (or a short eyebrow like this one) left all
-              // their slack on the right only. text-align:center distributes
-              // that slack evenly instead, per direct request to center the
-              // whole lockup against the grid, not just its outer box.
-              className="text-center font-semibold uppercase text-accent [font-family:var(--font-mono)]"
+              className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
               style={{ fontSize: 16, lineHeight: "24px" }}
             >
               {meta.years}
@@ -421,12 +414,17 @@ function CaseStudyHero({
                 var(--font-display) is this exact font (self-hosted,
                 layout.tsx), already wired via `.display`; only the size/
                 leading were wrong (60px/leading-none, a leftover guess).
-                text-align:center for the same reason as the eyebrow above —
-                confirmed via measurement on Airbnb's 4-line title: every
-                line's ink started flush at the same left edge (35px from
-                the grid) while the widest line's right-side gap (120px)
-                still dwarfed that 35px, let alone the shorter lines'. */}
-            <h1 className="display mt-2 text-center" style={{ fontSize: 90, lineHeight: "80px" }}>
+                Left-aligned text, per direct correction of the text-center
+                pass above. maxWidth:625 caps this element's OWN natural
+                width — without it, Airbnb's unbroken "Account Creation &
+                Onboarding" (no internal <br>, ~1300px unwrapped) would
+                make the PARENT's fit-content calculation blow past the
+                714px canvas and fall back to full width, silently
+                reintroducing the exact ragged-right problem this is
+                fixing. With the cap, that line wraps at 625 like before,
+                and the parent's fit-content correctly hugs the resulting
+                (already-wrapped) widest line instead. */}
+            <h1 className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
               {meta.company}
               <br />
               {meta.title}
@@ -437,32 +435,21 @@ function CaseStudyHero({
                 node's own Google Sans Flex 20px/28px — that mismatch is
                 most of why line lengths read wrong (a 14px paragraph wraps
                 far more words per line at the same 555px width than a 20px
-                one does). Box (not text) centered via auto margins — left-
-                aligned prose inside a centered column is the normal
-                editorial convention paired with a centered headline;
-                center-aligning the paragraph's own text as well would read
-                as noisy body copy. */}
+                one does). Left-aligned, flush with the parent's fit-content
+                left edge (no more of its own auto-margin centering — the
+                parent handles that now as a single unit). */}
             <p
               // mt-11 (44px) moved up by one grid row (31px) per direct
               // request: 44 - 31 = 13.
               className="font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{
-                fontSize: 20,
-                lineHeight: "28px",
-                maxWidth: 555,
-                marginTop: 13,
-                marginLeft: "auto",
-                marginRight: "auto",
-              }}
+              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
             >
               {meta.subtitle}
             </p>
-            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px.
-                Own row (icon + label) centered as a unit via fit-content +
-                auto margins, same reasoning as the paragraph above. */}
+            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
             <p
-              className="mt-11 flex w-fit items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 14, lineHeight: "22px", marginLeft: "auto", marginRight: "auto" }}
+              className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 14, lineHeight: "22px" }}
             >
               <span className="inline-block h-[3px] w-10 bg-accent" />
               Scroll to move through the story
