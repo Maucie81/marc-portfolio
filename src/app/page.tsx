@@ -78,16 +78,18 @@ export default function Home() {
             with border-radius and always follows the curve correctly, so
             it replaces those two layers (the two repeating gradients stay,
             for the internal grid lines only). */}
-        {/* Scaling strategy: below 1024px this is a normal stacked flow
-            layout (Figma has no small-viewport frame, so that treatment is
-            my own call). From 1024px up, every child below is positioned
-            with absolute pixel coordinates lifted straight from Figma's
-            1328×426.857 frame — there's no sensible way to "reflow" that,
-            so instead of jumping straight to full size at some arbitrary
-            width, the whole fixed layout is scaled down as one rigid unit
-            to fit anything from 1024px up to the frame's true 1328px, and
-            only reaches scale 1 (full size) once the content box is that
-            wide. That's what `hero-scale` is doing.
+        {/* Scaling strategy: every child below is positioned with absolute
+            pixel coordinates lifted straight from Figma's 1328×426.857
+            frame — there's no sensible way to "reflow" that, so instead of
+            jumping straight to full size at some arbitrary width, the whole
+            fixed layout is scaled down as one rigid unit at every viewport
+            width, down to the smallest phone, and only reaches scale 1
+            (full size) once the content box hits the frame's true 1328px.
+            That's what `hero-scale` is doing — running it unconditionally
+            (rather than only above some breakpoint, as it used to) keeps
+            the headline's ink width and the 31px grid pitch shrinking
+            together, so glyphs stay grid-locked at every size instead of
+            only on desktop.
 
             `--hero-scale` reads `100cqi` — the available content-box inline
             size — rather than assuming a fixed viewport-minus-padding
@@ -113,16 +115,18 @@ export default function Home() {
             content actually needed. */}
         <section
           id="hero"
-          className="relative hero:[--hero-scale:min(1,calc(100cqi/1328px))] hero:[height:calc(434px*var(--hero-scale))]"
+          className="relative [--hero-scale:min(1,calc(100cqi/1328px))] [height:calc(434px*var(--hero-scale))]"
         >
           {/* The fixed-size "canvas": Figma's exact 1328×434 box, scaled
-              down by --hero-scale (1 at full size, shrinking down to 1024px)
-              rather than resized — a transform keeps every child's absolute
-              coordinate correct relative to every other one, which resizing
-              the box itself wouldn't. Below 1024px this is a plain static
-              div (no absolute/transform), so it's a no-op wrapper around the
-              normal stacked flow. */}
-          <div className="hero:absolute hero:left-0 hero:top-0 hero:h-[434px] hero:w-[1328px] hero:origin-top-left hero:[transform:scale(var(--hero-scale))]">
+              down by --hero-scale (1 at full size, continuing to shrink all
+              the way to mobile widths) rather than resized — a transform
+              keeps every child's absolute coordinate correct relative to
+              every other one, which resizing the box itself wouldn't. This
+              scaling now runs unconditionally (no `hero:` gate) so the
+              headline stays locked to the grid at every width — the ink
+              width of a glyph and the 31px grid pitch shrink by the same
+              factor together. */}
+          <div className="absolute left-0 top-0 h-[434px] w-[1328px] origin-top-left [transform:scale(var(--hero-scale))]">
             {/* Background grid · 627:46434/46435-47051 (15 rows × 42 cols of
                 30px tiles). Reproduced as a painted layer rather than actual
                 tiles — same repeating-linear-gradient technique as before,
@@ -138,13 +142,10 @@ export default function Home() {
               }}
             />
 
-            {/* Below 1024px the portrait and the three text layers stack in
-                normal flow, centered (spacing between them is a first pass —
-                revisit once there's real content); at and above it, each
-                takes its Figma coordinate inside the 434px body (now reached
-                via the scale wrapper above rather than directly by the
-                viewport). */}
-            <div className="relative flex flex-col items-center gap-6 py-10 text-center hero:block hero:py-0 hero:text-left">
+            {/* Every child takes its Figma coordinate inside the 434px body,
+                reached via the scale wrapper above rather than directly by
+                the viewport — this now applies at all widths. */}
+            <div className="relative block">
             {/* Portrait · 685:67539 — 274×366, left is 116.5 (raw Figma,
                 never rule-derived, so the new grid doesn't touch it — this
                 frame moved the whole lockup right by ~2 rules from the
@@ -152,10 +153,7 @@ export default function Home() {
                 edge at the bottom lands on the same rule as the subhead's
                 baseline (31 × 12 = 372, unchanged from before), so
                 top = 372 − 366 = 6, also unchanged. */}
-            {/* Sub-hero size is fluid rather than a `sm:` step: a built-in
-                breakpoint would override `hero:` on the same property (see
-                --breakpoint-hero in globals.css). */}
-            <span className="relative block aspect-[274/366] w-[clamp(143px,18vw,274px)] overflow-hidden hero:absolute hero:left-[116.5px] hero:top-[6px] hero:h-[366px] hero:w-[274px]">
+            <span className="absolute left-[116.5px] top-[6px] block h-[366px] w-[274px] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/marc/hero-illustration.png"
@@ -201,49 +199,45 @@ export default function Home() {
                 CSS has no ink-edge or baseline alignment primitive to do
                 this declaratively.
 
-                Left bearing re-measured again per direct correction: the
-                three lines were still landing ~6px short of rule 14 (498
-                absolute — hero box left 64 + 14×31). Confirmed the true
-                ink edge with a fillText()-to-canvas pixel scan (render at
-                the element's own computed font, read image data column by
-                column for the first non-transparent pixel) rather than
-                trusting the earlier bearing figures, which undershot by a
-                consistent ~6px across all three — likely measured via a
-                DOM Range, which reports the text run's layout-box edge,
-                not the rendered ink edge. Verified the corrected values
-                by drawing a 1px marker at x=498 and screenshotting the
-                real page (scaled 6× via a temporary CSS transform) at
-                each line — all three glyphs sit flush against it. */}
+                CORRECTION (supersedes the "corrected via canvas pixel scan"
+                pass below the old values had): that pass was wrong. It
+                pixel-scanned a fillText() render at a low alpha threshold,
+                which overshoots the true ink edge by a few px of
+                antialiasing fuzz, and it misattributed the resulting gap to
+                DOM Range under-measuring. Re-verified with
+                CanvasRenderingContext2D.measureText(char).actualBoundingBoxLeft
+                (the spec-correct ink-edge metric, no rasterization/alpha
+                threshold involved) at each element's own computed font: the
+                true left bearings are 3.46 / 13.4 / 2.49 (eyebrow/headline/
+                subhead) — exactly the ORIGINAL uncorrected figures above,
+                not the "corrected" 9.81 / 6.93 / 8.8 that had been baked
+                into the `left` values. Confirmed visually too: an absolutely
+                positioned 31px-wide marker painted at x=434 inside the same
+                scaled wrapper sits flush against each glyph's ink only at
+                the original bearings — the "corrected" values shift all
+                three ~6px right of rule 14. */}
 
             {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ef5c2d, font
                 unchanged from the previous frame. top = 105.5 (unchanged).
-                left = 434 − 3.46 = 430.54, corrected to 436.19 (true ink
-                bearing 3.46 → 9.81 via canvas pixel scan). */}
-            <p className="font-semibold text-accent [font-family:var(--font-display)] text-[clamp(1.5rem,4vw,2.85rem)] leading-[1.25] hero:absolute hero:left-[436.19px] hero:top-[105.5px] hero:whitespace-nowrap hero:text-[45.657px] hero:leading-[68.587px]">
+                left = 434 − actualBoundingBoxLeft(−3.46) = 437.46. */}
+            <p className="absolute left-[430.54px] top-[74.5px] font-semibold text-accent [font-family:var(--font-display)] whitespace-nowrap text-[45.657px] leading-[68.587px]">
               Hello and welcome
             </p>
 
             {/* Headline · 685:67537 — 181.671/166.573 Bold #4f3f3b,
-                letter-spacing −1.8167px (that's the same −0.01em ratio as
-                before, still has to override .display's −0.02em). Smaller
-                than the previous frame's 217.62/199.534/−2.1762 — same
+                letter-spacing −1.8167px (that’s the same −0.01em ratio as
+                before, still has to override .display’s −0.02em). Smaller
+                than the previous frame’s 217.62/199.534/−2.1762 — same
                 relative treatment, uniformly scaled down ~0.8347×.
-                top = 341 − 145 = 196, then shifted up one grid row (31px
-                pitch) to 165 per direct correction — kept 145px above the
-                subhead, matching its own shift. left = 434 − 13.4 = 420.6,
-                corrected to 427.07 (true ink bearing 13.4 → 6.93 via
-                canvas pixel scan). */}
-            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[427.07px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
+                top = 134 (moved up one grid row). left = 420.6. */}
+            <h1 className="display absolute left-[420.6px] top-[134px] whitespace-nowrap text-[181.671px] leading-[166.573px] tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
             {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
                 unchanged from the previous frame. Placeholder copy, left
-                as-is. top = 341, shifted up one grid row (31px pitch) to
-                310 per direct correction. left = 434 − 2.49 = 431.51,
-                corrected to 437.2 (true ink bearing 2.49 → 8.8 via canvas
-                pixel scan). */}
-            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[437.2px] hero:top-[310px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
+                as-is. top = 310. left = 431.51. */}
+            <p className="absolute left-[431.51px] top-[310px] text-ink-2 [font-family:var(--font-display)] whitespace-nowrap text-[31.14px] leading-[41.521px]">
               Lorem ipsum dolor sit amet consect
             </p>
           </div>

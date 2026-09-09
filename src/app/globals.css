@@ -20,24 +20,6 @@
 }
 
 @theme inline {
-  /* The homepage hero reproduces a fixed-scale Figma frame (1328px content
-     box). It used to only switch on at the frame's own full width (1408px),
-     which meant anything narrower — including ordinary 1280–1366px laptop
-     screens — fell all the way back to the mobile stacked layout. It now
-     switches on at 1024px (iPad landscape / Tailwind's own `lg`), and the
-     gap between 1024 and 1408 is covered by scaling the whole fixed layout
-     down as one rigid unit (see `#hero`'s `container-type` and `--hero-scale`
-     in page.tsx) rather than by reflowing it — those absolute pixel
-     positions have no other sensible fallback between "full size" and
-     "give up and stack it."
-     CAUTION: Tailwind emits this block BEFORE its built-in sm/md/lg/xl
-     utilities, so at equal specificity a built-in breakpoint wins over this
-     one no matter which has the larger min-width — `sm:h-[256px]` silently
-     beat `hero:h-[366px]` and rendered the hero portrait at the wrong size.
-     Don't set the same property with both a built-in breakpoint and `hero:`
-     on one element; give the sub-hero case a base/fluid value instead. */
-  --breakpoint-hero: 1024px;
-
   --color-bg: var(--bg);
   --color-bg-deep: var(--bg-deep);
   --color-surface: var(--surface);
