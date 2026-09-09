@@ -230,7 +230,7 @@ export default function Home() {
                 than the previous frame’s 217.62/199.534/−2.1762 — same
                 relative treatment, uniformly scaled down ~0.8347×.
                 top = 134 (moved up one grid row). left = 420.6. */}
-            <h1 className="display absolute left-[420.6px] top-[134px] whitespace-nowrap text-[181.671px] leading-[166.573px] tracking-[-1.8167px]">
+            <h1 className="display absolute left-[420.6px] top-[134px] whitespace-nowrap text-[200px] leading-[183.2px] tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
