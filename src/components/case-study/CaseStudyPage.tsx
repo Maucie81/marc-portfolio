@@ -275,29 +275,52 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}>
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
-        <div className="flex w-full flex-col gap-2 min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <div className="flex flex-col gap-2">
-            {/* Company name, not the timeline. Matches the "Quotes/Stats"
-                type role (.cs-quote's values, applied directly rather than
-                via the class itself — .cs-quote is unlayered CSS and would
-                beat a Tailwind text-accent override regardless of source
-                order), not the shared .cs-kicker role (16px/24px SemiBold)
-                also used by the "01"-style section numbers elsewhere on
-                this page — those weren't part of this spec. */}
-            <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
-              {meta.company}
+        <div className="relative w-full min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
+          {/* Background grid — same 31px-pitch repeating-linear-gradient
+              technique as the homepage hero's "Background grid" layer
+              (page.tsx), reused here per the intro redesign (Figma node
+              594:122022's "Background grid" component, also 31px pitch).
+              Absolutely positioned with a negative inset so it bleeds past
+              the text column without affecting its width/wrap — desktop
+              only, matching every other horizontal-track-only treatment on
+              this page. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -inset-x-10 -inset-y-14 hidden rounded-[8px] border border-line min-[901px]:block"
+            style={{
+              backgroundImage: [
+                "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
+                "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+              ].join(","),
+            }}
+          />
+          <div className="relative flex flex-col gap-2">
+            <div className="flex flex-col gap-2">
+              {/* Eyebrow is now the project's year range (meta.years) per
+                  the Figma redesign — was meta.company, which is folded
+                  into the h1 alongside the title instead. Matches the
+                  "Quotes/Stats" type role (.cs-quote's values, applied
+                  directly rather than via the class itself — .cs-quote is
+                  unlayered CSS and would beat a Tailwind text-accent
+                  override regardless of source order), not the shared
+                  .cs-kicker role (16px/24px SemiBold) also used by the
+                  "01"-style section numbers elsewhere on this page — those
+                  weren't part of this spec. */}
+              <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
+                {meta.years}
+              </p>
+              <h1 className="display text-[2.5rem] leading-none min-[901px]:text-[60px] min-[901px]:leading-none">
+                {meta.company} {meta.title}
+              </h1>
+            </div>
+            <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
+              {meta.subtitle}
             </p>
-            <h1 className="display text-[2.5rem] leading-none min-[901px]:text-[60px] min-[901px]:leading-none">
-              {meta.title}
-            </h1>
+            <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
+              <span className="inline-block h-px w-10 bg-accent" />
+              Scroll to move through the story
+            </p>
           </div>
-          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
-            {meta.subtitle}
-          </p>
-          <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
-            <span className="inline-block h-px w-10 bg-accent" />
-            Scroll to move through the story
-          </p>
         </div>
 
         <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0">
