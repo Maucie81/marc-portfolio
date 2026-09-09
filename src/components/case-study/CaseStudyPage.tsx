@@ -1,3 +1,6 @@
+"use client";
+
+import { useLayoutEffect, useRef, useState } from "react";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
@@ -338,6 +341,53 @@ function CaseStudyHero({
   width?: number;
   height?: number;
 }) {
+  const scaledBoxRef = useRef<HTMLDivElement>(null);
+  const h1Ref = useRef<HTMLHeadingElement>(null);
+  // Measured, not guessed: CSS `width:fit-content` computes its "max-content"
+  // size assuming NO soft-wrapping (only forced <br> breaks count) — there's
+  // no native CSS primitive for "shrink to the widest line that results
+  // AFTER wrapping." A fixed maxWidth cap on the title papered over this for
+  // Yahoo, where the natural (unwrapped) width happened to land close to the
+  // cap — but for Headspace/Airbnb the cap itself becomes the box width even
+  // though their actual wrapped lines are narrower, leaving the same
+  // lopsided margin this is supposed to fix. So: measure the title's real
+  // per-line rendered width with a Range (after the browser has already
+  // wrapped it at the 625 cap below) and set the lockup's width to that
+  // directly. Range rects are post-transform (visual) pixels since this
+  // whole canvas sits inside `transform:scale(--hero-scale)`, so the
+  // measured width is divided by the actual applied scale (read off the
+  // computed transform matrix) to get back to this canvas's native px.
+  const [lockupWidth, setLockupWidth] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const scaledBox = scaledBoxRef.current;
+    const h1 = h1Ref.current;
+    if (!scaledBox || !h1) return;
+
+    const measure = () => {
+      const transform = getComputedStyle(scaledBox).transform;
+      const match = /matrix\(([^,]+),/.exec(transform);
+      const scale = match ? parseFloat(match[1]) || 1 : 1;
+
+      const range = document.createRange();
+      range.selectNodeContents(h1);
+      const widestLine = Array.from(range.getClientRects()).reduce(
+        (max, rect) => Math.max(max, rect.width),
+        0,
+      );
+
+      // Floor at 555 (the paragraph's own column width, node 679:61221) so a
+      // short title never shrinks the lockup narrower than the paragraph
+      // actually needs.
+      setLockupWidth(Math.max(Math.round(widestLine / scale), 555));
+    };
+
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(scaledBox);
+    return () => ro.disconnect();
+  }, [meta.company, meta.title]);
+
   return (
     <div className="cs-only-horizontal relative [container-type:inline-size] min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
       {/* --hero-scale takes the smaller of: how much width the column
@@ -358,6 +408,7 @@ function CaseStudyHero({
         }}
       >
         <div
+          ref={scaledBoxRef}
           className="absolute left-0 top-0 origin-top-left"
           style={{ width: `${width}px`, height: `${height}px`, transform: "scale(var(--hero-scale))" }}
         >
@@ -371,19 +422,16 @@ function CaseStudyHero({
             }}
           />
           <div
-            // width:fit-content shrinks this box to hug its widest child
-            // (the title, normally) instead of spanning the full 714px
-            // canvas; marginLeft/Right:auto then centers THAT shrunk box
-            // (the "green box") within the canvas (the "red box"). Every
-            // child stays left-aligned inside it — this replaces both the
-            // earlier symmetric-padding attempt (a full-width box, so
-            // ragged-right text still looked off-center) and the
-            // text-align:center attempt (centered each line's ink instead
-            // of leaving the block itself left-aligned, per direct
-            // correction).
-            className="relative flex w-fit flex-col"
+            // Before the first measurement pass (or if JS hasn't run yet,
+            // e.g. a pre-hydration paint), falls back to fit-content so
+            // there's still a reasonable layout rather than full-width.
+            // marginLeft/Right:auto centers whichever width is active (the
+            // "green box") within the 714px canvas (the "red box"). Every
+            // child stays left-aligned inside it.
+            className="relative flex flex-col"
             style={{
               paddingTop: 250,
+              width: lockupWidth != null ? `${lockupWidth}px` : "fit-content",
               marginLeft: "auto",
               marginRight: "auto",
               // #E4E4DF at 40% — genuinely in the Figma data
@@ -414,17 +462,12 @@ function CaseStudyHero({
                 var(--font-display) is this exact font (self-hosted,
                 layout.tsx), already wired via `.display`; only the size/
                 leading were wrong (60px/leading-none, a leftover guess).
-                Left-aligned text, per direct correction of the text-center
-                pass above. maxWidth:625 caps this element's OWN natural
-                width — without it, Airbnb's unbroken "Account Creation &
-                Onboarding" (no internal <br>, ~1300px unwrapped) would
-                make the PARENT's fit-content calculation blow past the
-                714px canvas and fall back to full width, silently
-                reintroducing the exact ragged-right problem this is
-                fixing. With the cap, that line wraps at 625 like before,
-                and the parent's fit-content correctly hugs the resulting
-                (already-wrapped) widest line instead. */}
-            <h1 className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
+                maxWidth:625 is just the wrap boundary now (not the source of
+                the lockup's own width, which comes from the measured widest
+                line above) — without SOME cap, Airbnb's unbroken "Account
+                Creation & Onboarding" (no internal <br>) wouldn't wrap at
+                all before being measured. */}
+            <h1 ref={h1Ref} className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
               {meta.company}
               <br />
               {meta.title}
@@ -435,9 +478,8 @@ function CaseStudyHero({
                 node's own Google Sans Flex 20px/28px — that mismatch is
                 most of why line lengths read wrong (a 14px paragraph wraps
                 far more words per line at the same 555px width than a 20px
-                one does). Left-aligned, flush with the parent's fit-content
-                left edge (no more of its own auto-margin centering — the
-                parent handles that now as a single unit). */}
+                one does). Left-aligned, flush with the lockup's own left
+                edge — the lockup itself handles centering as a unit. */}
             <p
               // mt-11 (44px) moved up by one grid row (31px) per direct
               // request: 44 - 31 = 13.
