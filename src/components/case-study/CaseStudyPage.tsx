@@ -313,18 +313,36 @@ function CaseStudyHeroGrid({
       aria-hidden
       className={`pointer-events-none absolute hidden [container-type:inline-size] min-[901px]:block ${className}`}
     >
+      {/* Sized layer — same relationship as the homepage's `#hero` to its
+          scaled inner box (page.tsx): `--grid-scale` is computed ONCE here
+          and read by both this element's own `height` and the inner box's
+          `transform`, so the two can never drift apart. Previously the
+          outer wrapper was `inset-0` (pulling its height from the *text*
+          column's height, e.g. 268px) while the inner box independently
+          computed its own scale/height (756.5px) — the wrapper never
+          actually enclosed what it was scaling, so `.cs-pin`'s
+          `overflow:hidden` (globals.css) clipped whatever fell outside the
+          wrapper's wrong, too-short box. Now the wrapper's real height IS
+          the scaled card's height, always. */}
       <div
-        className="origin-top-left overflow-hidden rounded-[8px] border border-line"
+        className="relative"
         style={{
-          width: `${width}px`,
-          height: `${height}px`,
-          transform: `scale(min(1, calc(100cqi / ${width}px)))`,
-          backgroundImage: [
-            "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
-            "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
-          ].join(","),
+          ["--grid-scale" as string]: `min(1, calc(100cqi / ${width}px))`,
+          height: `calc(${height}px * var(--grid-scale))`,
         }}
-      />
+      >
+        <div
+          className="absolute left-0 top-0 origin-top-left overflow-hidden rounded-[8px] border border-line [transform:scale(var(--grid-scale))]"
+          style={{
+            width: `${width}px`,
+            height: `${height}px`,
+            backgroundImage: [
+              "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
+              "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+            ].join(","),
+          }}
+        />
+      </div>
     </div>
   );
 }
@@ -334,7 +352,7 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
     <div className="cs-block" style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}>
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
         <div className="relative w-full min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <CaseStudyHeroGrid className="inset-0" />
+          <CaseStudyHeroGrid className="inset-x-0 top-0" />
           <div className="relative flex flex-col gap-2">
             <div className="flex flex-col gap-2">
               {/* Eyebrow is now the project's year range (meta.years) per
