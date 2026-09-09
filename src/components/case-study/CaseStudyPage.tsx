@@ -353,19 +353,15 @@ function CaseStudyHero({
   // by the actual applied scale (read off the computed transform matrix) to
   // get back to this canvas's native px.
   //
-  // This now sizes ONLY the title's own box, not a container shared with the
-  // paragraph. Previous passes forced title+paragraph into one shared box
-  // sized to whichever was wider, which is wrong on two counts: (1) Figma's
-  // own data has them positioned completely independently (Copy Lockup's
-  // padding-left:93 for the title vs. node 679:61221's left:60 for the
-  // paragraph — never meant to share a left edge or a width), and (2) when
-  // the paragraph's fixed 555px happened to be wider than the title's actual
-  // content (Airbnb: title's widest line is 400px), the shared box ended up
-  // wider than the title needed, leaving the title itself off-center even
-  // though the shared box measured as centered. Title and paragraph+scroll-
-  // hint now get their own independently-sized, independently-centered
-  // boxes (via `align-items:center` on their shared parent below) instead.
-  const [titleWidth, setTitleWidth] = useState<number | null>(null);
+  // ONE box for the whole lockup (eyebrow + title + paragraph + scroll-hint
+  // together), sized to the wider of the title's measured widest line or
+  // the paragraph's fixed 555px column — per direct correction: splitting
+  // title and paragraph into two independently-centered boxes (the previous
+  // version) made them stop sharing a left edge, which read as broken even
+  // though each individually measured as centered. Back to one shared box,
+  // text left-aligned throughout, the box itself centered on both axes via
+  // the flex parent below.
+  const [lockupWidth, setLockupWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const scaledBox = scaledBoxRef.current;
@@ -384,7 +380,10 @@ function CaseStudyHero({
         0,
       );
 
-      setTitleWidth(Math.round(widestLine / scale));
+      // Floor at 555 (the paragraph's own column width, node 679:61221) so a
+      // short title never shrinks the lockup narrower than the paragraph
+      // actually needs.
+      setLockupWidth(Math.max(Math.round(widestLine / scale), 555));
     };
 
     measure();
@@ -427,34 +426,28 @@ function CaseStudyHero({
             }}
           />
           <div
-            // items-center centers EACH child box independently within the
-            // canvas — not one shared box forced to the width of whichever
-            // child happens to be wider. Two child boxes below: the
-            // eyebrow+title group (Figma's own "Project Lockup" grouping,
-            // node 594:122067, sized to the title's measured widest line)
-            // and the paragraph+scroll-hint group (Figma's node 679:61221,
-            // fixed 555px — a real, deliberately-authored width, not a
-            // guess). Each centers on its own, so the title is always
-            // centered on the canvas regardless of whether the paragraph
-            // happens to be wider or narrower than it.
-            className="relative flex flex-col items-center"
-            style={{ paddingTop: 250 }}
+            // The canvas itself is the centering context now: flex +
+            // items-center (vertical) + justify-center (horizontal) center
+            // its ONE child — the whole lockup box below — on both axes at
+            // once, replacing the old fixed paddingTop:250 (which pinned it
+            // near the top, not centered) and the old margin:auto
+            // (horizontal-only). Per direct correction: the lockup is one
+            // unit (eyebrow + title + paragraph + scroll-hint together),
+            // not two separately-centered pieces — splitting them made
+            // title and paragraph stop sharing a left edge, which read as
+            // broken even though each piece individually measured as
+            // centered.
+            className="absolute inset-0 flex items-center justify-center"
           >
-            {/* Eyebrow + title group (594:122067 "Project Lockup"). Sized to
-                titleWidth (the title's own measured widest line) so the
-                short eyebrow above it sits flush with the title's left
-                edge, same as Figma's shared Project-Lockup grouping —
-                while the GROUP as a whole still centers on the canvas via
-                the parent's items-center. */}
             <div
               className="flex flex-col"
               style={{
-                width: titleWidth != null ? `${titleWidth}px` : "fit-content",
+                width: lockupWidth != null ? `${lockupWidth}px` : "fit-content",
                 // #E4E4DF at 40% — genuinely in the Figma data
                 // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
                 // though Figma only applied it to the paragraph+scroll-hint
-                // group; applied here too per earlier request to cover all
-                // the text.
+                // group; applied across the whole lockup per earlier request
+                // to cover all the text.
                 backgroundColor: "rgba(228,228,223,0.4)",
               }}
             >
@@ -475,37 +468,31 @@ function CaseStudyHero({
                   just the wrap boundary (without SOME cap, Airbnb's
                   unbroken "Account Creation & Onboarding" — no internal
                   <br> — wouldn't wrap at all before being measured); the
-                  group box's actual width above comes from the measured
-                  widest line, not this cap. */}
+                  lockup's actual width above comes from the measured widest
+                  line (or 555, whichever is bigger), not this cap. */}
               <h1 ref={h1Ref} className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
                 {meta.company}
                 <br />
                 {meta.title}
               </h1>
-            </div>
-            {/* Paragraph + scroll-hint group (679:61221) — real Figma
-                column width (555px), not derived from the title at all. */}
-            <div
-              className="flex flex-col"
-              style={{ width: 555, marginTop: 13, backgroundColor: "rgba(228,228,223,0.4)" }}
-            >
               {/* Paragraph (594:122070): Google Sans Flex SemiBold,
                   20px/28px, #444440 (= --ink-2 exactly). An earlier pass
                   inherited the page's default body font (DM Sans) at
                   14px/20px instead of this node's own spec — that mismatch
                   is most of why line lengths read wrong (a 14px paragraph
                   wraps far more words per line at the same 555px width
-                  than a 20px one does). */}
+                  than a 20px one does). Left-aligned, flush with the
+                  lockup's own left edge — the lockup handles centering as
+                  a unit, not this element individually. */}
               <p
+                // mt-11 (44px) moved up one grid row (31px) per earlier
+                // direct request: 44 - 31 = 13.
                 className="font-semibold text-ink-2 [font-family:var(--font-display)]"
-                style={{ fontSize: 20, lineHeight: "28px" }}
+                style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
               >
                 {meta.subtitle}
               </p>
-              {/* Scroll hint (594:122073): Google Sans Flex SemiBold,
-                  14px/22px. mt-11 (44px) moved up one grid row (31px) per
-                  earlier direct request: 44 - 31 = 13, applied to the group
-                  above instead of here now that this sits in its own box. */}
+              {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
               <p
                 className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
                 style={{ fontSize: 14, lineHeight: "22px" }}
