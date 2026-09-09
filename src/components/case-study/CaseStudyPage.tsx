@@ -405,7 +405,14 @@ function CaseStudyHero({
                 used var(--font-body) (DM Sans) at 20px, matching the
                 unrelated .cs-quote role instead of this node's own spec. */}
             <p
-              className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
+              // Center-aligned: with the box itself already centered (equal
+              // 44.5 padding), left-aligned ragged text still read as
+              // off-balance — every line sat flush at the box's left edge,
+              // so short lines (or a short eyebrow like this one) left all
+              // their slack on the right only. text-align:center distributes
+              // that slack evenly instead, per direct request to center the
+              // whole lockup against the grid, not just its outer box.
+              className="text-center font-semibold uppercase text-accent [font-family:var(--font-mono)]"
               style={{ fontSize: 16, lineHeight: "24px" }}
             >
               {meta.years}
@@ -413,8 +420,13 @@ function CaseStudyHero({
             {/* Title (594:122069): Google Sans Flex Bold, 90px/80px —
                 var(--font-display) is this exact font (self-hosted,
                 layout.tsx), already wired via `.display`; only the size/
-                leading were wrong (60px/leading-none, a leftover guess). */}
-            <h1 className="display mt-2" style={{ fontSize: 90, lineHeight: "80px" }}>
+                leading were wrong (60px/leading-none, a leftover guess).
+                text-align:center for the same reason as the eyebrow above —
+                confirmed via measurement on Airbnb's 4-line title: every
+                line's ink started flush at the same left edge (35px from
+                the grid) while the widest line's right-side gap (120px)
+                still dwarfed that 35px, let alone the shorter lines'. */}
+            <h1 className="display mt-2 text-center" style={{ fontSize: 90, lineHeight: "80px" }}>
               {meta.company}
               <br />
               {meta.title}
@@ -425,19 +437,32 @@ function CaseStudyHero({
                 node's own Google Sans Flex 20px/28px — that mismatch is
                 most of why line lengths read wrong (a 14px paragraph wraps
                 far more words per line at the same 555px width than a 20px
-                one does). */}
+                one does). Box (not text) centered via auto margins — left-
+                aligned prose inside a centered column is the normal
+                editorial convention paired with a centered headline;
+                center-aligning the paragraph's own text as well would read
+                as noisy body copy. */}
             <p
               // mt-11 (44px) moved up by one grid row (31px) per direct
               // request: 44 - 31 = 13.
               className="font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
+              style={{
+                fontSize: 20,
+                lineHeight: "28px",
+                maxWidth: 555,
+                marginTop: 13,
+                marginLeft: "auto",
+                marginRight: "auto",
+              }}
             >
               {meta.subtitle}
             </p>
-            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
+            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px.
+                Own row (icon + label) centered as a unit via fit-content +
+                auto margins, same reasoning as the paragraph above. */}
             <p
-              className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 14, lineHeight: "22px" }}
+              className="mt-11 flex w-fit items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 14, lineHeight: "22px", marginLeft: "auto", marginRight: "auto" }}
             >
               <span className="inline-block h-[3px] w-10 bg-accent" />
               Scroll to move through the story
