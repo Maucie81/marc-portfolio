@@ -346,18 +346,26 @@ function CaseStudyHero({
   // Measured, not guessed: CSS `width:fit-content` computes its "max-content"
   // size assuming NO soft-wrapping (only forced <br> breaks count) — there's
   // no native CSS primitive for "shrink to the widest line that results
-  // AFTER wrapping." A fixed maxWidth cap on the title papered over this for
-  // Yahoo, where the natural (unwrapped) width happened to land close to the
-  // cap — but for Headspace/Airbnb the cap itself becomes the box width even
-  // though their actual wrapped lines are narrower, leaving the same
-  // lopsided margin this is supposed to fix. So: measure the title's real
-  // per-line rendered width with a Range (after the browser has already
-  // wrapped it at the 625 cap below) and set the lockup's width to that
-  // directly. Range rects are post-transform (visual) pixels since this
-  // whole canvas sits inside `transform:scale(--hero-scale)`, so the
-  // measured width is divided by the actual applied scale (read off the
-  // computed transform matrix) to get back to this canvas's native px.
-  const [lockupWidth, setLockupWidth] = useState<number | null>(null);
+  // AFTER wrapping." Range.getClientRects() gets the title's real per-line
+  // rendered widths after the browser has wrapped it at the 625 cap below.
+  // Rects are post-transform (visual) pixels since this whole canvas sits
+  // inside `transform:scale(--hero-scale)`, so the measured width is divided
+  // by the actual applied scale (read off the computed transform matrix) to
+  // get back to this canvas's native px.
+  //
+  // This now sizes ONLY the title's own box, not a container shared with the
+  // paragraph. Previous passes forced title+paragraph into one shared box
+  // sized to whichever was wider, which is wrong on two counts: (1) Figma's
+  // own data has them positioned completely independently (Copy Lockup's
+  // padding-left:93 for the title vs. node 679:61221's left:60 for the
+  // paragraph — never meant to share a left edge or a width), and (2) when
+  // the paragraph's fixed 555px happened to be wider than the title's actual
+  // content (Airbnb: title's widest line is 400px), the shared box ended up
+  // wider than the title needed, leaving the title itself off-center even
+  // though the shared box measured as centered. Title and paragraph+scroll-
+  // hint now get their own independently-sized, independently-centered
+  // boxes (via `align-items:center` on their shared parent below) instead.
+  const [titleWidth, setTitleWidth] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const scaledBox = scaledBoxRef.current;
@@ -376,10 +384,7 @@ function CaseStudyHero({
         0,
       );
 
-      // Floor at 555 (the paragraph's own column width, node 679:61221) so a
-      // short title never shrinks the lockup narrower than the paragraph
-      // actually needs.
-      setLockupWidth(Math.max(Math.round(widestLine / scale), 555));
+      setTitleWidth(Math.round(widestLine / scale));
     };
 
     measure();
@@ -422,80 +427,93 @@ function CaseStudyHero({
             }}
           />
           <div
-            // Before the first measurement pass (or if JS hasn't run yet,
-            // e.g. a pre-hydration paint), falls back to fit-content so
-            // there's still a reasonable layout rather than full-width.
-            // marginLeft/Right:auto centers whichever width is active (the
-            // "green box") within the 714px canvas (the "red box"). Every
-            // child stays left-aligned inside it.
-            className="relative flex flex-col"
-            style={{
-              paddingTop: 250,
-              width: lockupWidth != null ? `${lockupWidth}px` : "fit-content",
-              marginLeft: "auto",
-              marginRight: "auto",
-              // #E4E4DF at 40% — genuinely in the Figma data
-              // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
-              // though Figma only applied it to the paragraph+scroll-hint
-              // group; applied across the whole block per earlier request.
-              backgroundColor: "rgba(228,228,223,0.4)",
-            }}
+            // items-center centers EACH child box independently within the
+            // canvas — not one shared box forced to the width of whichever
+            // child happens to be wider. Two child boxes below: the
+            // eyebrow+title group (Figma's own "Project Lockup" grouping,
+            // node 594:122067, sized to the title's measured widest line)
+            // and the paragraph+scroll-hint group (Figma's node 679:61221,
+            // fixed 555px — a real, deliberately-authored width, not a
+            // guess). Each centers on its own, so the title is always
+            // centered on the canvas regardless of whether the paragraph
+            // happens to be wider or narrower than it.
+            className="relative flex flex-col items-center"
+            style={{ paddingTop: 250 }}
           >
-            {/* Typography for all four pieces below is read straight off
-                get_design_context, not eyeballed — node ids in each comment.
-                The previous pass kept this codebase's pre-existing (pre-
-                redesign) type sizes instead of these, which is what read as
-                "wrong typography / line lengths" once padding/max-width
-                were corrected around text that was still the wrong size. */}
-            {/* Eyebrow "2024 - 2026" (594:122068): Roboto Mono SemiBold,
-                16px/24px, uppercase, `--accent`. var(--font-mono) is this
-                exact typeface (Roboto_Mono, layout.tsx) — the prior version
-                used var(--font-body) (DM Sans) at 20px, matching the
-                unrelated .cs-quote role instead of this node's own spec. */}
-            <p
-              className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
-              style={{ fontSize: 16, lineHeight: "24px" }}
+            {/* Eyebrow + title group (594:122067 "Project Lockup"). Sized to
+                titleWidth (the title's own measured widest line) so the
+                short eyebrow above it sits flush with the title's left
+                edge, same as Figma's shared Project-Lockup grouping —
+                while the GROUP as a whole still centers on the canvas via
+                the parent's items-center. */}
+            <div
+              className="flex flex-col"
+              style={{
+                width: titleWidth != null ? `${titleWidth}px` : "fit-content",
+                // #E4E4DF at 40% — genuinely in the Figma data
+                // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
+                // though Figma only applied it to the paragraph+scroll-hint
+                // group; applied here too per earlier request to cover all
+                // the text.
+                backgroundColor: "rgba(228,228,223,0.4)",
+              }}
             >
-              {meta.years}
-            </p>
-            {/* Title (594:122069): Google Sans Flex Bold, 90px/80px —
-                var(--font-display) is this exact font (self-hosted,
-                layout.tsx), already wired via `.display`; only the size/
-                leading were wrong (60px/leading-none, a leftover guess).
-                maxWidth:625 is just the wrap boundary now (not the source of
-                the lockup's own width, which comes from the measured widest
-                line above) — without SOME cap, Airbnb's unbroken "Account
-                Creation & Onboarding" (no internal <br>) wouldn't wrap at
-                all before being measured. */}
-            <h1 ref={h1Ref} className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
-              {meta.company}
-              <br />
-              {meta.title}
-            </h1>
-            {/* Paragraph (594:122070): Google Sans Flex SemiBold, 20px/28px,
-                #444440 (= --ink-2 exactly). Previously inherited the page's
-                default body font (DM Sans) at 14px/20px instead of this
-                node's own Google Sans Flex 20px/28px — that mismatch is
-                most of why line lengths read wrong (a 14px paragraph wraps
-                far more words per line at the same 555px width than a 20px
-                one does). Left-aligned, flush with the lockup's own left
-                edge — the lockup itself handles centering as a unit. */}
-            <p
-              // mt-11 (44px) moved up by one grid row (31px) per direct
-              // request: 44 - 31 = 13.
-              className="font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
+              {/* Eyebrow "2024 - 2026" (594:122068): Roboto Mono SemiBold,
+                  16px/24px, uppercase, `--accent`. var(--font-mono) is this
+                  exact typeface (Roboto_Mono, layout.tsx) — an earlier pass
+                  used var(--font-body) (DM Sans) at 20px, matching the
+                  unrelated .cs-quote role instead of this node's own spec. */}
+              <p
+                className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
+                style={{ fontSize: 16, lineHeight: "24px" }}
+              >
+                {meta.years}
+              </p>
+              {/* Title (594:122069): Google Sans Flex Bold, 90px/80px —
+                  var(--font-display) is this exact font (self-hosted,
+                  layout.tsx), already wired via `.display`. maxWidth:625 is
+                  just the wrap boundary (without SOME cap, Airbnb's
+                  unbroken "Account Creation & Onboarding" — no internal
+                  <br> — wouldn't wrap at all before being measured); the
+                  group box's actual width above comes from the measured
+                  widest line, not this cap. */}
+              <h1 ref={h1Ref} className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
+                {meta.company}
+                <br />
+                {meta.title}
+              </h1>
+            </div>
+            {/* Paragraph + scroll-hint group (679:61221) — real Figma
+                column width (555px), not derived from the title at all. */}
+            <div
+              className="flex flex-col"
+              style={{ width: 555, marginTop: 13, backgroundColor: "rgba(228,228,223,0.4)" }}
             >
-              {meta.subtitle}
-            </p>
-            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
-            <p
-              className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 14, lineHeight: "22px" }}
-            >
-              <span className="inline-block h-[3px] w-10 bg-accent" />
-              Scroll to move through the story
-            </p>
+              {/* Paragraph (594:122070): Google Sans Flex SemiBold,
+                  20px/28px, #444440 (= --ink-2 exactly). An earlier pass
+                  inherited the page's default body font (DM Sans) at
+                  14px/20px instead of this node's own spec — that mismatch
+                  is most of why line lengths read wrong (a 14px paragraph
+                  wraps far more words per line at the same 555px width
+                  than a 20px one does). */}
+              <p
+                className="font-semibold text-ink-2 [font-family:var(--font-display)]"
+                style={{ fontSize: 20, lineHeight: "28px" }}
+              >
+                {meta.subtitle}
+              </p>
+              {/* Scroll hint (594:122073): Google Sans Flex SemiBold,
+                  14px/22px. mt-11 (44px) moved up one grid row (31px) per
+                  earlier direct request: 44 - 31 = 13, applied to the group
+                  above instead of here now that this sits in its own box. */}
+              <p
+                className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+                style={{ fontSize: 14, lineHeight: "22px" }}
+              >
+                <span className="inline-block h-[3px] w-10 bg-accent" />
+                Scroll to move through the story
+              </p>
+            </div>
           </div>
         </div>
       </div>
