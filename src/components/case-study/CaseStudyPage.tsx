@@ -371,21 +371,51 @@ function CaseStudyHero({
             }}
           />
           <div
-            className="relative flex flex-col gap-2"
+            className="relative flex flex-col"
             style={{ paddingLeft: 93, paddingTop: 250, paddingRight: 27 }}
           >
-            <div className="flex flex-col gap-2">
-              <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
-                {meta.years}
-              </p>
-              <h1 className="display text-[60px] leading-none">
-                {meta.company} {meta.title}
-              </h1>
-            </div>
-            <p className="text-sm leading-[20px] text-ink-2" style={{ maxWidth: 555 }}>
+            {/* Typography for all four pieces below is read straight off
+                get_design_context, not eyeballed — node ids in each comment.
+                The previous pass kept this codebase's pre-existing (pre-
+                redesign) type sizes instead of these, which is what read as
+                "wrong typography / line lengths" once padding/max-width
+                were corrected around text that was still the wrong size. */}
+            {/* Eyebrow "2024 - 2026" (594:122068): Roboto Mono SemiBold,
+                16px/24px, uppercase, `--accent`. var(--font-mono) is this
+                exact typeface (Roboto_Mono, layout.tsx) — the prior version
+                used var(--font-body) (DM Sans) at 20px, matching the
+                unrelated .cs-quote role instead of this node's own spec. */}
+            <p
+              className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
+              style={{ fontSize: 16, lineHeight: "24px" }}
+            >
+              {meta.years}
+            </p>
+            {/* Title (594:122069): Google Sans Flex Bold, 90px/80px —
+                var(--font-display) is this exact font (self-hosted,
+                layout.tsx), already wired via `.display`; only the size/
+                leading were wrong (60px/leading-none, a leftover guess). */}
+            <h1 className="display mt-2" style={{ fontSize: 90, lineHeight: "80px" }}>
+              {meta.company} {meta.title}
+            </h1>
+            {/* Paragraph (594:122070): Google Sans Flex SemiBold, 20px/28px,
+                #444440 (= --ink-2 exactly). Previously inherited the page's
+                default body font (DM Sans) at 14px/20px instead of this
+                node's own Google Sans Flex 20px/28px — that mismatch is
+                most of why line lengths read wrong (a 14px paragraph wraps
+                far more words per line at the same 555px width than a 20px
+                one does). */}
+            <p
+              className="mt-11 font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555 }}
+            >
               {meta.subtitle}
             </p>
-            <p className="mt-10 flex items-center gap-3 text-sm text-ink-2">
+            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
+            <p
+              className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 14, lineHeight: "22px" }}
+            >
               <span className="inline-block h-px w-10 bg-accent" />
               Scroll to move through the story
             </p>
@@ -403,14 +433,24 @@ function CoverBlockMobileText({ meta }: { meta: Meta }) {
   return (
     <div className="cs-only-vertical flex w-full flex-col gap-2">
       <div className="flex flex-col gap-2">
-        <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
+        {/* Same font roles as the desktop canvas (Roboto Mono eyebrow,
+            Google Sans Flex title) — sized down for the narrow viewport
+            rather than at their native desktop px, since mobile has no
+            scaled canvas to inherit sizing from. */}
+        <p
+          className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
+          style={{ fontSize: 14, lineHeight: "20px" }}
+        >
           {meta.years}
         </p>
         <h1 className="display text-[2.5rem] leading-none">
           {meta.company} {meta.title}
         </h1>
       </div>
-      <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
+      <p
+        className="max-w-[calc(571px*var(--cs-scale,1))] font-semibold text-ink-2 [font-family:var(--font-display)]"
+        style={{ fontSize: 16, lineHeight: "24px" }}
+      >
         {meta.subtitle}
       </p>
     </div>
