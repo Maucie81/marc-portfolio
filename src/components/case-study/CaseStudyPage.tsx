@@ -399,7 +399,9 @@ function CaseStudyHero({
                 layout.tsx), already wired via `.display`; only the size/
                 leading were wrong (60px/leading-none, a leftover guess). */}
             <h1 className="display mt-2" style={{ fontSize: 90, lineHeight: "80px" }}>
-              {meta.company} {meta.title}
+              {meta.company}
+              <br />
+              {meta.title}
             </h1>
             {/* Paragraph (594:122070): Google Sans Flex SemiBold, 20px/28px,
                 #444440 (= --ink-2 exactly). Previously inherited the page's
@@ -419,7 +421,7 @@ function CaseStudyHero({
               className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
               style={{ fontSize: 14, lineHeight: "22px" }}
             >
-              <span className="inline-block h-px w-10 bg-accent" />
+              <span className="inline-block h-[3px] w-10 bg-accent" />
               Scroll to move through the story
             </p>
           </div>
