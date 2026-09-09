@@ -446,10 +446,13 @@ function CaseStudyHero({
             >
               {meta.subtitle}
             </p>
-            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
+            {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px.
+                w-fit + mx-auto centers this row (icon + label, as a unit)
+                within the lockup's own width, per direct request — the rest
+                of the lockup (eyebrow/title/paragraph) stays left-aligned. */}
             <p
-              className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 14, lineHeight: "22px" }}
+              className="mt-11 flex w-fit items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 14, lineHeight: "22px", marginLeft: "auto", marginRight: "auto" }}
             >
               <span className="inline-block h-[3px] w-10 bg-accent" />
               Scroll to move through the story
