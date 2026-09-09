@@ -272,77 +272,147 @@ function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeig
 }
 
 /**
- * Case-study hero background grid — a genuine fixed-dimension design canvas,
- * not a box that hugs whatever text happens to sit on top of it. Same
- * technique as the homepage hero's own `--hero-scale` canvas (page.tsx):
- * the grid is authored at its real Figma pixel size and uniformly scaled
- * down (via a local, self-contained container-query) to fit whatever box
- * it's dropped into — it never stretches or distorts, it only shrinks.
+ * Case-study hero — grid graphic AND text share ONE fixed-dimension design
+ * canvas, scaled uniformly, same technique as the homepage's `--hero-scale`
+ * (page.tsx). Third pass: the grid-only version from the previous two
+ * passes let the text sit outside the scaled canvas at a fixed size, so
+ * (a) padding/max-width numbers pulled from Figma had no consistent 714px
+ * frame of reference to be measured against, and (b) the grid could shrink
+ * to fit while the text next to it couldn't, which is what caused the
+ * clipping .cs-pin was blamed for last time — the real defect was the two
+ * pieces never sharing a scale in the first place, not .cs-pin's own
+ * height. Growing .cs-pin itself would make it worse: GSAP's `pin:true`
+ * (HorizontalTrack.tsx) freezes this section at its own box for the whole
+ * scroll range, so anything past 100vh in a taller-than-viewport pin isn't
+ * "clipped," it's permanently unreachable for that entire range — 100vh is
+ * load-bearing, not the bug. Content has to fit inside it instead.
  *
- * Dimensions/texture confirmed via the Figma MCP against fileKey
- * AWMKNoAFrxViMhBaGRfWbZ, node 679:59867 ("Background grid", child of the
- * Yahoo Partner Portal hero frame 594:122022 → "Frame 74" → this node):
- *   - 714×914, cells 30px + 1px gap = 31px pitch (get_metadata XML)
- *   - cell fill #e4e4df / gap color #b0b0b0 (get_design_context on a single
- *     row, id 679:59868: `bg-[#b0b0b0] ... gap-px`, children `bg-[#e4e4df]`)
- *     — exact matches for this file's existing --bg/--line tokens, so the
- *     already-coded repeating-linear-gradient texture is correct as-is.
- *   - ~8px outer corner radius — NOT a directly-pulled token: the frame's
- *     own get_design_context call exceeded the tool's size limit (714×914
- *     of individual cells is too large to render), so this is measured off
- *     the rendered screenshot's corner antialiasing arc instead, and it
- *     matches the homepage grid's own 8px exactly.
+ * All values below are cited to the specific Figma property they came
+ * from — fileKey AWMKNoAFrxViMhBaGRfWbZ, hero frame 594:122022:
+ *   - Grid (679:59867 "Background grid"): 714×914, 30px cells + 1px gap =
+ *     31px pitch (get_metadata XML), cell fill #e4e4df / gap #b0b0b0
+ *     (get_design_context on row 679:59868: `bg-[#b0b0b0] ... gap-px`,
+ *     children `bg-[#e4e4df]`) — exact matches for --bg/--line, texture
+ *     unchanged. ~8px corner radius measured off the rendered screenshot's
+ *     antialiasing arc (679:59867's own get_design_context exceeded the
+ *     tool's size limit, so this one number is NOT a pulled token).
+ *   - Text inset (594:122066 "Copy lockup", the real auto-layout frame
+ *     wrapping both the eyebrow/title and the paragraph): get_design_context
+ *     returns its own Tailwind classes directly — `pl-[93px] pr-[27px]
+ *     pt-[250px]`. Applied as ONE inset to the whole text block (eyebrow +
+ *     title + paragraph + scroll hint together), not two different values —
+ *     see below for why.
+ *   - Paragraph max-width: the paragraph's immediate wrapping frame
+ *     (679:61221, which also holds the scroll-hint line) has its own
+ *     `w-[555px]` in that same get_design_context pull. The <p> node itself
+ *     (594:122070) separately carries a conflicting `w-[591px]` — Figma
+ *     staleness (the text's last-recorded resize width vs. its parent's
+ *     current auto-layout width, common when a fixed-width text node sits
+ *     inside a later-resized auto-layout parent) — used the wrapping
+ *     frame's 555px instead since it's the deliberately-authored column
+ *     width shared with the scroll hint below it, not a stale text-node
+ *     leftover.
+ *   - NOT applied: 679:61221's own absolute position (`left-[60px]
+ *     top-[467px]`), which is 33px to the LEFT of the title's 93px inset
+ *     and only vertically clears Yahoo's specific 2-line title. Airbnb's
+ *     and Headspace's longer titles wrap taller at the same 594px content
+ *     width, so a fixed top:467px would overlap their titles. Kept the
+ *     paragraph in normal flow after the title instead (as before), so it
+ *     always clears whatever height the title actually renders at, and
+ *     left it at the same 93px inset as the title rather than the
+ *     Figma-literal 60px, since introducing a stagger nobody asked for
+ *     isn't part of this pass's scope. Flagging this rather than silently
+ *     matching the raw number.
  *
- * Airbnb and Headspace have no equivalent hero frame of their own in this
- * Figma file (their "Case Studies" page entries are flat legacy reference
- * screenshots, not editable frames), so all three case studies share these
- * same 714×914 numbers via CoverBlock below — width/height are still props
- * so a real per-case-study frame can override them later.
+ * Airbnb and Headspace have no hero frame of their own in this Figma file
+ * ("Case Studies" page entries there are flat legacy screenshots, not
+ * editable frames) — all three share Yahoo's 714×914 canvas and padding
+ * via CoverBlock below.
  */
-function CaseStudyHeroGrid({
+function CaseStudyHero({
+  meta,
   width = 714,
   height = 914,
-  className = "",
 }: {
+  meta: Meta;
   width?: number;
   height?: number;
-  className?: string;
 }) {
   return (
-    <div
-      aria-hidden
-      className={`pointer-events-none absolute hidden [container-type:inline-size] min-[901px]:block ${className}`}
-    >
-      {/* Sized layer — same relationship as the homepage's `#hero` to its
-          scaled inner box (page.tsx): `--grid-scale` is computed ONCE here
-          and read by both this element's own `height` and the inner box's
-          `transform`, so the two can never drift apart. Previously the
-          outer wrapper was `inset-0` (pulling its height from the *text*
-          column's height, e.g. 268px) while the inner box independently
-          computed its own scale/height (756.5px) — the wrapper never
-          actually enclosed what it was scaling, so `.cs-pin`'s
-          `overflow:hidden` (globals.css) clipped whatever fell outside the
-          wrapper's wrong, too-short box. Now the wrapper's real height IS
-          the scaled card's height, always. */}
+    <div className="cs-only-horizontal relative [container-type:inline-size] min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
+      {/* --hero-scale takes the smaller of: how much width the column
+          actually has (100cqi vs. the native 714px), and how much vertical
+          room is actually free inside .cs-pin's fixed 100vh once the fixed
+          top bar (64px desktop), .cs-track's own top padding (68px), and
+          the fixed bottom progress rail (32px, .cs-progress in
+          globals.css) are excluded — ~164px total, plus a small margin so
+          centering slop can't tip it over. Computed once here; both this
+          element's own height and the inner canvas's transform read the
+          SAME variable, so wrapper and content can't drift apart the way
+          they did last pass. */}
       <div
         className="relative"
         style={{
-          ["--grid-scale" as string]: `min(1, calc(100cqi / ${width}px))`,
-          height: `calc(${height}px * var(--grid-scale))`,
+          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - 190px) / ${height}px))`,
+          height: `calc(${height}px * var(--hero-scale))`,
         }}
       >
         <div
-          className="absolute left-0 top-0 origin-top-left overflow-hidden rounded-[8px] border border-line [transform:scale(var(--grid-scale))]"
-          style={{
-            width: `${width}px`,
-            height: `${height}px`,
-            backgroundImage: [
-              "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
-              "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
-            ].join(","),
-          }}
-        />
+          className="absolute left-0 top-0 origin-top-left"
+          style={{ width: `${width}px`, height: `${height}px`, transform: "scale(var(--hero-scale))" }}
+        >
+          <div
+            className="absolute inset-0 overflow-hidden rounded-[8px] border border-line"
+            style={{
+              backgroundImage: [
+                "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
+                "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+              ].join(","),
+            }}
+          />
+          <div
+            className="relative flex flex-col gap-2"
+            style={{ paddingLeft: 93, paddingTop: 250, paddingRight: 27 }}
+          >
+            <div className="flex flex-col gap-2">
+              <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
+                {meta.years}
+              </p>
+              <h1 className="display text-[60px] leading-none">
+                {meta.company} {meta.title}
+              </h1>
+            </div>
+            <p className="text-sm leading-[20px] text-ink-2" style={{ maxWidth: 555 }}>
+              {meta.subtitle}
+            </p>
+            <p className="mt-10 flex items-center gap-3 text-sm text-ink-2">
+              <span className="inline-block h-px w-10 bg-accent" />
+              Scroll to move through the story
+            </p>
+          </div>
+        </div>
       </div>
+    </div>
+  );
+}
+
+/** Mobile/tablet (<901px) fallback — plain stacked text, no grid canvas
+    (same `cs-only-vertical` split every other horizontal-track-only
+    treatment on this page already uses). */
+function CoverBlockMobileText({ meta }: { meta: Meta }) {
+  return (
+    <div className="cs-only-vertical flex w-full flex-col gap-2">
+      <div className="flex flex-col gap-2">
+        <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
+          {meta.years}
+        </p>
+        <h1 className="display text-[2.5rem] leading-none">
+          {meta.company} {meta.title}
+        </h1>
+      </div>
+      <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
+        {meta.subtitle}
+      </p>
     </div>
   );
 }
@@ -351,36 +421,8 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}>
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
-        <div className="relative w-full min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <CaseStudyHeroGrid className="inset-x-0 top-0" />
-          <div className="relative flex flex-col gap-2">
-            <div className="flex flex-col gap-2">
-              {/* Eyebrow is now the project's year range (meta.years) per
-                  the Figma redesign — was meta.company, which is folded
-                  into the h1 alongside the title instead. Matches the
-                  "Quotes/Stats" type role (.cs-quote's values, applied
-                  directly rather than via the class itself — .cs-quote is
-                  unlayered CSS and would beat a Tailwind text-accent
-                  override regardless of source order), not the shared
-                  .cs-kicker role (16px/24px SemiBold) also used by the
-                  "01"-style section numbers elsewhere on this page — those
-                  weren't part of this spec. */}
-              <p className="text-xl font-semibold leading-6 text-accent [font-family:var(--font-body)]">
-                {meta.years}
-              </p>
-              <h1 className="display text-[2.5rem] leading-none min-[901px]:text-[60px] min-[901px]:leading-none">
-                {meta.company} {meta.title}
-              </h1>
-            </div>
-            <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
-              {meta.subtitle}
-            </p>
-            <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
-              <span className="inline-block h-px w-10 bg-accent" />
-              Scroll to move through the story
-            </p>
-          </div>
-        </div>
+        <CoverBlockMobileText meta={meta} />
+        <CaseStudyHero meta={meta} />
 
         <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <dl className="flex flex-col gap-5">
