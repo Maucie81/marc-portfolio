@@ -372,7 +372,10 @@ function CaseStudyHero({
           />
           <div
             className="relative flex flex-col"
-            style={{ paddingLeft: 93, paddingTop: 250, paddingRight: 27 }}
+            // paddingLeft was 93px (Figma's literal Copy-lockup value) — exactly
+            // 3 grid columns at this canvas's own 31px pitch. Shifted left by one
+            // column per direct request: 93 - 31 = 62.
+            style={{ paddingLeft: 62, paddingTop: 250, paddingRight: 27 }}
           >
             {/* Typography for all four pieces below is read straight off
                 get_design_context, not eyeballed — node ids in each comment.
