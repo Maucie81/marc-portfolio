@@ -416,15 +416,32 @@ function CaseStudyHero({
           className="absolute left-0 top-0 origin-top-left"
           style={{ width: `${width}px`, height: `${height}px`, transform: "scale(var(--hero-scale))" }}
         >
-          <div
+          <svg
             className="absolute inset-0 overflow-hidden rounded-[8px] border border-line"
-            style={{
-              backgroundImage: [
-                "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
-                "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
-              ].join(","),
-            }}
-          />
+            width="100%"
+            height="100%"
+            viewBox={`0 0 ${width} ${height}`}
+            preserveAspectRatio="none"
+            aria-hidden
+          >
+            {/* Hairlines drawn as real SVG strokes with vector-effect
+                "non-scaling-stroke" rather than a repeating-linear-gradient,
+                because the whole canvas sits inside `transform:scale
+                (--hero-scale)` (a fractional value, e.g. ~0.58 at common
+                viewport widths). A 1px CSS gradient line scaled by a
+                fractional, non-pixel-aligned factor rasterizes each of the
+                ~20+ repeated lines at a slightly different sub-pixel
+                position, so they anti-alias to inconsistent widths/opacity
+                — reading as varying line weight and a color shimmer across
+                the grid. non-scaling-stroke pins every stroke to a true 1
+                device-pixel width regardless of the ambient scale. */}
+            {Array.from({ length: Math.floor(width / 31) + 1 }, (_, i) => i * 31).map((x) => (
+              <line key={`v-${x}`} x1={x} y1={0} x2={x} y2={height} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            ))}
+            {Array.from({ length: Math.floor(height / 31) + 1 }, (_, i) => i * 31).map((y) => (
+              <line key={`h-${y}`} x1={0} y1={y} x2={width} y2={y} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+            ))}
+          </svg>
           <div
             // The canvas itself is the centering context now: flex +
             // items-center (vertical) + justify-center (horizontal) center
