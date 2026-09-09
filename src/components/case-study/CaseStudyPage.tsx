@@ -372,9 +372,12 @@ function CaseStudyHero({
           />
           <div
             className="relative flex flex-col"
-            // paddingLeft was 93px (Figma's literal Copy-lockup value) — exactly
-            // 3 grid columns at this canvas's own 31px pitch. Shifted left by one
-            // column per direct request: 93 - 31 = 62.
+            // Horizontal padding is symmetric (44.5 each side) so the whole
+            // lockup centers within the 714px canvas, per direct request —
+            // same total (89px) as the previous 62/27 split (itself Figma's
+            // 93/27 shifted left one 31px grid column), just rebalanced so
+            // left and right margins match instead of the block sitting
+            // left-heavy. Content width (625px) is unchanged either way.
             //
             // backgroundColor: #E4E4DF at 40% — this is genuinely in the Figma
             // data (get_design_context on 679:61221 returned
@@ -384,9 +387,9 @@ function CaseStudyHero({
             // the whole padded block instead, per direct request just now to
             // cover "all of this text" for legibility.
             style={{
-              paddingLeft: 62,
+              paddingLeft: 44.5,
               paddingTop: 250,
-              paddingRight: 27,
+              paddingRight: 44.5,
               backgroundColor: "rgba(228,228,223,0.4)",
             }}
           >
