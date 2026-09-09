@@ -383,9 +383,31 @@ function CaseStudyHero({
     };
 
     measure();
+    // Re-measure once fonts are actually ready. `font-display: swap`
+    // (layout.tsx) paints the fallback font immediately and swaps in the
+    // real self-hosted Google Sans Flex asynchronously — if that swap
+    // hasn't happened yet when this effect's first `measure()` runs, it
+    // measures the FALLBACK font's (different) glyph widths, and nothing
+    // was re-triggering a correction once the real font landed. This is
+    // almost certainly why the centering looked right in testing (repeated
+    // navigation in the same session already had the font cached, so swap
+    // was instant/invisible) but wrong on a fresh load. `document.fonts`
+    // isn't in the default TS lib types this project targets, hence the cast.
+    (document as unknown as { fonts?: { ready: Promise<unknown> } }).fonts?.ready.then(measure);
     const ro = new ResizeObserver(measure);
     ro.observe(scaledBox);
-    return () => ro.disconnect();
+    // ResizeObserver only fires on actual layout-box size changes — it does
+    // NOT fire when --hero-scale changes on resize, since that only touches
+    // the `transform: scale()` (paint-time), and scaledBox's own layout
+    // width/height are fixed native px (`${width}px`/`${height}px`) that
+    // never change. The measurement itself is scale-independent (divided
+    // out below), so this is a defensive no-op in practice, not a fix for
+    // a known-wrong value — but cheap enough to keep as a safety net.
+    window.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", measure);
+    };
   }, [meta.company, meta.title]);
 
   return (
