@@ -375,7 +375,20 @@ function CaseStudyHero({
             // paddingLeft was 93px (Figma's literal Copy-lockup value) — exactly
             // 3 grid columns at this canvas's own 31px pitch. Shifted left by one
             // column per direct request: 93 - 31 = 62.
-            style={{ paddingLeft: 62, paddingTop: 250, paddingRight: 27 }}
+            //
+            // backgroundColor: #E4E4DF at 40% — this is genuinely in the Figma
+            // data (get_design_context on 679:61221 returned
+            // `bg-[rgba(228,228,223,0.4)]`, same on the nested Scroll div
+            // 594:122071), but Figma only applied it to the paragraph+scroll-
+            // hint group, not the eyebrow/title above it. Applied here across
+            // the whole padded block instead, per direct request just now to
+            // cover "all of this text" for legibility.
+            style={{
+              paddingLeft: 62,
+              paddingTop: 250,
+              paddingRight: 27,
+              backgroundColor: "rgba(228,228,223,0.4)",
+            }}
           >
             {/* Typography for all four pieces below is read straight off
                 get_design_context, not eyeballed — node ids in each comment.
@@ -411,8 +424,10 @@ function CaseStudyHero({
                 far more words per line at the same 555px width than a 20px
                 one does). */}
             <p
-              className="mt-11 font-semibold text-ink-2 [font-family:var(--font-display)]"
-              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555 }}
+              // mt-11 (44px) moved up by one grid row (31px) per direct
+              // request: 44 - 31 = 13.
+              className="font-semibold text-ink-2 [font-family:var(--font-display)]"
+              style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
             >
               {meta.subtitle}
             </p>
