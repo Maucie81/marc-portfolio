@@ -271,29 +271,70 @@ function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeig
   );
 }
 
+/**
+ * Case-study hero background grid — a genuine fixed-dimension design canvas,
+ * not a box that hugs whatever text happens to sit on top of it. Same
+ * technique as the homepage hero's own `--hero-scale` canvas (page.tsx):
+ * the grid is authored at its real Figma pixel size and uniformly scaled
+ * down (via a local, self-contained container-query) to fit whatever box
+ * it's dropped into — it never stretches or distorts, it only shrinks.
+ *
+ * Dimensions/texture confirmed via the Figma MCP against fileKey
+ * AWMKNoAFrxViMhBaGRfWbZ, node 679:59867 ("Background grid", child of the
+ * Yahoo Partner Portal hero frame 594:122022 → "Frame 74" → this node):
+ *   - 714×914, cells 30px + 1px gap = 31px pitch (get_metadata XML)
+ *   - cell fill #e4e4df / gap color #b0b0b0 (get_design_context on a single
+ *     row, id 679:59868: `bg-[#b0b0b0] ... gap-px`, children `bg-[#e4e4df]`)
+ *     — exact matches for this file's existing --bg/--line tokens, so the
+ *     already-coded repeating-linear-gradient texture is correct as-is.
+ *   - ~8px outer corner radius — NOT a directly-pulled token: the frame's
+ *     own get_design_context call exceeded the tool's size limit (714×914
+ *     of individual cells is too large to render), so this is measured off
+ *     the rendered screenshot's corner antialiasing arc instead, and it
+ *     matches the homepage grid's own 8px exactly.
+ *
+ * Airbnb and Headspace have no equivalent hero frame of their own in this
+ * Figma file (their "Case Studies" page entries are flat legacy reference
+ * screenshots, not editable frames), so all three case studies share these
+ * same 714×914 numbers via CoverBlock below — width/height are still props
+ * so a real per-case-study frame can override them later.
+ */
+function CaseStudyHeroGrid({
+  width = 714,
+  height = 914,
+  className = "",
+}: {
+  width?: number;
+  height?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute hidden [container-type:inline-size] min-[901px]:block ${className}`}
+    >
+      <div
+        className="origin-top-left overflow-hidden rounded-[8px] border border-line"
+        style={{
+          width: `${width}px`,
+          height: `${height}px`,
+          transform: `scale(min(1, calc(100cqi / ${width}px)))`,
+          backgroundImage: [
+            "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
+            "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+          ].join(","),
+        }}
+      />
+    </div>
+  );
+}
+
 function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}>
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
         <div className="relative w-full min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          {/* Background grid — same 31px-pitch repeating-linear-gradient
-              technique as the homepage hero's "Background grid" layer
-              (page.tsx), reused here per the intro redesign (Figma node
-              594:122022's "Background grid" component, also 31px pitch).
-              Absolutely positioned with a negative inset so it bleeds past
-              the text column without affecting its width/wrap — desktop
-              only, matching every other horizontal-track-only treatment on
-              this page. */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -inset-x-10 -inset-y-14 hidden rounded-[8px] border border-line min-[901px]:block"
-            style={{
-              backgroundImage: [
-                "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
-                "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
-              ].join(","),
-            }}
-          />
+          <CaseStudyHeroGrid className="inset-0" />
           <div className="relative flex flex-col gap-2">
             <div className="flex flex-col gap-2">
               {/* Eyebrow is now the project's year range (meta.years) per
