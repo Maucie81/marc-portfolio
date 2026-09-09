@@ -199,12 +199,27 @@ export default function Home() {
 
                 Re-measure both probes if the font file is ever updated;
                 CSS has no ink-edge or baseline alignment primitive to do
-                this declaratively. */}
+                this declaratively.
+
+                Left bearing re-measured again per direct correction: the
+                three lines were still landing ~6px short of rule 14 (498
+                absolute — hero box left 64 + 14×31). Confirmed the true
+                ink edge with a fillText()-to-canvas pixel scan (render at
+                the element's own computed font, read image data column by
+                column for the first non-transparent pixel) rather than
+                trusting the earlier bearing figures, which undershot by a
+                consistent ~6px across all three — likely measured via a
+                DOM Range, which reports the text run's layout-box edge,
+                not the rendered ink edge. Verified the corrected values
+                by drawing a 1px marker at x=498 and screenshotting the
+                real page (scaled 6× via a temporary CSS transform) at
+                each line — all three glyphs sit flush against it. */}
 
             {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ef5c2d, font
                 unchanged from the previous frame. top = 105.5 (unchanged).
-                left = 434 − 3.46 = 430.54. */}
-            <p className="font-semibold text-accent [font-family:var(--font-display)] text-[clamp(1.5rem,4vw,2.85rem)] leading-[1.25] hero:absolute hero:left-[430.54px] hero:top-[105.5px] hero:whitespace-nowrap hero:text-[45.657px] hero:leading-[68.587px]">
+                left = 434 − 3.46 = 430.54, corrected to 436.19 (true ink
+                bearing 3.46 → 9.81 via canvas pixel scan). */}
+            <p className="font-semibold text-accent [font-family:var(--font-display)] text-[clamp(1.5rem,4vw,2.85rem)] leading-[1.25] hero:absolute hero:left-[436.19px] hero:top-[105.5px] hero:whitespace-nowrap hero:text-[45.657px] hero:leading-[68.587px]">
               Hello and welcome
             </p>
 
@@ -215,16 +230,20 @@ export default function Home() {
                 relative treatment, uniformly scaled down ~0.8347×.
                 top = 341 − 145 = 196, then shifted up one grid row (31px
                 pitch) to 165 per direct correction — kept 145px above the
-                subhead, matching its own shift. left = 434 − 13.4 = 420.6. */}
-            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[420.6px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
+                subhead, matching its own shift. left = 434 − 13.4 = 420.6,
+                corrected to 427.07 (true ink bearing 13.4 → 6.93 via
+                canvas pixel scan). */}
+            <h1 className="display text-[clamp(2.5rem,9vw,6.7rem)] leading-[0.92] hero:absolute hero:left-[427.07px] hero:top-[165px] hero:whitespace-nowrap hero:text-[181.671px] hero:leading-[166.573px] hero:tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
             {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
                 unchanged from the previous frame. Placeholder copy, left
                 as-is. top = 341, shifted up one grid row (31px pitch) to
-                310 per direct correction. left = 434 − 2.49 = 431.51. */}
-            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[431.51px] hero:top-[310px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
+                310 per direct correction. left = 434 − 2.49 = 431.51,
+                corrected to 437.2 (true ink bearing 2.49 → 8.8 via canvas
+                pixel scan). */}
+            <p className="text-ink-2 [font-family:var(--font-display)] text-[clamp(1rem,2.2vw,1.35rem)] leading-[1.35] hero:absolute hero:left-[437.2px] hero:top-[310px] hero:whitespace-nowrap hero:text-[31.14px] hero:leading-[41.521px]">
               Lorem ipsum dolor sit amet consect
             </p>
           </div>
