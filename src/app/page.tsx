@@ -292,7 +292,7 @@ export default function Home() {
                   // the shadow layer so clipping the image never clips the
                   // shadow with it (an earlier bug).
                   <div
-                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
+                    className="relative w-full overflow-hidden rounded-t-[4px] border border-[#d2d2d2] bg-[#eaeae5]"
                     style={{ aspectRatio: "714 / 404" }}
                   >
                     {/* Available-space box: the green guide frame (520×302
