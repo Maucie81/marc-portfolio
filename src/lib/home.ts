@@ -15,25 +15,12 @@ export type Project = {
     | {
         src: string;
         alt: string;
+        /** Intrinsic pixel dimensions of the exported asset — the device
+         * bezel (border + corner radius) is baked into these pixels, not
+         * drawn in CSS, so every card uses identical markup regardless of
+         * each mockup's own aspect ratio in Figma. */
         width: number;
         height: number;
-        /** Inset of the device mockup within the outer #eaeae5 card, as a
-         * CSS `inset` value (top right bottom left) — pulled from each
-         * row's own Figma frame, not shared: Yahoo/Headspace's mockup box
-         * and Airbnb's aren't the same size in the design, and forcing
-         * Airbnb into a borrowed box is what caused the code-drawn shadow
-         * to sit around the wrong rectangle instead of the visible mockup
-         * (the asset's own aspect ratio matches its *own* Figma frame
-         * exactly, so using any other box re-introduces the mismatch). */
-        inset: string;
-        /** Draw the 8px #4f453b bezel + drop shadow around the inset
-         * image in code (raw screenshots, per Figma 643:52558/643:52618,
-         * shadow 19px/25px/26px #000 25%). False for an asset that already
-         * has its own border baked in from a Figma export (Airbnb's
-         * mockup, 643:52702) but still needs the shadow drawn in code
-         * (19px/14px/46px #000 25%) — object-contain so the baked-in
-         * frame never gets cropped. */
-        bezel: boolean;
       }
     | null;
   imageLabel: string;
@@ -49,12 +36,10 @@ export const projects: Project[] = [
       'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
     href: "/work/yahoo-partner-portal",
     image: {
-      src: "/ypp/thumbnail.webp",
-      alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard",
-      width: 2772,
-      height: 1556,
-      inset: "15.92% 15.89% 15.42% 14.63%",
-      bezel: true,
+      src: "/yahoo/thumbnail.webp",
+      alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard, with the device bezel baked into the image",
+      width: 1530,
+      height: 876,
     },
     imageLabel: "",
     skills: [
@@ -73,11 +58,9 @@ export const projects: Project[] = [
     href: "/work/headspace-admin-portal",
     image: {
       src: "/headspace/thumbnail.webp",
-      alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal",
-      width: 1482,
-      height: 828,
-      inset: "15.92% 15.89% 15.42% 14.63%",
-      bezel: true,
+      alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
+      width: 1548,
+      height: 882,
     },
     imageLabel: "",
     skills: [
@@ -97,19 +80,8 @@ export const projects: Project[] = [
     image: {
       src: "/airbnb/thumbnail.webp",
       alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
-      width: 1529,
-      height: 879,
-      // 784:121479's own confirmed frame (Portfolio-2026 file) — not
-      // Yahoo/Headspace's box. Deliberately a different size/shape in
-      // Figma, and object-cover (see page.tsx) fills this box regardless
-      // of the exported asset's exact aspect ratio.
-      inset: "12.44% 14.87% 11.44% 14.03%",
-      // Cropped from the Figma export (784:121481, "Mask group", 3x scale
-      // via a temporary rescaled clone for higher resolution) to just the
-      // bordered mockup — the raw export baked in drop-shadow bleed on a
-      // transparent backdrop. Border is still baked in; the shadow is
-      // drawn in code instead (see `bezel` above).
-      bezel: false,
+      width: 1545,
+      height: 882,
     },
     imageLabel: "",
     skills: [

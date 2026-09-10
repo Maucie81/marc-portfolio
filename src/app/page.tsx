@@ -261,68 +261,59 @@ export default function Home() {
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
                 const image = project.image ? (
-                  // Neutral card, per Figma 643:52558/643:52618: a 711×402
-                  // #eaeae5 card (border #d2d2d2, top corners radius 4)
-                  // with the device mockup inset at that row's own
-                  // confirmed box — Yahoo/Headspace and Airbnb aren't the
-                  // same size/shape in Figma, so each carries its own
-                  // `inset` rather than sharing one (a shared box left the
-                  // code-drawn shadow tracing a rectangle that didn't
-                  // match Airbnb's actual mockup bounds).
+                  // Two-layer structure, both tiers' numbers pulled
+                  // directly from Figma (784:121621/791:129913/784:121479)
+                  // via two guide rectangles the design added to each node
+                  // (get_design_context) plus the real DROP_SHADOW effect
+                  // on each "Mask group" layer (read via the Plugin API,
+                  // node.effects — not visible in the get_design_context
+                  // hint output, so it has to be read directly).
                   //
-                  // [container-type:inline-size]: lets the bezel border
-                  // below query this card's own rendered width instead of
-                  // the viewport's, so it can scale down at narrower card
-                  // widths (see border-[clamp(...)] below).
+                  // Outer = the red guide frame: 714×404, the total space
+                  // Figma allots per card including shadow bleed. No
+                  // overflow-hidden here — the shadow needs room to render
+                  // inside these bounds, not get clipped at them.
+                  //
+                  // Inner = the green guide frame: 520×302 positioned at
+                  // (94, 49) within the outer 714×404 — i.e. inset
+                  // 12.13% top / 14.01% right / 13.12% bottom / 13.17% left,
+                  // identical on all three nodes. This carries the exact
+                  // Figma shadow (offset 19/14, blur 46, spread 0,
+                  // rgba(0,0,0,0.24)) and, one level deeper, the
+                  // overflow-hidden crop for the image — kept separate from
+                  // the shadow layer so clipping the image never clips the
+                  // shadow with it (the earlier bug).
                   <div
-                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5] [container-type:inline-size]"
-                    style={{ aspectRatio: "711 / 402" }}
+                    className="relative w-full rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
+                    style={{ aspectRatio: "714 / 404" }}
                   >
                     <div
-                      className={
-                        project.image.bezel
-                          ? // 8px border at Figma's confirmed 711px-wide
-                            // reference frame (784:121621/791:129913,
-                            // get_design_context) is 8/711 = 1.1252cqw of
-                            // this card's own width — fixed border-8 held
-                            // that literal 8px at any card width, so it
-                            // read thicker than the design at narrower
-                            // viewports even as the card (and its inset
-                            // mockup box) shrank around it. cqw scales the
-                            // stroke down with the card; clamp holds it
-                            // between 2px and 10px so it never vanishes or
-                            // overshoots at extreme widths.
-                            "absolute overflow-hidden rounded-[12px] border-[clamp(2px,1.1252cqw,10px)] border-[#4f453b]"
-                          : // Asset already has its own border baked in
-                            // (Figma export, 784:121481) — inset only, no
-                            // second code-drawn border.
-                            "absolute overflow-hidden rounded-[12px]"
-                      }
-                      style={{
-                        inset: project.image.inset,
-                        // Drop shadow, read from Figma's own effect values
-                        // (SVG filter for 643:52558/643:52618's screenshot
-                        // frame; box-shadow for Airbnb's 643:52702) — kept
-                        // in code rather than baked into the asset so it
-                        // isn't clipped by the inset/overflow treatment.
-                        boxShadow: project.image.bezel
-                          ? "19px 25px 26px 0px rgba(0,0,0,0.25)"
-                          : "19px 14px 46px 0px rgba(0,0,0,0.25)",
-                      }}
+                      className="absolute inset-[12.13%_14.01%_13.12%_13.17%]"
+                      style={{ boxShadow: "19px 14px 46px 0px rgba(0,0,0,0.24)" }}
                     >
-                      <Image
-                        src={project.image.src}
-                        alt={project.image.alt}
-                        width={project.image.width}
-                        height={project.image.height}
-                        // object-cover for all three: object-contain
-                        // (previously used for Airbnb's bezel:false asset)
-                        // letterboxed whenever the exported asset's aspect
-                        // ratio didn't exactly match this inset box, leaving
-                        // a visible background-color gap. Cover crops to
-                        // fill instead — matches Yahoo/Headspace.
-                        className="h-full w-full object-cover"
-                      />
+                      {/* object-cover, not contain: measured via
+                          getBoundingClientRect that this crop box and its
+                          shadow-layer parent are pixel-identical (no drift
+                          between those two) — the visible line at the
+                          bottom edge was object-contain letterboxing,
+                          since none of the exported assets' aspect ratios
+                          exactly match this box's own (~1.726 vs
+                          1.746–1.755), leaving a thin gap where the
+                          (transparent) crop layer showed the outer card's
+                          background through. cover guarantees full
+                          coverage on every edge by definition — no aspect
+                          match required — at the cost of cropping a
+                          negligible sliver (~1–2%) off the mockup's own
+                          edges, which already carry their own margin. */}
+                      <div className="h-full w-full overflow-hidden rounded-[12px]">
+                        <Image
+                          src={project.image.src}
+                          alt={project.image.alt}
+                          width={project.image.width}
+                          height={project.image.height}
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
                     </div>
                   </div>
                 ) : (
