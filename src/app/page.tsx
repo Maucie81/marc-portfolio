@@ -287,44 +287,52 @@ export default function Home() {
                     className="relative w-full rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
                     style={{ aspectRatio: "714 / 404" }}
                   >
-                    <div
-                      className="absolute inset-[12.13%_14.01%_13.12%_13.17%]"
-                      style={{ boxShadow: "19px 14px 46px 0px rgba(0,0,0,0.24)" }}
-                    >
-                      {/* object-cover, not contain: measured via
-                          getBoundingClientRect that this crop box and its
-                          shadow-layer parent are pixel-identical (no drift
-                          between those two) — the visible line at the
-                          bottom edge was object-contain letterboxing,
-                          since none of the exported assets' aspect ratios
-                          exactly match this box's own (~1.726 vs
-                          1.746–1.755), leaving a thin gap where the
-                          (transparent) crop layer showed the outer card's
-                          background through. cover guarantees full
-                          coverage on every edge by definition — no aspect
-                          match required — at the cost of cropping a
-                          negligible sliver (~1–2%) off the mockup's own
-                          edges, which already carry their own margin.
-
-                          No rounded-[12px] here: the exported asset's own
-                          bezel corners are already baked in at that exact
-                          radius (verified pixel-for-pixel symmetric on all
-                          four corners). A second CSS radius on this
-                          wrapper doesn't align with the image's own arc
-                          once object-cover rescales it to the display
-                          size — two independently-computed roundings at
-                          slightly different effective radii, landing a
-                          pixel or two apart and showing as a seam/notch at
-                          each corner. overflow-hidden stays only as a
-                          plain rectangular safety clip. */}
-                      <div className="h-full w-full overflow-hidden">
-                        <Image
-                          src={project.image.src}
-                          alt={project.image.alt}
-                          width={project.image.width}
-                          height={project.image.height}
-                          className="h-full w-full object-cover"
-                        />
+                    {/* Available-space box: the green guide frame (520×302
+                        inset within the 714×404 red frame, 12.13/14.01/
+                        13.12/13.17%). This is a sizing envelope, not a crop
+                        box — flex centering lets the actual mockup box
+                        (below) size itself to fit inside via aspect-ratio,
+                        the same way object-contain would, but one level up
+                        so the shadow and border both hug the real visible
+                        mockup instead of a box whose aspect ratio doesn't
+                        match any of the three exported assets (~1.723 vs
+                        1.746–1.755 — that mismatch is what caused both
+                        earlier bugs: letterbox gaps under object-contain,
+                        then cropped-in side borders under object-cover). */}
+                    <div className="absolute inset-[12.13%_14.01%_13.12%_13.17%] flex items-center justify-center">
+                      {/* Actual mockup box: sized via the exported asset's
+                          own aspect ratio, constrained to fit the envelope
+                          above on whichever axis is tighter (flex +
+                          aspect-ratio + max-width/max-height is the
+                          standard CSS "contain" pattern for a box, not just
+                          an <img>). No cropping is possible — width/height
+                          are solved directly from the image's real ratio,
+                          so object-fit on the <img> below never has to
+                          reconcile a mismatched box. */}
+                      <div
+                        className="max-h-full max-w-full"
+                        style={{
+                          aspectRatio: `${project.image.width} / ${project.image.height}`,
+                          boxShadow: "19px 14px 46px 0px rgba(0,0,0,0.24)",
+                        }}
+                      >
+                        {/* No rounded-[12px] here: the exported asset's own
+                            bezel corners are already baked in at that exact
+                            radius (verified pixel-for-pixel symmetric on
+                            all four corners). overflow-hidden stays only as
+                            a plain rectangular safety clip — with the box
+                            above now matching the image's exact aspect
+                            ratio, object-cover never actually crops
+                            anything. */}
+                        <div className="h-full w-full overflow-hidden">
+                          <Image
+                            src={project.image.src}
+                            alt={project.image.alt}
+                            width={project.image.width}
+                            height={project.image.height}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
                       </div>
                     </div>
                   </div>
