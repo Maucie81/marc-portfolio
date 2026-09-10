@@ -332,6 +332,26 @@ function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeig
  * editable frames) — all three share Yahoo's 714×914 canvas and padding
  * via CoverBlock below.
  */
+
+/** Grid top offset, confirmed via get_metadata on 594:122065 ("Frame 74",
+ * the hero's shared coordinate space): "Background grid" (679:59867) sits
+ * at y:31, but "Copy lockup" (594:122066, the text content) starts at y:0 —
+ * a 31px gap where the grid doesn't yet reach the top of the content area.
+ * The grid's bottom already lines up with the frame's own bottom (31+914 =
+ * 945 = Frame 74's full height), so only the top needs extending, by
+ * exactly one grid pitch (30px cell + 1px gap = 31px — not a coincidence,
+ * the missing gap is literally one more row). Applied as a separate
+ * overlay `<div>` (its own top/height, own viewBox) rather than growing
+ * `width`/`height` above, which also size `scaledBox` and would re-center
+ * the text lockup inside a taller box and shift it down. */
+const GRID_TOP_EXTEND = 31;
+
+/** How far the grid pattern insets from the top and bottom of its
+ * (unchanged) container, applied after the extension above — given
+ * directly (not a Figma lookup). The container's own size/border/rounding
+ * stays put; only the drawn pattern stops this far short of its edges,
+ * leaving plain background showing in the gap. */
+const GRID_PADDING = 32;
 function CaseStudyHero({
   meta,
   width = 714,
@@ -416,32 +436,60 @@ function CaseStudyHero({
           className="absolute left-0 top-0 origin-top-left"
           style={{ width: `${width}px`, height: `${height}px`, transform: "scale(var(--hero-scale))" }}
         >
-          <svg
-            className="absolute inset-0 overflow-hidden rounded-[8px] border border-line"
-            width="100%"
-            height="100%"
-            viewBox={`0 0 ${width} ${height}`}
-            preserveAspectRatio="none"
+          <div
             aria-hidden
+            className="absolute overflow-hidden rounded-[8px] border border-line"
+            style={{
+              left: 0,
+              top: -GRID_TOP_EXTEND,
+              width,
+              height: height + GRID_TOP_EXTEND,
+            }}
           >
-            {/* Hairlines drawn as real SVG strokes with vector-effect
-                "non-scaling-stroke" rather than a repeating-linear-gradient,
-                because the whole canvas sits inside `transform:scale
-                (--hero-scale)` (a fractional value, e.g. ~0.58 at common
-                viewport widths). A 1px CSS gradient line scaled by a
-                fractional, non-pixel-aligned factor rasterizes each of the
-                ~20+ repeated lines at a slightly different sub-pixel
-                position, so they anti-alias to inconsistent widths/opacity
-                — reading as varying line weight and a color shimmer across
-                the grid. non-scaling-stroke pins every stroke to a true 1
-                device-pixel width regardless of the ambient scale. */}
-            {Array.from({ length: Math.floor(width / 31) + 1 }, (_, i) => i * 31).map((x) => (
-              <line key={`v-${x}`} x1={x} y1={0} x2={x} y2={height} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-            ))}
-            {Array.from({ length: Math.floor(height / 31) + 1 }, (_, i) => i * 31).map((y) => (
-              <line key={`h-${y}`} x1={0} y1={y} x2={width} y2={y} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
-            ))}
-          </svg>
+            {/* Grid pattern insets 32px from this container's top/bottom —
+                own position, not the container's padding — per direct
+                correction: padding on the container (or background-clip
+                tricks) still reads as "the pattern, just contained," where
+                what's wanted is the pattern stopping short and plain
+                background showing in the gap. Container itself (size,
+                border, rounding) is untouched by this inset. */}
+            <svg
+              className="absolute left-0"
+              style={{ top: GRID_PADDING, width: "100%", height: `calc(100% - ${GRID_PADDING * 2}px)` }}
+              viewBox={`0 0 ${width} ${height + GRID_TOP_EXTEND - GRID_PADDING * 2}`}
+              preserveAspectRatio="none"
+            >
+              {/* Hairlines drawn as real SVG strokes with vector-effect
+                  "non-scaling-stroke" rather than a repeating-linear-gradient,
+                  because the whole canvas sits inside `transform:scale
+                  (--hero-scale)` (a fractional value, e.g. ~0.58 at common
+                  viewport widths). A 1px CSS gradient line scaled by a
+                  fractional, non-pixel-aligned factor rasterizes each of the
+                  ~20+ repeated lines at a slightly different sub-pixel
+                  position, so they anti-alias to inconsistent widths/opacity
+                  — reading as varying line weight and a color shimmer across
+                  the grid. non-scaling-stroke pins every stroke to a true 1
+                  device-pixel width regardless of the ambient scale. */}
+              {Array.from({ length: Math.floor(width / 31) + 1 }, (_, i) => i * 31).map((x) => (
+                <line
+                  key={`v-${x}`}
+                  x1={x}
+                  y1={0}
+                  x2={x}
+                  y2={height + GRID_TOP_EXTEND - GRID_PADDING * 2}
+                  stroke="var(--line)"
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {Array.from(
+                { length: Math.floor((height + GRID_TOP_EXTEND - GRID_PADDING * 2) / 31) + 1 },
+                (_, i) => i * 31,
+              ).map((y) => (
+                <line key={`h-${y}`} x1={0} y1={y} x2={width} y2={y} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
+              ))}
+            </svg>
+          </div>
           <div
             // The canvas itself is the centering context now: flex +
             // items-center (vertical) + justify-center (horizontal) center
@@ -563,7 +611,7 @@ function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
         <CoverBlockMobileText meta={meta} />
         <CaseStudyHero meta={meta} />
 
-        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0">
+        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-end">
           <dl className="flex flex-col gap-5">
             {sidebar.groups.map((group) => (
               <div key={group.label} className="flex gap-[calc(21px*var(--cs-scale,1))]">
