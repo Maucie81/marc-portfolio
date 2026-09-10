@@ -269,16 +269,32 @@ export default function Home() {
                   // `inset` rather than sharing one (a shared box left the
                   // code-drawn shadow tracing a rectangle that didn't
                   // match Airbnb's actual mockup bounds).
+                  //
+                  // [container-type:inline-size]: lets the bezel border
+                  // below query this card's own rendered width instead of
+                  // the viewport's, so it can scale down at narrower card
+                  // widths (see border-[clamp(...)] below).
                   <div
-                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
+                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5] [container-type:inline-size]"
                     style={{ aspectRatio: "711 / 402" }}
                   >
                     <div
                       className={
                         project.image.bezel
-                          ? "absolute overflow-hidden rounded-[12px] border-8 border-[#4f453b]"
+                          ? // 8px border at Figma's confirmed 711px-wide
+                            // reference frame (784:121621/791:129913,
+                            // get_design_context) is 8/711 = 1.1252cqw of
+                            // this card's own width — fixed border-8 held
+                            // that literal 8px at any card width, so it
+                            // read thicker than the design at narrower
+                            // viewports even as the card (and its inset
+                            // mockup box) shrank around it. cqw scales the
+                            // stroke down with the card; clamp holds it
+                            // between 2px and 10px so it never vanishes or
+                            // overshoots at extreme widths.
+                            "absolute overflow-hidden rounded-[12px] border-[clamp(2px,1.1252cqw,10px)] border-[#4f453b]"
                           : // Asset already has its own border baked in
-                            // (Figma export, 643:52702) — inset only, no
+                            // (Figma export, 784:121481) — inset only, no
                             // second code-drawn border.
                             "absolute overflow-hidden rounded-[12px]"
                       }

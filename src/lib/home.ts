@@ -51,8 +51,8 @@ export const projects: Project[] = [
     image: {
       src: "/ypp/thumbnail.webp",
       alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard",
-      width: 1512,
-      height: 807,
+      width: 2772,
+      height: 1556,
       inset: "15.92% 15.89% 15.42% 14.63%",
       bezel: true,
     },
@@ -71,15 +71,11 @@ export const projects: Project[] = [
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
-    // TEMPORARY placeholder: reusing the Yahoo Partner Portal thumbnail
-    // because no Headspace asset has been chosen yet. Not a finished
-    // decision — swap for a real Headspace screenshot/mockup once Marc
-    // picks one.
     image: {
-      src: "/ypp/thumbnail.webp",
-      alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard",
-      width: 1512,
-      height: 807,
+      src: "/headspace/thumbnail.webp",
+      alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal",
+      width: 494,
+      height: 276,
       inset: "15.92% 15.89% 15.42% 14.63%",
       bezel: true,
     },
@@ -100,17 +96,17 @@ export const projects: Project[] = [
     href: "/work/airbnb-hotels",
     image: {
       src: "/airbnb/thumbnail.png",
-      alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow",
-      width: 1014,
-      height: 612,
-      // 643:52618's own confirmed frame (100,50,507,306 within 713×402) —
-      // not Yahoo's box. Deliberately a different size/shape in Figma, and
-      // the cropped asset's aspect ratio matches this exactly.
+      alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
+      width: 509,
+      height: 292,
+      // 784:121479's own confirmed frame (Portfolio-2026 file) — not
+      // Yahoo/Headspace's box. Deliberately a different size/shape in
+      // Figma, and the cropped asset's aspect ratio matches this exactly.
       inset: "12.44% 14.87% 11.44% 14.03%",
-      // Cropped from the Figma export (643:52702) to just the bordered
-      // mockup — the raw export baked in ~46px of drop-shadow bleed on a
-      // flattened card-color backdrop. Border is still baked in; the
-      // shadow is drawn in code instead (see `bezel` above).
+      // Cropped from the Figma export (784:121481, "Mask group") to just
+      // the bordered mockup — the raw export baked in drop-shadow bleed on
+      // a transparent backdrop. Border is still baked in; the shadow is
+      // drawn in code instead (see `bezel` above).
       bezel: false,
     },
     imageLabel: "",
