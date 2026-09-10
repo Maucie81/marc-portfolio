@@ -270,9 +270,17 @@ export default function Home() {
                   // hint output, so it has to be read directly).
                   //
                   // Outer = the red guide frame: 714×404, the total space
-                  // Figma allots per card including shadow bleed. No
-                  // overflow-hidden here — the shadow needs room to render
-                  // inside these bounds, not get clipped at them.
+                  // Figma allots per card including shadow bleed — sized
+                  // exactly so the shadow (max reach ~65px right/~60px
+                  // bottom from offset+blur) fits inside this box's own
+                  // margins (100px right/53px bottom) with room to spare.
+                  // Because of that, overflow-hidden is SAFE here: it clips
+                  // this box's own rectangular #eaeae5/border background
+                  // (which the browser otherwise renders full-bleed with
+                  // sharp corners on the sides/bottom, since only the top
+                  // is rounded — visible as a flat mismatched box sitting
+                  // behind the shadow) without touching the shadow, which
+                  // never reaches this boundary in the first place.
                   //
                   // Inner = the green guide frame: 520×302 positioned at
                   // (94, 49) within the outer 714×404 — i.e. inset
@@ -282,9 +290,9 @@ export default function Home() {
                   // rgba(0,0,0,0.24)) and, one level deeper, the
                   // overflow-hidden crop for the image — kept separate from
                   // the shadow layer so clipping the image never clips the
-                  // shadow with it (the earlier bug).
+                  // shadow with it (an earlier bug).
                   <div
-                    className="relative w-full rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
+                    className="relative w-full overflow-hidden rounded-t-[4px] border-l border-r border-t border-[#d2d2d2] bg-[#eaeae5]"
                     style={{ aspectRatio: "714 / 404" }}
                   >
                     {/* Available-space box: the green guide frame (520×302
