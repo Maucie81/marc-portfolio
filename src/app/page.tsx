@@ -310,19 +310,30 @@ export default function Home() {
                           so object-fit on the <img> below never has to
                           reconcile a mismatched box. */}
                       <div
-                        className="max-h-full max-w-full"
+                        className="max-h-full max-w-full rounded-[12px]"
                         style={{
                           aspectRatio: `${project.image.width} / ${project.image.height}`,
                           boxShadow: "19px 14px 46px 0px rgba(0,0,0,0.24)",
                         }}
                       >
-                        {/* No rounded-[12px] here: the exported asset's own
-                            bezel corners are already baked in at that exact
-                            radius (verified pixel-for-pixel symmetric on
-                            all four corners). overflow-hidden stays only as
-                            a plain rectangular safety clip — with the box
-                            above now matching the image's exact aspect
-                            ratio, object-cover never actually crops
+                        {/* rounded-[12px] on THIS box (not the crop layer
+                            below) matches Figma's own bezel radius so
+                            box-shadow — which always follows its casting
+                            element's own border-radius, square by default —
+                            renders with rounded corners too. Without it the
+                            shadow cast a sharp rectangular corner poking out
+                            past the visibly rounded mockup image: a flat
+                            "box" edge between the border and the soft blur.
+                            This box has no overflow-hidden itself, so the
+                            radius only shapes the shadow, it doesn't clip
+                            anything — no risk of the earlier double-
+                            rounding bug (that came from radius on the crop
+                            layer, which DOES clip, fighting the image's own
+                            baked corner once object-cover rescaled it).
+                            overflow-hidden below stays only as a plain
+                            rectangular safety clip — with the box above now
+                            matching the image's exact aspect ratio,
+                            object-cover never actually crops
                             anything. */}
                         <div className="h-full w-full overflow-hidden">
                           <Image
