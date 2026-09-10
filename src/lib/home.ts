@@ -74,8 +74,8 @@ export const projects: Project[] = [
     image: {
       src: "/headspace/thumbnail.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal",
-      width: 494,
-      height: 276,
+      width: 1482,
+      height: 828,
       inset: "15.92% 15.89% 15.42% 14.63%",
       bezel: true,
     },
@@ -95,17 +95,19 @@ export const projects: Project[] = [
       "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
     image: {
-      src: "/airbnb/thumbnail.png",
+      src: "/airbnb/thumbnail.webp",
       alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
-      width: 509,
-      height: 292,
+      width: 1529,
+      height: 879,
       // 784:121479's own confirmed frame (Portfolio-2026 file) — not
       // Yahoo/Headspace's box. Deliberately a different size/shape in
-      // Figma, and the cropped asset's aspect ratio matches this exactly.
+      // Figma, and object-cover (see page.tsx) fills this box regardless
+      // of the exported asset's exact aspect ratio.
       inset: "12.44% 14.87% 11.44% 14.03%",
-      // Cropped from the Figma export (784:121481, "Mask group") to just
-      // the bordered mockup — the raw export baked in drop-shadow bleed on
-      // a transparent backdrop. Border is still baked in; the shadow is
+      // Cropped from the Figma export (784:121481, "Mask group", 3x scale
+      // via a temporary rescaled clone for higher resolution) to just the
+      // bordered mockup — the raw export baked in drop-shadow bleed on a
+      // transparent backdrop. Border is still baked in; the shadow is
       // drawn in code instead (see `bezel` above).
       bezel: false,
     },

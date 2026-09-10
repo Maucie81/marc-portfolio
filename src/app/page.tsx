@@ -315,15 +315,13 @@ export default function Home() {
                         alt={project.image.alt}
                         width={project.image.width}
                         height={project.image.height}
-                        className={
-                          project.image.bezel
-                            ? "h-full w-full object-cover"
-                            : // object-contain: the asset's aspect ratio
-                              // matches this inset box almost exactly, but
-                              // contain guards against 1px rounding so the
-                              // baked-in border never gets clipped.
-                              "h-full w-full object-contain"
-                        }
+                        // object-cover for all three: object-contain
+                        // (previously used for Airbnb's bezel:false asset)
+                        // letterboxed whenever the exported asset's aspect
+                        // ratio didn't exactly match this inset box, leaving
+                        // a visible background-color gap. Cover crops to
+                        // fill instead — matches Yahoo/Headspace.
+                        className="h-full w-full object-cover"
                       />
                     </div>
                   </div>
