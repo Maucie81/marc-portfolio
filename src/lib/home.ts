@@ -59,8 +59,8 @@ export const projects: Project[] = [
     image: {
       src: "/headspace/thumbnail.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
-      width: 1548,
-      height: 882,
+      width: 1525,
+      height: 875,
     },
     imageLabel: "",
     skills: [
@@ -80,8 +80,8 @@ export const projects: Project[] = [
     image: {
       src: "/airbnb/thumbnail.webp",
       alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
-      width: 1545,
-      height: 882,
+      width: 1482,
+      height: 918,
     },
     imageLabel: "",
     skills: [
