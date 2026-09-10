@@ -304,8 +304,20 @@ export default function Home() {
                           coverage on every edge by definition — no aspect
                           match required — at the cost of cropping a
                           negligible sliver (~1–2%) off the mockup's own
-                          edges, which already carry their own margin. */}
-                      <div className="h-full w-full overflow-hidden rounded-[12px]">
+                          edges, which already carry their own margin.
+
+                          No rounded-[12px] here: the exported asset's own
+                          bezel corners are already baked in at that exact
+                          radius (verified pixel-for-pixel symmetric on all
+                          four corners). A second CSS radius on this
+                          wrapper doesn't align with the image's own arc
+                          once object-cover rescales it to the display
+                          size — two independently-computed roundings at
+                          slightly different effective radii, landing a
+                          pixel or two apart and showing as a seam/notch at
+                          each corner. overflow-hidden stays only as a
+                          plain rectangular safety clip. */}
+                      <div className="h-full w-full overflow-hidden">
                         <Image
                           src={project.image.src}
                           alt={project.image.alt}
