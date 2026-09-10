@@ -32,18 +32,18 @@ export type Sidebar = {
   highlightsLabel?: string;
 };
 
-/** Standard media-area aspect ratio, shared by every placeholder and every
- * real "plain" recording, so a section's shape doesn't shift the moment a
- * placeholder gets swapped for real footage. Was 7:5 to match
- * `MediaPlaceholder`'s old 857:609 (≈1.407, an arbitrary crop-derived
- * fraction), but every real recording so far was captured at ~1440:905
- * (≈1.59) — close to 857:609 in name only. 7:5 (1.4) cropped a real ~12%
- * off each side of the actual footage (buttons and labels at the edges
- * got cut off). 16:10 (1.6, also a standard, widely-held ratio — most
- * laptop/monitor screens, which is what these were captured on) is a
- * near-exact match to the real source instead, so object-cover barely
- * crops anything. */
-const MEDIA_ASPECT = "aspect-[16/10]";
+/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` — 857×609
+ * (≈7:5), confirmed via Figma (nodes 594:122135 "Overview" and 594:122465
+ * "User Management": both render the mockup as an explicit `w-[857px]
+ * h-[609px]` box, not flex-grown to fill the row). Shared by both so a
+ * section's shape doesn't shift the moment a placeholder gets swapped for
+ * real footage — `object-cover` on `PlainMedia`'s `<img>` crops real
+ * recordings (captured at ~1440:905, ≈1.59) down to this box rather than
+ * letting them dictate their own, taller shape; without a shared box like
+ * this, `MediaPlaceholder` and `PlainMedia` panels in the same row (e.g.
+ * Overview next to Top Content) render at different heights and their
+ * captions land at different depths. */
+const PLACEHOLDER_ASPECT = "aspect-[857/609]";
 
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
@@ -81,7 +81,7 @@ function MediaPlaceholder({
 }) {
   return (
     <div
-      className={`flex ${MEDIA_ASPECT} w-full flex-col overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
+      className={`flex ${PLACEHOLDER_ASPECT} w-full flex-col overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
     >
       <div className="flex shrink-0 items-center gap-3 border-b border-line/70 px-4 py-3">
         <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
@@ -151,7 +151,7 @@ function PlainMedia({
 }) {
   return (
     <div
-      className={`${MEDIA_ASPECT} w-full overflow-hidden rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-cover" />
@@ -669,10 +669,10 @@ function PanelItemBlock({
           <p className="cs-section-title">{title}</p>
           <p className="text-sm leading-[20px] text-ink-2">{body}</p>
         </div>
-        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(53.5rem*var(--cs-scale,1))]">
+        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(53.5rem*var(--cs-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
           <MediaPlaceholder
             brand={brand}
-            className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0"
+            className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0"
           />
           <p className="cs-caption text-center">{caption}</p>
         </div>
@@ -760,7 +760,7 @@ function ClosingBlock({
             ))}
           </div>
         ) : hasCaption ? (
-          <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+          <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
             <MediaPlaceholder brand={brand} />
             <p className="cs-caption text-center">{caption}</p>
           </div>
@@ -911,24 +911,24 @@ function SectionBlock({
     hasSteps ? (
       <StepsPanel steps={steps!} />
     ) : (
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col gap-6 min-[901px]:flex-row min-[901px]:items-stretch">
+      <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
+        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
                 image={image!}
-                className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
               />
             ) : (
               <IsolatedMedia
                 image={image!}
-                className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
               />
             )
           ) : (
             <MediaPlaceholder
               brand={brand}
-              className="min-[901px]:w-[calc(1080px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+              className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
             />
           )}
           {hasQuotes ? (
