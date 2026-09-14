@@ -32,22 +32,18 @@ export type Sidebar = {
   highlightsLabel?: string;
 };
 
-/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` — a fixed
- * 4:3 ratio, direct request (was 857:609, ≈7:5). Shared by both so a
+/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` — 857×609
+ * (≈7:5), confirmed via Figma (nodes 594:122135 "Overview" and 594:122465
+ * "User Management": both render the mockup as an explicit `w-[857px]
+ * h-[609px]` box, not flex-grown to fill the row). Shared by both so a
  * section's shape doesn't shift the moment a placeholder gets swapped for
- * real footage — `object-contain` on `PlainMedia`'s `<img>` letterboxes any
- * recording that isn't pre-cropped to exactly 4:3, rather than cropping or
- * stretching it into this box; without a shared box like this,
- * `MediaPlaceholder` and `PlainMedia` panels in the same row (e.g. Overview
- * next to Top Content) render at different heights and their captions land
- * at different depths. This fixed box is load-bearing for the whole
- * case-study layout (cs-pin/cs-track pin each block to a fixed on-screen
- * height) — a real recording's own aspect ratio must never dictate this
- * box's size, however close a match it happens to be, or every block after
- * it in the pinned scroll track shifts. Every uploaded recording should be
- * pre-cropped to 4:3 before it's added, so it fills this box edge-to-edge
- * with no letterboxing. */
-const PLACEHOLDER_ASPECT = "aspect-[4/3]";
+ * real footage — `object-cover` on `PlainMedia`'s `<img>` crops real
+ * recordings (captured at ~1440:905, ≈1.59) down to this box rather than
+ * letting them dictate their own, taller shape; without a shared box like
+ * this, `MediaPlaceholder` and `PlainMedia` panels in the same row (e.g.
+ * Overview next to Top Content) render at different heights and their
+ * captions land at different depths. */
+const PLACEHOLDER_ASPECT = "aspect-[857/609]";
 
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
@@ -157,15 +153,12 @@ function PlainMedia({
     <div
       className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
-      {/* object-contain, not object-cover: real recordings rarely land on
-          exactly 4:3, and object-cover was cropping UI off the edges
-          (losing the nav rail on one side, the testimonial column on the
-          other). Letterboxing (bg-white behind) keeps the full frame
-          visible instead — the fixed box itself is load-bearing for the
-          pinned-scroll layout (see PLACEHOLDER_ASPECT) and must not resize
-          to match any individual recording's own shape. Crop the source
-          GIF/video file itself ahead of time if it needs to fill this box
-          edge-to-edge with no letterboxing. */}
+      {/* object-contain, not object-cover: real recordings are captured
+          wider (~1440:905, ≈1.59) than this box's fixed 857:609 (≈1.41)
+          shape, and object-cover was cropping both side edges of the UI
+          off — losing the nav rail on the left and the testimonial column
+          on the right in e.g. Overview.gif. Letterboxing (bg-white behind)
+          keeps the full frame visible instead. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
     </div>
