@@ -238,6 +238,11 @@ export const blocks: Block[] = [
     ],
     caption:
       "Rank your best-performing stories by any metric, then slice the results by region, device, type, category, and license to find what's actually working.",
+    image: {
+      src: "/ypp/Gifs/TopContent.gif",
+      alt: "Sorting and filtering the Top Content ranked table",
+      frame: "plain",
+    },
     expandedPoints: [
       {
         label: "Sort in either direction",
