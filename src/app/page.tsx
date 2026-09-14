@@ -153,7 +153,7 @@ export default function Home() {
                 edge at the bottom lands on the same rule as the subhead's
                 baseline (31 × 12 = 372, unchanged from before), so
                 top = 372 − 366 = 6, also unchanged. */}
-            <span className="absolute left-[116.5px] top-[6px] block h-[366px] w-[274px] overflow-hidden">
+            <span className="absolute left-[85.5px] top-[6px] block h-[366px] w-[274px] overflow-hidden">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/marc/hero-illustration.png"
@@ -220,7 +220,7 @@ export default function Home() {
             {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ef5c2d, font
                 unchanged from the previous frame. top = 105.5 (unchanged).
                 left = 434 − actualBoundingBoxLeft(−3.46) = 437.46. */}
-            <p className="absolute left-[430.54px] top-[74.5px] font-semibold text-accent [font-family:var(--font-display)] whitespace-nowrap text-[45.657px] leading-[68.587px]">
+            <p className="absolute left-[399.54px] top-[74.5px] font-semibold text-accent [font-family:var(--font-display)] whitespace-nowrap text-[45.657px] leading-[68.587px]">
               Hello and welcome
             </p>
 
@@ -230,14 +230,14 @@ export default function Home() {
                 than the previous frame’s 217.62/199.534/−2.1762 — same
                 relative treatment, uniformly scaled down ~0.8347×.
                 top = 134 (moved up one grid row). left = 420.6. */}
-            <h1 className="display absolute left-[420.6px] top-[134px] whitespace-nowrap text-[200px] leading-[183.2px] tracking-[-1.8167px]">
+            <h1 className="display absolute left-[389.6px] top-[134px] whitespace-nowrap text-[200px] leading-[183.2px] tracking-[-1.8167px]">
               I’m Marc
             </h1>
 
             {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
                 unchanged from the previous frame. Placeholder copy, left
                 as-is. top = 310. left = 431.51. */}
-            <p className="absolute left-[431.51px] top-[310px] text-ink-2 [font-family:var(--font-display)] whitespace-nowrap text-[31.14px] leading-[41.521px]">
+            <p className="absolute left-[400.51px] top-[310px] text-ink-2 [font-family:var(--font-display)] whitespace-nowrap text-[31.14px] leading-[41.521px]">
               Lorem ipsum dolor sit amet consect
             </p>
           </div>
@@ -392,7 +392,7 @@ export default function Home() {
                           href={project.href!}
                           className="t-link group inline-flex items-center gap-1.5 self-start"
                         >
-                          Case study
+                          Project preview
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img
                             src="/icons/diagonal-right-up.svg"

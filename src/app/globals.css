@@ -233,7 +233,7 @@ body {
    rather than ink-2. Sentence case, not uppercase — see .t-label. */
 .t-link {
   font-family: var(--font-alt), system-ui, sans-serif;
-  font-weight: 600;
+  font-weight: 400;
   font-size: 1rem;
   line-height: 1.5rem;
   color: var(--accent);

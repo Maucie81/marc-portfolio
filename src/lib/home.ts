@@ -52,10 +52,10 @@ export const projects: Project[] = [
   },
   {
     company: "Headspace",
-    title: "Admin Portal Redesign",
+    title: "Unified Enrollment",
     description:
-      "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
-    href: "/work/headspace-admin-portal",
+      "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
+    href: "/work/headspace-health-umd",
     image: {
       src: "/headspace/thumbnail.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
@@ -114,10 +114,10 @@ export const additionalWork: SmallProject[] = [
   },
   {
     company: "Headspace",
-    title: "Unified Main Door",
+    title: "Admin Portal Redesign",
     description:
-      "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
-    href: "/work/headspace-health-umd",
+      "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
+    href: "/work/headspace-admin-portal",
   },
   {
     company: "Personal",

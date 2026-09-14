@@ -151,10 +151,16 @@ function PlainMedia({
 }) {
   return (
     <div
-      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
+      {/* object-contain, not object-cover: real recordings are captured
+          wider (~1440:905, ≈1.59) than this box's fixed 857:609 (≈1.41)
+          shape, and object-cover was cropping both side edges of the UI
+          off — losing the nav rail on the left and the testimonial column
+          on the right in e.g. Overview.gif. Letterboxing (bg-white behind)
+          keeps the full frame visible instead. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-cover" />
+      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
     </div>
   );
 }
@@ -350,8 +356,9 @@ const GRID_TOP_EXTEND = 31;
  * (unchanged) container, applied after the extension above — given
  * directly (not a Figma lookup). The container's own size/border/rounding
  * stays put; only the drawn pattern stops this far short of its edges,
- * leaving plain background showing in the gap. */
-const GRID_PADDING = 32;
+ * leaving plain background showing in the gap. Zero means the pattern runs
+ * flush to the container's own top/bottom edges. */
+const GRID_PADDING = 0;
 function CaseStudyHero({
   meta,
   width = 714,
@@ -382,6 +389,19 @@ function CaseStudyHero({
   // text left-aligned throughout, the box itself centered on both axes via
   // the flex parent below.
   const [lockupWidth, setLockupWidth] = useState<number | null>(null);
+  // Snapped so the lockup's own left edge always lands on a grid line
+  // instead of wherever flex-centering happens to put it — computed below
+  // as (available space)/2 rounded to the nearest 31px, then applied as an
+  // explicit offset in place of `justify-center`.
+  const [leftOffset, setLeftOffset] = useState<number | null>(null);
+  // The title font's own left ink bearing — Google Sans Flex Bold draws its
+  // glyphs starting a few px left of the box's edge, which otherwise makes
+  // "Yahoo"/"Headspace"/etc. overhang the grid line every other line in the
+  // lockup sits flush against. Measured (not guessed) via
+  // actualBoundingBoxLeft on the title's own first character at its actual
+  // computed font, then applied as a compensating negative margin so the
+  // INK — not the box — lines up with the grid.
+  const [h1InkBearing, setH1InkBearing] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const scaledBox = scaledBoxRef.current;
@@ -403,14 +423,25 @@ function CaseStudyHero({
       // Floor at 555 (the paragraph's own column width, node 679:61221) so a
       // short title never shrinks the lockup narrower than the paragraph
       // actually needs.
-      setLockupWidth(Math.max(Math.round(widestLine / scale), 555));
+      const width_ = Math.max(Math.round(widestLine / scale), 555);
+      setLockupWidth(width_);
+      setLeftOffset(Math.round((width - width_) / 2 / 31) * 31);
+
+      const h1Style = getComputedStyle(h1);
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.font = `${h1Style.fontWeight} ${h1Style.fontSize} ${h1Style.fontFamily}`;
+        const bearing = ctx.measureText(meta.company.charAt(0)).actualBoundingBoxLeft;
+        setH1InkBearing(bearing);
+      }
     };
 
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(scaledBox);
     return () => ro.disconnect();
-  }, [meta.company, meta.title]);
+  }, [meta.company, meta.title, width]);
 
   return (
     <div className="cs-only-horizontal relative [container-type:inline-size] min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
@@ -492,22 +523,24 @@ function CaseStudyHero({
           </div>
           <div
             // The canvas itself is the centering context now: flex +
-            // items-center (vertical) + justify-center (horizontal) center
-            // its ONE child — the whole lockup box below — on both axes at
-            // once, replacing the old fixed paddingTop:250 (which pinned it
-            // near the top, not centered) and the old margin:auto
-            // (horizontal-only). Per direct correction: the lockup is one
-            // unit (eyebrow + title + paragraph + scroll-hint together),
-            // not two separately-centered pieces — splitting them made
-            // title and paragraph stop sharing a left edge, which read as
-            // broken even though each piece individually measured as
-            // centered.
-            className="absolute inset-0 flex items-center justify-center"
+            // items-center (vertical) centers the lockup vertically;
+            // horizontal position is no longer justify-center (that landed
+            // the box at whatever fractional offset happened to center it,
+            // rarely a grid line) but an explicit marginLeft on the box
+            // itself, snapped to the nearest 31px rule — see leftOffset
+            // above. Per direct correction: the lockup is one unit (eyebrow
+            // + title + paragraph + scroll-hint together), not two
+            // separately-centered pieces — splitting them made title and
+            // paragraph stop sharing a left edge, which read as broken even
+            // though each piece individually measured as centered.
+            className="absolute inset-0 flex items-center"
           >
             <div
               className="flex flex-col"
               style={{
                 width: lockupWidth != null ? `${lockupWidth}px` : "fit-content",
+                marginLeft: leftOffset != null ? `${leftOffset}px` : "auto",
+                marginRight: leftOffset != null ? undefined : "auto",
                 // #E4E4DF at 40% — genuinely in the Figma data
                 // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
                 // though Figma only applied it to the paragraph+scroll-hint
@@ -535,7 +568,16 @@ function CaseStudyHero({
                   <br> — wouldn't wrap at all before being measured); the
                   lockup's actual width above comes from the measured widest
                   line (or 555, whichever is bigger), not this cap. */}
-              <h1 ref={h1Ref} className="display mt-2" style={{ fontSize: 90, lineHeight: "80px", maxWidth: 625 }}>
+              <h1
+                ref={h1Ref}
+                className="display mt-2"
+                style={{
+                  fontSize: 90,
+                  lineHeight: "80px",
+                  maxWidth: 625,
+                  marginLeft: h1InkBearing != null ? `-${h1InkBearing}px` : undefined,
+                }}
+              >
                 {meta.company}
                 <br />
                 {meta.title}
@@ -557,9 +599,15 @@ function CaseStudyHero({
               >
                 {meta.subtitle}
               </p>
-              {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px. */}
+              {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px.
+                  Centered ON the grid rule itself, not inside the cell below
+                  it: the row starts flush with the rule (mt-11, same as
+                  before), then h-[31px] + items-center pulls its own vertical
+                  center down 15.5px (half the grid pitch) — undone by
+                  shifting the whole row back up 15.5px so that midpoint lands
+                  back on the rule instead of the cell's midpoint. */}
               <p
-                className="mt-11 flex items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+                className="mt-11 flex h-[31px] -translate-y-[15.5px] items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
                 style={{ fontSize: 14, lineHeight: "22px" }}
               >
                 <span className="inline-block h-[3px] w-10 bg-accent" />
@@ -989,7 +1037,11 @@ function SectionBlock({
             renderStats()
           ) : null}
         </div>
-        <div className="flex w-full justify-center min-[901px]:w-[calc(1080px*var(--cs-scale,1))]">
+        {/* Matches the image column's own 857px width (not the full row,
+            which also includes the 907px quotes/stats column) so the
+            caption centers under the image itself instead of under the
+            whole wider row. */}
+        <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-scale,1))]">
           <p className="cs-caption text-center">{caption}</p>
         </div>
       </div>
