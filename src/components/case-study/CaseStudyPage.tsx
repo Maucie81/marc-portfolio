@@ -32,16 +32,22 @@ export type Sidebar = {
   highlightsLabel?: string;
 };
 
-/** Standard media-area box for `MediaPlaceholder` — 857×745 (≈1440:900
- * screen, cropped to the real recordings' own shape once browser chrome is
- * captured out: Overview.gif and TopContent.gif both land at 2392×2080 native
- * px, ≈1.15, scaled to width 857). `PlainMedia` (real footage) sizes itself
- * to its own image's intrinsic ratio rather than reading this constant — see
- * its own comment — but both recordings were cropped to this exact same
- * pixel size, so a placeholder using this box (e.g. KPI Deep-Dives, which
- * has no recording yet) renders at the same size as its neighbors instead of
- * an arbitrary guessed shape. */
-const PLACEHOLDER_ASPECT = "aspect-[857/745]";
+/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` — 857×609
+ * (≈7:5), confirmed via Figma (nodes 594:122135 "Overview" and 594:122465
+ * "User Management": both render the mockup as an explicit `w-[857px]
+ * h-[609px]` box, not flex-grown to fill the row). Shared by both so a
+ * section's shape doesn't shift the moment a placeholder gets swapped for
+ * real footage — `object-cover` on `PlainMedia`'s `<img>` crops real
+ * recordings (captured at ~1440:905, ≈1.59) down to this box rather than
+ * letting them dictate their own, taller shape; without a shared box like
+ * this, `MediaPlaceholder` and `PlainMedia` panels in the same row (e.g.
+ * Overview next to Top Content) render at different heights and their
+ * captions land at different depths. This fixed box is load-bearing for the
+ * whole case-study layout (cs-pin/cs-track pin each block to a fixed
+ * on-screen height) — a real recording's own aspect ratio must never
+ * dictate this box's size, however close a match it happens to be, or every
+ * block after it in the pinned scroll track shifts. */
+const PLACEHOLDER_ASPECT = "aspect-[857/609]";
 
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
@@ -148,18 +154,20 @@ function PlainMedia({
   className?: string;
 }) {
   return (
-    <div className={`w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}>
-      {/* No forced aspect-ratio box, no object-fit: real recordings never
-          land on exactly 857:609 no matter how carefully they're captured
-          (browser chrome, retina scaling, etc. all throw it off slightly),
-          and both object-cover (crops UI off the edges) and object-contain
-          (letterboxes with visible gaps) read as visibly wrong once you
-          know to look for it. Letting the box take the image's own
-          intrinsic aspect ratio — full width, auto height — means every
-          recording fills edge-to-edge in its own native shape, with
-          nothing cropped and no gaps, regardless of its exact dimensions. */}
+    <div
+      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+    >
+      {/* object-contain, not object-cover: real recordings rarely land on
+          exactly 857:609, and object-cover was cropping UI off the edges
+          (losing the nav rail on one side, the testimonial column on the
+          other). Letterboxing (bg-white behind) keeps the full frame
+          visible instead — the fixed box itself is load-bearing for the
+          pinned-scroll layout (see PLACEHOLDER_ASPECT) and must not resize
+          to match any individual recording's own shape. Crop the source
+          GIF/video file itself ahead of time if it needs to fill this box
+          edge-to-edge with no letterboxing. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="block h-auto w-full" />
+      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
     </div>
   );
 }
@@ -1007,13 +1015,7 @@ function SectionBlock({
       <StepsPanel steps={steps!} />
     ) : (
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-        <div
-          className={`flex flex-col gap-6 min-[901px]:flex-row ${
-            isPlainImage
-              ? "min-[901px]:items-start"
-              : "min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:items-stretch"
-          }`}
-        >
+        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
