@@ -150,17 +150,18 @@ function PlainMedia({
   className?: string;
 }) {
   return (
-    <div
-      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
-    >
-      {/* object-contain, not object-cover: real recordings are captured
-          wider (~1440:905, ≈1.59) than this box's fixed 857:609 (≈1.41)
-          shape, and object-cover was cropping both side edges of the UI
-          off — losing the nav rail on the left and the testimonial column
-          on the right in e.g. Overview.gif. Letterboxing (bg-white behind)
-          keeps the full frame visible instead. */}
+    <div className={`w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}>
+      {/* No forced aspect-ratio box, no object-fit: real recordings never
+          land on exactly 857:609 no matter how carefully they're captured
+          (browser chrome, retina scaling, etc. all throw it off slightly),
+          and both object-cover (crops UI off the edges) and object-contain
+          (letterboxes with visible gaps) read as visibly wrong once you
+          know to look for it. Letting the box take the image's own
+          intrinsic aspect ratio — full width, auto height — means every
+          recording fills edge-to-edge in its own native shape, with
+          nothing cropped and no gaps, regardless of its exact dimensions. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
+      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="block h-auto w-full" />
     </div>
   );
 }
@@ -1008,7 +1009,13 @@ function SectionBlock({
       <StepsPanel steps={steps!} />
     ) : (
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
+        <div
+          className={`flex flex-col gap-6 min-[901px]:flex-row ${
+            isPlainImage
+              ? "min-[901px]:items-start"
+              : "min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:items-stretch"
+          }`}
+        >
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
