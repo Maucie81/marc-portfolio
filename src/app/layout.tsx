@@ -3,6 +3,8 @@ import localFont from "next/font/local";
 import { DM_Sans, Roboto_Mono } from "next/font/google";
 import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
+import ProofNotes from "@/components/proof/ProofNotes";
+import { ProofProvider } from "@/components/proof/ProofProvider";
 import "./globals.css";
 
 // Google Sans Flex isn't in next/font/google's generated catalog yet, even
@@ -51,8 +53,14 @@ export default function RootLayout({
       <body
         className={`${googleSansFlex.variable} ${dmSans.variable} ${robotoMono.variable} antialiased`}
       >
-        <PersistentHeader />
-        <PageTransition>{children}</PageTransition>
+        {/* Proof notes (Figma-style comments a visitor can pin anywhere)
+            wrap everything so the CMYK lockup in PersistentHeader's rail
+            and the pin layer share one state. */}
+        <ProofProvider>
+          <PersistentHeader />
+          <PageTransition>{children}</PageTransition>
+          <ProofNotes />
+        </ProofProvider>
       </body>
     </html>
   );

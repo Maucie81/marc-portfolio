@@ -20,6 +20,23 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Proof notes (Figma-style comments)
+
+Visitors can press `C` (or click the CMYK lockup in the lower left) and pin a
+note anywhere on a page. Notes are saved under an anonymous 30-day cookie so
+they're still there when the visitor comes back, and every new note emails
+Marc with a link that opens the page with that pin highlighted.
+
+Code lives in `src/components/proof`, `src/lib/proof`, and `src/app/api/proof`.
+
+**Production needs a Redis database** — without one, notes are held in memory
+and vanish between serverless invocations. In the Vercel dashboard: project →
+Storage → Create Database → **Upstash Redis** (free tier is plenty). That injects
+`KV_REST_API_URL` / `KV_REST_API_TOKEN` automatically; redeploy and it's live.
+Locally it runs in memory with no setup.
+
+Emails go through the same `RESEND_API_KEY` as the contact form.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

@@ -1,3 +1,4 @@
+import ProofTrigger from "@/components/proof/ProofTrigger";
 import { contact } from "@/lib/home";
 
 /**
@@ -15,15 +16,8 @@ import { contact } from "@/lib/home";
 export const FRAME_TOP = 42;
 export const FRAME_SIDE = 32;
 
-// C/M/Y/K hex + 5-step opacity ramp (100/80/60/40/20%), confirmed via
-// get_design_context on 643:52825 — full saturation first, fading to tint.
-const CMYK_GROUPS = [
-  { label: "C", color: "#00AEEF" },
-  { label: "M", color: "#EC008C" },
-  { label: "Y", color: "#FFF200" },
-  { label: "K", color: "#000000" },
-];
-const CMYK_OPACITIES = [1, 0.8, 0.6, 0.4, 0.2];
+// The C/M/Y/K strip itself now lives in ProofTrigger (it became the
+// button that opens proof notes) — same hex + 5-step opacity ramp.
 
 export function Crosshair({
   className = "",
@@ -235,7 +229,8 @@ export function BottomBand() {
  * bottom edge sits 32px above the top line of BottomBand's double-line
  * mark (that mark's top line sits at -top-3/-12px above the 32px band,
  * i.e. 44px above the viewport bottom — so the strip's bottom needs
- * 44+32=76px clearance from the viewport bottom), not vertically centered. */
+ * 44+32=76px clearance from the viewport bottom), not vertically centered.
+ * The strip is ProofTrigger: clicking it opens the visitor's proof notes. */
 export function LeftRail() {
   return (
     <div className="fixed inset-y-0 left-0 z-40 hidden w-8 bg-white lg:flex">
@@ -247,27 +242,7 @@ export function LeftRail() {
         height={12}
         className="pointer-events-none absolute left-1/2 top-1/2 block size-3 -translate-x-1/2 -translate-y-1/2"
       />
-      <div aria-hidden className="absolute inset-x-0 bottom-[76px] flex flex-col items-center gap-2">
-        {CMYK_GROUPS.map((group) => (
-          <div key={group.label} className="flex flex-col items-center gap-0.5">
-            <span
-              className="font-display text-[8px] font-semibold leading-none"
-              style={{ color: group.color }}
-            >
-              {group.label}
-            </span>
-            <div className="flex flex-col gap-px">
-              {CMYK_OPACITIES.map((opacity) => (
-                <span
-                  key={opacity}
-                  className="block size-2.5"
-                  style={{ backgroundColor: group.color, opacity }}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <ProofTrigger variant="rail" />
     </div>
   );
 }
