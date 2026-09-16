@@ -115,6 +115,8 @@ export type Block =
       heading: string;
       body: string[];
       stats: { value: string; label: string }[];
+      /** Small filled-accent link pill under the copy (Figma 837:64875). */
+      cta?: { text: string; href: string };
       /** Placeholder caption for the closing image slot (Figma's Outcome
        * frame pairs the copy with its own media placeholder). */
       caption?: string;
@@ -511,33 +513,22 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 12. Learnings — copy, stats and outro combined into one closing screen,
-  // matching the Figma layout (no section number here).
+  // 12. Learnings — copy + prototype link, matching Figma 594:122503
+  // (no section number here). The earlier stats column is gone: the new
+  // copy explicitly says there's no satisfaction number to point to, so a
+  // "76% satisfied" stat beside it would contradict the text.
   {
     kind: "closing",
     heading: "Learnings",
     body: [
-      "The portal launched June 3, 2026 to 8,700+ media partners, retiring two legacy systems on the same day. We set publisher satisfaction as the primary success metric and support-ticket volume as the counter-metric, but I left before a follow-up survey could be fielded, so those numbers don't exist yet.",
-      "What the research did leave behind was a clear pattern. The loudest, most consistent reaction across both phases and at launch was relief — partners finally had visibility into their own performance on Yahoo. The loudest complaint was just as consistent: revenue data didn't ship, and partners noticed immediately.",
-      "That gap pointed toward the next opportunity. Solving transparency created a new expectation for control. The portal successfully moved partners from opaque and manual to visible and partially self-service. What came next was clear: revenue reporting, direct content controls, and more complete self-service workflows.",
+      "We set publisher satisfaction as the primary success measure and support-ticket volume as the counter-metric. I left the project before the follow-up survey that would have measured either, so I can't point to a number.",
+      "What I can point to is the pattern the research left behind. The loudest, most consistent reaction — across both phases and again at launch — was relief at finally having visibility. The loudest complaint was just as consistent: everyone asked for revenue, and nobody got it in this release.",
+      "If I had to predict what a satisfaction survey found, that's the shape I'd expect: a real gain on the problem we solved, and an unmoved — maybe sharper — frustration on the one we knew about, explained, and still couldn't close. That's a testable prediction, not a result I'm claiming.",
     ],
-    stats: [
-      {
-        value: "76%",
-        label: "Percentage of publishers who were satisfied with their Yahoo syndication experience",
-      },
-      {
-        value: "8,700+",
-        label: "Number of media partners who moved onto the new Yahoo Partner Platform",
-      },
-      {
-        value: "2",
-        label: "Number of legacy systems retired at launch of the new platform",
-      },
-      {
-        value: "1",
-        label: "Number of self-service partner platform",
-      },
-    ],
+    stats: [],
+    cta: {
+      text: "Check out the prototype I built with Claude",
+      href: "https://ypp-prototype.vercel.app/overview",
+    },
   },
 ];

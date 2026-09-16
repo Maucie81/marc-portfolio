@@ -13,9 +13,10 @@ import type { Block, ImageSpec } from "@/lib/ypp";
  * each page.tsx duplicated this entire file with only the brand chrome and
  * data source differing — three copies that had already drifted from each
  * other. Living in one place now so a type/color update only has to happen
- * once. Headspace — Unified Enrollment has a deliberately smaller block set
- * (no stats, no expand/collapse) and keeps its own page.tsx, but reuses the
- * shared type roles below.
+ * once. Headspace Unified Main Door has a deliberately smaller block set
+ * (cover, Context, walkthrough, closing) and keeps its own page.tsx, but
+ * composes it from the exported `CoverBlock`, `IntroStackBlock` and
+ * `PlainMedia` below so its geometry can't drift from the other three.
  */
 
 export type Meta = {
@@ -154,8 +155,10 @@ function IsolatedMedia({
 /** Full-bleed rounded image, just a drop shadow — no canvas, no chrome.
  * Figma's Search treatment (node 302:51676): a large, already-dense
  * recording reads fine on its own; it doesn't need the --ink pedestal
- * `IsolatedMedia` gives a small/odd-shaped crop. */
-function PlainMedia({
+ * `IsolatedMedia` gives a small/odd-shaped crop. Exported so Headspace
+ * Unified Main Door's page.tsx renders its walkthrough in this exact box
+ * rather than a drifting local copy. */
+export function PlainMedia({
   image,
   className = "",
 }: {
@@ -682,14 +685,27 @@ function CoverBlockMobileText({ meta }: { meta: Meta }) {
   );
 }
 
-function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
+/** Exported (with `IntroStackBlock` and `PlainMedia`) so Headspace Unified
+ * Main Door's own page.tsx composes the same cover — grid hero, tinted
+ * lockup, scroll hint on the rule — instead of a plain-text local copy. */
+export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}>
       <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
         <CoverBlockMobileText meta={meta} />
         <CaseStudyHero meta={meta} />
 
-        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-end">
+        {/* Metadata column top-aligns with the next block's title (The
+            Problem / Context), per direct request — previously self-end,
+            which dropped Role/Timeline/… a few hundred px below the row the
+            eye lands on next, so it bounced. The track centers this block,
+            so a column exactly 691.3px tall (the .cs-track content height
+            minus the 687px anchor row, twice over: 100vh − 68 − 2·(anchor
+            offset) — see .cs-anchor-687 in globals.css) puts its own top on
+            that same row whatever the hero's height happens to be. The list
+            inside just starts at the top; content shorter than 691px leaves
+            the remainder empty rather than shifting anything. */}
+        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:h-[calc(691.3px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-center">
           <dl className="flex flex-col gap-5">
             {sidebar.groups.map((group) => (
               <div key={group.label} className="flex gap-[calc(21px*var(--cs-scale,1))]">
@@ -839,12 +855,14 @@ function ClosingBlock({
   body,
   stats,
   caption,
+  cta,
   brand,
 }: {
   heading: string;
   body: string[];
   stats: { value: string; label: string }[];
   caption?: string;
+  cta?: { text: string; href: string };
   brand: Brand;
 }) {
   const hasStats = stats.length > 0;
@@ -862,13 +880,29 @@ function ClosingBlock({
       <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(293px*var(--cs-scale,1))]">
         <div className="flex w-full flex-col gap-4 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
-          <div className="flex flex-col text-sm leading-[20px] text-ink-2">
+          {/* Figma 594:122506 "Description": the .t-body role (Roboto Mono
+              14/22), 16px between paragraphs — not the DM Sans 14/20 the
+              section bodies use. */}
+          <div className="t-body flex flex-col text-ink-2">
             {body.map((p, i) => (
-              <p key={i} className={i < body.length - 1 ? "mb-3" : ""}>
+              <p key={i} className={i < body.length - 1 ? "mb-4" : ""}>
                 {p}
               </p>
             ))}
           </div>
+          {cta ? (
+            // Figma 837:64875: accent fill, 8px/2px padding, no radius, sits
+            // 92px below the copy. Text is Google Sans Flex SemiBold 12/24,
+            // capitalize (the design's text is lowercase and relies on it).
+            <a
+              href={cta.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-[calc(92px*var(--cs-scale,1)-1rem)] self-start bg-accent px-2 py-0.5 text-xs font-semibold capitalize leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
+            >
+              {cta.text}
+            </a>
+          ) : null}
         </div>
 
         {hasStats ? (
@@ -909,7 +943,11 @@ function QuoteBlock({ text, attribution }: { text: string; attribution: string }
   );
 }
 
-function IntroStackBlock({
+/** "The Problem" stack on every CaseStudyPage case study — 560px column,
+ * 200/300px problem inset, anchored to the shared 687px row. `quote` is
+ * optional only for Headspace Unified Main Door's "Context", which reuses
+ * this exact geometry with copy alone (no stat, no quote, so no rule). */
+export function IntroStackBlock({
   heading,
   body,
   stat,
@@ -919,7 +957,7 @@ function IntroStackBlock({
   heading: string;
   body: string[];
   stat?: { value: string; label: string };
-  quote: { text: string; attribution: string };
+  quote?: { text: string; attribution: string };
   sectionNumber?: string;
 }) {
   return (
@@ -949,16 +987,18 @@ function IntroStackBlock({
             </p>
             <p className="cs-quote flex-1">{stat.label}</p>
           </div>
-        ) : (
+        ) : quote ? (
           <div className="border-t border-line" />
-        )}
+        ) : null}
 
-        <div className="flex flex-col gap-2">
-          <blockquote>
-            <p className="cs-quote">{'"' + quote.text + '"'}</p>
-          </blockquote>
-          <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
-        </div>
+        {quote ? (
+          <div className="flex flex-col gap-2">
+            <blockquote>
+              <p className="cs-quote">{'"' + quote.text + '"'}</p>
+            </blockquote>
+            <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
@@ -1207,6 +1247,7 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           body={block.body}
           stats={block.stats}
           caption={block.caption}
+          cta={block.cta}
           brand={brand}
         />
       );

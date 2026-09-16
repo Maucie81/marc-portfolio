@@ -1,55 +1,25 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
-import { context, meta, sidebar } from "@/lib/headspace-umd";
+import { CoverBlock, IntroStackBlock } from "@/components/case-study/CaseStudyPage";
+import { caseStudies } from "@/lib/case-studies";
+import { context, meta, PROTOTYPE_URL, sidebar } from "@/lib/headspace-umd";
 
 export const metadata: Metadata = {
-  title: `${meta.title} — Marc Favro`,
+  title: `${meta.company} ${meta.title} — Marc Favro`,
   description: meta.subtitle,
 };
 
-const RESUME_URL =
-  "https://drive.google.com/file/d/1eH-USxlLh24SYEIUtEZJGOLgwV_v7qrQ/view?usp=share_link";
+// The fixed top bar ("← Back · Headspace Unified Main Door · Home /
+// Contact / Resume") is rendered by PersistentHeader in the root layout,
+// same as the three CaseStudyPage case studies — see CASE_STUDY_TITLES there.
 
-function TopBar() {
-  return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-6 backdrop-blur min-[901px]:h-16 min-[901px]:px-8">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/#work"
-          className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-2 transition-colors hover:text-accent"
-        >
-          <ArrowIcon className="mt-0 rotate-180 text-current" />
-          Back
-        </Link>
-        <span aria-hidden className="h-3 w-px bg-line" />
-        <span className="text-[0.6875rem] font-semibold uppercase tracking-[0.18em] text-accent">
-          Headspace — Unified Enrollment
-        </span>
-      </div>
-      <nav className="hidden gap-8 text-xs leading-[18px] text-ink min-[901px]:flex">
-        <Link href="/#hero" className="transition-colors hover:text-accent">
-          Home
-        </Link>
-        <Link href="/#work" className="transition-colors hover:text-accent">
-          Work
-        </Link>
-        <Link href="/#contact" className="transition-colors hover:text-accent">
-          Contact
-        </Link>
-        <a
-          href={RESUME_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="transition-colors hover:text-accent"
-        >
-          Resume
-        </a>
-      </nav>
-    </header>
-  );
-}
+/** "Want to see more?" pair for this page only — Yahoo Partner Portal and
+ * Airbnb, per direct request, rather than the site-wide default pair
+ * (Airbnb + Headspace Admin Portal) CaseStudyClosing falls back to. */
+const CLOSING_LINKS = ["yahoo-partner-portal", "airbnb-hotels"].map(
+  (slug) => caseStudies.find((cs) => cs.slug === slug)!,
+);
 
 function RailDots() {
   return (
@@ -70,151 +40,62 @@ function BottomRule() {
   );
 }
 
-function ArrowIcon({ className = "text-muted" }: { className?: string }) {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 16 16"
-      fill="none"
-      aria-hidden
-      className={`mt-px shrink-0 ${className}`}
-    >
-      <path
-        d="M2 8h11M9 4l4 4-4 4"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
+/** Recorded prototype walkthrough, anchored to the same 687px row as every
+ * YPP section's media (and as the Context stack before it, so the two tops
+ * line up). Same treatment as the shared `PlainMedia` box — bg-white,
+ * rounded-lg, drop shadow, 609px tall — but NOT the shared 1440:1024 shape:
+ * this prototype was built at a wider 1.6:1 frame (2982×1862 after cropping
+ * the recording to the frame's interior), and holding it in the 4:3 box
+ * letterboxed it with white bars top and bottom, which read as sloppy.
+ * Per direct correction the bars matter more than the width matching the
+ * other case studies, so the box takes the recording's own ratio at the
+ * shared height (609 × 2982/1862 ≈ 975px wide) and the video fills it edge
+ * to edge. Kept local rather than adding a ratio override to `PlainMedia`,
+ * which stays a fixed box on purpose.
+ *
+ * Mirrors SectionBlock's panel column — 609px media row, gap-6, 80px bottom
+ * pad — with the Figma link taking the caption's slot, left-aligned to the
+ * media's own left edge. Block width is the media width, so the 144px
+ * track gap plus CaseStudyClosing's own 149px margin-left gives the same
+ * 293px run-in to "Thank you." that YPP has. */
+const WALKTHROUGH_ASPECT = "2982/1862";
+const WALKTHROUGH_WIDTH = `calc(609px * ${WALKTHROUGH_ASPECT} * var(--cs-scale, 1))`;
 
-function CoverBlock() {
+function WalkthroughBlock({ href }: { href: string }) {
   return (
     <div
-      className="cs-block"
-      style={{ ["--w" as string]: "calc(76rem * var(--cs-scale, 1))" }}
+      className="cs-block cs-anchor-687"
+      style={{ ["--w" as string]: WALKTHROUGH_WIDTH }}
     >
-      <div className="flex flex-col gap-16 min-[901px]:flex-row min-[901px]:items-center min-[901px]:gap-0">
-        <div className="flex w-full flex-col gap-2 min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <div className="flex flex-col gap-2">
-            <p className="cs-kicker">{meta.years}</p>
-            <h1 className="display text-[2.5rem] leading-[1.1] min-[901px]:text-[60px] min-[901px]:leading-[1.1]">
-              {meta.title}
-            </h1>
-          </div>
-          <p className="max-w-[calc(571px*var(--cs-scale,1))] text-sm leading-[20px] text-ink-2">
-            {meta.subtitle}
-          </p>
-          <p className="cs-only-horizontal mt-10 flex items-center gap-3 text-sm text-ink-2">
-            <span className="inline-block h-px w-10 bg-accent" />
-            Scroll to move through the story
-          </p>
+      <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
+        <div
+          className="w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-scale,1))]"
+          style={{ aspectRatio: WALKTHROUGH_ASPECT }}
+        >
+          {/* object-cover, not object-contain: the box already has the
+              recording's exact ratio, so cover only ever trims sub-pixel
+              rounding — and can never leave a hairline of bg-white showing
+              along an edge the way contain could. playsInline is required
+              for autoplay to fire on iOS Safari. */}
+          <video
+            src="/headspace/videos/UMDWalkthrough.webm"
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label="Headspace Unified Main Door prototype walkthrough"
+            className="size-full object-cover"
+          />
         </div>
-
-        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <dl className="flex flex-col gap-5">
-            {sidebar.groups.map((group) => (
-              <div
-                key={group.label}
-                className="flex gap-[calc(21px*var(--cs-scale,1))]"
-              >
-                <ArrowIcon />
-                <div className="flex flex-1 flex-col gap-2">
-                  <dt className="cs-label">{group.label}</dt>
-                  <dd className="flex flex-col gap-2 cs-meta">
-                    {group.items.map((item) => (
-                      <p key={item}>{item}</p>
-                    ))}
-                  </dd>
-                </div>
-              </div>
-            ))}
-            <div className="flex gap-[calc(21px*var(--cs-scale,1))]">
-              <ArrowIcon />
-              <div className="flex flex-1 flex-col gap-2">
-                <dt className="cs-label">Highlights</dt>
-                <dd className="flex flex-col gap-2 cs-meta">
-                  {sidebar.highlights.map((h) => (
-                    <p key={h}>{h}</p>
-                  ))}
-                </dd>
-              </div>
-            </div>
-            <div className="flex gap-[calc(21px*var(--cs-scale,1))]">
-              <ArrowIcon />
-              <div className="flex flex-1 flex-col gap-2">
-                <dt className="cs-label">Prototype</dt>
-                <dd className="flex flex-col gap-2 cs-meta">
-                  <a
-                    href={sidebar.prototype.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-accent underline decoration-accent/40 underline-offset-2 transition-colors hover:decoration-accent"
-                  >
-                    {sidebar.prototype.text}
-                  </a>
-                </dd>
-              </div>
-            </div>
-          </dl>
-        </div>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="self-start text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
+        >
+          Open in Figma →
+        </a>
       </div>
-    </div>
-  );
-}
-
-function CopyBlock({
-  heading,
-  body,
-  width,
-}: {
-  heading?: string;
-  body: string[];
-  width?: string;
-}) {
-  return (
-    <div className="cs-block" style={{ ["--w" as string]: width ?? "27rem" }}>
-      {heading ? (
-        <div className="relative mb-5">
-          <h2
-            className="display text-[clamp(1.6rem,2.4vw,2.25rem)]"
-            style={{ fontWeight: 700 }}
-          >
-            {heading}
-          </h2>
-        </div>
-      ) : null}
-      <div className="space-y-4 text-sm leading-[20px] text-ink-2">
-        {body.map((p, i) => (
-          <p key={i}>{p}</p>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function PrototypeEmbedBlock({ href }: { href: string }) {
-  const embedSrc = `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(href)}`;
-  return (
-    <div className="cs-block flex flex-col gap-4" style={{ ["--w" as string]: "52rem" }}>
-      <p className="cs-section-title">Try the prototype</p>
-      <iframe
-        title="Headspace — Unified Enrollment prototype"
-        src={embedSrc}
-        className="aspect-[1440/900] w-full rounded-lg border border-line bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)]"
-        allowFullScreen
-      />
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="self-start text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
-      >
-        Open in Figma →
-      </a>
     </div>
   );
 }
@@ -222,17 +103,15 @@ function PrototypeEmbedBlock({ href }: { href: string }) {
 export default function HeadspaceUmdPage() {
   return (
     <main className="bg-bg">
-      <TopBar />
-
       <RailDots />
 
       <BottomRule />
 
       <HorizontalTrack>
-        <CoverBlock />
-        <CopyBlock heading="Context" body={context} width="34rem" />
-        <PrototypeEmbedBlock href={sidebar.prototype.href} />
-        <CaseStudyClosing />
+        <CoverBlock meta={meta} sidebar={sidebar} />
+        <IntroStackBlock heading="Context" body={context} />
+        <WalkthroughBlock href={PROTOTYPE_URL} />
+        <CaseStudyClosing links={CLOSING_LINKS} />
       </HorizontalTrack>
     </main>
   );

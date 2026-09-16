@@ -19,12 +19,11 @@ import { contact } from "@/lib/home";
  * animated motion.div; the nav disappearing along with the rest of the page
  * during every transition was the most visible part of a blank-screen issue
  * that motivated removing that animation entirely (see PageTransition.tsx).
- * Scoped to the three case studies that share
- * CaseStudyPage.tsx (Yahoo Partner Portal, Airbnb Hotels, Headspace Admin
- * Portal Redesign) plus the home page — headspace-health-umd and ht-perks
- * each keep their own separate, locally-defined header unchanged, since
- * folding those in too would mean touching more surface than this pass
- * intends to.
+ * Covers the three case studies that share CaseStudyPage.tsx (Yahoo Partner
+ * Portal, Airbnb Hotels, Headspace Admin Portal Redesign), Headspace Unified
+ * Main Door (its own page.tsx, but the same top bar so it reads as one of
+ * the set), plus the home page. ht-perks keeps its own locally-defined
+ * header.
  */
 
 const RESUME_URL = contact.resume;
@@ -33,9 +32,12 @@ const CASE_STUDY_TITLES: Record<string, string> = {
   "/work/yahoo-partner-portal": "Yahoo Partner Portal",
   "/work/airbnb-hotels": "Airbnb Hotels",
   "/work/headspace-admin-portal": "Headspace Admin Portal Redesign",
+  "/work/headspace-health-umd": "Headspace Unified Main Door",
 };
 
-function HomeHeader() {
+function HomeHeader({ active }: { active: "home" | "contact" }) {
+  const activeClass = (key: typeof active) =>
+    active === key ? " text-accent hover:text-accent lg:font-semibold" : "";
   // Mobile/tablet: unchanged sticky in-flow header, no frame chrome (Step 5
   // exclusion). At lg+ this becomes the perimeter frame's fixed top band —
   // position switches to fixed and height locks to 42px (nav vertically
@@ -68,7 +70,7 @@ function HomeHeader() {
                 get_design_context on 627:49704/643:52825 — mobile keeps
                 the original Google Sans Flex treatment (no confirmed
                 discrepancy there). */}
-            <a
+            <Link
               href="/"
               className="ml-[0px] flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]"
             >
@@ -77,23 +79,20 @@ function HomeHeader() {
                 className="inline-block size-[14px] shrink-0 rounded-full bg-accent"
               />
               Marc Favro
-            </a>
+            </Link>
             <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted lg:gap-4 lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]">
-              <a
-                href="#hero"
-                className="transition-colors hover:text-accent lg:font-semibold"
+              <Link
+                href="/#hero"
+                className={`transition-colors hover:text-accent${activeClass("home")}`}
               >
                 Home
-              </a>
-              <a href="#work" className="transition-colors hover:text-accent">
-                Work
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/contact"
-                className="transition-colors hover:text-accent"
+                className={`transition-colors hover:text-accent${activeClass("contact")}`}
               >
                 Contact
-              </a>
+              </Link>
               <a
                 href={contact.resume}
                 target="_blank"
@@ -135,9 +134,6 @@ function CaseStudyTopBar({ title }: { title: string }) {
         <Link href="/#hero" className="transition-colors hover:text-accent">
           Home
         </Link>
-        <Link href="/#work" className="transition-colors hover:text-accent">
-          Work
-        </Link>
         <Link href="/#contact" className="transition-colors hover:text-accent">
           Contact
         </Link>
@@ -152,8 +148,11 @@ function CaseStudyTopBar({ title }: { title: string }) {
 export default function PersistentHeader() {
   const pathname = usePathname();
 
-  if (pathname === "/") {
-    return <HomeHeader />;
+  if (pathname === "/" || pathname === "/coming-soon") {
+    return <HomeHeader active="home" />;
+  }
+  if (pathname === "/contact") {
+    return <HomeHeader active="contact" />;
   }
 
   const title = CASE_STUDY_TITLES[pathname];

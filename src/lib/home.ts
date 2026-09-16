@@ -38,8 +38,8 @@ export const projects: Project[] = [
     image: {
       src: "/yahoo/thumbnail.webp",
       alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard, with the device bezel baked into the image",
-      width: 1530,
-      height: 876,
+      width: 2848,
+      height: 1600,
     },
     imageLabel: "",
     skills: [
@@ -59,8 +59,8 @@ export const projects: Project[] = [
     image: {
       src: "/headspace/thumbnail.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
-      width: 1525,
-      height: 875,
+      width: 2848,
+      height: 1600,
     },
     imageLabel: "",
     skills: [
@@ -80,8 +80,8 @@ export const projects: Project[] = [
     image: {
       src: "/airbnb/thumbnail.webp",
       alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
-      width: 1482,
-      height: 918,
+      width: 2848,
+      height: 1600,
     },
     imageLabel: "",
     skills: [
@@ -110,7 +110,7 @@ export const additionalWork: SmallProject[] = [
     title: "Data Viz & Design System",
     description:
       "The charting and data visualization system built for the Partner Portal, along with the design system it runs on — built on a shared CMS foundation used across the platform.",
-    href: "/work/yahoo-partner-portal",
+    href: "/coming-soon?p=yahoo-data-viz",
   },
   {
     company: "Headspace",
@@ -124,8 +124,7 @@ export const additionalWork: SmallProject[] = [
     title: "Harrison's App",
     description:
       "A post-op medication tracker I built for my dog using AI-assisted development. Because the timing logic was genuinely hard to get right by hand.",
-    href: null,
-    draft: true,
+    href: "/coming-soon?p=harrisons-app",
   },
 ];
 

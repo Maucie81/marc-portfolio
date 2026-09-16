@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { caseStudies } from "@/lib/case-studies";
+import { caseStudies, type CaseStudyLink } from "@/lib/case-studies";
 
 const closingLinks = caseStudies.filter((cs) => cs.closingLink);
 
@@ -18,11 +18,18 @@ const closingLinks = caseStudies.filter((cs) => cs.closingLink);
  * `ht-perks` has no horizontal track — it's a single vertical reading column
  * — so it passes `variant="column"` to drop the track-specific width/height
  * and just fill whatever column it's placed in.
+ *
+ * `links` overrides the default "Want to see more?" pair (the two
+ * `closingLink` entries in case-studies.ts) — Headspace Unified Main Door
+ * passes Yahoo Partner Portal + Airbnb instead, per direct request; every
+ * other page keeps the default.
  */
 export default function CaseStudyClosing({
   variant = "track",
+  links = closingLinks,
 }: {
   variant?: "track" | "column";
+  links?: CaseStudyLink[];
 }) {
   return (
     <div
@@ -59,7 +66,7 @@ export default function CaseStudyClosing({
         >
           Want to see more?
         </p>
-        {closingLinks.map((cs) => (
+        {links.map((cs) => (
           <Link
             key={cs.slug}
             href={cs.href}

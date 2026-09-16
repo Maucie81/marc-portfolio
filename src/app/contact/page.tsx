@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import BackBar from "@/components/site/BackBar";
 import ContactForm from "@/components/site/ContactForm";
-import { contact } from "@/lib/home";
+import SectionNumber from "@/components/site/SectionNumber";
+import SectionRail from "@/components/site/SectionRail";
 
 export const metadata: Metadata = {
   title: "Contact — Marc Favro",
@@ -9,55 +11,46 @@ export const metadata: Metadata = {
 
 export default function ContactPage() {
   return (
-    <div className="bg-bg">
-      <header className="sticky top-0 z-50 border-b border-line bg-bg">
-        <div className="mx-auto flex max-w-[88rem] items-center justify-between px-6 pb-3 pt-6 lg:px-10">
-          <a
-            href="/"
-            className="flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent"
-          >
-            <span
-              aria-hidden
-              className="inline-block size-[14px] shrink-0 rounded-full bg-accent"
-            />
-            Welcome. I&apos;m Marc
-          </a>
-          <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted">
-            <a href="/#hero" className="transition-colors hover:text-accent">
-              Home
-            </a>
-            <a href="/#work" className="transition-colors hover:text-accent">
-              Work
-            </a>
-            <a href="/contact" className="transition-colors hover:text-accent">
-              Contact
-            </a>
-            <a
-              href={contact.resume}
-              target="_blank"
-              rel="noreferrer"
-              className="transition-colors hover:text-accent"
-            >
-              Resume
-            </a>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-dvh bg-bg">
+      {/* Same frame as the homepage: PersistentHeader supplies the fixed top
+          band + rails at lg, so <main> pads for it the same way page.tsx does. */}
+      <main className="mx-auto px-6 pb-16 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[82px]">
+        {/* 828:64259 — the "05" column is kept for alignment but its number
+            is opacity 0 in the design, so it's hidden here too. */}
+        <section className="sec py-12 lg:h-[calc(100dvh-164px)] lg:grid-cols-[1.5rem_6.25rem_1fr]! lg:py-0">
+          <SectionRail />
+          <SectionNumber
+            number="05"
+            label="Contact"
+            className="invisible max-lg:hidden"
+          />
+          <div className="relative flex min-h-0 flex-col self-stretch">
+            <div className="lg:absolute lg:inset-x-0 lg:top-0">
+              <BackBar />
+            </div>
+            {/* 828:64259 — 111px top offset at the 1024 design height; the
+                offset and gaps shrink on shorter viewports and the Message
+                field absorbs the remainder so the page never scrolls at lg. */}
+            <div className="flex flex-col gap-12 pt-12 lg:min-h-0 lg:flex-1 lg:gap-[clamp(16px,calc(10.5dvh-60px),48px)] lg:pt-[clamp(24px,calc(28.6dvh-182px),111px)] lg:pb-[clamp(8px,calc(10.5dvh-68px),40px)]">
+              <div className="flex max-w-[565px] flex-col gap-2">
+                {/* 828:64264 — DM Sans Bold 16/20, not the display face */}
+                <p className="text-base font-bold leading-5 text-accent [font-family:var(--font-body),system-ui,sans-serif]">
+                  I&apos;d love to hear from you
+                </p>
+                <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)] leading-none">
+                  Get in touch
+                </h1>
+                <p className="t-body mt-2 text-ink-2">
+                  You&apos;re a couple clicks away from discussing a role, or
+                  exchanging ideas on design. I would be very interested in
+                  either.
+                </p>
+              </div>
 
-      <main className="mx-auto max-w-[88rem] px-6 py-24 lg:px-10 lg:py-32">
-        <div className="max-w-[36rem]">
-          <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)]">
-            Let&apos;s work together
-          </h1>
-          <p className="t-body mt-4 max-w-[392px] text-ink-2">
-            I&apos;m currently open to new opportunities. Send me a message and
-            I&apos;ll get back to you.
-          </p>
-
-          <div className="mt-12">
-            <ContactForm />
+              <ContactForm />
+            </div>
           </div>
-        </div>
+        </section>
       </main>
     </div>
   );

@@ -42,7 +42,7 @@ export const caseStudies: CaseStudyLink[] = [
   },
   {
     slug: "headspace-health-umd",
-    title: "Headspace — Unified Enrollment",
+    title: "Headspace Unified Main Door",
     href: "/work/headspace-health-umd",
   },
   {

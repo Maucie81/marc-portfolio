@@ -261,99 +261,26 @@ export default function Home() {
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
                 const image = project.image ? (
-                  // Two-layer structure, both tiers' numbers pulled
-                  // directly from Figma (784:121621/791:129913/784:121479)
-                  // via two guide rectangles the design added to each node
-                  // (get_design_context) plus the real DROP_SHADOW effect
-                  // on each "Mask group" layer (read via the Plugin API,
-                  // node.effects — not visible in the get_design_context
-                  // hint output, so it has to be read directly).
-                  //
-                  // Outer = the red guide frame: 714×404, the total space
-                  // Figma allots per card including shadow bleed — sized
-                  // exactly so the shadow (max reach ~65px right/~60px
-                  // bottom from offset+blur) fits inside this box's own
-                  // margins (100px right/53px bottom) with room to spare.
-                  // Because of that, overflow-hidden is SAFE here: it clips
-                  // this box's own rectangular #eaeae5/border background
-                  // (which the browser otherwise renders full-bleed with
-                  // sharp corners on the sides/bottom, since only the top
-                  // is rounded — visible as a flat mismatched box sitting
-                  // behind the shadow) without touching the shadow, which
-                  // never reaches this boundary in the first place.
-                  //
-                  // Inner = the green guide frame: 520×302 positioned at
-                  // (94, 49) within the outer 714×404 — i.e. inset
-                  // 12.13% top / 14.01% right / 13.12% bottom / 13.17% left,
-                  // identical on all three nodes. This carries the exact
-                  // Figma shadow (offset 19/14, blur 46, spread 0,
-                  // rgba(0,0,0,0.24)) and, one level deeper, the
-                  // overflow-hidden crop for the image — kept separate from
-                  // the shadow layer so clipping the image never clips the
-                  // shadow with it (an earlier bug).
+                  // The whole card artwork — grey ground, bezel, radius and
+                  // drop shadow — is one export of the Figma card frame
+                  // (784:121621 / 784:121479 / 791:129913, node "Homepage
+                  // artwork" 835:64874), cropped to the inside of its 1px
+                  // #d2d2d2 border. Only that border is drawn here, so the
+                  // three cards can't drift apart in CSS.
                   <div
                     className="relative w-full overflow-hidden rounded-t-[4px] border border-[#d2d2d2] bg-[#eaeae5]"
-                    style={{ aspectRatio: "714 / 404" }}
+                    style={{ aspectRatio: "714 / 402" }}
                   >
-                    {/* Available-space box: the green guide frame (520×302
-                        inset within the 714×404 red frame, 12.13/14.01/
-                        13.12/13.17%). This is a sizing envelope, not a crop
-                        box — flex centering lets the actual mockup box
-                        (below) size itself to fit inside via aspect-ratio,
-                        the same way object-contain would, but one level up
-                        so the shadow and border both hug the real visible
-                        mockup instead of a box whose aspect ratio doesn't
-                        match any of the three exported assets (~1.723 vs
-                        1.746–1.755 — that mismatch is what caused both
-                        earlier bugs: letterbox gaps under object-contain,
-                        then cropped-in side borders under object-cover). */}
-                    <div className="absolute inset-[12.13%_14.01%_13.12%_13.17%] flex items-center justify-center">
-                      {/* Actual mockup box: sized via the exported asset's
-                          own aspect ratio, constrained to fit the envelope
-                          above on whichever axis is tighter (flex +
-                          aspect-ratio + max-width/max-height is the
-                          standard CSS "contain" pattern for a box, not just
-                          an <img>). No cropping is possible — width/height
-                          are solved directly from the image's real ratio,
-                          so object-fit on the <img> below never has to
-                          reconcile a mismatched box. */}
-                      <div
-                        className="max-h-full max-w-full rounded-[12px]"
-                        style={{
-                          aspectRatio: `${project.image.width} / ${project.image.height}`,
-                          boxShadow: "19px 14px 46px 0px rgba(0,0,0,0.24)",
-                        }}
-                      >
-                        {/* rounded-[12px] on THIS box (not the crop layer
-                            below) matches Figma's own bezel radius so
-                            box-shadow — which always follows its casting
-                            element's own border-radius, square by default —
-                            renders with rounded corners too. Without it the
-                            shadow cast a sharp rectangular corner poking out
-                            past the visibly rounded mockup image: a flat
-                            "box" edge between the border and the soft blur.
-                            This box has no overflow-hidden itself, so the
-                            radius only shapes the shadow, it doesn't clip
-                            anything — no risk of the earlier double-
-                            rounding bug (that came from radius on the crop
-                            layer, which DOES clip, fighting the image's own
-                            baked corner once object-cover rescaled it).
-                            overflow-hidden below stays only as a plain
-                            rectangular safety clip — with the box above now
-                            matching the image's exact aspect ratio,
-                            object-cover never actually crops
-                            anything. */}
-                        <div className="h-full w-full overflow-hidden">
-                          <Image
-                            src={project.image.src}
-                            alt={project.image.alt}
-                            width={project.image.width}
-                            height={project.image.height}
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                      </div>
-                    </div>
+                    <Image
+                      src={project.image.src}
+                      alt={project.image.alt}
+                      width={project.image.width}
+                      height={project.image.height}
+                      // 4x Figma export served as-is: the optimizer's q75
+                      // re-encode of small UI text was visibly soft.
+                      unoptimized
+                      className="block h-full w-full"
+                    />
                   </div>
                 ) : (
                   <div className="relative">
