@@ -16,3 +16,11 @@ const OTHER_TITLES: Record<string, string> = {
 export function pageLabel(path: string): string {
   return CASE_STUDY_TITLES[path] ?? OTHER_TITLES[path] ?? path;
 }
+
+/** Routes PersistentHeader wraps in the perimeter frame (PerimeterFrame.tsx)
+ * — the homepage set plus every case study. The frame's left rail carries
+ * the CMYK proof-notes trigger, so ProofNotes only renders its floating
+ * trigger on routes outside this set (ht-perks, lab pages). */
+export function hasPerimeterFrame(path: string): boolean {
+  return path in OTHER_TITLES || path in CASE_STUDY_TITLES;
+}

@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
-import { CoverBlock, IntroStackBlock } from "@/components/case-study/CaseStudyPage";
+import {
+  BottomRule,
+  CoverBlock,
+  IntroStackBlock,
+  RailDots,
+} from "@/components/case-study/CaseStudyPage";
 import { caseStudies } from "@/lib/case-studies";
 import { context, meta, PROTOTYPE_URL, sidebar } from "@/lib/headspace-umd";
 
@@ -21,25 +26,6 @@ const CLOSING_LINKS = ["yahoo-partner-portal", "airbnb-hotels"].map(
   (slug) => caseStudies.find((cs) => cs.slug === slug)!,
 );
 
-function RailDots() {
-  return (
-    <div
-      aria-hidden
-      className="fixed bottom-0 left-0 top-16 z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
-    >
-      <span className="rail-dot" />
-      <span className="rail-dot" />
-      <span className="rail-dot" />
-    </div>
-  );
-}
-
-function BottomRule() {
-  return (
-    <div aria-hidden className="fixed inset-x-0 bottom-0 z-30 border-t border-line" />
-  );
-}
-
 /** Recorded prototype walkthrough, anchored to the same 687px row as every
  * YPP section's media (and as the Context stack before it, so the two tops
  * line up). Same treatment as the shared `PlainMedia` box — bg-white,
@@ -49,8 +35,9 @@ function BottomRule() {
  * letterboxed it with white bars top and bottom, which read as sloppy.
  * Per direct correction the bars matter more than the width matching the
  * other case studies, so the box takes the recording's own ratio at the
- * shared height (609 × 2982/1862 ≈ 975px wide) and the video fills it edge
- * to edge. Kept local rather than adding a ratio override to `PlainMedia`,
+ * shared height (609 × 2982/1862 ≈ 975px wide, both × --cs-media-scale so
+ * it shrinks with every other media box on short viewports) and the video
+ * fills it edge to edge. Kept local rather than adding a ratio override to `PlainMedia`,
  * which stays a fixed box on purpose.
  *
  * Mirrors SectionBlock's panel column — 609px media row, gap-6, 80px bottom
@@ -59,7 +46,7 @@ function BottomRule() {
  * track gap plus CaseStudyClosing's own 149px margin-left gives the same
  * 293px run-in to "Thank you." that YPP has. */
 const WALKTHROUGH_ASPECT = "2982/1862";
-const WALKTHROUGH_WIDTH = `calc(609px * ${WALKTHROUGH_ASPECT} * var(--cs-scale, 1))`;
+const WALKTHROUGH_WIDTH = `calc(609px * ${WALKTHROUGH_ASPECT} * var(--cs-media-scale, 1))`;
 
 function WalkthroughBlock({ href }: { href: string }) {
   return (
@@ -69,7 +56,7 @@ function WalkthroughBlock({ href }: { href: string }) {
     >
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
         <div
-          className="w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-scale,1))]"
+          className="w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-media-scale,1))]"
           style={{ aspectRatio: WALKTHROUGH_ASPECT }}
         >
           {/* object-cover, not object-contain: the box already has the

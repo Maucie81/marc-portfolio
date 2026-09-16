@@ -327,11 +327,18 @@ body {
 
 /* ---------- Case study: horizontal track ---------- */
 
+/* Sits directly on top of the perimeter frame's 32px white bottom band
+   (PerimeterFrame.tsx BottomBand — its top edge is exactly where this
+   strip's bottom edge lands) and runs between the two 32px white side
+   rails rather than under them: the rails are z-40 and this is z-60, so a
+   full-width strip would paint its grey over the white rail corners. The
+   drag-to-scrub math in HorizontalTrack.tsx reads this element's own
+   bounding rect, so the inset doesn't skew the 0–1 ratio. */
 .cs-progress {
   position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
+  left: 32px;
+  right: 32px;
+  bottom: 32px;
   height: 32px;
   background: var(--bg);
   border-top: 1px solid var(--line);
@@ -460,6 +467,14 @@ body {
   color: var(--ink-strong);
 }
 
+/* Pull-quote text only (the blockquotes beside a section's media) — the
+   .cs-quote role stepped down to 16/24 per direct request; the 20px read
+   too loud next to the recordings. Stat labels keep .cs-quote's 20px. */
+.cs-pull-quote {
+  font-size: 1rem;
+  line-height: 1.5rem;
+}
+
 /* Sub Label · a title paired with a smaller description directly beneath it
    — case-study section bullets, but also the homepage's Recent Work
    sub-feature titles. Not scoped to case studies despite the prefix; kept
@@ -502,15 +517,46 @@ body {
     position: relative;
   }
 
-  /* --cs-scale multiplies the 1440px-baseline geometry (spacing, media
-     placeholder, rail/quote columns — never typography). Held at 1 across
-     the whole horizontal-mode range: 1440px is the intended viewing width,
-     so nothing should visibly change between it and the 901px floor where
-     horizontal mode itself switches off. Inherits from .cs-track down to
-     every block, since custom properties cascade. Revisit this value (or
-     reintroduce a tier) only if the 901px floor itself moves. */
+  /* --cs-scale multiplies the 1440px-baseline geometry (spacing, text/quote
+     columns, block widths — never typography). Held at 1 across the whole
+     horizontal-mode range: 1440px is the intended viewing width, so nothing
+     should visibly change between it and the 901px floor where horizontal
+     mode itself switches off. Inherits from .cs-track down to every block,
+     since custom properties cascade. Revisit this value (or reintroduce a
+     tier) only if the 901px floor itself moves.
+
+     --cs-media-scale is the separate, height-driven knob for the media
+     boxes ONLY — every recording/placeholder/steps panel sized off the
+     shared 857×609 box and its 687.3px row (and the row's own anchor,
+     .cs-anchor-687). The row has to fit between the fixed chrome with
+     --cs-pad of clear space above and below it; a ~1440×780 laptop window
+     used to leave it jammed under the top band. Above the height where it
+     fits at 1:1 the row just sits centered with more than --cs-pad to
+     spare; below it, the ratio holds the padding exactly and shrinks the
+     boxes instead. Deliberately NOT folded into --cs-scale, per direct
+     request: shrinking the text columns along with the media re-wrapped
+     every subtitle on short screens, so those stay full-width and only the
+     media gives. Unitless via length/length division, same as the hero's
+     own 100cqi / 714px. */
   .cs-track {
     --cs-scale: 1;
+    /* Fixed chrome stacked on the pinned viewport's top and bottom edges:
+       the perimeter frame's 42px white top band above, and below it the
+       32px white bottom band plus the 32px progress scrubber that sits on
+       top of that band (.cs-progress). Not multiplied by either scale —
+       the chrome is fixed-size regardless of the track's own geometry.
+       Every vertical budget on this page (--cs-media-scale, the track's
+       padding, .cs-anchor-687, CaseStudyHero's --hero-scale) derives from
+       these so the story is always centered in the area actually left
+       between them. --cs-pad is the minimum clear space between that
+       chrome and any block's content, top and bottom. */
+    --cs-chrome-top: 42px;
+    --cs-chrome-bottom: 64px;
+    --cs-pad: 40px;
+    --cs-media-scale: min(
+      1,
+      calc((100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - 2 * var(--cs-pad)) / 687.3px)
+    );
   }
 
   .cs-track {
@@ -524,8 +570,12 @@ body {
     gap: calc(144px * var(--cs-scale));
     padding-left: calc(129.6px * var(--cs-scale));
     padding-right: calc(259.2px * var(--cs-scale));
-    /* Clears the fixed top bar so content never starts underneath it. */
-    padding-top: calc(68px * var(--cs-scale));
+    /* Pads out exactly the fixed chrome on each edge, so `align-items:
+       center` centers each block in the visible area between the top band
+       and the scrubber — not in the raw 100vh, which used to leave every
+       block sitting a few dozen px low. */
+    padding-top: var(--cs-chrome-top);
+    padding-bottom: var(--cs-chrome-bottom);
     will-change: transform;
   }
 
@@ -543,7 +593,17 @@ body {
      bottom flow with .cs-track's own gap instead. */
   .cs-anchor-687 {
     align-self: flex-start;
-    margin-top: calc((100vh - (72px + 687.3px) * var(--cs-scale, 1)) / 2);
+    /* Centers the shared 687.3px media row in the space between the fixed
+       chrome (.cs-track's padding), i.e. the same place a 687.3px-tall
+       block would land via the track's own centering. Formerly
+       `(100vh - (72px + 687.3px)) / 2` against the raw viewport: the 72px
+       was headroom for a section title that has since moved beside the
+       media instead of above it, so it had become pure bottom slack —
+       dropped now that the top band + bottom band + scrubber leave less
+       vertical room than the old 64px bar + scrubber did. */
+    margin-top: calc(
+      (100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - 687.3px * var(--cs-media-scale, 1)) / 2
+    );
   }
 
   /* The Problem's horizontal inset — desktop only, for the same reason. */

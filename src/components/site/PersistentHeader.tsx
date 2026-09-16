@@ -110,32 +110,64 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   );
 }
 
+/** Case-study nav. Below 901px (the vertical-fallback layout) it's the
+ * original 56px sticky strip: "← Back · title", grey, hairline underneath.
+ * From 901px up — the same width HorizontalTrack/globals.css switch to the
+ * pinned horizontal story — it becomes the perimeter frame's 42px white top
+ * band, with the same TopBandChrome ornaments, BottomBand, and rails the
+ * homepage draws (PerimeterFrame.tsx), so a case study reads as the same
+ * printed sheet as the page it was opened from. Nav type switches to the
+ * band's Roboto Mono role at that width too (mirrors HomeHeader's lg:
+ * treatment) — the title keeps its accent color so it still reads as the
+ * breadcrumb, 32px right of "Back" at every width (per direct request).
+ * Content insets 64px from each viewport edge: 32px rail +
+ * 32px, landing "Back" on the same x the homepage logo sits at (at 1440).
+ * Not capped/centered like the homepage's 1376px column, because the
+ * horizontal track underneath isn't either. */
 function CaseStudyTopBar({ title }: { title: string }) {
+  const bandType =
+    "min-[901px]:text-[12px] min-[901px]:font-normal min-[901px]:uppercase min-[901px]:leading-[20px] min-[901px]:tracking-normal min-[901px]:[font-family:var(--font-mono),ui-monospace,monospace]";
   return (
-    <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-6 backdrop-blur min-[901px]:h-16 min-[901px]:px-8">
-      <div className="flex items-center gap-3 min-[901px]:gap-[65px]">
-        <BackLink
-          className="flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)]"
-        >
-          <ArrowIcon className="mt-0 rotate-180 text-current" />
-          Back
-        </BackLink>
-        <span className="text-sm font-medium leading-4 text-accent [font-family:var(--font-display)]">
-          {title}
-        </span>
-      </div>
-      <nav className="hidden gap-8 text-xs leading-4 text-ink-strong min-[901px]:flex">
-        <Link href="/#hero" className="transition-colors hover:text-accent">
-          Home
-        </Link>
-        <Link href="/#contact" className="transition-colors hover:text-accent">
-          Contact
-        </Link>
-        <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
-          Resume
-        </a>
-      </nav>
-    </header>
+    <>
+      <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg/95 backdrop-blur min-[901px]:border-b-0 min-[901px]:bg-white min-[901px]:backdrop-blur-none">
+        <div className="relative">
+          <div className="flex h-14 items-center justify-between px-6 min-[901px]:h-[42px] min-[901px]:px-16">
+            <div className="flex items-center gap-8">
+              <BackLink
+                className={`flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)] min-[901px]:text-black ${bandType}`}
+              >
+                <ArrowIcon className="mt-0 rotate-180 text-current" />
+                Back
+              </BackLink>
+              <span
+                className={`text-sm font-medium leading-4 text-accent [font-family:var(--font-display)] ${bandType}`}
+              >
+                {title}
+              </span>
+            </div>
+            <nav
+              className={`hidden gap-4 text-xs leading-4 text-ink-strong min-[901px]:flex min-[901px]:text-black ${bandType}`}
+            >
+              <Link href="/#hero" className="transition-colors hover:text-accent">
+                Home
+              </Link>
+              <Link href="/#contact" className="transition-colors hover:text-accent">
+                Contact
+              </Link>
+              <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
+                Resume
+              </a>
+            </nav>
+          </div>
+          <div className="pointer-events-none absolute inset-0 hidden min-[901px]:block">
+            <TopBandChrome />
+          </div>
+        </div>
+      </header>
+      <BottomBand breakpoint="cs" />
+      <LeftRail breakpoint="cs" />
+      <RightRail breakpoint="cs" />
+    </>
   );
 }
 

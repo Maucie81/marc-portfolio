@@ -2,7 +2,8 @@ import ProofTrigger from "@/components/proof/ProofTrigger";
 import { contact } from "@/lib/home";
 
 /**
- * Fixed outer "print registration" frame for the homepage — a continuous
+ * Fixed outer "print registration" frame for the homepage (and, via
+ * PersistentHeader, the contact/coming-soon pages and every case study) — a continuous
  * white border around the whole viewport (top band 42px, right/bottom/left
  * 32px), not just floating top/bottom bars. Sourced from Figma fileKey
  * AWMKNoAFrxViMhBaGRfWbZ, node 627:49704 ("Final Homepage - Cropped"), with
@@ -15,6 +16,20 @@ import { contact } from "@/lib/home";
 
 export const FRAME_TOP = 42;
 export const FRAME_SIDE = 32;
+
+/** Which breakpoint the frame's bands/rails switch on at. "lg" (1024px) is
+ * the homepage/contact/coming-soon frame. "cs" is the case studies' own
+ * horizontal-mode threshold (901px, the same width HorizontalTrack.tsx and
+ * globals.css flip on) — the frame has to appear at exactly the width the
+ * progress scrubber starts sitting on the bottom band (`.cs-progress`
+ * bottom: 32px), or there'd be a 901–1023px window where the scrubber
+ * floats 32px above the viewport edge with no band underneath it. */
+export type FrameBreakpoint = "lg" | "cs";
+
+const SHOW: Record<FrameBreakpoint, { flex: string; block: string }> = {
+  lg: { flex: "hidden lg:flex", block: "hidden lg:block" },
+  cs: { flex: "hidden min-[901px]:flex", block: "hidden min-[901px]:block" },
+};
 
 // The C/M/Y/K strip itself now lives in ProofTrigger (it became the
 // button that opens proof notes) — same hex + 5-step opacity ramp.
@@ -196,9 +211,9 @@ export function TopBandChrome() {
  * overlay with the crosshair hidden, then shown, and comparing.
  * Campaign badge anchored here (Figma: 627:51854, sits just left of the
  * bottom-right divider/crosshair) instead of floating mid-page. */
-export function BottomBand() {
+export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
   return (
-    <div className="fixed inset-x-0 bottom-0 z-50 hidden lg:block">
+    <div className={`fixed inset-x-0 bottom-0 z-50 ${SHOW[breakpoint].block}`}>
       <div className="relative h-8 bg-white">
         <BandOrnaments />
         <BandTicks />
@@ -211,8 +226,11 @@ export function BottomBand() {
             right-16 (64px): briefly frozen at the 1440px design width,
             then reverted per direct correction — plain viewport-edge-
             relative, since content no longer freezes and this badge sits
-            in the never-moving 32px rail's band. */}
-        <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right">
+            in the never-moving 32px rail's band.
+            max-lg:hidden: only reachable on the "cs" breakpoint (case
+            studies draw the band from 901px), where between 901–1023px the
+            ~390px badge would run into the band's center crosshair. */}
+        <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right max-lg:hidden">
           <span className="t-frame-mono whitespace-nowrap normal-case">
             2026 get a new job campaign • M.Favro / {contact.phone} /{" "}
             {contact.email}
@@ -231,9 +249,9 @@ export function BottomBand() {
  * i.e. 44px above the viewport bottom — so the strip's bottom needs
  * 44+32=76px clearance from the viewport bottom), not vertically centered.
  * The strip is ProofTrigger: clicking it opens the visitor's proof notes. */
-export function LeftRail() {
+export function LeftRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
   return (
-    <div className="fixed inset-y-0 left-0 z-40 hidden w-8 bg-white lg:flex">
+    <div className={`fixed inset-y-0 left-0 z-40 w-8 bg-white ${SHOW[breakpoint].flex}`}>
       <img
         src="/icons/center-mark.svg"
         alt=""
@@ -249,9 +267,9 @@ export function LeftRail() {
 
 /** Right rail — 32px wide, full viewport height, white. Mirrors the left
  * rail's frame treatment; no CMYK content (that's left-margin only). */
-export function RightRail() {
+export function RightRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
   return (
-    <div className="fixed inset-y-0 right-0 z-40 hidden w-8 bg-white lg:flex">
+    <div className={`fixed inset-y-0 right-0 z-40 w-8 bg-white ${SHOW[breakpoint].flex}`}>
       <img
         src="/icons/center-mark.svg"
         alt=""

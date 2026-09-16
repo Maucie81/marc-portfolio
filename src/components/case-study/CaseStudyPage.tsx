@@ -49,6 +49,11 @@ export type Sidebar = {
  * different depths. */
 const PLACEHOLDER_ASPECT = "aspect-[1440/1024]";
 
+/* Every box built on this shape is sized as 857px × var(--cs-media-scale)
+ * wide (609px tall at 1:1) — the height-driven scale set on .cs-track in
+ * globals.css that shrinks ONLY the media on short viewports, leaving the
+ * text columns (--cs-scale) alone. */
+
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
   bold: string;
@@ -212,7 +217,7 @@ export function PlainMedia({
  * page's horizontal-scroll-jacking in HorizontalTrack is untouched. */
 function StepsPanel({ steps }: { steps: { title: string; body: string }[] }) {
   return (
-    <div className="flex w-full flex-col gap-10 overflow-y-auto rounded-lg bg-ink/80 px-8 py-10 text-bg min-[901px]:w-[calc(500px*var(--cs-scale,1))] min-[901px]:max-h-[calc(687.3px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-16">
+    <div className="flex w-full flex-col gap-10 overflow-y-auto rounded-lg bg-ink/80 px-8 py-10 text-bg min-[901px]:w-[calc(500px*var(--cs-scale,1))] min-[901px]:max-h-[calc(687.3px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-16">
       {steps.map((step) => (
         <div key={step.title} className="flex flex-col gap-3">
           <p className="text-xl font-semibold leading-[26px] [font-family:var(--font-display)]">{step.title}</p>
@@ -280,11 +285,16 @@ function PrinciplesBlock({
   );
 }
 
-function RailDots() {
+/** Three registration dots down the left edge of the story. Inset by the
+ * perimeter frame's 32px white rails on every side (left-8 / top-[42px] /
+ * bottom-8 — see PerimeterFrame.tsx FRAME_TOP/FRAME_SIDE) so the column
+ * sits just inboard of the left rail on the grey, not underneath it.
+ * Exported so headspace-health-umd/page.tsx shares this exact element. */
+export function RailDots() {
   return (
     <div
       aria-hidden
-      className="fixed bottom-0 left-0 top-16 z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
+      className="fixed bottom-8 left-8 top-[42px] z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
     >
       <span className="rail-dot" />
       <span className="rail-dot" />
@@ -293,8 +303,15 @@ function RailDots() {
   );
 }
 
-function BottomRule() {
-  return <div aria-hidden className="fixed inset-x-0 bottom-0 z-30 border-t border-line" />;
+/** Hairline along the bottom of the viewport. On the vertical/mobile
+ * layout it's the only bottom rule; in horizontal mode the scrubber's own
+ * border-top normally covers it, so it lifts 32px to sit on the frame's
+ * bottom band (same edge the scrubber sits on) for the moments the
+ * scrubber is hidden. */
+export function BottomRule() {
+  return (
+    <div aria-hidden className="fixed inset-x-0 bottom-0 z-30 border-t border-line min-[901px]:bottom-8" />
+  );
 }
 
 /** Small orange section number ("01", "02", ...) beside a section's title.
@@ -481,17 +498,20 @@ function CaseStudyHero({
       {/* --hero-scale takes the smaller of: how much width the column
           actually has (100cqi vs. the native 714px), and how much vertical
           room is actually free inside .cs-pin's fixed 100vh once the fixed
-          top bar (64px desktop), .cs-track's own top padding (68px), and
-          the fixed bottom progress rail (32px, .cs-progress in
-          globals.css) are excluded — ~164px total, plus a small margin so
-          centering slop can't tip it over. Computed once here; both this
-          element's own height and the inner canvas's transform read the
-          SAME variable, so wrapper and content can't drift apart the way
-          they did last pass. */}
+          chrome is excluded — the perimeter frame's 42px top band, and the
+          32px bottom band + 32px progress scrubber stacked on it
+          (--cs-chrome-top/--cs-chrome-bottom, set on .cs-track in
+          globals.css; 0px fallbacks only matter below 901px, where this
+          column is display:none anyway) — plus 2 × --cs-pad so the canvas
+          keeps the same 40px of air off the band and the scrubber that
+          every media row gets via --cs-media-scale. Computed once
+          here; both this element's own height and the inner canvas's
+          transform read the SAME variable, so wrapper and content can't
+          drift apart the way they did last pass. */}
       <div
         className="relative"
         style={{
-          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - 190px) / ${height}px))`,
+          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / ${height}px))`,
           height: `calc(${height}px * var(--hero-scale))`,
         }}
       >
@@ -698,14 +718,17 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
         {/* Metadata column top-aligns with the next block's title (The
             Problem / Context), per direct request — previously self-end,
             which dropped Role/Timeline/… a few hundred px below the row the
-            eye lands on next, so it bounced. The track centers this block,
-            so a column exactly 691.3px tall (the .cs-track content height
-            minus the 687px anchor row, twice over: 100vh − 68 − 2·(anchor
-            offset) — see .cs-anchor-687 in globals.css) puts its own top on
-            that same row whatever the hero's height happens to be. The list
-            inside just starts at the top; content shorter than 691px leaves
-            the remainder empty rather than shifting anything. */}
-        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:h-[calc(691.3px*var(--cs-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-center">
+            eye lands on next, so it bounced. The track centers this block
+            between the fixed chrome, and .cs-anchor-687 (globals.css)
+            centers the 687.3px media row in that same space — so a column
+            exactly 687.3px tall (× --cs-media-scale, same as the row),
+            itself centered, puts its own top on that row whatever the
+            hero's height happens to be. (Was 691.3px while
+            the anchor formula still carried 72px of title headroom; that
+            slack is gone, see .cs-anchor-687.) The list inside just starts
+            at the top; content shorter than that leaves the remainder empty
+            rather than shifting anything. */}
+        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:h-[calc(687.3px*var(--cs-media-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-center">
           <dl className="flex flex-col gap-5">
             {sidebar.groups.map((group) => (
               <div key={group.label} className="flex gap-[calc(21px*var(--cs-scale,1))]">
@@ -811,10 +834,10 @@ function PanelItemBlock({
           <p className="cs-section-title">{title}</p>
           <p className="text-sm leading-[20px] text-ink-2">{body}</p>
         </div>
-        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(53.5rem*var(--cs-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
+        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
           <MediaPlaceholder
             brand={brand}
-            className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0"
+            className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0"
           />
           <p className="cs-caption text-center">{caption}</p>
         </div>
@@ -935,7 +958,7 @@ function QuoteBlock({ text, attribution }: { text: string; attribution: string }
     <div className="cs-block" style={{ ["--w" as string]: "31rem" }}>
       <figure>
         <blockquote className="border-l-2 border-accent pl-6">
-          <p className="cs-quote">{'"' + text + '"'}</p>
+          <p className="cs-quote cs-pull-quote">{'"' + text + '"'}</p>
         </blockquote>
         <figcaption className="mt-6 pl-6 text-sm leading-[20px] text-ink-2">{attribution}</figcaption>
       </figure>
@@ -994,7 +1017,7 @@ export function IntroStackBlock({
         {quote ? (
           <div className="flex flex-col gap-2">
             <blockquote>
-              <p className="cs-quote">{'"' + quote.text + '"'}</p>
+              <p className="cs-quote cs-pull-quote">{'"' + quote.text + '"'}</p>
             </blockquote>
             <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
           </div>
@@ -1046,7 +1069,7 @@ function SectionBlock({
     pullQuotes?.map((pq) => (
       <div key={pq.quote} className="flex flex-col gap-2">
         <blockquote className="w-full border-l-2 border-accent pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
-          <p className="cs-quote">{'"' + pq.quote + '"'}</p>
+          <p className="cs-quote cs-pull-quote">{'"' + pq.quote + '"'}</p>
         </blockquote>
         <p className="w-full pl-6 text-sm leading-[20px] text-ink-2 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
           — {pq.attribution}
@@ -1078,23 +1101,23 @@ function SectionBlock({
       <StepsPanel steps={steps!} />
     ) : (
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
+        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-media-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
                 image={image!}
-                className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
               />
             ) : (
               <IsolatedMedia
                 image={image!}
-                className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
               />
             )
           ) : (
             <MediaPlaceholder
               brand={brand}
-              className="min-[901px]:w-[calc(857px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
+              className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
             />
           )}
           {hasQuotes ? (
@@ -1111,7 +1134,7 @@ function SectionBlock({
             which also includes the 907px quotes/stats column) so the
             caption centers under the image itself instead of under the
             whole wider row. */}
-        <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-scale,1))]">
+        <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-media-scale,1))]">
           <p className="cs-caption text-center">{caption}</p>
         </div>
       </div>

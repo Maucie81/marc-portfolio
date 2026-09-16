@@ -4,10 +4,10 @@ import { useProof } from "./ProofProvider";
 
 /**
  * The CMYK lockup, now a button. "rail" is the original vertical strip in
- * the homepage frame's left rail (PerimeterFrame.tsx), kept pixel-for-pixel
- * but clickable; "floating" is a compact horizontal version for routes
- * without that rail (case studies), parked bottom-left just inboard of
- * their own 56px section rail and above the 32px progress bar.
+ * the perimeter frame's left rail (PerimeterFrame.tsx — homepage, contact,
+ * coming-soon and every case study), kept pixel-for-pixel but clickable;
+ * "floating" is a compact horizontal version for the few routes without
+ * that rail (ht-perks, lab pages), parked bottom-left.
  * Desktop only — dropping pins on a phone isn't the v1 story.
  */
 
