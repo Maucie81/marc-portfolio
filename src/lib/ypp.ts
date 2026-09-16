@@ -97,13 +97,18 @@ export type Block =
        * (Figma's "Steps" component) instead of an image + caption. */
       steps?: Bullet[];
       /** Replaces the media placeholder with a real, isolated interaction
-       * clip (gif) — one component cropped tight, no browser chrome, not
+       * clip — one component cropped tight, no browser chrome, not
        * a full-dashboard screenshot. `frame` picks the presentation:
        * "canvas" (default) stages it on the dark --ink card for a small/
        * odd-shaped crop; "plain" is a full-bleed rounded image with just a
        * drop shadow, for a large, already self-contained recording (Figma
-       * node 302:51676's Search treatment). */
-      image?: { src: string; alt: string; frame?: "canvas" | "plain" };
+       * node 302:51676's Search treatment). `src` is optional — omitted
+       * while no asset is available, which renders an empty placeholder
+       * box (same container styling) instead of a broken image. `type:
+       * "video"` renders `src` as an autoplay/muted/loop <video> instead
+       * of an <img> — for a real screen recording (.webm) rather than a
+       * static screenshot. */
+      image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
     }
   | {
       kind: "closing";
@@ -190,9 +195,10 @@ export const blocks: Block[] = [
     caption:
       "Eight KPI cards — views, reach, uniques, dwell, CTR, comments, video streams, content volume — each with period-over-period movement.",
     image: {
-      src: "/ypp/Gifs/Overview.gif",
+      src: "/ypp/videos/Overview.webm",
       alt: "Filtering the Overview page and reading KPI cards and charts",
       frame: "plain",
+      type: "video",
     },
     expandedPoints: [
       {
@@ -238,6 +244,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Rank your best-performing stories by any metric, then slice the results by region, device, type, category, and license to find what's actually working.",
+    image: {
+      src: "/ypp/videos/TopContent.webm",
+      alt: "Ranking and filtering Top Content and opening a story's placement data",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "Sort in either direction",
@@ -277,6 +289,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Drill into any KPI with full historical trend lines, median and average breakdowns, and an export of every row in the filtered view.",
+    image: {
+      src: "/ypp/videos/KPIDeepDives.webm",
+      alt: "Viewing the Views KPI's historical trend line and hourly breakdown table",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "Median > average",
@@ -289,13 +307,13 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 6. Content Vitals
+  // 6. Feed Health
   {
     kind: "section",
     sectionNumber: "05",
     eyebrow: "Reactive to self-service",
-    title: "Content Vitals",
-    body: "Content Vitals started as a monitoring dashboard but research changed that. Partners don't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a command center.",
+    title: "Feed Health",
+    body: "Feed Health started as a monitoring dashboard but research changed that. Partners don't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a command center.",
     bullets: [
       {
         title: "Your worst problems surface first",
@@ -308,6 +326,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Monitor feed health in real time: success rate, uptime, latency, and the exact issues holding you back (low word count, duplicate photos, restricted words) with guidance on how to fix each one.",
+    image: {
+      src: "/ypp/videos/FeedHealth.webm",
+      alt: "Reviewing feed health status and drilling into a content issue's diagnostics",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "Your worst problems surface first",
@@ -347,6 +371,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Watch how specific issues trend across your entire feed over time, drill into affected content, and see the impact on performance.",
+    image: {
+      src: "/ypp/videos/IssueTrend.webm",
+      alt: "Viewing a specific issue's hourly trend chart and the affected content list",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "History, not just a snapshot",
@@ -374,6 +404,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Click into any piece of content to see performance, metadata, warnings, and actionable next steps — no guessing, no tickets required.",
+    image: {
+      src: "/ypp/videos/StoryDetails.webm",
+      alt: "Opening a story from the issues list to view its warning and remediation details",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "Precise, not categorical",
@@ -401,7 +437,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID, then jump straight to its performance data.",
-    image: { src: "/ypp/Gifs/Search.gif", alt: "Searching for a story and opening its Content Item Detail", frame: "plain" },
+    image: {
+      src: "/ypp/videos/Search.webm",
+      alt: "Searching for a story and opening its Content Item Detail",
+      frame: "plain",
+      type: "video",
+    },
   },
 
   // 10. Takedowns
@@ -419,6 +460,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Request content removal directly from a story's details — include metadata, get confirmation, self-serve without support tickets.",
+    image: {
+      src: "/ypp/videos/Takedowns.webm",
+      alt: "Filing a pre-filled takedown request from a story's details",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "What shipped instead",
@@ -446,6 +493,12 @@ export const blocks: Block[] = [
     ],
     caption:
       "Add and remove team members, assign roles, control brand access, and manage organizational permissions — all without involving Yahoo.",
+    image: {
+      src: "/ypp/videos/UserManagement.webm",
+      alt: "Browsing the user list and reviewing a team member's role and brand access",
+      frame: "plain",
+      type: "video",
+    },
     expandedPoints: [
       {
         label: "Role based brand access",

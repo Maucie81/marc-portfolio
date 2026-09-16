@@ -32,18 +32,21 @@ export type Sidebar = {
   highlightsLabel?: string;
 };
 
-/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` — 857×609
- * (≈7:5), confirmed via Figma (nodes 594:122135 "Overview" and 594:122465
- * "User Management": both render the mockup as an explicit `w-[857px]
- * h-[609px]` box, not flex-grown to fill the row). Shared by both so a
- * section's shape doesn't shift the moment a placeholder gets swapped for
- * real footage — `object-cover` on `PlainMedia`'s `<img>` crops real
- * recordings (captured at ~1440:905, ≈1.59) down to this box rather than
- * letting them dictate their own, taller shape; without a shared box like
- * this, `MediaPlaceholder` and `PlainMedia` panels in the same row (e.g.
- * Overview next to Top Content) render at different heights and their
- * captions land at different depths. */
-const PLACEHOLDER_ASPECT = "aspect-[857/609]";
+/** Standard media-area box for `MediaPlaceholder` and `PlainMedia` —
+ * 1440×1024 (≈1.406:1), per explicit direct instruction superseding the
+ * previous 857×609 value (which had been confirmed via Figma nodes
+ * 594:122135 "Overview" and 594:122465 "User Management"; that Figma
+ * citation no longer applies to this new value — flagging rather than
+ * re-citing a source that wasn't re-checked). Shared by both `MediaPlaceholder`
+ * and `PlainMedia` so a section's shape doesn't shift the moment a
+ * placeholder gets swapped for real footage — `object-contain` on
+ * `PlainMedia`'s `<img>` fits real recordings (captured at ~1440:905,
+ * ≈1.59) inside this box rather than letting them dictate their own,
+ * differently-shaped box; without a shared box like this, `MediaPlaceholder`
+ * and `PlainMedia` panels in the same row (e.g. Overview next to Top
+ * Content) render at different heights and their captions land at
+ * different depths. */
+const PLACEHOLDER_ASPECT = "aspect-[1440/1024]";
 
 /** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
 export type Brand = {
@@ -119,9 +122,19 @@ function IsolatedMedia({
   image,
   className = "",
 }: {
-  image: { src: string; alt: string };
+  image: { src?: string; alt: string };
   className?: string;
 }) {
+  if (!image.src) {
+    // No asset yet — same standard media box (aspect ratio, bg, shadow,
+    // radius) as MediaPlaceholder/PlainMedia rather than an empty dark
+    // pedestal with nothing sized inside it.
+    return (
+      <div
+        className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+      />
+    );
+  }
   return (
     <div
       className={`flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 min-[901px]:px-14 min-[901px]:py-14 ${className}`}
@@ -146,7 +159,7 @@ function PlainMedia({
   image,
   className = "",
 }: {
-  image: { src: string; alt: string };
+  image: { src?: string; alt: string; type?: "video" };
   className?: string;
 }) {
   return (
@@ -154,13 +167,30 @@ function PlainMedia({
       className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* object-contain, not object-cover: real recordings are captured
-          wider (~1440:905, ≈1.59) than this box's fixed 857:609 (≈1.41)
-          shape, and object-cover was cropping both side edges of the UI
-          off — losing the nav rail on the left and the testimonial column
-          on the right in e.g. Overview.gif. Letterboxing (bg-white behind)
-          keeps the full frame visible instead. */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
+          wider (~1440:905, ≈1.59) than this box's fixed 1440:1024 (≈1.41)
+          shape, and object-cover would crop both side edges of the UI off —
+          losing the nav rail on the left and the testimonial column on the
+          right. Letterboxing (bg-white behind) keeps the full frame visible
+          instead. */}
+      {image.src ? (
+        image.type === "video" ? (
+          // playsInline is required for autoplay to actually fire on iOS
+          // Safari, not part of the requested attribute list but silently
+          // needed for it to work there at all.
+          <video
+            src={image.src}
+            autoPlay
+            muted
+            loop
+            playsInline
+            aria-label={image.alt}
+            className="size-full object-contain"
+          />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
+        )
+      ) : null}
     </div>
   );
 }
@@ -962,7 +992,7 @@ function SectionBlock({
   sectionNumber?: string;
   expandedPoints?: { label: string; text: string }[];
   steps?: { title: string; body: string }[];
-  image?: { src: string; alt: string; frame?: "canvas" | "plain" };
+  image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
   brand: Brand;
 }) {
   const position = pullQuotePosition ?? "bottom";

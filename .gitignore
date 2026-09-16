@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# raw screen recordings (source footage for public/ypp/videos/*.webm) —
+# not referenced by the app; kept locally, never committed
+/public/ypp/*.mov
