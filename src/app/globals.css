@@ -245,6 +245,8 @@ body {
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.25rem;
+  /* Keeps a #section target clear of the sticky/fixed header. */
+  scroll-margin-top: 66px;
 }
 
 @media (min-width: 1024px) {
@@ -254,6 +256,7 @@ body {
   .sec {
     grid-template-columns: 1.5rem 7.5rem 1fr;
     gap: 0;
+    scroll-margin-top: 42px;
   }
 
   /* Circle, number and section title share one vertical centre. The 5px

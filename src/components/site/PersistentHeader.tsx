@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ArrowIcon from "@/components/site/ArrowIcon";
+import BackLink from "@/components/site/BackLink";
 import {
   BottomBand,
   LeftRail,
@@ -10,6 +11,7 @@ import {
   TopBandChrome,
 } from "@/components/site/PerimeterFrame";
 import { contact } from "@/lib/home";
+import { CASE_STUDY_TITLES } from "@/lib/page-titles";
 
 /**
  * Renders whichever nav belongs to the current route, but lives in the root
@@ -27,13 +29,6 @@ import { contact } from "@/lib/home";
  */
 
 const RESUME_URL = contact.resume;
-
-const CASE_STUDY_TITLES: Record<string, string> = {
-  "/work/yahoo-partner-portal": "Yahoo Partner Portal",
-  "/work/airbnb-hotels": "Airbnb Hotels",
-  "/work/headspace-admin-portal": "Headspace Admin Portal Redesign",
-  "/work/headspace-health-umd": "Headspace Unified Main Door",
-};
 
 function HomeHeader({ active }: { active: "home" | "contact" }) {
   const activeClass = (key: typeof active) =>
@@ -119,13 +114,12 @@ function CaseStudyTopBar({ title }: { title: string }) {
   return (
     <header className="fixed inset-x-0 top-0 z-50 flex h-14 items-center justify-between border-b border-line bg-bg/95 px-6 backdrop-blur min-[901px]:h-16 min-[901px]:px-8">
       <div className="flex items-center gap-3 min-[901px]:gap-[65px]">
-        <Link
-          href="/#work"
+        <BackLink
           className="flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)]"
         >
           <ArrowIcon className="mt-0 rotate-180 text-current" />
           Back
-        </Link>
+        </BackLink>
         <span className="text-sm font-medium leading-4 text-accent [font-family:var(--font-display)]">
           {title}
         </span>

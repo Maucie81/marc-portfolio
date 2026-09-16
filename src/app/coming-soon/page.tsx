@@ -39,6 +39,7 @@ export default async function ComingSoonPage({
           <div className="relative flex flex-col self-stretch lg:justify-center">
             <div className="lg:absolute lg:inset-x-0 lg:top-0">
               <BackBar
+                fallbackHref="/#additional-work"
                 title={
                   project ? `${project.company} | ${project.title}` : undefined
                 }

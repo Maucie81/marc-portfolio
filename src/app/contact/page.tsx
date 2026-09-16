@@ -26,7 +26,7 @@ export default function ContactPage() {
           />
           <div className="relative flex min-h-0 flex-col self-stretch">
             <div className="lg:absolute lg:inset-x-0 lg:top-0">
-              <BackBar />
+              <BackBar fallbackHref="/" />
             </div>
             {/* 828:64259 — 111px top offset at the 1024 design height; the
                 offset and gaps shrink on shorter viewports and the Message
