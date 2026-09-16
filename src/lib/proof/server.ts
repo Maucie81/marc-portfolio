@@ -33,6 +33,9 @@ export function newId(bytes = 6): string {
 /** Public origin for deep links. Vercel puts the real host in
  * x-forwarded-host; request.url can be the internal one. */
 export function requestOrigin(request: Request): string {
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
   const host =
     request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "";
   const proto =
