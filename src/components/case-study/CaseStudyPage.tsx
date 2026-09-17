@@ -286,15 +286,23 @@ function PrinciplesBlock({
 }
 
 /** Three registration dots down the left edge of the story. Inset by the
- * perimeter frame's 32px white rails on every side (left-8 / top-[42px] /
- * bottom-8 — see PerimeterFrame.tsx FRAME_TOP/FRAME_SIDE) so the column
- * sits just inboard of the left rail on the grey, not underneath it.
- * Exported so headspace-health-umd/page.tsx shares this exact element. */
+ * perimeter frame's white rails (left-8 / top-[42px] — see PerimeterFrame.tsx
+ * FRAME_TOP/FRAME_SIDE) so the column sits just inboard of the left rail on
+ * the grey, not underneath it. The bottom inset is the 32px band PLUS the
+ * 32px progress scrubber stacked on it (bottom-16 = 64px, the same
+ * --cs-chrome-bottom the track uses) — per direct correction: with only
+ * the band excluded, the bottom dot sat 30px off the scrubber while the
+ * top dot had its full 56px (py-14) off the top band, so the three read as
+ * shoved down. Now both end dots clear their chrome by the same 56px and
+ * justify-between puts the middle one at the true midpoint — which is also
+ * exactly the hero's own vertical center, since the track centers between
+ * the same two edges. Exported so headspace-health-umd/page.tsx shares
+ * this exact element. */
 export function RailDots() {
   return (
     <div
       aria-hidden
-      className="fixed bottom-8 left-8 top-[42px] z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
+      className="fixed bottom-16 left-8 top-[42px] z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
     >
       <span className="rail-dot" />
       <span className="rail-dot" />
@@ -389,18 +397,31 @@ function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeig
  * via CoverBlock below.
  */
 
-/** Grid top offset, confirmed via get_metadata on 594:122065 ("Frame 74",
- * the hero's shared coordinate space): "Background grid" (679:59867) sits
- * at y:31, but "Copy lockup" (594:122066, the text content) starts at y:0 —
- * a 31px gap where the grid doesn't yet reach the top of the content area.
- * The grid's bottom already lines up with the frame's own bottom (31+914 =
- * 945 = Frame 74's full height), so only the top needs extending, by
- * exactly one grid pitch (30px cell + 1px gap = 31px — not a coincidence,
- * the missing gap is literally one more row). Applied as a separate
- * overlay `<div>` (its own top/height, own viewBox) rather than growing
- * `width`/`height` above, which also size `scaledBox` and would re-center
- * the text lockup inside a taller box and shift it down. */
-const GRID_TOP_EXTEND = 31;
+/** Grid top offset. The Figma reference is 31: per get_metadata on
+ * 594:122065 ("Frame 74", the hero's shared coordinate space), "Background
+ * grid" (679:59867) sits at y:31 while "Copy lockup" (594:122066) starts at
+ * y:0, and the grid's bottom already meets the frame's own bottom (31+914 =
+ * 945 = Frame 74's full height) — so only the top needed extending. But
+ * 945 isn't a whole number of 31px rows (30.48): the container's top edge
+ * landed ON a rule and its bottom edge cut through a 15px sliver of a row.
+ * Per direct request, trimmed to the nearest whole row count below (30 rows
+ * = 930px → extend by 16, not 31) and, with GRID_ROW_PHASE below, arranged
+ * so a row's CENTER — not a rule — sits exactly on both the top and bottom
+ * edges. The bottom edge stays at the canvas's own bottom (y:914) either
+ * way; only the top moves, by the 15px that was the cut-off sliver.
+ * Applied as a separate overlay `<div>` (its own top/height, own viewBox)
+ * rather than growing `width`/`height` above, which also size `scaledBox`
+ * and would re-center the text lockup inside a taller box. */
+const GRID_TOP_EXTEND = 16;
+
+/** Half the 31px pitch — every horizontal rule is drawn this far below
+ * where a 0-based pattern would put it, so the rules fall BETWEEN row
+ * centers and the row centers themselves land on whole multiples of the
+ * pitch from the container's top edge (0, 31, … 930 — i.e. the top and
+ * bottom edges included, which is the point). Column rules are unaffected:
+ * the request was about rows, and the lockup's left edge still snaps to a
+ * column rule (see leftOffset). */
+const GRID_ROW_PHASE = 15.5;
 
 /** How far the grid pattern insets from the top and bottom of its
  * (unchanged) container, applied after the extension above — given
@@ -452,6 +473,14 @@ function CaseStudyHero({
   // computed font, then applied as a compensating negative margin so the
   // INK — not the box — lines up with the grid.
   const [h1InkBearing, setH1InkBearing] = useState<number | null>(null);
+  // Vertical nudge (canvas px, ≤ half a row either way) applied to the
+  // whole lockup so the scroll hint's midline lands on a grid-row center —
+  // see the effect below. Nudging the lockup as a unit rather than the hint
+  // alone keeps the designed spacing between paragraph and hint intact;
+  // the lockup still reads as centered since the shift is under 16px.
+  const hintRef = useRef<HTMLParagraphElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  const [lockupNudge, setLockupNudge] = useState(0);
 
   useLayoutEffect(() => {
     const scaledBox = scaledBoxRef.current;
@@ -488,10 +517,45 @@ function CaseStudyHero({
     };
 
     measure();
+    // Google Sans Flex is `display: swap` — if it lands after first paint
+    // the title re-wraps at different widths, so measure again then.
+    document.fonts?.ready.then(measure);
     const ro = new ResizeObserver(measure);
     ro.observe(scaledBox);
     return () => ro.disconnect();
   }, [meta.company, meta.title, width]);
+
+  // Snap the scroll hint to a grid row. The lockup is flex-centered
+  // vertically, so where the hint lands depends on how tall the title and
+  // paragraph above it wrap — different per case study, and the old fixed
+  // -15.5px translate only held for one of them. Measured instead: the
+  // hint's midline in canvas px, versus the nearest row center, and the
+  // difference applied to the whole lockup as translateY. Row centers sit
+  // at every whole pitch from the grid container's top edge (see
+  // GRID_ROW_PHASE), which is GRID_TOP_EXTEND above canvas y:0.
+  useLayoutEffect(() => {
+    const hint = hintRef.current;
+    const canvas = canvasRef.current;
+    if (!hint || !canvas) return;
+    const snap = () => {
+      // offsetTop is layout-only — it ignores the translateY this sets —
+      // so re-running never compounds on a previous nudge. Summed up the
+      // chain to the canvas rather than read once: a transformed lockup
+      // becomes its own offsetParent, which would otherwise re-base the
+      // hint's offsetTop to the lockup on every run after the first.
+      let top = 0;
+      for (let el: HTMLElement | null = hint; el && el !== canvas; el = el.offsetParent as HTMLElement | null) {
+        top += el.offsetTop;
+      }
+      const center = top + hint.offsetHeight / 2;
+      const row = Math.round((center + GRID_TOP_EXTEND) / 31);
+      setLockupNudge(row * 31 - GRID_TOP_EXTEND - center);
+    };
+    snap();
+    document.fonts?.ready.then(snap);
+    // Re-run once the width/bearing measurements above have re-wrapped the
+    // text — those change the hint's position.
+  }, [lockupWidth, h1InkBearing]);
 
   return (
     <div className="cs-only-horizontal relative [container-type:inline-size] min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
@@ -507,18 +571,32 @@ function CaseStudyHero({
           every media row gets via --cs-media-scale. Computed once
           here; both this element's own height and the inner canvas's
           transform read the SAME variable, so wrapper and content can't
-          drift apart the way they did last pass. */}
+          drift apart the way they did last pass.
+
+          Sized and centered on the GRID's extent (height + GRID_TOP_EXTEND),
+          not the text canvas's: the grid overlay pokes GRID_TOP_EXTEND
+          above the canvas, so fitting/centering the canvas alone left the
+          grid with that much less air above it than below (28px vs 40px
+          at a typical laptop height) — per direct correction, the padding
+          above and below the grid must match. This wrapper's box IS the
+          grid's box now; the canvas sits GRID_TOP_EXTEND (scaled) down
+          inside it so the overlay's top lands flush with this box's top. */}
       <div
         className="relative"
         style={{
-          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / ${height}px))`,
-          height: `calc(${height}px * var(--hero-scale))`,
+          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / ${height + GRID_TOP_EXTEND}px))`,
+          height: `calc(${height + GRID_TOP_EXTEND}px * var(--hero-scale))`,
         }}
       >
         <div
           ref={scaledBoxRef}
-          className="absolute left-0 top-0 origin-top-left"
-          style={{ width: `${width}px`, height: `${height}px`, transform: "scale(var(--hero-scale))" }}
+          className="absolute left-0 origin-top-left"
+          style={{
+            top: `calc(${GRID_TOP_EXTEND}px * var(--hero-scale))`,
+            width: `${width}px`,
+            height: `${height}px`,
+            transform: "scale(var(--hero-scale))",
+          }}
         >
           <div
             aria-hidden
@@ -567,8 +645,8 @@ function CaseStudyHero({
                 />
               ))}
               {Array.from(
-                { length: Math.floor((height + GRID_TOP_EXTEND - GRID_PADDING * 2) / 31) + 1 },
-                (_, i) => i * 31,
+                { length: Math.floor((height + GRID_TOP_EXTEND - GRID_PADDING * 2 - GRID_ROW_PHASE) / 31) + 1 },
+                (_, i) => i * 31 + GRID_ROW_PHASE,
               ).map((y) => (
                 <line key={`h-${y}`} x1={0} y1={y} x2={width} y2={y} stroke="var(--line)" strokeWidth={1} vectorEffect="non-scaling-stroke" />
               ))}
@@ -586,6 +664,7 @@ function CaseStudyHero({
             // separately-centered pieces — splitting them made title and
             // paragraph stop sharing a left edge, which read as broken even
             // though each piece individually measured as centered.
+            ref={canvasRef}
             className="absolute inset-0 flex items-center"
           >
             <div
@@ -600,6 +679,8 @@ function CaseStudyHero({
                 // group; applied across the whole lockup per earlier request
                 // to cover all the text.
                 backgroundColor: "rgba(228,228,223,0.4)",
+                // See lockupNudge: lands the scroll hint on a row center.
+                transform: lockupNudge ? `translateY(${lockupNudge}px)` : undefined,
               }}
             >
               {/* Eyebrow "2024 - 2026" (594:122068): Roboto Mono SemiBold,
@@ -648,19 +729,21 @@ function CaseStudyHero({
                 // mt-11 (44px) moved up one grid row (31px) per earlier
                 // direct request: 44 - 31 = 13.
                 className="font-semibold text-ink-2 [font-family:var(--font-display)]"
-                style={{ fontSize: 20, lineHeight: "28px", maxWidth: 555, marginTop: 13 }}
+                style={{ fontSize: 20, lineHeight: "32px", maxWidth: 555, marginTop: 13 }}
               >
                 {meta.subtitle}
               </p>
               {/* Scroll hint (594:122073): Google Sans Flex SemiBold, 14px/22px.
-                  Centered ON the grid rule itself, not inside the cell below
-                  it: the row starts flush with the rule (mt-11, same as
-                  before), then h-[31px] + items-center pulls its own vertical
-                  center down 15.5px (half the grid pitch) — undone by
-                  shifting the whole row back up 15.5px so that midpoint lands
-                  back on the rule instead of the cell's midpoint. */}
+                  Exactly one row tall (h-[31px]) with its content centered
+                  in that box, and the whole lockup is nudged (translateY —
+                  see lockupNudge) so this box's midline sits on a grid-row
+                  center, per direct request, however tall the title and
+                  paragraph above it wrap. Replaces a fixed -15.5px translate
+                  that aimed for a RULE instead and only held for one
+                  title/paragraph height. */}
               <p
-                className="mt-11 flex h-[31px] -translate-y-[15.5px] items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
+                ref={hintRef}
+                className="mt-11 flex h-[31px] items-center gap-3 font-semibold text-ink-2 [font-family:var(--font-display)]"
                 style={{ fontSize: 14, lineHeight: "22px" }}
               >
                 <span className="inline-block h-[3px] w-10 bg-accent" />
@@ -725,10 +808,19 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
             itself centered, puts its own top on that row whatever the
             hero's height happens to be. (Was 691.3px while
             the anchor formula still carried 72px of title headroom; that
-            slack is gone, see .cs-anchor-687.) The list inside just starts
-            at the top; content shorter than that leaves the remainder empty
-            rather than shifting anything. */}
-        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:h-[calc(687.3px*var(--cs-media-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-center">
+            slack is gone, see .cs-anchor-687.) Content shorter than that
+            leaves the remainder empty rather than shifting anything.
+
+            pt-[…]: the first row ("Role" + its arrow) is centered on the
+            same line as the section number beside the next block's title,
+            per direct request — previously the list started flush at the
+            column's top, which put the label's midline 14px above the "01"
+            and the rail's top dot. Same expression SectionNum uses to sit
+            on the title's first line ((40px * 1.04) / 2 + 1.3px below the
+            anchor row), minus half of .cs-label's 1rem line-height so it's
+            the label's MIDLINE that lands there, not its top. Fixed px, not
+            scaled: typography isn't scaled by --cs-scale either. */}
+        <div className="w-full min-[901px]:ml-[calc(300px*var(--cs-scale,1))] min-[901px]:h-[calc(687.3px*var(--cs-media-scale,1))] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:self-center min-[901px]:pt-[calc((40px*1.04)/2+1.3px-0.5rem)]">
           <dl className="flex flex-col gap-5">
             {sidebar.groups.map((group) => (
               <div key={group.label} className="flex gap-[calc(21px*var(--cs-scale,1))]">

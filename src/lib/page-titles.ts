@@ -1,3 +1,5 @@
+import { additionalWork } from "@/lib/home";
+
 /** Human names for routes — shared by PersistentHeader's case-study top
  * bar and the proof-notes panel (which groups a visitor's notes by page). */
 export const CASE_STUDY_TITLES: Record<string, string> = {
@@ -15,6 +17,19 @@ const OTHER_TITLES: Record<string, string> = {
 
 export function pageLabel(path: string): string {
   return CASE_STUDY_TITLES[path] ?? OTHER_TITLES[path] ?? path;
+}
+
+/** /coming-soon serves every not-yet-written project (`?p=<slug>`, the
+ * additionalWork links in home.ts), so its breadcrumb title comes from the
+ * query string, not the pathname table: "Company | Title" for a known slug,
+ * undefined otherwise. Used by PersistentHeader's top bar and the page's
+ * own <title>, so the two never disagree. */
+export function comingSoonTitle(p?: string | null): string | undefined {
+  if (!p) return undefined;
+  const project = additionalWork.find(
+    (item) => item.href === `/coming-soon?p=${p}`,
+  );
+  return project ? `${project.company} | ${project.title}` : undefined;
 }
 
 /** Routes PersistentHeader wraps in the perimeter frame (PerimeterFrame.tsx)

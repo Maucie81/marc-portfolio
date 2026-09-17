@@ -1,4 +1,5 @@
 import ProofTrigger from "@/components/proof/ProofTrigger";
+import CopyEmail from "@/components/site/CopyEmail";
 import { contact } from "@/lib/home";
 
 /**
@@ -229,11 +230,14 @@ export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint
             in the never-moving 32px rail's band.
             max-lg:hidden: only reachable on the "cs" breakpoint (case
             studies draw the band from 901px), where between 901–1023px the
-            ~390px badge would run into the band's center crosshair. */}
+            ~390px badge would run into the band's center crosshair.
+            The wrapper stays pointer-events-none so the rest of the badge
+            is inert; only the email (CopyEmail) opts back in — click copies
+            the address to the clipboard. */}
         <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right max-lg:hidden">
           <span className="t-frame-mono whitespace-nowrap normal-case">
             2026 get a new job campaign • M.Favro / {contact.phone} /{" "}
-            {contact.email}
+            <CopyEmail email={contact.email} />
           </span>
         </div>
       </div>

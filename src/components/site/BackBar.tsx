@@ -2,7 +2,8 @@ import BackLink from "@/components/site/BackLink";
 import ArrowIcon from "@/components/site/ArrowIcon";
 
 /** The case-study "← Back" row, placed inside the content column on the
- * contact and coming-soon pages instead of in the fixed header. */
+ * contact page instead of in the fixed header. (Coming-soon used to use it
+ * too; that page now gets PersistentHeader's case-study top bar.) */
 export default function BackBar({
   title,
   fallbackHref,

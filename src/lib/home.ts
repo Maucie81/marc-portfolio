@@ -134,8 +134,8 @@ export type Role = {
   period: string;
   /** Always visible, collapsed or not — per the Figma row (177:112148). */
   intro: string;
-  /** Revealed on expand (177:112150). */
-  description: string;
+  /** Revealed on expand (177:112150). One paragraph, or several. */
+  description: string | string[];
   tags: string[];
   draft?: boolean;
 };
@@ -167,9 +167,11 @@ export const roles: Role[] = [
     title: "Principal Product Designer, Platform",
     period: "2024 — 2026",
     intro:
-      "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude. Built 13 production-adjacent dashboard pages with real components, defined a four-tier AI maturity model for the org, and established a collaboration framework between design and engineering that had never existed before.",
-    description:
+      "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude.",
+    description: [
+      "Built 13 production-adjacent dashboard pages with real components, defined a four-tier AI maturity model for the org, and established a collaboration framework between design and engineering that had never existed before.",
       "Sole design lead on the Partner Portal serving 8,700+ media partners including Gannett, Business Insider, and Penske. Ran two phases of publisher UXR that directly reshaped the roadmap, made the scoping call to focus a sprawling self-service platform into a targeted analytics product, and shipped capabilities competitors hadn't built: feed diagnostics and discovery source breakdowns that let publishers understand exactly why content underperformed.",
+    ],
     tags: [
       "B2B platform",
       "Publisher tooling",

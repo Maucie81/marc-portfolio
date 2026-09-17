@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import BackLink from "@/components/site/BackLink";
 import {
@@ -11,7 +12,7 @@ import {
   TopBandChrome,
 } from "@/components/site/PerimeterFrame";
 import { contact } from "@/lib/home";
-import { CASE_STUDY_TITLES } from "@/lib/page-titles";
+import { CASE_STUDY_TITLES, comingSoonTitle } from "@/lib/page-titles";
 
 /**
  * Renders whichever nav belongs to the current route, but lives in the root
@@ -24,8 +25,8 @@ import { CASE_STUDY_TITLES } from "@/lib/page-titles";
  * Covers the three case studies that share CaseStudyPage.tsx (Yahoo Partner
  * Portal, Airbnb Hotels, Headspace Admin Portal Redesign), Headspace Unified
  * Main Door (its own page.tsx, but the same top bar so it reads as one of
- * the set), plus the home page. ht-perks keeps its own locally-defined
- * header.
+ * the set), the coming-soon page (same top bar, title from its `?p=` slug),
+ * plus the home page. ht-perks keeps its own locally-defined header.
  */
 
 const RESUME_URL = contact.resume;
@@ -110,21 +111,38 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   );
 }
 
-/** Case-study nav. Below 901px (the vertical-fallback layout) it's the
- * original 56px sticky strip: "← Back · title", grey, hairline underneath.
+/** Case-study nav — the one "← Back · title" bar every case study and the
+ * coming-soon page share, so a not-yet-written project reads as one of the
+ * set instead of carrying its own in-page Back row. Below 901px (the
+ * vertical-fallback layout) it's the original 56px sticky strip: "← Back ·
+ * title", grey, hairline underneath.
  * From 901px up — the same width HorizontalTrack/globals.css switch to the
  * pinned horizontal story — it becomes the perimeter frame's 42px white top
  * band, with the same TopBandChrome ornaments, BottomBand, and rails the
  * homepage draws (PerimeterFrame.tsx), so a case study reads as the same
  * printed sheet as the page it was opened from. Nav type switches to the
  * band's Roboto Mono role at that width too (mirrors HomeHeader's lg:
- * treatment) — the title keeps its accent color so it still reads as the
- * breadcrumb, 32px right of "Back" at every width (per direct request).
+ * treatment), title included — it keeps only its accent color so it still
+ * reads as the breadcrumb.
  * Content insets 64px from each viewport edge: 32px rail +
  * 32px, landing "Back" on the same x the homepage logo sits at (at 1440).
  * Not capped/centered like the homepage's 1376px column, because the
- * horizontal track underneath isn't either. */
-function CaseStudyTopBar({ title }: { title: string }) {
+ * horizontal track underneath isn't either.
+ * The title, from 901px up, is pulled out of the flex row and pinned at
+ * 129.6px — the same x .cs-track's padding-left (globals.css) starts the
+ * story at, i.e. the hero grid box's left edge — so the breadcrumb sits on
+ * the content column, not a text-width-dependent gap after "Back". Below
+ * 901px it stays in flow, 32px after Back, as before. */
+function CaseStudyTopBar({
+  title,
+  fallbackHref,
+}: {
+  title: string;
+  /** Where "Back" goes when there's no in-app history to step through
+   * (BackLink's default is /#work; coming-soon links live further down
+   * the homepage). */
+  fallbackHref?: string;
+}) {
   const bandType =
     "min-[901px]:text-[12px] min-[901px]:font-normal min-[901px]:uppercase min-[901px]:leading-[20px] min-[901px]:tracking-normal min-[901px]:[font-family:var(--font-mono),ui-monospace,monospace]";
   return (
@@ -134,13 +152,17 @@ function CaseStudyTopBar({ title }: { title: string }) {
           <div className="flex h-14 items-center justify-between px-6 min-[901px]:h-[42px] min-[901px]:px-16">
             <div className="flex items-center gap-8">
               <BackLink
+                fallbackHref={fallbackHref}
                 className={`flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)] min-[901px]:text-black ${bandType}`}
               >
-                <ArrowIcon className="mt-0 rotate-180 text-current" />
+                {/* Same ArrowIcon the cover's Role/Timeline/… list uses,
+                    rotated to point back; text-current so it takes the
+                    link's own color. */}
+                <ArrowIcon className="rotate-180 text-current" />
                 Back
               </BackLink>
               <span
-                className={`text-sm font-medium leading-4 text-accent [font-family:var(--font-display)] ${bandType}`}
+                className={`text-sm font-medium leading-4 text-accent [font-family:var(--font-display)] min-[901px]:absolute min-[901px]:left-[129.6px] min-[901px]:top-1/2 min-[901px]:-translate-y-1/2 ${bandType}`}
               >
                 {title}
               </span>
@@ -171,14 +193,39 @@ function CaseStudyTopBar({ title }: { title: string }) {
   );
 }
 
+/** Split out so useSearchParams only runs on /coming-soon — that page is
+ * already dynamic (it awaits searchParams), and every other route stays
+ * statically prerendered. The Suspense fallback is the same bar with the
+ * generic title, so the chrome never blinks out. */
+function ComingSoonTopBar() {
+  const p = useSearchParams().get("p");
+  return (
+    <CaseStudyTopBar
+      title={comingSoonTitle(p) ?? "Coming soon"}
+      fallbackHref="/#additional-work"
+    />
+  );
+}
+
 export default function PersistentHeader() {
   const pathname = usePathname();
 
-  if (pathname === "/" || pathname === "/coming-soon") {
+  if (pathname === "/") {
     return <HomeHeader active="home" />;
   }
   if (pathname === "/contact") {
     return <HomeHeader active="contact" />;
+  }
+  if (pathname === "/coming-soon") {
+    return (
+      <Suspense
+        fallback={
+          <CaseStudyTopBar title="Coming soon" fallbackHref="/#additional-work" />
+        }
+      >
+        <ComingSoonTopBar />
+      </Suspense>
+    );
   }
 
   const title = CASE_STUDY_TITLES[pathname];

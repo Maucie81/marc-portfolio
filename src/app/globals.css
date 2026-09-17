@@ -464,7 +464,7 @@ body {
   font-size: 1.25rem;
   line-height: 1.5rem;
   letter-spacing: 0;
-  color: var(--ink-strong);
+  color: #444440;
 }
 
 /* Pull-quote text only (the blockquotes beside a section's media) — the
