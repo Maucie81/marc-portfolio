@@ -497,7 +497,7 @@ export default function Home() {
               Interests
             </p>
             <p className="t-body max-w-[720px] text-muted">
-              Personal list of things that I love, dive deep into, and get in
+              Personal list of things that I love, dive deep into, and get
               inspiration from
             </p>
             <div className="mt-8">
