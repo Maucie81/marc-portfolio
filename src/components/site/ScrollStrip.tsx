@@ -6,8 +6,10 @@ import { useCallback, useEffect, useRef } from "react";
  * Tunable constants — pulled to the top per spec. All the "feel" lives here.
  * ==========================================================================*/
 
-/** Uniform rest height of every card, in px. */
-const REST_HEIGHT = 150;
+/** Uniform rest height of every card, in px. Kept below the shortest possible
+ *  focus height (a wide landscape fit by width) so every card only ever grows
+ *  toward focus, never shrinks. */
+const REST_HEIGHT = 120;
 /** Rest width:height ratio. ~0.29:1 measured off the reference footage. */
 const REST_ASPECT = 0.29;
 /** Rest width, derived so rest cards are a uniform narrow portrait box. */
@@ -17,6 +19,13 @@ const GAP = 6;
 /** Peak height the focused card grows to, as a fraction of viewport height.
  *  Kept modest so the focus reads without dominating the whole viewport. */
 const PEAK_HEIGHT_VH = 0.42;
+/** Max focus width, as a fraction of the viewport. The focused card shows the
+ *  WHOLE image at its own aspect ratio, scaled to fit within a box of
+ *  PEAK_HEIGHT tall × this wide — so portrait shots grow tall and wide
+ *  landscapes grow short-and-wide, each shown in full (no crop), and none can
+ *  run off the edge (sizing purely by height let a 2.23 landscape hit ~96% of
+ *  the viewport). Widths still vary by image; they're just capped here. */
+const PEAK_MAX_WIDTH_FRAC = 0.4;
 /** Half-width of the magnify zone, in px of rest-track distance. A card this
  *  far (in rest spacing) from center has t=0; at center t=1. Kept just over
  *  one card stride so the size ladder is only two rungs — the focus, then one
@@ -32,8 +41,8 @@ const REST_STRIDE = REST_WIDTH + GAP;
 
 export type StripImage = {
   src: string;
-  /** Intrinsic width:height. Drives the per-image peak — each card magnifies
-   *  toward its OWN natural ratio, so width and height don't scale together. */
+  /** Intrinsic width:height. Sets the focused card's shape (capped by
+   *  PEAK_MAX_WIDTH_FRAC) so the whole image shows without cropping. */
   aspect: number;
   alt?: string;
 };
@@ -58,10 +67,15 @@ function clamp(v: number, lo: number, hi: number) {
  *
  * The magnifying card IS a strip card (it grows in its own slot; neighbors
  * reflow) — there is no separate preview pane. Size is a continuous function
- * of each card's distance from the center line (free glide, no snap), and each
- * peaks toward its OWN aspect ratio. Color is exclusive to the single card
- * nearest center — everything else stays grayscale — so there's always exactly
- * one focus, independent of the size math.
+ * of each card's distance from the center line (free glide, no snap). A focused
+ * card shows the WHOLE image at its own aspect ratio, scaled to fit within a
+ * bounding box (PEAK_HEIGHT tall × PEAK_MAX_WIDTH_FRAC wide) — so portrait
+ * shots grow tall, wide landscapes grow short-and-wide, each uncropped, and
+ * nothing overflows the viewport. As a card grows, `object-fit: cover` reveals
+ * progressively more until, at full focus (box == image ratio), the whole
+ * image shows. Color is exclusive to the single card nearest center —
+ * everything else stays grayscale — so there's always exactly one focus,
+ * independent of the size math.
  *
  * Architecture: a manual scroll `offset` (fed by wheel/drag) is the single
  * stable input. Every frame we (1) size each card from its distance to the
@@ -95,6 +109,7 @@ export default function ScrollStrip({ images }: Props) {
     const offset = offsetRef.current;
     const viewportCenter = viewport.clientWidth / 2;
     const peakHeight = window.innerHeight * PEAK_HEIGHT_VH;
+    const maxWidth = viewport.clientWidth * PEAK_MAX_WIDTH_FRAC;
     const cards = cardRefs.current;
     // Exactly one card is in color: the one whose rest slot is nearest the
     // playhead. Snappy flip between neighbors as you glide past the midpoint.
@@ -116,9 +131,14 @@ export default function ScrollStrip({ images }: Props) {
           ? 0
           : 1 - smoothstep(Math.abs(d) / ZONE_WIDTH);
 
-      const height = REST_HEIGHT + (peakHeight - REST_HEIGHT) * t;
-      const peakWidth = peakHeight * images[i].aspect;
-      const width = REST_WIDTH + (peakWidth - REST_WIDTH) * t;
+      // Focus box: fit the whole image within (maxWidth × peakHeight),
+      // preserving its own aspect — bounded on BOTH axes so it shows in full
+      // and never overflows. Portrait → tall; wide landscape → short-and-wide.
+      const aspect = images[i].aspect;
+      const focusWidth = Math.min(peakHeight * aspect, maxWidth);
+      const focusHeight = focusWidth / aspect;
+      const width = REST_WIDTH + (focusWidth - REST_WIDTH) * t;
+      const height = REST_HEIGHT + (focusHeight - REST_HEIGHT) * t;
 
       widths.push(width);
       centers.push(cursor + width / 2);
