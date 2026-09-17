@@ -485,7 +485,10 @@ export default function Home() {
         <section id="interests" className="sec border-t border-line py-12">
           <SectionRail />
           <SectionNumber number="04" label="Interests" />
-          <div>
+          {/* min-w-0 lets this grid item shrink to the column instead of being
+              propped open by content; the ScrollStrip inside clips its own
+              overflow. */}
+          <div className="min-w-0">
             <p className="t-section-title">Personal interests</p>
             <div className="mt-8">
               <InterestGallery />
