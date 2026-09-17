@@ -489,7 +489,17 @@ export default function Home() {
               propped open by content; the ScrollStrip inside clips its own
               overflow. */}
           <div className="min-w-0">
-            <p className="t-section-title">Personal interests</p>
+            {/* Figma 853:47185 — accent eyebrow + one-line description. */}
+            <p
+              className="t-section-title"
+              style={{ marginBottom: "0.75rem", textTransform: "uppercase" }}
+            >
+              Interests
+            </p>
+            <p className="t-body max-w-[720px] text-muted">
+              Personal list of things that I love, dive deep into, and get in
+              inspiration from
+            </p>
             <div className="mt-8">
               <InterestGallery />
             </div>
