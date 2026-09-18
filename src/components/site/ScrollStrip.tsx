@@ -3,45 +3,40 @@
 import { useCallback, useEffect, useRef } from "react";
 
 /* ============================================================================
- * Tunable constants — pulled to the top per spec. All the "feel" lives here.
+ * Tunable constants — all the "feel" lives here.
  * ==========================================================================*/
 
-/** Uniform rest height of every card, in px. Kept below the shortest possible
- *  focus height (a wide landscape fit by width) so every card only ever grows
- *  toward focus, never shrinks. */
+/** Idle height of every slice, in px. */
 const REST_HEIGHT = 120;
-/** Rest width:height ratio. ~0.29:1 measured off the reference footage. */
-const REST_ASPECT = 0.29;
-/** Rest width, derived so rest cards are a uniform narrow portrait box. */
-const REST_WIDTH = Math.round(REST_HEIGHT * REST_ASPECT);
-/** Hairline gap between cards, in px. */
-const GAP = 6;
-/** Peak height the focused card grows to, as a fraction of viewport height.
- *  Kept modest so the focus reads without dominating the whole viewport. */
+/** Floor for a slice's width when many are fit across the width. */
+const MIN_REST_WIDTH = 10;
+/** Hairline gap between slices, in px. */
+const GAP = 4;
+/** Hovered card's max height, as a fraction of viewport height. */
 const PEAK_HEIGHT_VH = 0.42;
-/** Max focus width, as a fraction of the viewport. The focused card shows the
- *  WHOLE image at its own aspect ratio, scaled to fit within a box of
- *  PEAK_HEIGHT tall × this wide — so portrait shots grow tall and wide
- *  landscapes grow short-and-wide, each shown in full (no crop), and none can
- *  run off the edge (sizing purely by height let a 2.23 landscape hit ~96% of
- *  the viewport). Widths still vary by image; they're just capped here. */
+/** Hovered card's max width, as a fraction of the container width. The card
+ *  grows toward its OWN aspect ratio, capped here so a wide landscape can't run
+ *  off the edge; at full size the box matches the image, so it shows uncropped. */
 const PEAK_MAX_WIDTH_FRAC = 0.4;
-/** Half-width of the magnify zone, in px of rest-track distance. A card this
- *  far (in rest spacing) from center has t=0; at center t=1. Kept just over
- *  one card stride so the size ladder is only two rungs — the focus, then one
- *  step down for its immediate neighbors, then straight to the strip baseline
- *  (no long multi-step gradient). */
-const ZONE_WIDTH = 110;
-/** Color (grayscale) transition duration, in ms. Snappy, near-threshold. */
+/** Half-width of the magnify zone, in multiples of the (width-dependent) slice
+ *  stride — so the dock feels the same at any screen width. ~1.6 means the
+ *  hovered slice peaks, its immediate neighbors lift a little, and everything
+ *  past that stays flat, so one image clearly dominates. */
+const ZONE_STRIDES = 1.6;
+/** Per-frame easing (0–1). LOWER = slower, floatier response as the focus
+ *  follows the cursor and the magnification fades in/out. Higher = snappier.
+ *  With a curated set (wide slices), it can track the cursor cleanly without
+ *  feeling twitchy — the flip rate is set by slice width, not this. */
+const SMOOTHING = 0.15;
+/** Grayscale transition duration, in ms. Snappy. */
 const COLOR_MS = 120;
-/** Wheel/drag → offset scaling. */
-const WHEEL_SPEED = 1;
-
-const REST_STRIDE = REST_WIDTH + GAP;
+/** Minimum breathing room, in px, between the focused image and either edge —
+ *  it's held fully in view rather than being pushed off by the cursor anchor. */
+const EDGE_PAD = 8;
 
 export type StripImage = {
   src: string;
-  /** Intrinsic width:height. Sets the focused card's shape (capped by
+  /** Intrinsic width:height — sets the hovered card's shape (capped by
    *  PEAK_MAX_WIDTH_FRAC) so the whole image shows without cropping. */
   aspect: number;
   alt?: string;
@@ -51,200 +46,188 @@ type Props = {
   images: StripImage[];
 };
 
-/** Classic smoothstep — C1-continuous ease, no overshoot. */
 function smoothstep(x: number) {
   return x * x * (3 - 2 * x);
 }
-
 function clamp(v: number, lo: number, hi: number) {
   return v < lo ? lo : v > hi ? hi : v;
 }
 
 /**
- * Scroll Strip — a horizontal filmstrip of tall, narrow cards where the card
- * nearest the horizontal center continuously magnifies and turns from
- * grayscale to full color, macOS-dock / coverflow style.
+ * Interest strip — a macOS-dock-style filmstrip. At rest it's a flat line of
+ * thin, grayscale slices fit across the full width, with NOTHING magnified.
+ * When the pointer is over it, the slice under the cursor blooms to full size
+ * and color (and its neighbors lift a little), following the cursor; move away
+ * and it settles back to the flat line. There is no scrolling — the whole set
+ * is always visible as one line.
  *
- * The magnifying card IS a strip card (it grows in its own slot; neighbors
- * reflow) — there is no separate preview pane. Size is a continuous function
- * of each card's distance from the center line (free glide, no snap). A focused
- * card shows the WHOLE image at its own aspect ratio, scaled to fit within a
- * bounding box (PEAK_HEIGHT tall × PEAK_MAX_WIDTH_FRAC wide) — so portrait
- * shots grow tall, wide landscapes grow short-and-wide, each uncropped, and
- * nothing overflows the viewport. As a card grows, `object-fit: cover` reveals
- * progressively more until, at full focus (box == image ratio), the whole
- * image shows. Color is exclusive to the single card nearest center —
- * everything else stays grayscale — so there's always exactly one focus,
- * independent of the size math.
- *
- * Architecture: a manual scroll `offset` (fed by wheel/drag) is the single
- * stable input. Every frame we (1) size each card from its distance to the
- * playhead and (2) translate the whole track so the playhead stays pinned to
- * the viewport center. Doing the centering ourselves — rather than relying on
- * native flex flow, which anchors growth to the left and lets the peak drift
- * off-center — is what keeps the magnification symmetric about the center
- * line. Sizes are written straight to the DOM each frame, never as a CSS
- * transition, so they stay locked to scroll position; only color transitions.
- *
- * Rebuilt from reference footage of devouringdetails.com's paywalled "Scroll
- * Strip" prototype — confirmed behavior matched, timing details are our own.
+ * The cursor position and an overall "intensity" (0 idle → 1 hovering) are both
+ * eased by SMOOTHING each frame, so the focus glides toward the cursor and the
+ * whole effect fades in and out rather than snapping — that's what keeps the
+ * motion slow and calm. Sizes are written straight to the DOM; the track is
+ * translated so the point under the cursor stays under the cursor as the row
+ * bulges. The hovered card grows to its own aspect ratio (capped by width) so
+ * it shows uncropped.
  */
 export default function ScrollStrip({ images }: Props) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const trackRef = useRef<HTMLUListElement | null>(null);
   const cardRefs = useRef<(HTMLLIElement | null)[]>([]);
-  const maxOffset = Math.max(0, (images.length - 1) * REST_STRIDE);
-  // Start mid-strip so cards flank the focus on both sides (no dead space to
-  // the left on load), snapped to the nearest card so it opens on one clean
-  // focus rather than blended between two.
-  const midCard = Math.round(maxOffset / 2 / REST_STRIDE);
-  const offsetRef = useRef(midCard * REST_STRIDE);
+
+  // Smoothed state the paint reads; target state the pointer writes.
+  const stateRef = useRef({ x: 0, intensity: 0 });
+  const targetXRef = useRef(0);
+  const hoveringRef = useRef(false);
   const rafRef = useRef(0);
+  const runningRef = useRef(false);
 
-  const paint = useCallback(() => {
-    const viewport = viewportRef.current;
-    const track = trackRef.current;
-    if (!viewport || !track) return;
+  const paint = useCallback(
+    (hoverX: number, intensity: number) => {
+      const viewport = viewportRef.current;
+      const track = trackRef.current;
+      if (!viewport || !track) return;
 
-    const offset = offsetRef.current;
-    const viewportCenter = viewport.clientWidth / 2;
-    const peakHeight = window.innerHeight * PEAK_HEIGHT_VH;
-    const maxWidth = viewport.clientWidth * PEAK_MAX_WIDTH_FRAC;
-    const cards = cardRefs.current;
-    // Exactly one card is in color: the one whose rest slot is nearest the
-    // playhead. Snappy flip between neighbors as you glide past the midpoint.
-    const colorIdx = clamp(
-      Math.round(offset / REST_STRIDE),
-      0,
-      cards.length - 1,
-    );
+      const N = images.length;
+      if (N === 0) return;
+      const W = viewport.clientWidth;
+      const peakHeight = window.innerHeight * PEAK_HEIGHT_VH;
+      const maxWidth = W * PEAK_MAX_WIDTH_FRAC;
+      const restWidth = Math.max(MIN_REST_WIDTH, (W - (N - 1) * GAP) / N);
+      const restStride = restWidth + GAP;
+      const zone = restStride * ZONE_STRIDES;
+      const cards = cardRefs.current;
+      const active = intensity > 0.001;
 
-    // Pass 1: size each card from its rest-space distance to the playhead, and
-    // accumulate actual (magnified) left/center positions.
-    const widths: number[] = [];
-    const centers: number[] = [];
-    let cursor = 0;
-    for (let i = 0; i < cards.length; i++) {
-      const d = i * REST_STRIDE - offset; // signed distance from playhead
-      const t =
-        Math.abs(d) >= ZONE_WIDTH
-          ? 0
-          : 1 - smoothstep(Math.abs(d) / ZONE_WIDTH);
+      // Color goes only to the slice nearest the cursor, once the effect is
+      // mostly faded in (its own CSS transition smooths the flip).
+      const colorIdx =
+        active && intensity > 0.4
+          ? clamp(Math.round((hoverX - restWidth / 2) / restStride), 0, N - 1)
+          : -1;
 
-      // Focus box: fit the whole image within (maxWidth × peakHeight),
-      // preserving its own aspect — bounded on BOTH axes so it shows in full
-      // and never overflows. Portrait → tall; wide landscape → short-and-wide.
-      const aspect = images[i].aspect;
-      const focusWidth = Math.min(peakHeight * aspect, maxWidth);
-      const focusHeight = focusWidth / aspect;
-      const width = REST_WIDTH + (focusWidth - REST_WIDTH) * t;
-      const height = REST_HEIGHT + (focusHeight - REST_HEIGHT) * t;
+      const centers: number[] = [];
+      const widths: number[] = [];
+      let cx = 0;
+      for (let i = 0; i < N; i++) {
+        let t = 0;
+        if (active) {
+          const restCenter = i * restStride + restWidth / 2;
+          const d = Math.abs(restCenter - hoverX);
+          const base = d >= zone ? 0 : 1 - smoothstep(d / zone);
+          t = base * intensity;
+        }
 
-      widths.push(width);
-      centers.push(cursor + width / 2);
-      cursor += width + GAP;
+        const aspect = images[i].aspect;
+        const focusWidth = Math.min(peakHeight * aspect, maxWidth);
+        const focusHeight = focusWidth / aspect;
+        const width = restWidth + (focusWidth - restWidth) * t;
+        const height = REST_HEIGHT + (focusHeight - REST_HEIGHT) * t;
 
-      const el = cards[i];
-      if (el) {
-        el.style.width = `${width}px`;
-        el.style.height = `${height}px`;
-        el.style.zIndex = t > 0 ? String(Math.round(t * 1000)) : "0";
-        const img = el.firstElementChild as HTMLElement | null;
-        if (img)
-          img.style.filter = i === colorIdx ? "grayscale(0)" : "grayscale(1)";
+        widths.push(width);
+        centers.push(cx + width / 2);
+        cx += width + GAP;
+
+        const el = cards[i];
+        if (el) {
+          el.style.width = `${width}px`;
+          el.style.height = `${height}px`;
+          el.style.zIndex = t > 0 ? String(Math.round(t * 1000)) : "0";
+          const img = el.firstElementChild as HTMLElement | null;
+          if (img)
+            img.style.filter = i === colorIdx ? "grayscale(0)" : "grayscale(1)";
+        }
       }
-    }
+      let translate = 0;
+      if (active) {
+        const f = clamp(hoverX / restStride, 0, N - 1);
+        const k = Math.floor(f);
+        const actualFocusX =
+          k >= N - 1
+            ? centers[N - 1]
+            : centers[k] + (centers[k + 1] - centers[k]) * (f - k);
+        const desired = hoverX - actualFocusX;
+        // Keep the focused card fully on screen: clamp the translate so its left
+        // and right edges stay within the viewport (with a little padding),
+        // rather than letting the cursor anchor push it off an edge.
+        const fi = clamp(
+          Math.round((hoverX - restWidth / 2) / restStride),
+          0,
+          N - 1,
+        );
+        const fLeft = centers[fi] - widths[fi] / 2;
+        const fRight = centers[fi] + widths[fi] / 2;
+        const lo = EDGE_PAD - fLeft;
+        const hi = W - EDGE_PAD - fRight;
+        translate = hi < lo ? (lo + hi) / 2 : clamp(desired, lo, hi);
+      }
+      track.style.transform = `translateX(${translate}px)`;
+    },
+    [images],
+  );
 
-    // Where does the playhead land in actual (magnified) track space? Find the
-    // rest interval it sits in and interpolate between those cards' actual
-    // centers, then translate the track so that point is at viewport center.
-    const k = Math.floor(offset / REST_STRIDE);
-    let playheadX: number;
-    if (k >= centers.length - 1) {
-      playheadX = centers[centers.length - 1] ?? 0;
-    } else if (k < 0) {
-      playheadX = centers[0] ?? 0;
+  // Eased animation loop: glide x toward the cursor and intensity toward 1
+  // (hovering) or 0 (idle). Runs only while there's motion left to resolve.
+  const tick = useCallback(() => {
+    const st = stateRef.current;
+    st.x += (targetXRef.current - st.x) * SMOOTHING;
+    const targetI = hoveringRef.current ? 1 : 0;
+    st.intensity += (targetI - st.intensity) * SMOOTHING;
+    paint(st.x, st.intensity);
+
+    if (hoveringRef.current || st.intensity > 0.002) {
+      rafRef.current = requestAnimationFrame(tick);
     } else {
-      const frac = (offset - k * REST_STRIDE) / REST_STRIDE;
-      playheadX = centers[k] + (centers[k + 1] - centers[k]) * frac;
+      st.intensity = 0;
+      paint(st.x, 0);
+      runningRef.current = false;
     }
-
-    track.style.transform = `translateX(${viewportCenter - playheadX}px)`;
-  }, [images]);
-
-  const schedulePaint = useCallback(() => {
-    if (rafRef.current) return;
-    rafRef.current = requestAnimationFrame(() => {
-      rafRef.current = 0;
-      paint();
-    });
   }, [paint]);
 
+  const ensureRunning = useCallback(() => {
+    if (runningRef.current) return;
+    runningRef.current = true;
+    rafRef.current = requestAnimationFrame(tick);
+  }, [tick]);
+
   useEffect(() => {
-    paint();
-    const onResize = () => paint();
+    paint(stateRef.current.x, stateRef.current.intensity);
+    const onResize = () =>
+      paint(stateRef.current.x, stateRef.current.intensity);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [paint]);
 
-  // --- Input, isolated so it's easy to swap. A manual offset (not native
-  // overflow scroll) is the input, so the track transform above can own
-  // positioning outright. Wheel + trackpad + pointer-drag all just move offset.
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-
-    const applyDelta = (delta: number) => {
-      offsetRef.current = clamp(offsetRef.current + delta, 0, maxOffset);
-      schedulePaint();
+    const onMove = (e: PointerEvent) => {
+      const x = e.clientX - viewport.getBoundingClientRect().left;
+      targetXRef.current = x;
+      // On first entry, snap position so the focus fades in AT the cursor
+      // rather than gliding in from the left edge.
+      if (!hoveringRef.current) stateRef.current.x = x;
+      hoveringRef.current = true;
+      ensureRunning();
     };
-
-    const onWheel = (e: WheelEvent) => {
-      const delta =
-        Math.abs(e.deltaY) > Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
-      applyDelta(delta * WHEEL_SPEED);
-      e.preventDefault();
+    const onLeave = () => {
+      hoveringRef.current = false;
+      ensureRunning();
     };
-    viewport.addEventListener("wheel", onWheel, { passive: false });
-
-    let dragging = false;
-    let lastX = 0;
-    const onPointerDown = (e: PointerEvent) => {
-      dragging = true;
-      lastX = e.clientX;
-      viewport.setPointerCapture(e.pointerId);
-      viewport.style.cursor = "grabbing";
-    };
-    const onPointerMove = (e: PointerEvent) => {
-      if (!dragging) return;
-      applyDelta(-(e.clientX - lastX));
-      lastX = e.clientX;
-    };
-    const onPointerUp = (e: PointerEvent) => {
-      dragging = false;
-      if (viewport.hasPointerCapture(e.pointerId))
-        viewport.releasePointerCapture(e.pointerId);
-      viewport.style.cursor = "grab";
-    };
-    viewport.addEventListener("pointerdown", onPointerDown);
-    viewport.addEventListener("pointermove", onPointerMove);
-    viewport.addEventListener("pointerup", onPointerUp);
-    viewport.addEventListener("pointercancel", onPointerUp);
-
+    viewport.addEventListener("pointermove", onMove);
+    viewport.addEventListener("pointerleave", onLeave);
     return () => {
-      viewport.removeEventListener("wheel", onWheel);
-      viewport.removeEventListener("pointerdown", onPointerDown);
-      viewport.removeEventListener("pointermove", onPointerMove);
-      viewport.removeEventListener("pointerup", onPointerUp);
-      viewport.removeEventListener("pointercancel", onPointerUp);
+      viewport.removeEventListener("pointermove", onMove);
+      viewport.removeEventListener("pointerleave", onLeave);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      runningRef.current = false;
     };
-  }, [maxOffset, schedulePaint]);
+  }, [ensureRunning]);
 
   return (
     <div
       ref={viewportRef}
       className="relative overflow-hidden"
-      style={{ height: `${PEAK_HEIGHT_VH * 100}vh`, cursor: "grab", touchAction: "pan-y" }}
+      style={{ height: `${PEAK_HEIGHT_VH * 100}vh` }}
     >
       <ul
         ref={trackRef}
@@ -258,7 +241,7 @@ export default function ScrollStrip({ images }: Props) {
               cardRefs.current[i] = el;
             }}
             className="relative shrink-0 overflow-hidden rounded-[2px]"
-            style={{ width: REST_WIDTH, height: REST_HEIGHT }}
+            style={{ width: MIN_REST_WIDTH, height: REST_HEIGHT }}
           >
             <img
               src={img.src}

@@ -481,22 +481,17 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 04 — Personal Interests */}
+        {/* 04 — Personal inspo */}
         <section id="interests" className="sec border-t border-line py-12">
           <SectionRail />
-          <SectionNumber number="04" label="Interests" />
+          <SectionNumber number="04" label="Personal inspo" />
           {/* min-w-0 lets this grid item shrink to the column instead of being
               propped open by content; the ScrollStrip inside clips its own
               overflow. */}
           <div className="min-w-0">
-            {/* Figma 853:47185 — accent eyebrow + one-line description. */}
-            <p
-              className="t-section-title"
-              style={{ marginBottom: "0.75rem", textTransform: "uppercase" }}
-            >
-              Interests
-            </p>
-            <p className="t-body max-w-[720px] text-muted">
+            {/* Accent section eyebrow, same as every other section header. */}
+            <p className="t-section-title">Personal inspo</p>
+            <p className="t-body mt-4 max-w-[720px] text-muted">
               Personal list of things that I love, dive deep into, and get
               inspiration from
             </p>
@@ -512,7 +507,7 @@ export default function Home() {
           <SectionNumber number="05" label="Contact" />
           {/* The email address is the headline. */}
           <div>
-            <p className="t-section-title">
+            <p className="t-section-title" style={{ marginBottom: "0.75rem" }}>
               We should probably chat, right?
             </p>
             <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
