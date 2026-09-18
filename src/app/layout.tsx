@@ -3,6 +3,7 @@ import localFont from "next/font/local";
 import { DM_Sans, Roboto_Mono } from "next/font/google";
 import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
+import NoiseOverlay from "@/components/site/NoiseOverlay";
 import ProofNotes from "@/components/proof/ProofNotes";
 import { ProofProvider } from "@/components/proof/ProofProvider";
 import "./globals.css";
@@ -61,6 +62,7 @@ export default function RootLayout({
           <PageTransition>{children}</PageTransition>
           <ProofNotes />
         </ProofProvider>
+        <NoiseOverlay />
       </body>
     </html>
   );

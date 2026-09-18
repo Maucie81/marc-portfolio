@@ -43,6 +43,9 @@ html:has(#home) {
 }
 
 body {
+  /* Positioned so .noise-overlay's inset:0 stretches to the full document
+     height (the page grain sheet), not just the viewport. */
+  position: relative;
   /* Every text layer in Figma is Google Sans Flex — alias --font-alt to the
      same font instead of loading a second (mono) typeface. Must be set here
      (not :root) so var(--font-display) resolves against the value next/font
@@ -654,4 +657,45 @@ body {
   .cs-only-horizontal {
     display: none;
   }
+}
+
+/* Paper grain — the exact 500×500 Figma noise, tiled and laid ON TOP of the
+   content with soft-light @ 0.5, so every element reads as printed onto the
+   same sheet of paper. The trick is that the grain has to RIDE with whatever
+   it covers, or it looks like a fixed film the content slides under. So there
+   isn't one global film — each scrolling surface carries its own grain:
+
+   1. .noise-overlay — the page sheet. Absolute + inset:0 inside the positioned
+      <body>, spanning the whole document, so it scrolls with the page. z-index
+      38 keeps it above content but below the fixed chrome (rails z-40, header
+      z-60…), so the nav/rails stay crisp while everything else gets grain.
+   2. .cs-track::after — the carousel is one long horizontal sheet that slides
+      (translateX) independently of page scroll; its grain lives INSIDE the
+      track so it slides in lockstep with the cards. Every case-study block
+      lives in this track, so this alone textures the whole carousel.
+   3. .cs-pin — the pinned (position:fixed) carousel frame. Given an opaque
+      paper fill and z-index 39 (above .noise-overlay, below chrome) so the
+      page sheet can't bleed through and crawl over the fixed carousel; the
+      track's own grain covers it instead. */
+.noise-overlay,
+.cs-track::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 38;
+  pointer-events: none;
+  background-image: url("/noise.png");
+  background-repeat: repeat;
+  background-size: 500px 500px;
+  mix-blend-mode: soft-light;
+  opacity: 0.5;
+}
+
+.cs-track {
+  position: relative;
+}
+
+.cs-pin {
+  background-color: var(--bg);
+  z-index: 39;
 }
