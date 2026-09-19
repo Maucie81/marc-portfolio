@@ -105,6 +105,32 @@ body {
   color: var(--muted);
 }
 
+/* ---------- Contact form autofill ----------
+
+Chrome/Safari paint their own (usually pale blue) background behind an
+autofilled value, ignoring the field's `bg-transparent` — background-color
+alone can't override it; an inset box-shadow sized to fill the field is the
+only reliable fix. Scoped to these three field ids rather than every
+input/textarea site-wide because ContactForm sits on the page's --bg, while
+other fields elsewhere (e.g. the proof-notes popover) sit on white and would
+get the wrong fill from a blanket rule. The long transition delay stops
+Chrome's own yellow autofill flash from ever animating in before the shadow
+paints over it. */
+#contact-name:-webkit-autofill,
+#contact-name:-webkit-autofill:hover,
+#contact-name:-webkit-autofill:focus,
+#contact-email:-webkit-autofill,
+#contact-email:-webkit-autofill:hover,
+#contact-email:-webkit-autofill:focus,
+#contact-message:-webkit-autofill,
+#contact-message:-webkit-autofill:hover,
+#contact-message:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--bg) inset;
+  -webkit-text-fill-color: var(--ink-2);
+  caret-color: var(--ink-2);
+  transition: background-color 600000s ease-in-out 0s;
+}
+
 /* ---------- Type roles (from design/design-system.json) ----------
    Each class maps to a role in that file; the Figma node ID is noted so the
    value is traceable. Sizes here are Figma's literal values — only the four
