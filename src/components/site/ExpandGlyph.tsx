@@ -3,11 +3,21 @@
 import { forwardRef } from "react";
 
 /**
- * The "+" spin/pulse treatment shared with the case-study ExpandCollapse
- * glyph — this component owns the animation and its timing; ExpandCollapse
- * renders it too rather than keeping its own parallel copy, so the two can't
- * drift apart the way they had (Experience's copy was missing the color
- * fade entirely, snapping instead of easing).
+ * The circle-plus spin/pulse treatment shared with the case-study
+ * ExpandCollapse glyph — this component owns the animation and its timing;
+ * ExpandCollapse renders it too rather than keeping its own parallel copy,
+ * so the two can't drift apart the way they had (Experience's copy was
+ * missing the color fade entirely, snapping instead of easing).
+ *
+ * The badge is Figma's "Expand Icon" (15:34034): a solid circle with a
+ * plus punched through it. The circle fills with `currentColor` (so the
+ * caller's text-ink/text-accent className still drives its resting and
+ * open colors exactly as it did for the old "+" glyph); the plus itself
+ * stays the page's paper tone (--bg) regardless of the circle's color, per
+ * the source asset (#444440 circle / #E4E4DF plus — the latter is --bg
+ * exactly). Rotating the whole badge 45° on open turns the plus into an
+ * "×" the same way the old text glyph did, so that half of the treatment
+ * carries over unchanged.
  *
  * Experience's row button owns the click and the open/close state for the
  * whole row (not just this icon), so the spin itself is triggered by the
@@ -27,7 +37,15 @@ const ExpandGlyph = forwardRef<
       aria-hidden
       className={`expand-glyph ${expanded ? "is-open" : ""} ${className}`}
     >
-      <span className="expand-glyph-pulse">+</span>
+      <span className="expand-glyph-pulse">
+        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="8" cy="8" r="8" fill="currentColor" />
+          <path
+            d="M13.4 7.4H8.6V2.6C8.6 2.27 8.33 2 8 2C7.67 2 7.4 2.27 7.4 2.6V7.4H2.6C2.27 7.4 2 7.67 2 8C2 8.33 2.27 8.6 2.6 8.6H7.4V13.4C7.4 13.73 7.67 14 8 14C8.33 14 8.6 13.73 8.6 13.4V8.6H13.4C13.73 8.6 14 8.33 14 8C14 7.67 13.73 7.4 13.4 7.4Z"
+            fill="var(--bg)"
+          />
+        </svg>
+      </span>
 
       <style jsx>{`
         /* No delay on close, delayed on open so the color lands near the
@@ -39,9 +57,7 @@ const ExpandGlyph = forwardRef<
              keeps the box hugging the glyph itself so rotation spins it in
              place instead of orbiting around the stretched box's center. */
           width: fit-content;
-          font-size: 1.25rem;
           line-height: 1;
-          font-weight: 500;
           transform-origin: center;
           transition: color 150ms ease;
         }
