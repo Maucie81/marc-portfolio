@@ -1,4 +1,4 @@
-import { additionalWork } from "@/lib/home";
+import { additionalWork, projects } from "@/lib/home";
 
 /** Human names for routes — shared by PersistentHeader's case-study top
  * bar and the proof-notes panel (which groups a visitor's notes by page). */
@@ -19,17 +19,35 @@ export function pageLabel(path: string): string {
   return CASE_STUDY_TITLES[path] ?? OTHER_TITLES[path] ?? path;
 }
 
-/** /coming-soon serves every not-yet-written project (`?p=<slug>`, the
- * additionalWork links in home.ts), so its breadcrumb title comes from the
- * query string, not the pathname table: "Company | Title" for a known slug,
- * undefined otherwise. Used by PersistentHeader's top bar and the page's
- * own <title>, so the two never disagree. */
-export function comingSoonTitle(p?: string | null): string | undefined {
+/** /coming-soon serves every not-yet-written project: the additionalWork
+ * links in home.ts (`?p=<slug>`), plus any main project whose case study
+ * is gated behind the private-preview proxy (src/proxy.ts) — there `?p=`
+ * is the /work/<slug> the public was redirected from. Returns the
+ * "Company | Title" breadcrumb and which homepage section Back should
+ * land on, so PersistentHeader's top bar and the page's own <title> never
+ * disagree; undefined for an unknown slug. */
+export function comingSoonProject(
+  p?: string | null,
+): { title: string; backHref: string } | undefined {
   if (!p) return undefined;
-  const project = additionalWork.find(
+  const small = additionalWork.find(
     (item) => item.href === `/coming-soon?p=${p}`,
   );
-  return project ? `${project.company} | ${project.title}` : undefined;
+  if (small) {
+    return {
+      title: `${small.company} | ${small.title}`,
+      backHref: "/#additional-work",
+    };
+  }
+  const main = projects.find((item) => item.href === `/work/${p}`);
+  if (main) {
+    return { title: `${main.company} | ${main.title}`, backHref: "/#work" };
+  }
+  return undefined;
+}
+
+export function comingSoonTitle(p?: string | null): string | undefined {
+  return comingSoonProject(p)?.title;
 }
 
 /** Routes PersistentHeader wraps in the perimeter frame (PerimeterFrame.tsx)

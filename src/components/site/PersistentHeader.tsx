@@ -12,7 +12,7 @@ import {
   TopBandChrome,
 } from "@/components/site/PerimeterFrame";
 import { contact } from "@/lib/home";
-import { CASE_STUDY_TITLES, comingSoonTitle } from "@/lib/page-titles";
+import { CASE_STUDY_TITLES, comingSoonProject } from "@/lib/page-titles";
 
 /**
  * Renders whichever nav belongs to the current route, but lives in the root
@@ -198,11 +198,11 @@ function CaseStudyTopBar({
  * statically prerendered. The Suspense fallback is the same bar with the
  * generic title, so the chrome never blinks out. */
 function ComingSoonTopBar() {
-  const p = useSearchParams().get("p");
+  const project = comingSoonProject(useSearchParams().get("p"));
   return (
     <CaseStudyTopBar
-      title={comingSoonTitle(p) ?? "Coming soon"}
-      fallbackHref="/#additional-work"
+      title={project?.title ?? "Coming soon"}
+      fallbackHref={project?.backHref ?? "/#additional-work"}
     />
   );
 }
