@@ -26,7 +26,9 @@ import { CASE_STUDY_TITLES, comingSoonProject } from "@/lib/page-titles";
  * Portal, Airbnb Hotels, Headspace Admin Portal Redesign), Headspace Unified
  * Main Door (its own page.tsx, but the same top bar so it reads as one of
  * the set), the coming-soon page (same top bar, title from its `?p=` slug),
- * plus the home page. ht-perks keeps its own locally-defined header.
+ * and the contact page (same top bar, static "Contact" title) — plus the
+ * home page, which is the only route still on HomeHeader. ht-perks keeps
+ * its own locally-defined header.
  */
 
 const RESUME_URL = contact.resume;
@@ -214,7 +216,7 @@ export default function PersistentHeader() {
     return <HomeHeader active="home" />;
   }
   if (pathname === "/contact") {
-    return <HomeHeader active="contact" />;
+    return <CaseStudyTopBar title="Contact" fallbackHref="/" />;
   }
   if (pathname === "/coming-soon") {
     return (

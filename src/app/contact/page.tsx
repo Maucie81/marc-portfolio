@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import BackBar from "@/components/site/BackBar";
 import ContactForm from "@/components/site/ContactForm";
 import SectionNumber from "@/components/site/SectionNumber";
 import SectionRail from "@/components/site/SectionRail";
@@ -12,9 +11,10 @@ export const metadata: Metadata = {
 export default function ContactPage() {
   return (
     <div className="min-h-dvh bg-bg">
-      {/* Same frame as the homepage: PersistentHeader supplies the fixed top
-          band + rails at lg, so <main> pads for it the same way page.tsx does. */}
-      <main className="mx-auto px-6 pb-16 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[82px]">
+      {/* Nav is PersistentHeader's case-study top bar (fixed: 56px below
+          901px, the 42px perimeter band from there up), so <main> pads for
+          it the same way coming-soon does. */}
+      <main className="mx-auto px-6 pb-16 pt-14 min-[901px]:pt-[42px] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[82px]">
         {/* 828:64259 — the "05" column is kept for alignment but its number
             is opacity 0 in the design, so it's hidden here too. */}
         <section className="sec py-12 lg:h-[calc(100dvh-164px)] lg:grid-cols-[1.5rem_6.25rem_1fr]! lg:py-0">
@@ -25,9 +25,6 @@ export default function ContactPage() {
             className="invisible max-lg:hidden"
           />
           <div className="relative flex min-h-0 flex-col self-stretch">
-            <div className="lg:absolute lg:inset-x-0 lg:top-0">
-              <BackBar fallbackHref="/" />
-            </div>
             {/* 828:64259 — 111px top offset at the 1024 design height; the
                 offset and gaps shrink on shorter viewports and the Message
                 field absorbs the remainder so the page never scrolls at lg. */}
