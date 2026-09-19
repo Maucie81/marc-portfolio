@@ -3,11 +3,11 @@
 import { forwardRef } from "react";
 
 /**
- * The circle-plus spin/pulse treatment shared with the case-study
- * ExpandCollapse glyph — this component owns the animation and its timing;
- * ExpandCollapse renders it too rather than keeping its own parallel copy,
- * so the two can't drift apart the way they had (Experience's copy was
- * missing the color fade entirely, snapping instead of easing).
+ * The circle-plus spin treatment shared with the case-study ExpandCollapse
+ * glyph — this component owns the animation and its timing; ExpandCollapse
+ * renders it too rather than keeping its own parallel copy, so the two
+ * can't drift apart the way they had (Experience's copy was missing the
+ * color fade entirely, snapping instead of easing).
  *
  * The badge is Figma's "Expand Icon" (15:34034): a solid circle with a
  * plus punched through it. The circle fills with `currentColor` (so the
@@ -15,9 +15,11 @@ import { forwardRef } from "react";
  * open colors exactly as it did for the old "+" glyph); the plus itself
  * stays the page's paper tone (--bg) regardless of the circle's color, per
  * the source asset (#444440 circle / #E4E4DF plus — the latter is --bg
- * exactly). Rotating the whole badge 45° on open turns the plus into an
- * "×" the same way the old text glyph did, so that half of the treatment
- * carries over unchanged.
+ * exactly). The plus is drawn at 65% scale about the circle's center so it
+ * reads as a mark inside the badge rather than filling it edge to edge.
+ * Rotating the whole badge 45° on open turns the plus into an "×" the same
+ * way the old text glyph did, so that half of the treatment carries over
+ * unchanged.
  *
  * Experience's row button owns the click and the open/close state for the
  * whole row (not just this icon), so the spin itself is triggered by the
@@ -37,15 +39,15 @@ const ExpandGlyph = forwardRef<
       aria-hidden
       className={`expand-glyph ${expanded ? "is-open" : ""} ${className}`}
     >
-      <span className="expand-glyph-pulse">
-        <svg width="20" height="20" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="8" cy="8" r="8" fill="currentColor" />
+      <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="8" cy="8" r="8" fill="currentColor" />
+        <g transform="translate(8 8) scale(0.65) translate(-8 -8)">
           <path
             d="M13.4 7.4H8.6V2.6C8.6 2.27 8.33 2 8 2C7.67 2 7.4 2.27 7.4 2.6V7.4H2.6C2.27 7.4 2 7.67 2 8C2 8.33 2.27 8.6 2.6 8.6H7.4V13.4C7.4 13.73 7.67 14 8 14C8.33 14 8.6 13.73 8.6 13.4V8.6H13.4C13.73 8.6 14 8.33 14 8C14 7.67 13.73 7.4 13.4 7.4Z"
             fill="var(--bg)"
           />
-        </svg>
-      </span>
+        </g>
+      </svg>
 
       <style jsx>{`
         /* No delay on close, delayed on open so the color lands near the
@@ -65,28 +67,6 @@ const ExpandGlyph = forwardRef<
         .expand-glyph.is-open {
           transform: rotate(45deg);
           transition: color 150ms ease 330ms;
-        }
-
-        .expand-glyph-pulse {
-          display: inline-block;
-          animation: expand-glyph-pulse 2.2s ease-in-out infinite;
-        }
-
-        .expand-glyph:hover .expand-glyph-pulse,
-        .expand-glyph.is-open .expand-glyph-pulse {
-          animation-play-state: paused;
-        }
-
-        @keyframes expand-glyph-pulse {
-          0%,
-          100% {
-            opacity: 1;
-            transform: scale(1);
-          }
-          50% {
-            opacity: 0.55;
-            transform: scale(1.15);
-          }
         }
       `}</style>
     </span>
