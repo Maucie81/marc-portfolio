@@ -54,14 +54,6 @@ const PLACEHOLDER_ASPECT = "aspect-[1440/1024]";
  * globals.css that shrinks ONLY the media on short viewports, leaving the
  * text columns (--cs-scale) alone. */
 
-/** Mock browser-chrome brand mark shown inside every MediaPlaceholder. */
-export type Brand = {
-  bold: string;
-  normal?: string;
-  initials: string;
-  color: string;
-};
-
 function Frame({ image }: { image: ImageSpec }) {
   return (
     <figure>
@@ -81,40 +73,11 @@ function Frame({ image }: { image: ImageSpec }) {
   );
 }
 
-function MediaPlaceholder({
-  brand,
-  className = "",
-}: {
-  brand: Brand;
-  className?: string;
-}) {
+function MediaPlaceholder({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`flex ${PLACEHOLDER_ASPECT} w-full flex-col overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
-    >
-      <div className="flex shrink-0 items-center gap-3 border-b border-line/70 px-4 py-3">
-        <svg width="16" height="12" viewBox="0 0 16 12" fill="none" aria-hidden>
-          <path d="M0 1h16M0 6h16M0 11h16" stroke="#111111" strokeWidth="1.4" />
-        </svg>
-        <span className="text-sm font-bold leading-none" style={{ color: brand.color }}>
-          {brand.bold}
-          {brand.normal ? <span className="font-normal">{brand.normal}</span> : null}
-        </span>
-        <div className="ml-auto flex items-center gap-3">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-            <circle cx="6" cy="6" r="5" stroke="#111111" strokeWidth="1.3" />
-            <path d="M9.8 9.8L13 13" stroke="#111111" strokeWidth="1.3" strokeLinecap="round" />
-          </svg>
-          <span
-            className="flex h-6 w-6 items-center justify-center rounded-full border text-[10px] font-semibold leading-none"
-            style={{ borderColor: brand.color, color: brand.color }}
-          >
-            {brand.initials}
-          </span>
-        </div>
-      </div>
-      <div className="flex-1" />
-    </div>
+      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
+    />
   );
 }
 
@@ -910,13 +873,11 @@ function PanelItemBlock({
   title,
   body,
   caption,
-  brand,
 }: {
   number: string;
   title: string;
   body: string;
   caption: string;
-  brand: Brand;
 }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "calc(81.25rem * var(--cs-scale, 1))" }}>
@@ -927,10 +888,7 @@ function PanelItemBlock({
           <p className="text-sm leading-[20px] text-ink-2">{body}</p>
         </div>
         <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-          <MediaPlaceholder
-            brand={brand}
-            className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0"
-          />
+          <MediaPlaceholder className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0" />
           <p className="cs-caption text-center">{caption}</p>
         </div>
       </div>
@@ -971,14 +929,12 @@ function ClosingBlock({
   stats,
   caption,
   cta,
-  brand,
 }: {
   heading: string;
   body: string[];
   stats: { value: string; label: string }[];
   caption?: string;
   cta?: { text: string; href: string };
-  brand: Brand;
 }) {
   const hasStats = stats.length > 0;
   const hasCaption = Boolean(caption);
@@ -1036,7 +992,7 @@ function ClosingBlock({
           </div>
         ) : hasCaption ? (
           <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-            <MediaPlaceholder brand={brand} />
+            <MediaPlaceholder />
             <p className="cs-caption text-center">{caption}</p>
           </div>
         ) : null}
@@ -1133,7 +1089,6 @@ function SectionBlock({
   expandedPoints,
   steps,
   image,
-  brand,
 }: {
   eyebrow: string;
   title: string;
@@ -1148,7 +1103,6 @@ function SectionBlock({
   expandedPoints?: { label: string; text: string }[];
   steps?: { title: string; body: string }[];
   image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
-  brand: Brand;
 }) {
   const position = pullQuotePosition ?? "bottom";
   const hasQuotes = Boolean(pullQuotes?.length);
@@ -1207,10 +1161,7 @@ function SectionBlock({
               />
             )
           ) : (
-            <MediaPlaceholder
-              brand={brand}
-              className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start"
-            />
+            <MediaPlaceholder className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start" />
           )}
           {hasQuotes ? (
             <div
@@ -1284,7 +1235,7 @@ function SectionBlock({
   );
 }
 
-function renderBlock(block: Block, i: number, brand: Brand) {
+function renderBlock(block: Block, i: number) {
   switch (block.kind) {
     case "cover":
       return null; // rendered separately by CaseStudyPage, which owns meta/sidebar
@@ -1308,7 +1259,6 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           title={block.title}
           body={block.body}
           caption={block.caption}
-          brand={brand}
         />
       );
     case "stat":
@@ -1351,7 +1301,6 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           expandedPoints={block.expandedPoints}
           steps={block.steps}
           image={block.image}
-          brand={brand}
         />
       );
     case "closing":
@@ -1363,7 +1312,6 @@ function renderBlock(block: Block, i: number, brand: Brand) {
           stats={block.stats}
           caption={block.caption}
           cta={block.cta}
-          brand={brand}
         />
       );
     case "principles":
@@ -1384,14 +1332,12 @@ export function CaseStudyPage({
   meta,
   sidebar,
   blocks,
-  brand,
 }: {
   /** Breadcrumb text in the fixed top bar, e.g. "Airbnb Hotels". */
   navTitle: string;
   meta: Meta;
   sidebar: Sidebar;
   blocks: Block[];
-  brand: Brand;
 }) {
   return (
     <main className="bg-bg">
@@ -1399,7 +1345,7 @@ export function CaseStudyPage({
       <BottomRule />
       <HorizontalTrack>
         <CoverBlock meta={meta} sidebar={sidebar} />
-        {blocks.map((block, i) => renderBlock(block, i, brand))}
+        {blocks.map((block, i) => renderBlock(block, i))}
         <CaseStudyClosing />
       </HorizontalTrack>
     </main>
