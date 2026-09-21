@@ -259,14 +259,13 @@ function PrinciplesBlock({
  * shoved down. Now both end dots clear their chrome by the same 56px and
  * justify-between puts the middle one at the true midpoint — which is also
  * exactly the hero's own vertical center, since the track centers between
- * the same two edges. Exported so headspace-health-umd/page.tsx shares
- * this exact element. */
+ * the same two edges. Rendered INSIDE the track (see .cs-rail-dots) so the
+ * dots slide away with the opening section rather than staying pinned
+ * beside every block, per direct request. Exported so
+ * headspace-health-umd/page.tsx shares this exact element. */
 export function RailDots() {
   return (
-    <div
-      aria-hidden
-      className="fixed bottom-16 left-8 top-[42px] z-40 hidden w-14 flex-col items-center justify-between bg-bg py-14 min-[901px]:flex"
-    >
+    <div aria-hidden className="cs-rail-dots">
       <span className="rail-dot" />
       <span className="rail-dot" />
       <span className="rail-dot" />
@@ -1356,9 +1355,9 @@ export function CaseStudyPage({
 }) {
   return (
     <main className="bg-bg">
-      <RailDots />
       <BottomRule />
       <HorizontalTrack>
+        <RailDots />
         {backdrop ? (
           <div
             aria-hidden

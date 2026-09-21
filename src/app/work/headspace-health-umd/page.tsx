@@ -90,11 +90,10 @@ function WalkthroughBlock({ href }: { href: string }) {
 export default function HeadspaceUmdPage() {
   return (
     <main className="bg-bg">
-      <RailDots />
-
       <BottomRule />
 
       <HorizontalTrack>
+        <RailDots />
         <CoverBlock meta={meta} sidebar={sidebar} />
         <IntroStackBlock heading="Context" body={context} />
         <WalkthroughBlock href={PROTOTYPE_URL} />

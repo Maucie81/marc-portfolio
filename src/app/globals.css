@@ -312,6 +312,33 @@ paints over it. */
    this correction. A transform, not a wider grid column, so the "01" number
    and body copy that follow this rail keep their own frame's (177:xxx)
    authoritative position instead of shifting with it. */
+/* The three cover dots ride INSIDE the track (an absolute child, not a
+   fixed element) so they slide away with the opening section instead of
+   staying pinned beside every block. Left/top/bottom are chrome-aligned
+   fixed px (32px rail, 42px top band, 64px bottom chrome), not --cs-scale;
+   the track is 100vh, so top/bottom here land on the same viewport edges
+   the old fixed element used. No paper fill any more — nothing slides
+   under it now that it moves with the content. */
+.cs-rail-dots {
+  position: absolute;
+  top: 42px;
+  bottom: 64px;
+  left: 32px;
+  width: 56px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 56px 0;
+  pointer-events: none;
+}
+
+@media (min-width: 901px) {
+  .cs-rail-dots {
+    display: flex;
+  }
+}
+
 .rail-dot {
   display: block;
   width: 12px;
@@ -369,7 +396,12 @@ paints over it. */
   right: 32px;
   bottom: 32px;
   height: 32px;
-  background: var(--bg);
+  /* Transparent, not --bg: a story's backdrop wash (.cs-backdrop) reaches
+     the viewport bottom and should read through this strip with the ticks
+     drawn over it, the way the Figma frame runs its wash under the rule.
+     Nothing else can reach here — every block clears the chrome by
+     --cs-pad — so there's no content to hide. */
+  background: transparent;
   border-top: 1px solid var(--line);
   z-index: 60;
   opacity: 0;
@@ -766,59 +798,64 @@ paints over it. */
   content: "";
   position: absolute;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 300px 300px;
+  /* feColorMatrix after the turbulence: desaturate, then push contrast
+     (×1.9, re-centred) so the grain reads as film grain rather than a
+     faint haze — Figma's noise layer is far punchier than raw turbulence. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeColorMatrix type='matrix' values='1.9 0 0 0 -0.45  0 1.9 0 0 -0.45  0 0 1.9 0 -0.45  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 320px 320px;
   mix-blend-mode: overlay;
-  opacity: 0.55;
+  opacity: 0.85;
   -webkit-mask-image: var(--backdrop-mask, var(--backdrop-art));
   mask-image: var(--backdrop-mask, var(--backdrop-art));
   pointer-events: none;
 }
 
-/* Yahoo — two blobs measured off the Figma export (3325×1004 box): centres,
-   extents and the rgb(46,37,34) warm near-black all sampled from it. Each
-   blob's centre sits on the bottom edge (both peak on the last row). The
-   eased stops approximate a Gaussian falloff. --backdrop-mask is the grain
-   layer's reach: the same two blobs, but ~15% larger and holding alpha
-   further out. Banding shows most in the faint outer falloff, and a mask
-   that fades exactly with the blob would thin the grain out right where
-   it's needed — so the grain reaches a little past the wash. The bit that
-   lands on bare paper is overlay-blended grey noise at low alpha, which
-   just merges into the page's own grain. */
+/* Yahoo — two lobes measured off the Figma reference (screenshot of the
+   story, mapped to track px; the Overview block lands within 9px of where
+   that mapping predicts). Box is 3300×1024 at track x 1500, so % here are
+   of that box. Both lobes sit on the bottom edge. The right lobe has a
+   FLAT dense core — ~95% coverage across its inner third before falling
+   off — which is what makes it read as a heavy wash rather than a soft
+   spot; a falloff that starts at the centre looked far lighter. Colour
+   sampled at rgb(46,37,34), warm near-black. --backdrop-mask is the grain
+   layer's reach: same lobes ~15% larger, holding alpha further out, since
+   banding shows most in the faint outer falloff. */
 .cs-backdrop--yahoo {
+  --backdrop-art:
+    /* right lobe — centre 3712, ~1340 wide, ~62% tall, dense core */
+    radial-gradient(
+      ellipse 23% 44% at 67% 100%,
+      rgba(46, 37, 34, 0.95) 0%,
+      rgba(46, 37, 34, 0.93) 32%,
+      rgba(46, 37, 34, 0.74) 52%,
+      rgba(46, 37, 34, 0.4) 70%,
+      rgba(46, 37, 34, 0.12) 88%,
+      rgba(46, 37, 34, 0) 100%
+    ),
+    /* left lobe — centre 2172, ~790 wide, shallow */
+    radial-gradient(
+      ellipse 14.5% 21.5% at 20.4% 100%,
+      rgba(46, 37, 34, 0.68) 0%,
+      rgba(46, 37, 34, 0.55) 35%,
+      rgba(46, 37, 34, 0.28) 65%,
+      rgba(46, 37, 34, 0.08) 88%,
+      rgba(46, 37, 34, 0) 100%
+    );
   --backdrop-mask:
     radial-gradient(
-      ellipse 28% 54% at 76% 100%,
+      ellipse 27% 51% at 67% 100%,
       #000 0%,
-      rgba(0, 0, 0, 0.85) 35%,
-      rgba(0, 0, 0, 0.5) 65%,
-      rgba(0, 0, 0, 0.18) 88%,
+      #000 40%,
+      rgba(0, 0, 0, 0.75) 65%,
+      rgba(0, 0, 0, 0.35) 85%,
       transparent 100%
     ),
     radial-gradient(
-      ellipse 19% 24% at 31% 100%,
+      ellipse 17% 25% at 20.4% 100%,
       #000 0%,
-      rgba(0, 0, 0, 0.7) 40%,
-      rgba(0, 0, 0, 0.25) 75%,
+      rgba(0, 0, 0, 0.8) 45%,
+      rgba(0, 0, 0, 0.3) 78%,
       transparent 100%
-    );
-  --backdrop-art:
-    /* big blob, right */
-    radial-gradient(
-      ellipse 24% 46% at 76% 100%,
-      rgba(46, 37, 34, 0.85) 0%,
-      rgba(46, 37, 34, 0.6) 25%,
-      rgba(46, 37, 34, 0.26) 52%,
-      rgba(46, 37, 34, 0.07) 76%,
-      rgba(46, 37, 34, 0) 100%
-    ),
-    /* small blob, left */
-    radial-gradient(
-      ellipse 16% 20% at 31% 100%,
-      rgba(46, 37, 34, 0.7) 0%,
-      rgba(46, 37, 34, 0.32) 40%,
-      rgba(46, 37, 34, 0.08) 72%,
-      rgba(46, 37, 34, 0) 100%
     );
   background: var(--backdrop-art);
 }
