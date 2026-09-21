@@ -13,7 +13,7 @@ import type { Block, ImageSpec } from "@/lib/ypp";
  */
 
 export const meta = {
-  title: "Account Creation & Onboarding",
+  title: "account creation & onboarding",
   subtitle:
     "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs the existing host flow wasn't built for. Getting a single hotel live required six manual handoffs across account managers, contractors, and ops teams. I redesigned that process into a self-service flow built entirely on existing Airbnb infrastructure — no net-new engineering required.",
   company: "Airbnb",

@@ -24,25 +24,25 @@ export type CaseStudyLink = {
 export const caseStudies: CaseStudyLink[] = [
   {
     slug: "yahoo-partner-portal",
-    title: "Yahoo Partner Portal",
+    title: "Yahoo partner portal",
     href: "/work/yahoo-partner-portal",
   },
   {
     slug: "airbnb-hotels",
-    title: "Airbnb Hotels",
+    title: "Airbnb hotels",
     href: "/work/airbnb-hotels",
     closingLink: true,
     closingLabel: "Airbnb Account Creation & Onboarding",
   },
   {
     slug: "headspace-admin-portal",
-    title: "Headspace Admin Portal Redesign",
+    title: "Headspace admin portal redesign",
     href: "/work/headspace-admin-portal",
     closingLink: true,
   },
   {
     slug: "headspace-health-umd",
-    title: "Headspace Unified Main Door",
+    title: "Headspace unified main door",
     href: "/work/headspace-health-umd",
   },
   {

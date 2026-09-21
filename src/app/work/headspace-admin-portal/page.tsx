@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function HeadspaceAdminPortalPage() {
   return (
     <CaseStudyPage
-      navTitle="Headspace Admin Portal Redesign"
+      navTitle="Headspace admin portal redesign"
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}

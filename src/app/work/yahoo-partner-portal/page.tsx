@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function YahooPartnerPortalPage() {
   return (
     <CaseStudyPage
-      navTitle="Yahoo Partner Portal"
+      navTitle="Yahoo partner portal"
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}

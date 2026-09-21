@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 export default function AirbnbHotelsPage() {
   return (
     <CaseStudyPage
-      navTitle="Airbnb Hotels"
+      navTitle="Airbnb hotels"
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}

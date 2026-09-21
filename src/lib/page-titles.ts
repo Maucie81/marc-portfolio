@@ -3,10 +3,10 @@ import { additionalWork, projects } from "@/lib/home";
 /** Human names for routes — shared by PersistentHeader's case-study top
  * bar and the proof-notes panel (which groups a visitor's notes by page). */
 export const CASE_STUDY_TITLES: Record<string, string> = {
-  "/work/yahoo-partner-portal": "Yahoo Partner Portal",
-  "/work/airbnb-hotels": "Airbnb Hotels",
-  "/work/headspace-admin-portal": "Headspace Admin Portal Redesign",
-  "/work/headspace-health-umd": "Headspace Unified Main Door",
+  "/work/yahoo-partner-portal": "Yahoo partner portal",
+  "/work/airbnb-hotels": "Airbnb hotels",
+  "/work/headspace-admin-portal": "Headspace admin portal redesign",
+  "/work/headspace-health-umd": "Headspace unified main door",
 };
 
 const OTHER_TITLES: Record<string, string> = {

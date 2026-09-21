@@ -12,7 +12,7 @@
  */
 
 export const meta = {
-  title: "Partner Portal",
+  title: "partner portal",
   subtitle:
     'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode — no new investment, no roadmap, and 8,700+ media partners without the tools to understand how their content was performing on Yahoo. Partner Portal 2.0 set out to change that: self-service visibility, actionable diagnostics, and the administrative controls partners had been asking for.',
   company: "Yahoo",
@@ -183,7 +183,7 @@ export const blocks: Block[] = [
     sectionNumber: "02",
     eyebrow: "Every metric in one place",
     title: "Overview",
-    body: "Live Metrics gave partners one insight: page views. The Overview gives them eight — and for most, it was the first time they'd seen Click through Rate, dwell, or reach without asking a Yahoo contact.",
+    body: "Live Metrics gave partners one insight: page views. The Overview gives them eight — and for most, it was the first time they'd seen click-through rate, dwell, or reach without asking a Yahoo contact.",
     bullets: [
       {
         title: "Side-by-side, not siloed",
@@ -232,7 +232,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "03",
     eyebrow: "What's working, and why",
-    title: "Top Content",
+    title: "Top content",
     body: "Partners were Googling their own headlines to find where their content lived on Yahoo. Top Content gives them ranked performance, placement data, and filtering to understand what drove every story.",
     bullets: [
       {
@@ -272,13 +272,13 @@ export const blocks: Block[] = [
     pullQuotePosition: "bottom",
   },
 
-  // 5. KPI Deep-Dives
+  // 5. KPI deep-dives
   {
     kind: "section",
     sectionNumber: "04",
     eyebrow: "Trends and breakdowns",
-    title: "KPI Deep‑Dives",
-    body: "The Overview cards show where you stand. KPI Deep-Dives let you interrogate any metric — historical trends, median and average breakdowns, sliced by content type, region, device, and category.",
+    title: "KPI deep‑dives",
+    body: "The Overview cards show where you stand. KPI deep-dives let you interrogate any metric — historical trends, median and average breakdowns, sliced by content type, region, device, and category.",
     bullets: [
       {
         title: "Median > average",
@@ -309,13 +309,13 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 6. Feed Health
+  // 6. Feed health
   {
     kind: "section",
     sectionNumber: "05",
     eyebrow: "Reactive to self-service",
-    title: "Feed Health",
-    body: "Feed Health started as a monitoring dashboard but research changed that. Partners don't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a command center.",
+    title: "Feed health",
+    body: "Feed health started as a monitoring dashboard but research changed that. Partners don't have bandwidth to watch metrics continuously — they needed a firefighting tool, not a command center.",
     bullets: [
       {
         title: "Your worst problems surface first",
@@ -359,7 +359,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "06",
     eyebrow: "Track issues over time",
-    title: "Issue Trends",
+    title: "Issue trends",
     body: "Knowing an issue exists isn't enough. Issue Trends shows how a specific problem has moved over time. Partners can now tell their engineering team exactly what's broken, when it started, and how many pieces of content it's touching.",
     bullets: [
       {
@@ -396,7 +396,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "07",
     eyebrow: "The exact warning. The exact fix.",
-    title: "Story Details",
+    title: "Story details",
     body: "Partners found out about content problems through emails from their Yahoo partner managers. Story Details replaced that with self-service visibility — the exact warning on a specific piece of content, with remediation guidance built in.",
     bullets: [
       {
@@ -481,7 +481,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "10",
     eyebrow: "Manage your own team",
-    title: "User Management",
+    title: "User management",
     body: "Adding a user to the legacy system required going through Yahoo. User Management gives that control back to partners — invite, assign, and scope brand access without filing a ticket.",
     bullets: [
       {

@@ -9,7 +9,7 @@
  */
 
 export const meta = {
-  title: "Unified Main Door",
+  title: "unified main door",
   subtitle:
     "Designing the enrollment front door for a bundled mental health benefit, from eligibility to booked care.",
   company: "Headspace",

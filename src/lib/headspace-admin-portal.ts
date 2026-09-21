@@ -16,7 +16,7 @@
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 export const meta = {
-  title: "Admin Portal Redesign",
+  title: "admin portal redesign",
   subtitle:
     "Headspace's B2B Admin Portal hadn't been meaningfully touched since 2017. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore. 17 stakeholder interviews and a 147-respondent survey made the case for separating internal and external experiences entirely, and put the redesign on the roadmap.",
   company: "Headspace",
