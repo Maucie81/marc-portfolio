@@ -261,16 +261,36 @@ export default function Home() {
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
                 const image = project.image ? (
-                  // The whole card artwork — grey ground, bezel, radius and
-                  // drop shadow — is one export of the Figma card frame
-                  // (784:121621 / 784:121479 / 791:129913, node "Homepage
-                  // artwork" 835:64874), cropped to the inside of its 1px
-                  // #d2d2d2 border. Only that border is drawn here, so the
-                  // three cards can't drift apart in CSS.
+                  // Card = texture sheet with the device mockup sitting on
+                  // it (Figma card frame 784:121621 / 784:121479 /
+                  // 791:129913, node "Homepage artwork" 835:64874). The
+                  // mockup is the original flattened export with its grey
+                  // ground and shadow masked to transparent (same canvas,
+                  // same position — see home.ts), so it lays over the
+                  // texture without a matte. No border: the design has none.
                   <div
-                    className="relative w-full overflow-hidden rounded-t-[4px] border border-[#d2d2d2] bg-[#eaeae5]"
+                    className="relative isolate w-full overflow-hidden rounded-t-[4px] bg-bg"
                     style={{ aspectRatio: "714 / 402" }}
                   >
+                    {/* Texture · Figma frame 26:2683, the hand-exported SVG
+                        used as-is (Dev Mode MCP guest access blocks
+                        inspect/export), multiply-blended against the page
+                        grey exactly as the frame sits on the Figma canvas —
+                        the ground here has to be --bg, not white (multiply
+                        over white is an identity and left it far too
+                        bright). The export carries a few stray colored
+                        pixels at two corners (Figma's selection handles,
+                        visible in the source screenshot too) and a ~2px
+                        fade from its blur filter, all within the outer
+                        ~2.5%, so it's scaled 6% and the overflow-hidden
+                        parent crops them off. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/case-study-texture.svg"
+                      alt=""
+                      aria-hidden
+                      className="pointer-events-none absolute inset-0 h-full w-full scale-[1.06] mix-blend-multiply"
+                    />
                     <Image
                       src={project.image.src}
                       alt={project.image.alt}
@@ -279,7 +299,7 @@ export default function Home() {
                       // 4x Figma export served as-is: the optimizer's q75
                       // re-encode of small UI text was visibly soft.
                       unoptimized
-                      className="block h-full w-full"
+                      className="relative block h-full w-full"
                     />
                   </div>
                 ) : (

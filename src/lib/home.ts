@@ -18,7 +18,10 @@ export type Project = {
         /** Intrinsic pixel dimensions of the exported asset — the device
          * bezel (border + corner radius) is baked into these pixels, not
          * drawn in CSS, so every card uses identical markup regardless of
-         * each mockup's own aspect ratio in Figma. */
+         * each mockup's own aspect ratio in Figma. The `-cutout` files are
+         * the original flattened exports with the grey ground and drop
+         * shadow masked to transparent (same canvas, same position) so the
+         * bezel can sit on the card's texture layer. */
         width: number;
         height: number;
       }
@@ -36,7 +39,7 @@ export const projects: Project[] = [
       'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
     href: "/work/yahoo-partner-portal",
     image: {
-      src: "/yahoo/thumbnail.webp",
+      src: "/yahoo/thumbnail-cutout.webp",
       alt: "Screenshot of the Yahoo Partner Portal analytics overview dashboard, with the device bezel baked into the image",
       width: 2848,
       height: 1600,
@@ -57,7 +60,7 @@ export const projects: Project[] = [
       "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
     href: "/work/headspace-health-umd",
     image: {
-      src: "/headspace/thumbnail.webp",
+      src: "/headspace/thumbnail-cutout.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
       width: 2848,
       height: 1600,
@@ -78,7 +81,7 @@ export const projects: Project[] = [
       "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
     image: {
-      src: "/airbnb/thumbnail.webp",
+      src: "/airbnb/thumbnail-cutout.webp",
       alt: "Figma mockup of the Airbnb hotel partner account creation and onboarding flow, showing the welcome screen with a Get started button",
       width: 2848,
       height: 1600,
