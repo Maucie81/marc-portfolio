@@ -70,7 +70,7 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 discrepancy there). */}
             <Link
               href="/"
-              className="ml-[0px] flex items-center gap-3 font-display text-base font-semibold leading-[18px] tracking-[-0.16px] text-ink transition-colors hover:text-accent lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]"
+              className="ml-[0px] flex items-center gap-3 text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong transition-colors hover:text-accent [font-family:var(--font-mono),ui-monospace,monospace]"
             >
               <span
                 aria-hidden
@@ -78,7 +78,7 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               />
               Marc Favro
             </Link>
-            <nav className="flex gap-8 font-display text-sm font-semibold leading-[18px] tracking-[-0.14px] text-muted lg:gap-4 lg:text-[12px] lg:font-normal lg:uppercase lg:leading-[20px] lg:tracking-normal lg:text-black lg:[font-family:var(--font-mono),ui-monospace,monospace]">
+            <nav className="flex gap-4 text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
               <Link
                 href="/#hero"
                 className={`transition-colors hover:text-accent${activeClass("home")}`}
@@ -146,7 +146,7 @@ function CaseStudyTopBar({
   fallbackHref?: string;
 }) {
   const bandType =
-    "min-[901px]:text-[12px] min-[901px]:font-normal min-[901px]:uppercase min-[901px]:leading-[20px] min-[901px]:tracking-normal min-[901px]:[font-family:var(--font-mono),ui-monospace,monospace]";
+    "text-[12px] font-normal uppercase leading-[20px] tracking-normal [font-family:var(--font-mono),ui-monospace,monospace]";
   return (
     <>
       <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg/95 backdrop-blur min-[901px]:border-b-0 min-[901px]:bg-white min-[901px]:backdrop-blur-none">
@@ -155,7 +155,7 @@ function CaseStudyTopBar({
             <div className="flex items-center gap-8">
               <BackLink
                 fallbackHref={fallbackHref}
-                className={`flex items-center gap-1.5 text-sm font-medium leading-4 text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display)] min-[901px]:text-black ${bandType}`}
+                className={`flex items-center gap-1.5 text-ink-strong transition-colors hover:text-accent ${bandType}`}
               >
                 {/* Same ArrowIcon the cover's Role/Timeline/… list uses,
                     rotated to point back; text-current so it takes the
@@ -164,13 +164,13 @@ function CaseStudyTopBar({
                 Back
               </BackLink>
               <span
-                className={`text-sm font-medium leading-4 text-accent [font-family:var(--font-display)] min-[901px]:absolute min-[901px]:left-[129.6px] min-[901px]:top-1/2 min-[901px]:-translate-y-1/2 ${bandType}`}
+                className={`text-accent min-[901px]:absolute min-[901px]:left-[129.6px] min-[901px]:top-1/2 min-[901px]:-translate-y-1/2 ${bandType}`}
               >
                 {title}
               </span>
             </div>
             <nav
-              className={`hidden gap-4 text-xs leading-4 text-ink-strong min-[901px]:flex min-[901px]:text-black ${bandType}`}
+              className={`hidden gap-4 text-ink-strong min-[901px]:flex ${bandType}`}
             >
               <Link href="/#hero" className="transition-colors hover:text-accent">
                 Home

@@ -64,8 +64,8 @@ function DividerTicks({ className = "" }: { className?: string }) {
       aria-hidden
       className={`pointer-events-none absolute top-1/2 flex h-4 -translate-y-1/2 gap-2.5 ${className}`}
     >
-      <span className="block h-full w-px bg-[#666666]" />
-      <span className="block h-full w-px bg-[#666666]" />
+      <span className="block h-full w-px bg-muted" />
+      <span className="block h-full w-px bg-muted" />
     </span>
   );
 }
@@ -84,8 +84,8 @@ export function DoubleLineIcon({ className = "" }: { className?: string }) {
       aria-hidden
       className={`pointer-events-none absolute flex w-4 flex-col gap-2.5 ${className}`}
     >
-      <span className="block h-px w-full bg-[#666666]" />
-      <span className="block h-px w-full bg-[#666666]" />
+      <span className="block h-px w-full bg-muted" />
+      <span className="block h-px w-full bg-muted" />
     </span>
   );
 }

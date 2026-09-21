@@ -18,7 +18,7 @@ export default function Placeholder({
   if (!label) {
     return (
       <div
-        className={`rounded-[4px] border border-line-soft bg-[#eaeae5] ${className}`}
+        className={`rounded-[4px] border border-line-soft bg-bg-deep ${className}`}
         style={{ aspectRatio: ratio }}
       />
     );
@@ -26,7 +26,7 @@ export default function Placeholder({
 
   return (
     <div
-      className={`relative flex items-center justify-center overflow-hidden rounded-[4px] border border-line-soft bg-[#eaeae5] ${className}`}
+      className={`relative flex items-center justify-center overflow-hidden rounded-[4px] border border-line-soft bg-bg-deep ${className}`}
       style={{ aspectRatio: ratio }}
     >
       <div

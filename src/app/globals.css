@@ -1,21 +1,31 @@
 @import "tailwindcss";
 
-/* Neutrals are Figma's (Portfolio-2026 / Final Homepage, 499:54149). --bg is
-   the frame's own fill (#e4e4df, confirmed via get_design_context) — not a
-   value from the older brief. --ink/--ink-2/--muted/--ink-strong match the
-   Figma "Desktop System" color legend: Headlines/Top Nav, Navigation/Sub
-   Headers/Body copy, Company Names/Meta Data, and Quote/Stat emphasis. */
+/* Colour system — one warm neutral ladder, every rung on the same brown-grey
+   hue as --ink, so nothing reads cool against the cream sheet. Started from
+   Figma's neutrals (Portfolio-2026 / Final Homepage, 499:54149: #e4e4df
+   paper, #444440 / #686868 / #111111 / #b0b0b0) and warmed each one to
+   match when the sheet moved from grey to cream (--bg #f8f4eb); lightness
+   is unchanged, so every text contrast is the same or better than before.
+
+   Text hierarchy, top to bottom — each type role below uses exactly one:
+     --ink-strong  emphasis (quotes/stats) and the frame chrome type
+     --ink         display + headlines (also the body default)
+     --ink-2       body copy, sub-headers, labels
+     --muted       meta data, captions, list values
+     --accent      interactive + landmark only (links, kickers, section
+                   numbers) — never for copy
+   Surfaces: --bg paper · --bg-deep deeper paper (placeholders, letterbox)
+   · --surface raised · --line rules and grids · --line-soft dividers. */
 :root {
-  --bg: #e4e4df;
+  --bg: #f8f4eb;
   --bg-deep: #eae5db;
   --surface: #fbf9f5;
   --ink: #4f3f3b;
-  --ink-2: #444440;
-  --muted: #686868;
-  --ink-strong: #111111;
-  --line: #b0b0b0;
-  --line-soft: #d8d8d8;
-  /* Reserved for interactive elements and landmark moments only */
+  --ink-2: #47413d;
+  --muted: #6b6560;
+  --ink-strong: #1a1512;
+  --line: #b4ada4;
+  --line-soft: #dcd6cc;
   --accent: #ff5841;
 }
 
@@ -211,15 +221,18 @@ paints over it. */
   font-size: 0.875rem;
   line-height: 1rem;
   letter-spacing: 0;
-  color: var(--muted);
+  /* Label rung (--ink-2), one step above the --muted values it titles —
+     same pairing as .cs-label / .cs-meta on the case studies. */
+  color: var(--ink-2);
 }
 
 /* Meta Data · 499:54925 (Experience Skills/Tooling list items) and 543:114278
    (Recent Work skill tags — same role, confirmed via get_design_context on
-   both). Roboto Mono Regular 12/20, not Google Sans Flex. Color is Figma's
-   literal rgba(104,104,104,0.9) — that's --muted itself (#686868 = rgb
-   104,104,104) at 90% opacity, not a different color, so expressed as a
-   mix rather than a new token. The orange "•" divider between tags is a
+   both). Roboto Mono Regular 12/20, not Google Sans Flex. Figma had this
+   at rgba(104,104,104,0.9) — --muted at 90%; the 10% is dropped here so the
+   smallest text on the page sits on the same rung as every other value
+   (at 12px it was the one role dipping under 4.5:1). The orange "•"
+   divider between tags is a
    separate role (Google Sans Flex, 13px, accent) — not part of this class,
    see its usage in page.tsx. */
 .t-meta-sm {
@@ -228,7 +241,7 @@ paints over it. */
   font-size: 0.75rem;
   line-height: 1.25rem;
   letter-spacing: 0;
-  color: color-mix(in srgb, var(--muted) 90%, transparent);
+  color: var(--muted);
 }
 
 /* Perimeter-frame nav/badge role · confirmed via get_design_context on
@@ -247,7 +260,7 @@ paints over it. */
   line-height: 1.25rem;
   letter-spacing: 0;
   text-transform: uppercase;
-  color: #000;
+  color: var(--ink-strong);
 }
 
 /* Shared display level for work project titles (177:111991) and the interest
@@ -396,12 +409,7 @@ paints over it. */
   right: 32px;
   bottom: 32px;
   height: 32px;
-  /* Transparent, not --bg: a story's backdrop wash (.cs-backdrop) reaches
-     the viewport bottom and should read through this strip with the ticks
-     drawn over it, the way the Figma frame runs its wash under the rule.
-     Nothing else can reach here — every block clears the chrome by
-     --cs-pad — so there's no content to hide. */
-  background: transparent;
+  background: var(--bg);
   border-top: 1px solid var(--line);
   z-index: 60;
   opacity: 0;
@@ -525,7 +533,7 @@ paints over it. */
   font-size: 1.25rem;
   line-height: 1.5rem;
   letter-spacing: 0;
-  color: #444440;
+  color: var(--ink-2);
 }
 
 /* Pull-quote text only (the blockquotes beside a section's media) — the
@@ -751,113 +759,6 @@ paints over it. */
 
 .cs-track {
   position: relative;
-}
-
-/* Optional per-story backdrop art (CaseStudyPage's `backdrop` prop) — e.g.
-   Yahoo's soft dark wash rising from the bottom of the story (Figma
-   "Gradient 22", 35:3480). Drawn natively as radial-gradients rather than an
-   exported image: a radial-gradient IS a smooth falloff (no blur filter
-   needed), and it's transparent everywhere but the blob, so there's no flat
-   "paper" region in the layer to mismatch the real --bg — an image export
-   carries its own paper fill, and even 1 value off it reads as a pasted
-   rectangle. The grain sheet (.cs-track::after) textures it like everything
-   else. Lives INSIDE the track so it slides with the story, bottom-anchored,
-   z-index -1: over the paper, under every block. Geometry is in the same
-   1440-baseline px as the blocks, scaled by --cs-scale. Vertical mode
-   stacks the story, where a wide horizontal wash makes no sense — hidden. */
-.cs-backdrop {
-  display: none;
-}
-
-@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
-  .cs-backdrop {
-    display: block;
-    position: absolute;
-    bottom: 0;
-    left: calc(var(--backdrop-left) * var(--cs-scale, 1));
-    width: calc(var(--backdrop-width) * var(--cs-scale, 1));
-    height: calc(var(--backdrop-height) * var(--cs-scale, 1));
-    z-index: -1;
-    pointer-events: none;
-  }
-}
-
-/* Grain ON the wash, the part that makes a soft gradient look good: a smooth
-   low-contrast dark-to-paper gradient over a large area visibly bands in
-   8-bit colour (too few distinct values for the steps to hide), and fine
-   noise on top dithers those steps away — it's why the Figma version worked
-   and a bare CSS gradient didn't. Same recipe as Figma's layer: grey noise,
-   overlay blend, ~50%. The noise is a tiny inline SVG feTurbulence tile
-   (rasterised once, then repeated) rather than an image file; its size is
-   fixed px, not --cs-scale, so the grain stays fine at every layout scale.
-   It's masked with the wash's OWN gradients (shared via --backdrop-art) so
-   it fades out exactly with the blob — grain confined to the wash, never a
-   noise rectangle on the paper. The page sheet's grain still lays over the
-   top like everywhere else. */
-.cs-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  /* feColorMatrix after the turbulence: desaturate, then push contrast
-     (×1.9, re-centred) so the grain reads as film grain rather than a
-     faint haze — Figma's noise layer is far punchier than raw turbulence. */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='320' height='320'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeColorMatrix type='matrix' values='1.9 0 0 0 -0.45  0 1.9 0 0 -0.45  0 0 1.9 0 -0.45  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 320px 320px;
-  mix-blend-mode: overlay;
-  opacity: 0.85;
-  -webkit-mask-image: var(--backdrop-mask, var(--backdrop-art));
-  mask-image: var(--backdrop-mask, var(--backdrop-art));
-  pointer-events: none;
-}
-
-/* Yahoo — two lobes measured off the Figma reference (screenshot of the
-   story, mapped to track px; the Overview block lands within 9px of where
-   that mapping predicts). Box is 3300×1024 at track x 1500, so % here are
-   of that box. Both lobes sit on the bottom edge. The right lobe has a
-   FLAT dense core — ~95% coverage across its inner third before falling
-   off — which is what makes it read as a heavy wash rather than a soft
-   spot; a falloff that starts at the centre looked far lighter. Colour
-   sampled at rgb(46,37,34), warm near-black. --backdrop-mask is the grain
-   layer's reach: same lobes ~15% larger, holding alpha further out, since
-   banding shows most in the faint outer falloff. */
-.cs-backdrop--yahoo {
-  --backdrop-art:
-    /* right lobe — centre 3712, ~1340 wide, ~62% tall, dense core */
-    radial-gradient(
-      ellipse 23% 44% at 67% 100%,
-      rgba(46, 37, 34, 0.95) 0%,
-      rgba(46, 37, 34, 0.93) 32%,
-      rgba(46, 37, 34, 0.74) 52%,
-      rgba(46, 37, 34, 0.4) 70%,
-      rgba(46, 37, 34, 0.12) 88%,
-      rgba(46, 37, 34, 0) 100%
-    ),
-    /* left lobe — centre 2172, ~790 wide, shallow */
-    radial-gradient(
-      ellipse 14.5% 21.5% at 20.4% 100%,
-      rgba(46, 37, 34, 0.68) 0%,
-      rgba(46, 37, 34, 0.55) 35%,
-      rgba(46, 37, 34, 0.28) 65%,
-      rgba(46, 37, 34, 0.08) 88%,
-      rgba(46, 37, 34, 0) 100%
-    );
-  --backdrop-mask:
-    radial-gradient(
-      ellipse 27% 51% at 67% 100%,
-      #000 0%,
-      #000 40%,
-      rgba(0, 0, 0, 0.75) 65%,
-      rgba(0, 0, 0, 0.35) 85%,
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 17% 25% at 20.4% 100%,
-      #000 0%,
-      rgba(0, 0, 0, 0.8) 45%,
-      rgba(0, 0, 0, 0.3) 78%,
-      transparent 100%
-    );
-  background: var(--backdrop-art);
 }
 
 .cs-pin {

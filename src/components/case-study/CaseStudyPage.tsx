@@ -635,12 +635,13 @@ function CaseStudyHero({
                 width: lockupWidth != null ? `${lockupWidth}px` : "fit-content",
                 marginLeft: leftOffset != null ? `${leftOffset}px` : "auto",
                 marginRight: leftOffset != null ? undefined : "auto",
-                // #E4E4DF at 40% — genuinely in the Figma data
-                // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`)
-                // though Figma only applied it to the paragraph+scroll-hint
-                // group; applied across the whole lockup per earlier request
-                // to cover all the text.
-                backgroundColor: "rgba(228,228,223,0.4)",
+                // The paper at 40% — genuinely in the Figma data
+                // (get_design_context on 679:61221: `bg-[rgba(228,228,223,0.4)]`,
+                // i.e. the then-#E4E4DF sheet) though Figma only applied it
+                // to the paragraph+scroll-hint group; applied across the
+                // whole lockup per earlier request to cover all the text.
+                // Derived from --bg so it follows the sheet colour.
+                backgroundColor: "color-mix(in srgb, var(--bg) 40%, transparent)",
                 // See lockupNudge: lands the scroll hint on a row center.
                 transform: lockupNudge ? `translateY(${lockupNudge}px)` : undefined,
               }}
@@ -856,7 +857,7 @@ function CopyBlock({
           {eyebrow ? <p className="cs-section-title mt-2">{eyebrow}</p> : null}
         </div>
       ) : null}
-      <div className="space-y-4 text-sm leading-[20px] text-ink-2">
+      <div className="t-body space-y-4">
         {body.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
@@ -884,7 +885,7 @@ function PanelItemBlock({
         <div className="flex w-full flex-col gap-[18px] min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0">
           <p className="display text-[40px] leading-none text-accent">{number}</p>
           <p className="cs-section-title">{title}</p>
-          <p className="text-sm leading-[20px] text-ink-2">{body}</p>
+          <p className="t-body">{body}</p>
         </div>
         <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
           <MediaPlaceholder className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0" />
@@ -1116,7 +1117,7 @@ function SectionBlock({
         <blockquote className="w-full border-l-2 border-accent pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
           <p className="cs-quote cs-pull-quote">{'"' + pq.quote + '"'}</p>
         </blockquote>
-        <p className="w-full pl-6 text-sm leading-[20px] text-ink-2 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
+        <p className="t-body w-full pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
           — {pq.attribution}
         </p>
       </div>
@@ -1205,7 +1206,7 @@ function SectionBlock({
             <p className="cs-section-title">{eyebrow}</p>
           </div>
           {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <div className="-mt-2 flex flex-col gap-3 text-sm leading-[20px] text-ink-2">
+          <div className="t-body -mt-2 flex flex-col gap-3">
             {(Array.isArray(body) ? body : [body]).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
@@ -1217,7 +1218,7 @@ function SectionBlock({
               {bullets.map((bullet) => (
                 <div key={bullet.title}>
                   <p className="cs-sub-label">{bullet.title}</p>
-                  <p className="mt-1 text-sm leading-[20px] text-ink-2">{bullet.body}</p>
+                  <p className="t-body mt-1">{bullet.body}</p>
                 </div>
               ))}
             </div>
@@ -1326,49 +1327,23 @@ function renderBlock(block: Block, i: number) {
   }
 }
 
-/** Optional story-wide backdrop art laid behind the blocks — e.g. Yahoo's
- * soft dark wash (Figma "Gradient 22", 35:3480). Drawn in CSS: `className`
- * names a `.cs-backdrop--*` rule in globals.css that paints the art (radial
- * gradients — see the note there for why not an image). `left`/`width`/
- * `height` are 1440-baseline px along the track, the same coordinate space
- * the blocks use, scaled by --cs-scale; the box is bottom-anchored. */
-export type Backdrop = {
-  className: string;
-  left: number;
-  width: number;
-  height: number;
-};
-
 export function CaseStudyPage({
   navTitle,
   meta,
   sidebar,
   blocks,
-  backdrop,
 }: {
   /** Breadcrumb text in the fixed top bar, e.g. "Airbnb Hotels". */
   navTitle: string;
   meta: Meta;
   sidebar: Sidebar;
   blocks: Block[];
-  backdrop?: Backdrop;
 }) {
   return (
     <main className="bg-bg">
       <BottomRule />
       <HorizontalTrack>
         <RailDots />
-        {backdrop ? (
-          <div
-            aria-hidden
-            className={`cs-backdrop ${backdrop.className}`}
-            style={{
-              ["--backdrop-left" as string]: `${backdrop.left}px`,
-              ["--backdrop-width" as string]: `${backdrop.width}px`,
-              ["--backdrop-height" as string]: `${backdrop.height}px`,
-            }}
-          />
-        ) : null}
         <CoverBlock meta={meta} sidebar={sidebar} />
         {blocks.map((block, i) => renderBlock(block, i))}
         <CaseStudyClosing />
