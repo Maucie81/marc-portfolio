@@ -725,3 +725,15 @@ paints over it. */
   background-color: var(--bg);
   z-index: 39;
 }
+
+/* Product imagery — screenshots, recordings, device mockups — sits ABOVE the
+   grain: z-39 is over the sheet (38) and under the chrome (40+). Grain over a
+   UI screenshot reads as a low-quality image, not as print, so these stay
+   crisp while text, illustration and paper keep the printed look. Inside the
+   carousel .cs-pin is the stacking context, so 39 lands above .cs-track::after
+   there too. Applied to each media box wrapper (PlainMedia, IsolatedMedia,
+   MediaPlaceholder, Frame, the homepage work cards, the UMD walkthrough). */
+.product-media {
+  position: relative;
+  z-index: 39;
+}

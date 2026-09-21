@@ -57,7 +57,7 @@ const PLACEHOLDER_ASPECT = "aspect-[1440/1024]";
 function Frame({ image }: { image: ImageSpec }) {
   return (
     <figure>
-      <div className="cs-frame">
+      <div className="cs-frame product-media">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={image.src}
@@ -76,7 +76,7 @@ function Frame({ image }: { image: ImageSpec }) {
 function MediaPlaceholder({ className = "" }: { className?: string }) {
   return (
     <div
-      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
+      className={`product-media ${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
     />
   );
 }
@@ -100,13 +100,13 @@ function IsolatedMedia({
     // pedestal with nothing sized inside it.
     return (
       <div
-        className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+        className={`product-media ${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
       />
     );
   }
   return (
     <div
-      className={`flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 min-[901px]:px-14 min-[901px]:py-14 ${className}`}
+      className={`product-media flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 min-[901px]:px-14 min-[901px]:py-14 ${className}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -135,7 +135,7 @@ export function PlainMedia({
 }) {
   return (
     <div
-      className={`${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+      className={`product-media ${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
     >
       {/* object-contain, not object-cover: real recordings are captured
           wider (~1440:905, ≈1.59) than this box's fixed 1440:1024 (≈1.41)

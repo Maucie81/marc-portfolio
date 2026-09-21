@@ -56,7 +56,7 @@ function WalkthroughBlock({ href }: { href: string }) {
     >
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
         <div
-          className="w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-media-scale,1))]"
+          className="product-media w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-media-scale,1))]"
           style={{ aspectRatio: WALKTHROUGH_ASPECT }}
         >
           {/* object-cover, not object-contain: the box already has the

@@ -269,7 +269,7 @@ export default function Home() {
                   // same position — see home.ts), so it lays over the
                   // texture without a matte. No border: the design has none.
                   <div
-                    className="relative isolate w-full overflow-hidden rounded-t-[4px] bg-bg"
+                    className="product-media relative isolate w-full overflow-hidden rounded-t-[4px] bg-bg"
                     style={{ aspectRatio: "714 / 402" }}
                   >
                     {/* Texture · Figma frame 26:2683, the hand-exported SVG
