@@ -1064,7 +1064,7 @@ export function IntroStackBlock({
 
         {quote ? (
           <div className="flex flex-col gap-2">
-            <blockquote>
+            <blockquote className="border-l-2 border-accent pl-6">
               <p className="cs-quote cs-pull-quote">{'"' + quote.text + '"'}</p>
             </blockquote>
             <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
