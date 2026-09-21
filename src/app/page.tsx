@@ -486,14 +486,14 @@ export default function Home() {
           className="sec border-t border-line py-12"
         >
           <SectionRail />
-          <SectionNumber number="03" label="experience" />
+          <SectionNumber number="03" label="Experience" />
           <div>
             {/* 177:112118 — label line. Figma's copy here is the placeholder
                 "LABEL TITLE"; this wording is mine, swap it freely. */}
             <p className="t-section-title">Career history</p>
             {/* 177:112121 — Playfair headline */}
             <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
-              experience
+              Experience
             </h2>
             <div className="mt-8">
               <Experience roles={roles} />
