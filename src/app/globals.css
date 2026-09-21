@@ -750,13 +750,59 @@ paints over it. */
   }
 }
 
-/* Yahoo — two blobs measured off the Figma export (3325×1004 box): centers,
+/* Grain ON the wash, the part that makes a soft gradient look good: a smooth
+   low-contrast dark-to-paper gradient over a large area visibly bands in
+   8-bit colour (too few distinct values for the steps to hide), and fine
+   noise on top dithers those steps away — it's why the Figma version worked
+   and a bare CSS gradient didn't. Same recipe as Figma's layer: grey noise,
+   overlay blend, ~50%. The noise is a tiny inline SVG feTurbulence tile
+   (rasterised once, then repeated) rather than an image file; its size is
+   fixed px, not --cs-scale, so the grain stays fine at every layout scale.
+   It's masked with the wash's OWN gradients (shared via --backdrop-art) so
+   it fades out exactly with the blob — grain confined to the wash, never a
+   noise rectangle on the paper. The page sheet's grain still lays over the
+   top like everywhere else. */
+.cs-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch' seed='7'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
+  mix-blend-mode: overlay;
+  opacity: 0.55;
+  -webkit-mask-image: var(--backdrop-mask, var(--backdrop-art));
+  mask-image: var(--backdrop-mask, var(--backdrop-art));
+  pointer-events: none;
+}
+
+/* Yahoo — two blobs measured off the Figma export (3325×1004 box): centres,
    extents and the rgb(46,37,34) warm near-black all sampled from it. Each
    blob's centre sits on the bottom edge (both peak on the last row). The
-   eased stops approximate a Gaussian falloff; a single linear stop looks
-   like a hard-edged spotlight by comparison. */
+   eased stops approximate a Gaussian falloff. --backdrop-mask is the grain
+   layer's reach: the same two blobs, but ~15% larger and holding alpha
+   further out. Banding shows most in the faint outer falloff, and a mask
+   that fades exactly with the blob would thin the grain out right where
+   it's needed — so the grain reaches a little past the wash. The bit that
+   lands on bare paper is overlay-blended grey noise at low alpha, which
+   just merges into the page's own grain. */
 .cs-backdrop--yahoo {
-  background:
+  --backdrop-mask:
+    radial-gradient(
+      ellipse 28% 54% at 76% 100%,
+      #000 0%,
+      rgba(0, 0, 0, 0.85) 35%,
+      rgba(0, 0, 0, 0.5) 65%,
+      rgba(0, 0, 0, 0.18) 88%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 19% 24% at 31% 100%,
+      #000 0%,
+      rgba(0, 0, 0, 0.7) 40%,
+      rgba(0, 0, 0, 0.25) 75%,
+      transparent 100%
+    );
+  --backdrop-art:
     /* big blob, right */
     radial-gradient(
       ellipse 24% 46% at 76% 100%,
@@ -774,6 +820,7 @@ paints over it. */
       rgba(46, 37, 34, 0.08) 72%,
       rgba(46, 37, 34, 0) 100%
     );
+  background: var(--backdrop-art);
 }
 
 .cs-pin {
