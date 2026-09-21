@@ -55,7 +55,7 @@ export const projects: Project[] = [
   },
   {
     company: "Headspace",
-    title: "unified enrollment",
+    title: "Unified main door",
     description:
       "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
     href: "/work/headspace-health-umd",
