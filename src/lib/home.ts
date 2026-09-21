@@ -55,7 +55,7 @@ export const projects: Project[] = [
   },
   {
     company: "Headspace",
-    title: "Unified Enrollment",
+    title: "unified enrollment",
     description:
       "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
     href: "/work/headspace-health-umd",
@@ -76,7 +76,7 @@ export const projects: Project[] = [
   },
   {
     company: "Airbnb",
-    title: "Account Creation & Onboarding",
+    title: "account creation & onboarding",
     description:
       "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
