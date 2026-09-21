@@ -217,7 +217,7 @@ export default function Home() {
                 the original bearings — the "corrected" values shift all
                 three ~6px right of rule 14. */}
 
-            {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ef5c2d, font
+            {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ff5841, font
                 unchanged from the previous frame. top = 105.5 (unchanged).
                 left = 434 − actualBoundingBoxLeft(−3.46) = 437.46. */}
             <p className="absolute left-[399.54px] top-[74.5px] font-semibold text-accent [font-family:var(--font-display)] whitespace-nowrap text-[45.657px] leading-[68.587px]">

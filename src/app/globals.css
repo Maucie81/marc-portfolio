@@ -16,7 +16,7 @@
   --line: #b0b0b0;
   --line-soft: #d8d8d8;
   /* Reserved for interactive elements and landmark moments only */
-  --accent: #ef5c2d;
+  --accent: #ff5841;
 }
 
 @theme inline {
