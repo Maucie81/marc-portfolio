@@ -7,6 +7,7 @@ import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import InterestGallery from "@/components/site/InterestGallery";
 import ArrowIcon from "@/components/site/ArrowIcon";
+import { HomeRisoBackdrop } from "@/components/site/HomeRisoBackdrop";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -17,7 +18,12 @@ import {
 
 export default function Home() {
   return (
-    <div className="bg-bg">
+    <div className="overflow-x-clip bg-bg">
+      {/* overflow-x-clip: the Riso washes (HomeRisoBackdrop, inside <main>)
+          are 3157px plates anchored to the content column's edges and
+          rotated out past it on both sides — Figma's interior container
+          clips them the same way. `clip`, not `hidden`, so this stays a
+          plain block and not a scroll container. */}
       {/* Header now lives in the root layout as PersistentHeader, outside
           PageTransition's fade — see that component for why.
           bg-bg here (not bg-white): the grey needs to fill all space
@@ -34,8 +40,16 @@ export default function Home() {
           for the other. */}
       <main
         id="home"
-        className="mx-auto px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pt-[82px]"
+        className="relative isolate mx-auto px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pt-[82px]"
       >
+        {/* Riso washes hugging the column's two edges (Figma's Gradient 23
+            / Gradient 22 in Final Homepage - Full). Positioned against
+            <main> — Figma's 1376px interior container — so past 1440 the
+            plates stay with the capped column and the widening margins
+            reveal more of them. `isolate` makes <main> a stacking
+            context so the backdrop's -z-[1] tucks it under every section
+            (and above the wrapper's paper) without touching a section. */}
+        <HomeRisoBackdrop />
         {/* max-w equivalent via w-[min(1376px,...)], centered (mx-auto):
             1376 = confirmed 1440px design width (get_metadata, node
             627:49704) minus the 32px rail on each side. Below that width
