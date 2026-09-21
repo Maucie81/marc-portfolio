@@ -721,6 +721,46 @@ paints over it. */
   position: relative;
 }
 
+/* Optional per-story backdrop art (CaseStudyPage's `backdrop` prop) — e.g.
+   Yahoo's blurred dark gradient (Figma "Gradient 22", 35:3480). Lives INSIDE
+   the track so it slides with the story, bottom-anchored, and at z-index -1
+   so it paints over the paper but under every block. Geometry is in the same
+   1440-baseline px as the blocks, scaled by --cs-scale. Vertical mode stacks
+   the story, where a wide horizontal gradient makes no sense — hidden there. */
+.cs-backdrop {
+  display: none;
+}
+
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
+  .cs-backdrop {
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: calc(var(--backdrop-left) * var(--cs-scale, 1));
+    width: calc(var(--backdrop-width) * var(--cs-scale, 1));
+    /* Preflight's img { max-width: 100% } resolves against the track's own
+       box (the viewport width), not its overflowing content, and clamped the
+       art to 1024px. */
+    max-width: none;
+    height: auto;
+    z-index: -1;
+    pointer-events: none;
+    user-select: none;
+    /* The export's flat paper region is within 1 value of --bg, which is
+       invisible on a soft field but can read as a faint seam along a hard
+       rectangular edge. Feather the top and both sides so the art has no
+       hard edge to see; the bottom sits flush on the frame's bottom. */
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent, #000 35%),
+      linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(to bottom, transparent, #000 35%),
+      linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+    mask-composite: intersect;
+  }
+}
+
 .cs-pin {
   background-color: var(--bg);
   z-index: 39;

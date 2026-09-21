@@ -1327,23 +1327,45 @@ function renderBlock(block: Block, i: number) {
   }
 }
 
+/** Optional story-wide backdrop art laid behind the blocks — e.g. Yahoo's
+ * blurred dark gradient (Figma "Gradient 22", 35:3480). `left`/`width` are
+ * 1440-baseline px along the track (the same coordinate space the blocks
+ * use), scaled by --cs-scale; the image is bottom-anchored and keeps its
+ * own aspect ratio. See .cs-backdrop in globals.css. */
+export type Backdrop = { src: string; left: number; width: number };
+
 export function CaseStudyPage({
   navTitle,
   meta,
   sidebar,
   blocks,
+  backdrop,
 }: {
   /** Breadcrumb text in the fixed top bar, e.g. "Airbnb Hotels". */
   navTitle: string;
   meta: Meta;
   sidebar: Sidebar;
   blocks: Block[];
+  backdrop?: Backdrop;
 }) {
   return (
     <main className="bg-bg">
       <RailDots />
       <BottomRule />
       <HorizontalTrack>
+        {backdrop ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={backdrop.src}
+            alt=""
+            aria-hidden
+            className="cs-backdrop"
+            style={{
+              ["--backdrop-left" as string]: `${backdrop.left}px`,
+              ["--backdrop-width" as string]: `${backdrop.width}px`,
+            }}
+          />
+        ) : null}
         <CoverBlock meta={meta} sidebar={sidebar} />
         {blocks.map((block, i) => renderBlock(block, i))}
         <CaseStudyClosing />
