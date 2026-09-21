@@ -405,7 +405,7 @@ export default function Home() {
           </div>
         </section>
 
-        {/* 02 — Additional Work · 499:55119 — deliberately lighter than the
+        {/* 02 — additional work · 499:55119 — deliberately lighter than the
             primary case studies: headline + intro on the left, a carousel
             list on the right. No images, label only, no case-study link.
             Its own numbered section per Figma, not folded into Recent Work. */}
@@ -420,7 +420,7 @@ export default function Home() {
             <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
                 <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
-                  Additional Work
+                  additional work
                 </h3>
                 <p className="t-body max-w-[343px] text-ink-2">
                   {additionalWorkIntro}
@@ -486,14 +486,14 @@ export default function Home() {
           className="sec border-t border-line py-12"
         >
           <SectionRail />
-          <SectionNumber number="03" label="Experience" />
+          <SectionNumber number="03" label="experience" />
           <div>
             {/* 177:112118 — label line. Figma's copy here is the placeholder
                 "LABEL TITLE"; this wording is mine, swap it freely. */}
             <p className="t-section-title">Career history</p>
             {/* 177:112121 — Playfair headline */}
             <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
-              Experience
+              experience
             </h2>
             <div className="mt-8">
               <Experience roles={roles} />

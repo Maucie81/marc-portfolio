@@ -76,7 +76,7 @@ export const projects: Project[] = [
   },
   {
     company: "Airbnb",
-    title: "account creation & onboarding",
+    title: "Account creation & onboarding",
     description:
       "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
@@ -110,21 +110,21 @@ export const additionalWorkIntro =
 export const additionalWork: SmallProject[] = [
   {
     company: "Yahoo",
-    title: "Data Viz & Design System",
+    title: "data viz & design system",
     description:
       "The charting and data visualization system built for the Partner Portal, along with the design system it runs on — built on a shared CMS foundation used across the platform.",
     href: "/coming-soon?p=yahoo-data-viz",
   },
   {
     company: "Headspace",
-    title: "Admin Portal Redesign",
+    title: "admin portal redesign",
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
   },
   {
     company: "Personal",
-    title: "Harrison's App",
+    title: "Harrison's app",
     description:
       "A post-op medication tracker I built for my dog using AI-assisted development. Because the timing logic was genuinely hard to get right by hand.",
     href: "/coming-soon?p=harrisons-app",
@@ -167,7 +167,7 @@ export const experienceSkills = [
 export const roles: Role[] = [
   {
     company: "Yahoo",
-    title: "Principal Product Designer, Platform",
+    title: "Principal product designer, platform",
     period: "2024 — 2026",
     intro:
       "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude.",
@@ -184,7 +184,7 @@ export const roles: Role[] = [
   },
   {
     company: "Headspace",
-    title: "Senior Product Designer",
+    title: "Senior product designer",
     period: "2022 — 2023",
     intro:
       "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees actually needed to use it.",
@@ -200,7 +200,7 @@ export const roles: Role[] = [
   },
   {
     company: "Airbnb",
-    title: "Experience Designer",
+    title: "Experience designer",
     period: "2019 — 2020",
     intro:
       "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality after the HotelTonight acquisition.",
@@ -210,7 +210,7 @@ export const roles: Role[] = [
   },
   {
     company: "Hotel Tonight",
-    title: "Product Designer",
+    title: "Product designer",
     period: "2017 — 2019",
     intro:
       "Sole designer across web and mobile during a brand evolution that repositioned HotelTonight from a discount last-minute booking app toward a more premium experience.",
@@ -220,7 +220,7 @@ export const roles: Role[] = [
   },
   {
     company: "Stitch Fix",
-    title: "UX Designer",
+    title: "UX designer",
     period: "2015 — 2017",
     intro:
       "Redesigned the referral program, driving a 52% increase in referred customers.",
