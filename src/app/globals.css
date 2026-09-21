@@ -722,11 +722,17 @@ paints over it. */
 }
 
 /* Optional per-story backdrop art (CaseStudyPage's `backdrop` prop) — e.g.
-   Yahoo's blurred dark gradient (Figma "Gradient 22", 35:3480). Lives INSIDE
-   the track so it slides with the story, bottom-anchored, and at z-index -1
-   so it paints over the paper but under every block. Geometry is in the same
-   1440-baseline px as the blocks, scaled by --cs-scale. Vertical mode stacks
-   the story, where a wide horizontal gradient makes no sense — hidden there. */
+   Yahoo's soft dark wash rising from the bottom of the story (Figma
+   "Gradient 22", 35:3480). Drawn natively as radial-gradients rather than an
+   exported image: a radial-gradient IS a smooth falloff (no blur filter
+   needed), and it's transparent everywhere but the blob, so there's no flat
+   "paper" region in the layer to mismatch the real --bg — an image export
+   carries its own paper fill, and even 1 value off it reads as a pasted
+   rectangle. The grain sheet (.cs-track::after) textures it like everything
+   else. Lives INSIDE the track so it slides with the story, bottom-anchored,
+   z-index -1: over the paper, under every block. Geometry is in the same
+   1440-baseline px as the blocks, scaled by --cs-scale. Vertical mode
+   stacks the story, where a wide horizontal wash makes no sense — hidden. */
 .cs-backdrop {
   display: none;
 }
@@ -738,27 +744,36 @@ paints over it. */
     bottom: 0;
     left: calc(var(--backdrop-left) * var(--cs-scale, 1));
     width: calc(var(--backdrop-width) * var(--cs-scale, 1));
-    /* Preflight's img { max-width: 100% } resolves against the track's own
-       box (the viewport width), not its overflowing content, and clamped the
-       art to 1024px. */
-    max-width: none;
-    height: auto;
+    height: calc(var(--backdrop-height) * var(--cs-scale, 1));
     z-index: -1;
     pointer-events: none;
-    user-select: none;
-    /* The export's flat paper region is within 1 value of --bg, which is
-       invisible on a soft field but can read as a faint seam along a hard
-       rectangular edge. Feather the top and both sides so the art has no
-       hard edge to see; the bottom sits flush on the frame's bottom. */
-    -webkit-mask-image:
-      linear-gradient(to bottom, transparent, #000 35%),
-      linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-    -webkit-mask-composite: source-in;
-    mask-image:
-      linear-gradient(to bottom, transparent, #000 35%),
-      linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
-    mask-composite: intersect;
   }
+}
+
+/* Yahoo — two blobs measured off the Figma export (3325×1004 box): centers,
+   extents and the rgb(46,37,34) warm near-black all sampled from it. Each
+   blob's centre sits on the bottom edge (both peak on the last row). The
+   eased stops approximate a Gaussian falloff; a single linear stop looks
+   like a hard-edged spotlight by comparison. */
+.cs-backdrop--yahoo {
+  background:
+    /* big blob, right */
+    radial-gradient(
+      ellipse 24% 46% at 76% 100%,
+      rgba(46, 37, 34, 0.85) 0%,
+      rgba(46, 37, 34, 0.6) 25%,
+      rgba(46, 37, 34, 0.26) 52%,
+      rgba(46, 37, 34, 0.07) 76%,
+      rgba(46, 37, 34, 0) 100%
+    ),
+    /* small blob, left */
+    radial-gradient(
+      ellipse 16% 20% at 31% 100%,
+      rgba(46, 37, 34, 0.7) 0%,
+      rgba(46, 37, 34, 0.32) 40%,
+      rgba(46, 37, 34, 0.08) 72%,
+      rgba(46, 37, 34, 0) 100%
+    );
 }
 
 .cs-pin {
