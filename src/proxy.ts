@@ -21,6 +21,7 @@ import { NextResponse, type NextRequest } from "next/server";
  */
 const HIDDEN: Record<string, string> = {
   "/work/airbnb-hotels": "/coming-soon?p=airbnb-hotels",
+  "/work/harrisons-app": "/coming-soon?p=harrisons-app",
 };
 
 const COOKIE = "mf-preview";
@@ -60,5 +61,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/work/airbnb-hotels"],
+  matcher: ["/work/airbnb-hotels", "/work/harrisons-app"],
 };

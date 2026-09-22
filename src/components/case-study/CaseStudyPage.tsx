@@ -5,11 +5,13 @@ import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import ArrowIcon from "@/components/site/ArrowIcon";
+import { closingLinksFor } from "@/lib/case-studies";
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 /**
  * Shared shell + block renderers for every horizontal-scroll case study
- * (Airbnb Hotels, Headspace Admin Portal, Yahoo Partner Portal). Previously
+ * (Airbnb Account Creation & Onboarding, Headspace Admin Portal, Yahoo
+ * Partner Portal). Previously
  * each page.tsx duplicated this entire file with only the brand chrome and
  * data source differing — three copies that had already drifted from each
  * other. Living in one place now so a type/color update only has to happen
@@ -233,8 +235,8 @@ function PrinciplesBlock({
               key={item.title}
               className={`flex gap-6 py-8 ${i < items.length - 1 ? "border-b border-bg/20" : ""}`}
             >
-              <p className="display shrink-0 text-[40px] leading-none text-accent">{item.number}</p>
-              <div className="flex flex-col gap-3 pt-[10px]">
+              <p className="cs-kicker w-10 shrink-0">{item.number}</p>
+              <div className="flex flex-col gap-3">
                 <p className="text-[20px] font-semibold leading-[26px] text-bg [font-family:var(--font-display)]">
                   {item.title}
                 </p>
@@ -262,7 +264,7 @@ function PrinciplesBlock({
  * the same two edges. Rendered INSIDE the track (see .cs-rail-dots) so the
  * dots slide away with the opening section rather than staying pinned
  * beside every block, per direct request. Exported so
- * headspace-health-umd/page.tsx shares this exact element. */
+ * headspace-umd/page.tsx shares this exact element. */
 export function RailDots() {
   return (
     <div aria-hidden className="cs-rail-dots">
@@ -866,33 +868,96 @@ function CopyBlock({
   );
 }
 
-/** One numbered item in a repeating text+own-image group (Block kind
- * "panel-item") — Figma's per-item panels in Research and Key Decisions. */
-function PanelItemBlock({
-  number,
-  title,
-  body,
-  caption,
+/** A numbered section whose items each get their own text column + media
+ * panel (Block kind "panel-group") — Figma's Research (519:72601) and Key
+ * Decisions (520:72979). Per Figma the group heading shares the first
+ * item's column, sitting above that item's numeral; later columns carry
+ * the same heading lockup invisibly so every item numeral lands on the
+ * same row. Each item is its own `.cs-block` on `SectionBlock`'s geometry
+ * (19rem text column, 3rem gap, 857px media, 108.75rem block) so the
+ * group scrolls with the same rhythm as the plain sections around it —
+ * Figma's own per-item pitch (758 + 957 = 1715px) is within 25px of it. */
+function PanelGroupBlocks({
+  sectionNumber,
+  heading,
+  eyebrow,
+  items,
 }: {
-  number: string;
-  title: string;
-  body: string;
-  caption: string;
+  sectionNumber?: string;
+  heading: string;
+  eyebrow?: string;
+  items: {
+    number: string;
+    title: string;
+    body: string;
+    caption: string;
+    image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
+  }[];
 }) {
+  const mediaClass =
+    "min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start";
   return (
-    <div className="cs-block" style={{ ["--w" as string]: "calc(81.25rem * var(--cs-scale, 1))" }}>
-      <div className="flex flex-col gap-6 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
-        <div className="flex w-full flex-col gap-[18px] min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <p className="display text-[40px] leading-none text-accent">{number}</p>
-          <p className="cs-section-title">{title}</p>
-          <p className="t-body">{body}</p>
-        </div>
-        <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-          <MediaPlaceholder className="min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0" />
-          <p className="cs-caption text-center">{caption}</p>
-        </div>
-      </div>
-    </div>
+    <>
+      {items.map((item, i) => {
+        const first = i === 0;
+        const HeadingTag = first ? "h2" : "p";
+        return (
+          <div
+            key={item.number}
+            className="cs-block cs-anchor-687"
+            style={{ ["--w" as string]: "calc(108.75rem * var(--cs-scale, 1))" }}
+          >
+            <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
+              <div
+                className={`flex w-full flex-col min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
+                  eyebrow ? "gap-8" : "gap-6"
+                }`}
+              >
+                {/* Figma puts the heading 24px above the item (32px when an
+                    eyebrow is present). After the first column the lockup
+                    is kept but invisible, purely to hold the numeral row —
+                    and dropped on mobile, where columns stack. */}
+                <div
+                  aria-hidden={!first}
+                  className={`flex flex-col gap-2 ${first ? "" : "invisible hidden min-[901px]:flex"}`}
+                >
+                  <div className="relative">
+                    {first && sectionNumber ? (
+                      <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" />
+                    ) : null}
+                    <HeadingTag className="display text-[2rem] min-[901px]:text-[40px]">{heading}</HeadingTag>
+                  </div>
+                  {eyebrow ? <p className="cs-section-title">{eyebrow}</p> : null}
+                </div>
+                <div className="flex flex-col gap-3">
+                  {/* Figma 521:73526: 40px numeral on a 50px line, 18px to
+                      the 20px title, 12px to the body. */}
+                  <div className="flex flex-col gap-[18px]">
+                    <p className="display text-[40px] leading-[50px] text-accent">{item.number}</p>
+                    <p className="cs-section-title">{item.title}</p>
+                  </div>
+                  <p className="t-body">{item.body}</p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
+                {item.image ? (
+                  item.image.frame === "plain" ? (
+                    <PlainMedia image={item.image} className={mediaClass} />
+                  ) : (
+                    <IsolatedMedia image={item.image} className={mediaClass} />
+                  )
+                ) : (
+                  <MediaPlaceholder className={mediaClass} />
+                )}
+                <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-media-scale,1))]">
+                  <p className="cs-caption text-center">{item.caption}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -963,13 +1028,14 @@ function ClosingBlock({
           </div>
           {cta ? (
             // Figma 837:64875: accent fill, 8px/2px padding, no radius, sits
-            // 92px below the copy. Text is Google Sans Flex SemiBold 12/24,
-            // capitalize (the design's text is lowercase and relies on it).
+            // 92px below the copy. Text is Google Sans Flex SemiBold 12/24.
+            // No `capitalize`: the site sets CTAs in sentence case, and the
+            // transform was overriding the copy into Title Case.
             <a
               href={cta.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-[calc(92px*var(--cs-scale,1)-1rem)] self-start bg-accent px-2 py-0.5 text-xs font-semibold capitalize leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
+              className="mt-[calc(92px*var(--cs-scale,1)-1rem)] self-start bg-accent px-2 py-0.5 text-xs font-semibold leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
             >
               {cta.text}
             </a>
@@ -1001,15 +1067,35 @@ function ClosingBlock({
   );
 }
 
+/** One or more pull quotes (Figma 43:3729 / 43:3730, without that card's
+ * grid backdrop) — 299px wide (the Figma quote frame: 330px less its 31px
+ * left inset), stacked 58px apart, each quote and its attribution sharing
+ * a single 3px accent rule. */
+function PullQuoteStack({
+  quotes,
+  className = "",
+}: {
+  quotes: { text: string; attribution: string }[];
+  className?: string;
+}) {
+  return (
+    <div className={`flex w-full flex-col gap-[58px] min-[901px]:w-[calc(299px*var(--cs-scale,1))] ${className}`}>
+      {quotes.map((q) => (
+        <figure key={q.text} className="flex flex-col gap-2 border-l-[3px] border-accent pl-6">
+          <blockquote>
+            <p className="cs-pull-quote-alt">{'"' + q.text + '"'}</p>
+          </blockquote>
+          <figcaption className="cs-quote-attr">— {q.attribution}</figcaption>
+        </figure>
+      ))}
+    </div>
+  );
+}
+
 function QuoteBlock({ text, attribution }: { text: string; attribution: string }) {
   return (
     <div className="cs-block" style={{ ["--w" as string]: "31rem" }}>
-      <figure>
-        <blockquote className="border-l-2 border-accent pl-6">
-          <p className="cs-quote cs-pull-quote">{'"' + text + '"'}</p>
-        </blockquote>
-        <figcaption className="mt-6 pl-6 text-sm leading-[20px] text-ink-2">{attribution}</figcaption>
-      </figure>
+      <PullQuoteStack quotes={[{ text, attribution }]} />
     </div>
   );
 }
@@ -1064,7 +1150,7 @@ export function IntroStackBlock({
 
         {quote ? (
           <div className="flex flex-col gap-2">
-            <blockquote className="border-l-2 border-accent pl-6">
+            <blockquote>
               <p className="cs-quote cs-pull-quote">{'"' + quote.text + '"'}</p>
             </blockquote>
             <p className="text-sm leading-[20px] text-ink-2">— {quote.attribution}</p>
@@ -1112,16 +1198,11 @@ function SectionBlock({
   const isPlainImage = hasImage && image!.frame === "plain";
 
   const renderQuotes = () =>
-    pullQuotes?.map((pq) => (
-      <div key={pq.quote} className="flex flex-col gap-2">
-        <blockquote className="w-full border-l-2 border-accent pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
-          <p className="cs-quote cs-pull-quote">{'"' + pq.quote + '"'}</p>
-        </blockquote>
-        <p className="t-body w-full pl-6 min-[901px]:w-[calc(375px*var(--cs-scale,1))]">
-          — {pq.attribution}
-        </p>
-      </div>
-    ));
+    pullQuotes ? (
+      <PullQuoteStack
+        quotes={pullQuotes.map((pq) => ({ text: pq.quote, attribution: pq.attribution }))}
+      />
+    ) : null;
 
   const renderStats = () => (
     <div className="flex flex-col min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:ml-[calc(200px*var(--cs-scale,1))] min-[901px]:self-center">
@@ -1251,14 +1332,14 @@ function renderBlock(block: Block, i: number) {
           sectionNumber={block.sectionNumber}
         />
       );
-    case "panel-item":
+    case "panel-group":
       return (
-        <PanelItemBlock
+        <PanelGroupBlocks
           key={i}
-          number={block.number}
-          title={block.title}
-          body={block.body}
-          caption={block.caption}
+          sectionNumber={block.sectionNumber}
+          heading={block.heading}
+          eyebrow={block.eyebrow}
+          items={block.items}
         />
       );
     case "stat":
@@ -1328,13 +1409,14 @@ function renderBlock(block: Block, i: number) {
 }
 
 export function CaseStudyPage({
-  navTitle,
+  slug,
   meta,
   sidebar,
   blocks,
 }: {
-  /** Breadcrumb text in the fixed top bar, e.g. "Airbnb Hotels". */
-  navTitle: string;
+  /** case-studies.ts slug for this page — picks its "Want to see more?"
+   * pair via closingLinksFor, which excludes this page by construction. */
+  slug: string;
   meta: Meta;
   sidebar: Sidebar;
   blocks: Block[];
@@ -1346,7 +1428,7 @@ export function CaseStudyPage({
         <RailDots />
         <CoverBlock meta={meta} sidebar={sidebar} />
         {blocks.map((block, i) => renderBlock(block, i))}
-        <CaseStudyClosing />
+        <CaseStudyClosing links={closingLinksFor(slug)} />
       </HorizontalTrack>
     </main>
   );

@@ -19,7 +19,7 @@ export default function ExpandCollapse({ points }: Props) {
 
   return (
     <div className="-mt-2">
-      <button type="button" onClick={handleClick} aria-expanded={expanded}>
+      <button type="button" onClick={handleClick} aria-expanded={expanded} className="group">
         <ExpandGlyph
           ref={glyphRef}
           expanded={expanded}
@@ -30,15 +30,22 @@ export default function ExpandCollapse({ points }: Props) {
       {/* grid-template-rows 0fr/1fr, not a fixed max-height — see
           Experience.tsx's copy of this same reveal for why (a flat max
           value makes the easing run against an arbitrary distance instead
-          of the real content height, which reads as a glitch). */}
+          of the real content height, which reads as a glitch). Height and
+          opacity used to share one 350ms ease-out transition on this same
+          element, fading the text fully in/out while the row was still
+          mid-resize — see Experience.tsx for the same fix: opacity moved
+          to the inner wrapper with its own delayed-on-open, immediate-on-
+          close timing, and the height easing swapped to the standard
+          "material" curve for a smoother deceleration. */}
       <div
-        className="grid overflow-hidden transition-[grid-template-rows,opacity] duration-[350ms] ease-out"
-        style={{
-          gridTemplateRows: expanded ? "1fr" : "0fr",
-          opacity: expanded ? 1 : 0,
-        }}
+        className="grid overflow-hidden transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{ gridTemplateRows: expanded ? "1fr" : "0fr" }}
       >
-        <div className="overflow-hidden">
+        <div
+          className={`overflow-hidden transition-opacity duration-300 ${
+            expanded ? "opacity-100 delay-150" : "opacity-0"
+          }`}
+        >
           <div className="flex flex-col gap-4 pt-4">
             {points.map((point) => (
               <div key={point.label}>

@@ -5,8 +5,14 @@
  * stack, and the recorded prototype walkthrough — no section-by-section
  * narrative. `company` + `title` are split because the shared cover hero
  * (CaseStudyPage's CoverBlock) sets them on two lines, "Headspace" over
- * "Unified Main Door", same as "Yahoo" over "Partner Portal".
- */
+ * "unified main door" — lowercase, unlike Yahoo/"Partner Portal" (a
+ * canonical product name) or Airbnb/"Account creation & onboarding" (its
+ * own sentence-case title): here the two lines read as one continuous
+ * phrase, "Headspace unified main door", so the second line isn't
+ * capitalized as if it started its own sentence. Per direct request this
+ * is local to this cover only — meta.title has no other consumer (the top
+ * bar and homepage card use their own separately-cased strings in
+ * page-titles.ts / case-studies.ts). */
 
 export const meta = {
   title: "unified main door",
@@ -18,7 +24,7 @@ export const meta = {
 
 export const context = [
   "Headspace acquired Ginger in 2021. The two products, Headspace's meditation and mindfulness platform and Ginger's behavioral health coaching service, could now be offered to employers as a single bundled benefit. But there was no unified way for employees to access it. Each product had its own signup flow, its own eligibility system, and its own app. Getting the benefit meant navigating two doors that had nothing to do with each other.",
-  "Unified Main Door was the first product the combined company shipped to solve that. I designed the web enrollment experience: building the flow, translating the mobile-native design across web formats, and running usability testing to validate it before launch.",
+  "Unified main door was the first product the combined company shipped to solve that. I designed the web enrollment experience: building the flow, translating the mobile-native design across web formats, and running usability testing to validate it before launch.",
 ];
 
 export const PROTOTYPE_URL =

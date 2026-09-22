@@ -3,7 +3,7 @@ import RegistrationMark from "./RegistrationMark";
 
 const ITEMS = [
   { n: "01", label: "Work", href: "#work" },
-  { n: "02", label: "Experience", href: "#experience" },
+  { n: "02", label: "Career history", href: "#experience" },
   { n: "03", label: "Contact", href: "#contact" },
 ];
 

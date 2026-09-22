@@ -7,7 +7,7 @@ import { useProof } from "./ProofProvider";
  * the perimeter frame's left rail (PerimeterFrame.tsx — homepage, contact,
  * coming-soon and every case study), kept pixel-for-pixel but clickable;
  * "floating" is a compact horizontal version for the few routes without
- * that rail (ht-perks, lab pages), parked bottom-left.
+ * that rail (lab pages), parked bottom-left.
  * Desktop only — dropping pins on a phone isn't the v1 story.
  */
 

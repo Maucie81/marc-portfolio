@@ -12,9 +12,9 @@
  */
 
 export const meta = {
-  title: "partner portal",
+  title: "Partner Portal",
   subtitle:
-    'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode — no new investment, no roadmap, and 8,700+ media partners without the tools to understand how their content was performing on Yahoo. Partner Portal 2.0 set out to change that: self-service visibility, actionable diagnostics, and the administrative controls partners had been asking for.',
+    'Yahoo\'s Partner Portal had stagnated in "keep lights on" mode — no new investment, no roadmap, and 8,700+ media partners without the tools to understand how their content was performing on Yahoo. Partner Portal 2.0 set out to change that: self-service visibility, actionable diagnostics, and the administrative controls partners had been asking for.',
   company: "Yahoo",
   years: "2024 — 2026",
 };
@@ -36,8 +36,8 @@ export const sidebar = {
       label: "Areas of influence",
       items: [
         "Scope & roadmap definition",
-        "Wireframing & Information architecture",
-        "Research Program (2 phases, 11 partners)",
+        "Wireframing & information architecture",
+        "Research program (2 phases, 11 partners)",
         "Data visualization design system",
       ],
     },
@@ -122,15 +122,25 @@ export type Block =
       caption?: string;
     }
   | {
-      /** One numbered item in a repeating text+own-image group — Figma's
-       * per-item panels in Research and Key Decisions (each item gets its
-       * own placeholder image, unlike `section`'s single shared one). Pair
-       * with a `copy` block (using `eyebrow`) for the group's heading. */
-      kind: "panel-item";
-      number: string;
-      title: string;
-      body: string;
-      caption: string;
+      /** A numbered section whose items each get their own text column and
+       * media panel — Figma's Research (519:72601) and Key Decisions
+       * (520:72979). Per Figma the group heading shares the first item's
+       * column, sitting above that item's numeral; every later column holds
+       * the same heading lockup invisibly so the item numerals land on one
+       * row. Renders one `.cs-block` per item on `section`'s geometry. */
+      kind: "panel-group";
+      sectionNumber?: string;
+      heading: string;
+      /** Optional "Case Study Section Title" line under the heading. */
+      eyebrow?: string;
+      items: {
+        number: string;
+        title: string;
+        body: string;
+        caption: string;
+        /** Same options as `section.image`; omitted = placeholder box. */
+        image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
+      }[];
     }
   | {
       /** Full-bleed dark chapter panel — Figma's "Design Principles"
@@ -162,7 +172,7 @@ export const blocks: Block[] = [
   {
     kind: "intro-stack",
     sectionNumber: "01",
-    heading: "The Problem",
+    heading: "The problem",
     body: [
       "Yahoo syndicates content from over 8,700 media partners — Gannett, Business Insider, CNN, the New York Post, Apartment Therapy, BBC — across its own properties. The only tool partners had to understand how their content was performing on Yahoo was a legacy system already in maintenance mode.",
       "There was no self-service way to see if a story had been published, understand why content was being rejected, or take content down without opening a support ticket. Partners were Googling their own content headlines to find where it lived on Yahoo. When a feed broke, partners found out through a forwarded email from their Yahoo rep, days after the fact.",
@@ -224,7 +234,7 @@ export const blocks: Block[] = [
         attribution: "Gannett",
       },
     ],
-    pullQuotePosition: "middle",
+    pullQuotePosition: "top",
   },
 
   // 4. Top Content
@@ -445,6 +455,16 @@ export const blocks: Block[] = [
       frame: "plain",
       type: "video",
     },
+    expandedPoints: [
+      {
+        label: "Five ways in, one result",
+        text: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
+      },
+      {
+        label: "Straight to the data",
+        text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
+      },
+    ],
   },
 
   // 10. Takedowns

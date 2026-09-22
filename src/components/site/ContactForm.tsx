@@ -117,7 +117,7 @@ export default function ContactForm() {
         type="button"
         onClick={handleSubmit}
         disabled={!isValid || status === "loading"}
-        className="self-start bg-accent px-2 py-0.5 text-xs font-semibold capitalize leading-6 text-bg transition-opacity [font-family:var(--font-display),system-ui,sans-serif] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="self-start bg-accent px-2 py-0.5 text-xs font-semibold leading-6 text-bg transition-opacity [font-family:var(--font-display),system-ui,sans-serif] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {status === "loading" ? "Sending…" : "Send message"}
       </button>

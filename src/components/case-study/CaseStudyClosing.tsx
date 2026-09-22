@@ -1,46 +1,26 @@
 import Link from "next/link";
-import { caseStudies, type CaseStudyLink } from "@/lib/case-studies";
-
-const closingLinks = caseStudies.filter((cs) => cs.closingLink);
+import type { CaseStudyLink } from "@/lib/case-studies";
 
 /**
- * Closing section for every case study and micro case study page — Figma
- * 387:66552. In the Figma canvas this frame is a sibling slide in the same
- * horizontal row as the preceding stats block (same y, same 518px height),
- * not a section below it — so by default it renders as a `.cs-block` inside
- * `HorizontalTrack`, matching that frame's exact 809px width. `cs-anchor-687`
- * (same class `ClosingBlock` uses) anchors its top to that block's top
- * regardless of either block's actual content height. The middle "Want to
- * see more?" group carries the file's own `flex: 1 0 0`, which is what pins
- * "Get in touch" to the frame's bottom edge once `.cs-closing-block`
- * (globals.css) gives the block its literal 518px height.
+ * Closing section for every case study page — Figma 387:66552. In the
+ * Figma canvas this frame is a sibling slide in the same horizontal row as
+ * the preceding stats block (same y, same 518px height), not a section
+ * below it — so it renders as a `.cs-block` inside `HorizontalTrack`,
+ * matching that frame's exact 809px width. `cs-anchor-687` (same class
+ * `ClosingBlock` uses) anchors its top to that block's top regardless of
+ * either block's actual content height. The middle "Want to see more?"
+ * group carries the file's own `flex: 1 0 0`, which is what pins "Get in
+ * touch" to the frame's bottom edge once `.cs-closing-block` (globals.css)
+ * gives the block its literal 518px height.
  *
- * `ht-perks` has no horizontal track — it's a single vertical reading column
- * — so it passes `variant="column"` to drop the track-specific width/height
- * and just fill whatever column it's placed in.
- *
- * `links` overrides the default "Want to see more?" pair (the two
- * `closingLink` entries in case-studies.ts) — Headspace Unified Main Door
- * passes Yahoo Partner Portal + Airbnb instead, per direct request; every
- * other page keeps the default.
- */
-export default function CaseStudyClosing({
-  variant = "track",
-  links = closingLinks,
-}: {
-  variant?: "track" | "column";
-  links?: CaseStudyLink[];
-}) {
+ * `links` is the pair of case studies to offer — see `closingLinksFor` in
+ * case-studies.ts, which sets each page's own pair explicitly so a page
+ * never lists itself. */
+export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) {
   return (
     <div
-      className={`flex flex-col items-start gap-4 ${
-        variant === "track" ? "cs-block cs-closing-block cs-anchor-687" : "w-full"
-      }`}
-      style={
-        variant === "track"
-          ? { ["--w" as string]: "calc(809px * var(--cs-scale, 1))" }
-          : undefined
-      }
+      className="flex flex-col items-start gap-4 cs-block cs-closing-block cs-anchor-687"
+      style={{ ["--w" as string]: "calc(809px * var(--cs-scale, 1))" }}
     >
       <div className="flex w-full flex-col items-start gap-2">
         <p
@@ -73,7 +53,7 @@ export default function CaseStudyClosing({
             className="flex items-center justify-center border border-accent bg-accent px-[8px] py-[2px] text-[12px] font-semibold leading-[20px] text-bg transition-opacity hover:opacity-90 [font-family:var(--font-display)]"
             style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
           >
-            {cs.closingLabel ?? cs.title}
+            {cs.title}
           </Link>
         ))}
       </div>

@@ -75,9 +75,18 @@ export default function HorizontalTrack({ children }: Props) {
         "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
         () => {
         // Re-measured continuously via the function values below (resize,
-        // font swap, image decode all change this).
+        // font swap, image decode all change this). The track's box is
+        // width:max-content (globals.css, so its grain sheet spans every
+        // block), which pulls its padding-right into scrollWidth — the
+        // browser had been dropping that trailing padding from the
+        // scrollable area when the blocks merely overflowed a viewport-wide
+        // box. Subtracted here so the story still ends with the closing
+        // block flush to the viewport edge, exactly as before.
         const distance = () =>
-          Math.max(0, track.scrollWidth - window.innerWidth);
+          Math.max(
+            0,
+            track.scrollWidth - parseFloat(getComputedStyle(track).paddingRight) - window.innerWidth,
+          );
 
         // `paused: true` is load-bearing, not stylistic. This timeline is
         // built in the longhand form — created here, handed to

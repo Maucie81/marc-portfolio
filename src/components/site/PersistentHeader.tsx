@@ -23,13 +23,12 @@ import { CASE_STUDY_TITLES, comingSoonProject } from "@/lib/page-titles";
  * during every transition was the most visible part of a blank-screen issue
  * that motivated removing that animation entirely (see PageTransition.tsx).
  * Covers the three case studies that share CaseStudyPage.tsx (Yahoo Partner
- * Portal, Airbnb Hotels, Headspace Admin Portal Redesign), Headspace Unified
+ * Portal, Airbnb Account Creation & Onboarding, Headspace Admin Portal
+ * Redesign), Headspace Unified
  * Main Door (its own page.tsx, but the same top bar so it reads as one of
  * the set), the coming-soon page (same top bar, title from its `?p=` slug),
  * and the contact page (same top bar, static "Contact" title) — plus the
- * home page, which is the only route still on HomeHeader. ht-perks keeps
- * its own locally-defined header.
- */
+ * home page, which is the only route still on HomeHeader. */
 
 const RESUME_URL = contact.resume;
 
@@ -128,8 +127,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
  * reads as the breadcrumb.
  * Content insets 64px from each viewport edge: 32px rail +
  * 32px, landing "Back" on the same x the homepage logo sits at (at 1440).
- * Not capped/centered like the homepage's 1376px column, because the
- * horizontal track underneath isn't either.
  * The title, from 901px up, is pulled out of the flex row and pinned at
  * 129.6px — the same x .cs-track's padding-left (globals.css) starts the
  * story at, i.e. the hero grid box's left edge — so the breadcrumb sits on
@@ -138,12 +135,21 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
 function CaseStudyTopBar({
   title,
   fallbackHref,
+  capped = false,
 }: {
   title: string;
   /** Where "Back" goes when there's no in-app history to step through
    * (BackLink's default is /#work; coming-soon links live further down
    * the homepage). */
   fallbackHref?: string;
+  /** Caps and centers the bar on the homepage's 1376px column instead of
+   * letting it span the viewport. For the ordinary vertical pages that
+   * borrow this bar (contact, coming-soon), whose <main> is capped the
+   * same way — past 1440px their nav used to keep spreading while the
+   * page content stopped, which the homepage never does. A real case
+   * study stays full-bleed: the horizontal track underneath isn't capped
+   * either, and its title pins to the track's own 129.6px start. */
+  capped?: boolean;
 }) {
   const bandType =
     "text-[12px] font-normal uppercase leading-[20px] tracking-normal [font-family:var(--font-mono),ui-monospace,monospace]";
@@ -151,7 +157,13 @@ function CaseStudyTopBar({
     <>
       <header className="fixed inset-x-0 top-0 z-50 border-b border-line bg-bg/95 backdrop-blur min-[901px]:border-b-0 min-[901px]:bg-white min-[901px]:backdrop-blur-none">
         <div className="relative">
-          <div className="flex h-14 items-center justify-between px-6 min-[901px]:h-[42px] min-[901px]:px-16">
+          <div
+            className={`flex h-14 items-center justify-between px-6 min-[901px]:h-[42px] ${
+              capped
+                ? "min-[901px]:mx-auto min-[901px]:w-[min(1376px,calc(100%-4rem))] min-[901px]:px-8"
+                : "min-[901px]:px-16"
+            }`}
+          >
             <div className="flex items-center gap-8">
               <BackLink
                 fallbackHref={fallbackHref}
@@ -163,8 +175,15 @@ function CaseStudyTopBar({
                 <ArrowIcon className="rotate-180 text-current" />
                 Back
               </BackLink>
+              {/* Capped bars keep the title in flow (32px after Back, as on
+                  mobile) so it travels with the centered column; only the
+                  full-bleed case-study bar pins it to the track's start. */}
               <span
-                className={`text-accent min-[901px]:absolute min-[901px]:left-[129.6px] min-[901px]:top-1/2 min-[901px]:-translate-y-1/2 ${bandType}`}
+                className={`text-accent ${
+                  capped
+                    ? ""
+                    : "min-[901px]:absolute min-[901px]:left-[129.6px] min-[901px]:top-1/2 min-[901px]:-translate-y-1/2"
+                } ${bandType}`}
               >
                 {title}
               </span>
@@ -205,6 +224,7 @@ function ComingSoonTopBar() {
     <CaseStudyTopBar
       title={project?.title ?? "Coming soon"}
       fallbackHref={project?.backHref ?? "/#additional-work"}
+      capped
     />
   );
 }
@@ -216,13 +236,13 @@ export default function PersistentHeader() {
     return <HomeHeader active="home" />;
   }
   if (pathname === "/contact") {
-    return <CaseStudyTopBar title="Contact" fallbackHref="/" />;
+    return <CaseStudyTopBar title="Contact" fallbackHref="/" capped />;
   }
   if (pathname === "/coming-soon") {
     return (
       <Suspense
         fallback={
-          <CaseStudyTopBar title="Coming soon" fallbackHref="/#additional-work" />
+          <CaseStudyTopBar title="Coming soon" fallbackHref="/#additional-work" capped />
         }
       >
         <ComingSoonTopBar />

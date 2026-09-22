@@ -7,11 +7,11 @@ import {
   IntroStackBlock,
   RailDots,
 } from "@/components/case-study/CaseStudyPage";
-import { caseStudies } from "@/lib/case-studies";
+import { closingLinksFor } from "@/lib/case-studies";
 import { context, meta, PROTOTYPE_URL, sidebar } from "@/lib/headspace-umd";
 
 export const metadata: Metadata = {
-  title: `${meta.company} ${meta.title} — Marc Favro`,
+  title: `${meta.company} | ${meta.title} — Marc Favro`,
   description: meta.subtitle,
 };
 
@@ -19,12 +19,9 @@ export const metadata: Metadata = {
 // Contact / Resume") is rendered by PersistentHeader in the root layout,
 // same as the three CaseStudyPage case studies — see CASE_STUDY_TITLES there.
 
-/** "Want to see more?" pair for this page only — Yahoo Partner Portal and
- * Airbnb, per direct request, rather than the site-wide default pair
- * (Airbnb + Headspace Admin Portal) CaseStudyClosing falls back to. */
-const CLOSING_LINKS = ["yahoo-partner-portal", "airbnb-hotels"].map(
-  (slug) => caseStudies.find((cs) => cs.slug === slug)!,
-);
+/** "Want to see more?" pair — Yahoo Partner Portal and Airbnb, via the
+ * closing ring (case-studies.ts): this page's own two ring-neighbors. */
+const CLOSING_LINKS = closingLinksFor("headspace-umd");
 
 /** Recorded prototype walkthrough, anchored to the same 687px row as every
  * YPP section's media (and as the Context stack before it, so the two tops

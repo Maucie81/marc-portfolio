@@ -269,7 +269,7 @@ export default function Home() {
                   // same position — see home.ts), so it lays over the
                   // texture without a matte. No border: the design has none.
                   <div
-                    className="product-media relative isolate w-full overflow-hidden rounded-t-[4px] bg-bg"
+                    className="product-media relative isolate w-full overflow-hidden rounded-[4px] bg-bg"
                     style={{ aspectRatio: "714 / 402" }}
                   >
                     {/* Texture · Figma frame 26:2683, the hand-exported SVG
@@ -333,21 +333,18 @@ export default function Home() {
                         </p>
                       </div>
 
-                      {/* Link · 177:111993 — text + icon, no pill */}
+                      {/* Link · 177:111993 — text + icon, no pill. Shared
+                          ArrowIcon (straight right, currentColor), same as
+                          every other in-line link on the site — was a
+                          diagonal up-right glyph baked into its own SVG
+                          asset, the only place that arrow appeared. */}
                       {isLinked ? (
                         <Link
                           href={project.href!}
                           className="t-link group inline-flex items-center gap-1.5 self-start"
                         >
                           Project preview
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src="/icons/diagonal-right-up.svg"
-                            alt=""
-                            width={11}
-                            height={11}
-                            className="block h-[11px] w-[11px] transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5"
-                          />
+                          <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
                         </Link>
                       ) : (
                         <span className="t-link self-start text-muted">
@@ -360,7 +357,17 @@ export default function Home() {
                     <div className="flex flex-col gap-6">
                       {/* Image and Skills row merged into one rounded card
                           (488:48637) — overflow-hidden clips both to shared
-                          corners instead of rounding each piece separately. */}
+                          corners, though in practice only the top two ever
+                          show: the skills row below shares this div's
+                          bg-bg, so its corners have no visible edge against
+                          the page to round. product-media rounds all four
+                          of its own corners (not just the top) so the
+                          image itself always reads as a complete rounded
+                          rectangle regardless of what's below it. 4px,
+                          matching product-media — was mismatched at 8px
+                          briefly (top-only on the image, full on this
+                          wrapper), which is what made the bottom corners
+                          look unrounded. */}
                       <div className="overflow-hidden rounded-[4px]">
                         {isLinked ? (
                           <Link
@@ -413,14 +420,15 @@ export default function Home() {
           <SectionRail />
           <SectionNumber number="02" label="Additional work" />
           <div>
-            {/* 499:55129 — small label above the headline, same pattern as
-                every other section (was missing here, which is why the
-                number never lined up with anything). */}
-            <h2 className="t-section-title">Additional work</h2>
+            {/* 499:55129 — small label above the headline. Distinct wording
+                from the h3 below it ("A little bit more" vs. "Additional
+                work") — previously both said "Additional work", the exact
+                redundant-eyebrow pattern flagged in review. */}
+            <h2 className="t-section-title">A little bit more</h2>
             <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
               <div className="flex flex-col gap-4">
                 <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
-                  additional work
+                  Additional work
                 </h3>
                 <p className="t-body max-w-[343px] text-ink-2">
                   {additionalWorkIntro}
@@ -486,14 +494,16 @@ export default function Home() {
           className="sec border-t border-line py-12"
         >
           <SectionRail />
-          <SectionNumber number="03" label="Experience" />
+          <SectionNumber number="03" label="Career history" />
           <div>
-            {/* 177:112118 — label line. Figma's copy here is the placeholder
-                "LABEL TITLE"; this wording is mine, swap it freely. */}
-            <p className="t-section-title">Career history</p>
+            {/* 177:112118 — label line. Distinct wording from the h2 below
+                it ("Where I've been" vs. "Career history") — previously
+                both said "Career history", the same redundant-eyebrow
+                pattern as Additional Work above. */}
+            <p className="t-section-title">Where I&apos;ve been</p>
             {/* 177:112121 — Playfair headline */}
             <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
-              Experience
+              Career history
             </h2>
             <div className="mt-8">
               <Experience roles={roles} />

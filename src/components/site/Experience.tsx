@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { experienceSkills, experienceTooling, type Role } from "@/lib/home";
 import ExpandGlyph, { spinExpandGlyph } from "./ExpandGlyph";
 
@@ -17,11 +17,10 @@ import ExpandGlyph, { spinExpandGlyph } from "./ExpandGlyph";
  * The intro paragraph stays visible whether or not the row is open;
  * expanding adds the longer description.
  *
- * Every row starts collapsed. The first one opens itself — glyph spin and
- * all — once the reader has scrolled far enough that its "+" is well into
- * the viewport, so the section demonstrates that the rows expand instead of
- * relying on the reader to try the glyph. It fires once; after that (or
- * after any click) the rows are entirely the reader's to open and close.
+ * Every row starts collapsed and stays that way until the reader clicks —
+ * an earlier version auto-opened the first row via IntersectionObserver
+ * once it scrolled into view, which read as the page acting on its own
+ * rather than responding to the reader. Removed per direct request.
  *
  * The Tooling/Skills panel is pinned to the top of the section (177:112200)
  * and is a fixed curated list (`experienceTooling`/`experienceSkills` in
@@ -31,35 +30,6 @@ import ExpandGlyph, { spinExpandGlyph } from "./ExpandGlyph";
 export default function Experience({ roles }: { roles: Role[] }) {
   const [open, setOpen] = useState(-1);
   const glyphRefs = useRef<(HTMLSpanElement | null)[]>([]);
-  const firstToggleRef = useRef<HTMLButtonElement | null>(null);
-  // Flipped by the auto-reveal or by the reader's first click, whichever
-  // comes first — either way the auto-reveal must not fire afterwards.
-  const settledRef = useRef(false);
-
-  useEffect(() => {
-    const el = firstToggleRef.current;
-    if (!el || settledRef.current) return;
-
-    // rootMargin shrinks the viewport's bottom edge by 35%, so this fires
-    // when the first row's "+" crosses into the top 65% of the screen —
-    // by then the whole row above it is on screen, and there's room below
-    // it for the description to unfold into without the animation
-    // happening off the bottom edge.
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (!entry?.isIntersecting || settledRef.current) return;
-        settledRef.current = true;
-        observer.disconnect();
-        // Same ordering as the click handler: spin first, synchronously,
-        // then flip state — see ExpandGlyph for why.
-        spinExpandGlyph(glyphRefs.current[0], true);
-        setOpen(0);
-      },
-      { rootMargin: "0px 0px -35% 0px", threshold: 1 }
-    );
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
 
   return (
     <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_495px] lg:gap-0">
@@ -106,16 +76,30 @@ export default function Experience({ roles }: { roles: Role[] }) {
                     actual height, which is what read as a glitch: short
                     descriptions finished animating well before the curve
                     did, long ones never really matched it either. 0fr→1fr
-                    always animates to the exact content height. */}
+                    always animates to the exact content height.
+                    Height and opacity used to share one 350ms ease-out
+                    transition on this same element — the text faded fully
+                    in/out while the row was still mid-resize, which is what
+                    read as abrupt. Opacity now lives on the inner wrapper
+                    with its own timing: on open it's delayed 150ms so the
+                    text only starts appearing once the row is already
+                    unfolding, landing just as the 450ms height animation
+                    finishes; on close there's no delay, so the text is
+                    gone well before the row finishes collapsing instead of
+                    visibly folding into itself. The standard "material"
+                    ease (cubic-bezier(0.4,0,0.2,1)) replaces ease-out for
+                    the height itself — smoother deceleration than the
+                    fairly sharp default. */}
                 <div
                   id={panelId}
-                  className="grid overflow-hidden transition-[grid-template-rows,opacity] duration-[350ms] ease-out"
-                  style={{
-                    gridTemplateRows: isOpen ? "1fr" : "0fr",
-                    opacity: isOpen ? 1 : 0,
-                  }}
+                  className="grid overflow-hidden transition-[grid-template-rows] duration-[450ms] ease-[cubic-bezier(0.4,0,0.2,1)]"
+                  style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
                 >
-                  <div className="overflow-hidden">
+                  <div
+                    className={`overflow-hidden transition-opacity duration-300 ${
+                      isOpen ? "opacity-100 delay-150" : "opacity-0"
+                    }`}
+                  >
                     {/* 499:54867 */}
                     <div className="flex flex-col gap-4 pt-4">
                       {paragraphs.map((p, j) => (
@@ -137,10 +121,8 @@ export default function Experience({ roles }: { roles: Role[] }) {
                     inside a gap-5 column) — from the intro when closed,
                     from the last revealed paragraph when open. */}
                 <button
-                  ref={i === 0 ? firstToggleRef : undefined}
                   type="button"
                   onClick={() => {
-                    settledRef.current = true;
                     spinExpandGlyph(glyphRefs.current[i], !isOpen);
                     if (!isOpen && open !== -1 && open !== i) {
                       spinExpandGlyph(glyphRefs.current[open], false);
@@ -150,7 +132,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
                   aria-expanded={isOpen}
                   aria-controls={panelId}
                   aria-label={`${isOpen ? "Hide" : "Show"} more about ${role.company}`}
-                  className="mt-3"
+                  className="group mt-3"
                 >
                   <ExpandGlyph
                     ref={(el) => {

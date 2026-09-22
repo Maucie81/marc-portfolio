@@ -271,13 +271,17 @@ paints over it. */
 }
 
 /* Desktop - Link · 499:54561 ("Case study") — text + icon only, never a
-   pill. Same role as .t-label/.t-mark, at its highlighted (accent) color
-   rather than ink-2. Sentence case, not uppercase — see .t-label. */
+   pill. Sentence case, not uppercase — see .t-label. Same weight/size as
+   .t-meta-title (the "Skills"/"Tooling" labels and Experience row dates),
+   at accent instead of ink-2 — was its own larger/lighter size (16/24,
+   weight 400) before, which read as a different, heavier role than the
+   rest of the meta-label family it's meant to match. */
 .t-link {
   font-family: var(--font-alt), system-ui, sans-serif;
-  font-weight: 400;
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1rem;
+  letter-spacing: 0;
   color: var(--accent);
 }
 
@@ -544,6 +548,31 @@ paints over it. */
   line-height: 1.5rem;
 }
 
+/* Pull quotes outside the Context/Problem intro stack · Figma 43:3729 (one)
+   / 43:3730 (two), minus that card's graph-paper backdrop (dropped per
+   direct request). Google Sans Flex SemiBold — not the DM Sans .cs-quote
+   used by stat labels — stepped down from the Figma's 20/28 to 16/24, also
+   per direct request. The 3px accent rule spans the quote AND its
+   attribution (one bordered figure, 8px gap — see PullQuoteStack in
+   CaseStudyPage.tsx). */
+.cs-pull-quote-alt {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.5rem;
+  letter-spacing: 0;
+  color: var(--ink-2);
+}
+
+.cs-quote-attr {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  letter-spacing: 0;
+  color: var(--ink-strong);
+}
+
 /* Sub Label · a title paired with a smaller description directly beneath it
    — case-study section bullets, but also the homepage's Recent Work
    sub-feature titles. Not scoped to case studies despite the prefix; kept
@@ -633,6 +662,16 @@ paints over it. */
     flex-direction: row;
     align-items: center;
     height: 100vh;
+    /* The track's own box must span every block, not just the viewport:
+       .cs-track::after (the carousel's grain sheet) is inset:0 against
+       this box, and with the default block width the blocks overflow it —
+       so the grain stopped at the box's right edge (viewport width) and
+       everything the track had slid into view past that edge rendered
+       un-grained, reading as a second, flatter cream with a hard vertical
+       seam. HorizontalTrack.tsx compensates for the padding-right this
+       pulls into scrollWidth. */
+    width: max-content;
+    min-width: 100%;
     /* 1440px-baseline values: gap resolved from the old clamp(7rem,10vw,13rem)
        at 1440px (144px); padding-left/right resolved from the old 9vw/18vw
        at 1440px (129.6px/259.2px). */
@@ -742,9 +781,14 @@ paints over it. */
    3. .cs-pin — the pinned (position:fixed) carousel frame. Given an opaque
       paper fill and z-index 39 (above .noise-overlay, below chrome) so the
       page sheet can't bleed through and crawl over the fixed carousel; the
-      track's own grain covers it instead. */
+      track's own grain covers it instead.
+   4. .cs-progress::after — the scrubber strip is fixed at z-60, above the
+      track's grain, so on the same --bg fill it rendered as bare, flatter
+      cream against the grained story beside it. It carries its own sheet
+      for the same reason the track does. */
 .noise-overlay,
-.cs-track::after {
+.cs-track::after,
+.cs-progress::after {
   content: "";
   position: absolute;
   inset: 0;

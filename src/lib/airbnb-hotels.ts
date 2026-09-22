@@ -13,6 +13,14 @@ import type { Block, ImageSpec } from "@/lib/ypp";
  */
 
 export const meta = {
+  // Lowercase per direct request, scoped to this cover only — same
+  // reasoning as Headspace UMD's meta.title (headspace-umd.ts): the hero
+  // reads "Airbnb" / "account creation & onboarding" as one continuous
+  // phrase, not two independently-capitalized lines. This field has no
+  // other consumer besides the hero and the tab title (`${company} |
+  // ${title}`); the breadcrumb, homepage card, and case-studies.ts entry
+  // each carry their own separately-cased "Airbnb account creation &
+  // onboarding" string.
   title: "account creation & onboarding",
   subtitle:
     "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs the existing host flow wasn't built for. Getting a single hotel live required six manual handoffs across account managers, contractors, and ops teams. I redesigned that process into a self-service flow built entirely on existing Airbnb infrastructure — no net-new engineering required.",
@@ -33,8 +41,8 @@ export const sidebar = {
     {
       label: "Audience",
       items: [
-        "Hotel Revenue Managers, General Managers, Front Desk Agents",
-        "Airbnb Market Managers and Ops team",
+        "Hotel revenue managers, general managers, front desk agents",
+        "Airbnb market managers and ops team",
       ],
     },
     {
@@ -63,7 +71,7 @@ export const blocks: Block[] = [
   {
     kind: "intro-stack",
     sectionNumber: "01",
-    heading: "The Problem",
+    heading: "The problem",
     body: [
       "Airbnb acquired HotelTonight in early 2019 and inherited something its platform wasn't designed for: professional hospitality businesses. Revenue managers, directors of operations, COOs. People who ran their properties across 15 to 20 OTA channels simultaneously through purpose-built PMS and channel management systems. They expected extranet parity. They expected to be treated like the operators they were.",
       "What they got was a flow built for individual hosts. The onboarding process had six steps and required a human handoff at every one of them. No hotel could get a single room live on Airbnb without going through an account manager, a contractor, and back again. The Google Form sitting at the center of that process wasn't just inefficient. It was the wrong signal to send to a partner you were asking to trust you with their inventory.",
@@ -84,7 +92,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "02",
     eyebrow: "",
-    title: "The Inherited Flow",
+    title: "The inherited flow",
     body: "Every hotel went through the same sequence before a single room could be booked. Seven steps, seven handoffs, no way in without a Market Manager and no way to finish without a contractor.",
     bullets: [],
     caption: "",
@@ -120,35 +128,33 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 4. Research — group heading, then one panel-item per audit, each with
-  // its own placeholder image (matches Figma's three separate panels).
+  // 4. Research — Figma (519:72601): the heading sits above item 01 in the
+  // same column; 02 and 03 follow, each with its own media panel.
   {
-    kind: "copy",
+    kind: "panel-group",
     sectionNumber: "03",
     heading: "Research",
-    eyebrow: "What the Market Already Knew",
-    body: [],
-  },
-  {
-    kind: "panel-item",
-    number: "01",
-    title: "Competitive audit",
-    body: "Expedia, Booking.com, and Agoda audited against three questions: how they sequenced onboarding versus ongoing property setup, how professional their language was, and how they handled task complexity. Every mature OTA already treated hotels as operators. That became the baseline.",
-    caption: "[PLACEHOLDER — competitive audit artifact]",
-  },
-  {
-    kind: "panel-item",
-    number: "02",
-    title: "Systems audit",
-    body: "Three internal tools reviewed: the Trust and Safety signup flow, Luxury Retreats' stepped onboarding, and Hubble, the account manager tool the Luxury Retreats team had built. All three became direct building blocks. One early constraint: Hubble didn't store signed contracts, which would have required net-new engineering to solve.",
-    caption: "[PLACEHOLDER — systems audit diagram]",
-  },
-  {
-    kind: "panel-item",
-    number: "03",
-    title: "User testing",
-    body: "Three rounds over the course of the project, five to ten hotels per round. Two findings drove the most consequential decisions: hotels were confused and frustrated when asked for room type and tax information upfront, and the welcome email felt like a cold introduction rather than a continuation of their existing HotelTonight relationship.",
-    caption: "[PLACEHOLDER — user testing session]",
+    eyebrow: "What the market already knew",
+    items: [
+      {
+        number: "01",
+        title: "Competitive audit",
+        body: "Expedia, Booking.com, and Agoda audited against three questions: how they sequenced onboarding versus ongoing property setup, how professional their language was, and how they handled task complexity. Every mature OTA already treated hotels as operators. That became the baseline.",
+        caption: "[PLACEHOLDER — competitive audit artifact]",
+      },
+      {
+        number: "02",
+        title: "Systems audit",
+        body: "Three internal tools reviewed: the Trust and Safety signup flow, Luxury Retreats' stepped onboarding, and Hubble, the account manager tool the Luxury Retreats team had built. All three became direct building blocks. One early constraint: Hubble didn't store signed contracts, which would have required net-new engineering to solve.",
+        caption: "[PLACEHOLDER — systems audit diagram]",
+      },
+      {
+        number: "03",
+        title: "User testing",
+        body: "Three rounds over the course of the project, five to ten hotels per round. Two findings drove the most consequential decisions: hotels were confused and frustrated when asked for room type and tax information upfront, and the welcome email felt like a cold introduction rather than a continuation of their existing HotelTonight relationship.",
+        caption: "[PLACEHOLDER — user testing session]",
+      },
+    ],
   },
 
   // 5. Design Principles — the dark full-bleed panel now matches Figma's
@@ -161,7 +167,7 @@ export const blocks: Block[] = [
   {
     kind: "principles",
     sectionNumber: "04",
-    heading: "Design Principles",
+    heading: "Design principles",
     intro:
       "Developing principles served as a constant reminder of our priorities, allowing us to course-correct quickly if we began to stray from our objectives or misrepresent our end users.",
     items: [
@@ -183,38 +189,39 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 6. Key Decisions — now three decisions, not four. Same group-heading +
-  // per-item-panel pattern as Research; Figma numbers these items 02–04
-  // (01 is the group heading's own slot in that panel layout).
+  // 6. Key Decisions — Figma (520:72979) treats the intro as item 01 in the
+  // heading's own column, with its own media panel, then the decisions
+  // follow as 02–04.
   {
-    kind: "copy",
+    kind: "panel-group",
     sectionNumber: "05",
-    heading: "Key Decisions",
-    eyebrow: "Choices that shaped the flow",
-    body: [
-      "Three decisions defined the final shape of the flow — each a fork where a more obvious path existed and was set aside for a specific reason.",
+    heading: "Key decisions",
+    items: [
+      {
+        number: "01",
+        title: "Choices that shaped the flow",
+        body: "Three decisions defined the final shape of the flow — each a fork where a more obvious path existed and was set aside for a specific reason.",
+        caption: "[PLACEHOLDER — the three decisions mapped onto the final flow]",
+      },
+      {
+        number: "02",
+        title: "Extended Hubble instead of building new",
+        body: "The Hotels team extended Hubble — the account manager tool built by the Luxury Retreats team — to create host accounts for hotels, track property progress through onboarding, manage commission rates and contracts, and let account managers build a property details page per hotel. The team also integrated Rookery into Hubble so the ops team could trigger templated, branded emails automatically, replacing manually written plain-text messages and making the trigger step scalable.",
+        caption: "[PLACEHOLDER — Hubble property details page]",
+      },
+      {
+        number: "03",
+        title: "Replaced full support with a Hotels FAQ",
+        body: "Research showed that embedding a support feature gave hotels ease and trust. The team knew before testing that real-time support wasn't shippable in this flow. Rather than omitting it entirely, they linked to a Hotels-specific FAQ with articles directly relevant to what partners were being asked to do at each step. Form fields were also pre-populated with data already gathered by account managers in Hubble.",
+        caption: "[PLACEHOLDER — Hotels FAQ / pre-populated form fields]",
+      },
+      {
+        number: "04",
+        title: "Moved complex tasks out of the critical path",
+        body: "Room information, taxes and fees, and property photos had all been collected upfront via Google Form. User testing confirmed the bigger issue: the person completing account creation was often not the person who had that information, making those fields a bottleneck that stopped the whole flow. Moving complex tasks to the post-account-creation property dashboard let hotels complete the critical path quickly and return to detailed setup with the right people.",
+        caption: "[PLACEHOLDER — before/after: Google Form vs. property dashboard]",
+      },
     ],
-  },
-  {
-    kind: "panel-item",
-    number: "02",
-    title: "Extended Hubble instead of building new",
-    body: "The Hotels team extended Hubble — the account manager tool built by the Luxury Retreats team — to create host accounts for hotels, track property progress through onboarding, manage commission rates and contracts, and let account managers build a property details page per hotel. The team also integrated Rookery into Hubble so the ops team could trigger templated, branded emails automatically, replacing manually written plain-text messages and making the trigger step scalable.",
-    caption: "[PLACEHOLDER — Hubble property details page]",
-  },
-  {
-    kind: "panel-item",
-    number: "03",
-    title: "Replaced full support with a Hotels FAQ",
-    body: "Research showed that embedding a support feature gave hotels ease and trust. The team knew before testing that real-time support wasn't shippable in this flow. Rather than omitting it entirely, they linked to a Hotels-specific FAQ with articles directly relevant to what partners were being asked to do at each step. Form fields were also pre-populated with data already gathered by account managers in Hubble.",
-    caption: "[PLACEHOLDER — Hotels FAQ / pre-populated form fields]",
-  },
-  {
-    kind: "panel-item",
-    number: "04",
-    title: "Moved complex tasks out of the critical path",
-    body: "Room information, taxes and fees, and property photos had all been collected upfront via Google Form. User testing confirmed the bigger issue: the person completing account creation was often not the person who had that information, making those fields a bottleneck that stopped the whole flow. Moving complex tasks to the post-account-creation property dashboard let hotels complete the critical path quickly and return to detailed setup with the right people.",
-    caption: "[PLACEHOLDER — before/after: Google Form vs. property dashboard]",
   },
 
   // 7. Outcome — no stats in this version of the design

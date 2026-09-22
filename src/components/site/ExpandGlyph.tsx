@@ -37,7 +37,7 @@ const ExpandGlyph = forwardRef<
     <span
       ref={ref}
       aria-hidden
-      className={`expand-glyph ${expanded ? "is-open" : ""} ${className}`}
+      className={`expand-glyph group-hover:text-accent ${expanded ? "is-open" : ""} ${className}`}
     >
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="8" cy="8" r="8" fill="currentColor" />

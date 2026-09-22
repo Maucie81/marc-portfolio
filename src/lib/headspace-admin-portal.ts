@@ -10,13 +10,14 @@
  * copyright guidance — any verbatim quote here is kept under 15 words.
  *
  * [PLACEHOLDER] marks anything without final copy or exported assets yet —
- * same convention as the YPP and Airbnb Hotels case studies.
+ * same convention as the YPP and Airbnb Account Creation & Onboarding case
+ * studies.
  */
 
 import type { Block, ImageSpec } from "@/lib/ypp";
 
 export const meta = {
-  title: "admin portal redesign",
+  title: "Admin portal redesign",
   subtitle:
     "Headspace's B2B Admin Portal hadn't been meaningfully touched since 2017. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore. 17 stakeholder interviews and a 147-respondent survey made the case for separating internal and external experiences entirely, and put the redesign on the roadmap.",
   company: "Headspace",
@@ -47,7 +48,7 @@ export const sidebar = {
       items: [
         "Journey mapping & stakeholder interviews",
         "Admin survey design & synthesis",
-        "Need vs. Impact prioritization",
+        "Need vs. impact prioritization",
         "Portal architecture & roadmap",
       ],
     },
@@ -69,7 +70,7 @@ export const blocks: Block[] = [
   {
     kind: "intro-stack",
     sectionNumber: "01",
-    heading: "The Problem",
+    heading: "The problem",
     body: [
       "By 2022 the Admin Portal was serving 2,000+ partners on a structure that hadn't changed since 2017. Capability had been added throughout various phases over the years, but the foundation underneath it never kept pace with the scale of who was using it or what they needed from it. Every insight about what Admins needed had been filtered through PSM conversations — secondhand, and shaped by what internal teams assumed rather than what Admins actually said.",
       "The deeper issue was structural. Internal and external use cases were tangled in one tool: an Admin managing their company's benefits, a Partner Success Manager troubleshooting an eligibility file, an engineer investigating a member issue. Admin value was getting buried under internal tooling needs. A coming merger with a company called Ginger made the gap impossible to ignore.",
@@ -109,7 +110,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "03",
     eyebrow: "Size matters",
-    title: "The Admin Survey",
+    title: "The admin survey",
     body: "Before this project, Headspace's understanding of Admins came entirely through PSM conversations. I partnered with our PM and UX researcher to design the first direct survey of this population, structured by company size so priorities could be read by segment instead of averaged into noise.",
     bullets: [
       {
@@ -166,7 +167,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "05",
     eyebrow: "Built to convince, not to ship",
-    title: "Wireframe Explorations",
+    title: "Wireframe explorations",
     body: "Research findings are easy to dismiss as a slide deck. These wireframes gave leadership something to react to — six modules built on Headspace's updated UI patterns, not the portal's 2017 styling.",
     bullets: [
       {
@@ -189,7 +190,7 @@ export const blocks: Block[] = [
     kind: "section",
     sectionNumber: "06",
     eyebrow: "Split it or kill it",
-    title: "The Proposal",
+    title: "The proposal",
     body: "The merger with Ginger made the diagnosis unavoidable. Comparing their internal Django platform to the Admin Portal revealed that Admin value was getting buried under internal tooling that had no business being there.",
     bullets: [
       {

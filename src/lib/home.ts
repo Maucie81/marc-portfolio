@@ -36,7 +36,7 @@ export const projects: Project[] = [
     company: "Yahoo",
     title: "Partner Portal",
     description:
-      'Yahoo\'s partner portal had stagnated in "Keep Lights On" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
+      'Yahoo\'s Partner Portal had stagnated in "keep lights on" mode, leaving 8,700+ media partners without the tools to understand how their content was performing on Yahoo. This project set out to change that.',
     href: "/work/yahoo-partner-portal",
     image: {
       src: "/yahoo/thumbnail-cutout.webp",
@@ -46,11 +46,11 @@ export const projects: Project[] = [
     },
     imageLabel: "",
     skills: [
-      "Publisher Tooling",
-      "Data Visualization",
-      "UX Research",
-      "Partner Ecosystems",
-      "AI Prototyping",
+      "Publisher tooling",
+      "Data visualization",
+      "UX research",
+      "Partner ecosystems",
+      "AI prototyping",
     ],
   },
   {
@@ -58,7 +58,7 @@ export const projects: Project[] = [
     title: "Unified main door",
     description:
       "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
-    href: "/work/headspace-health-umd",
+    href: "/work/headspace-umd",
     image: {
       src: "/headspace/thumbnail-cutout.webp",
       alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
@@ -67,16 +67,16 @@ export const projects: Project[] = [
     },
     imageLabel: "",
     skills: [
-      "B2B Platform",
-      "Design Systems",
+      "B2B platform",
+      "Design systems",
       "Retention",
-      "UX Research",
-      "Roadmap Prioritization",
+      "UX research",
+      "Roadmap prioritization",
     ],
   },
   {
     company: "Airbnb",
-    title: "Account creation & onboarding",
+    title: "Account creation &\u00a0onboarding",
     description:
       "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs that the existing host flow wasn't built for.",
     href: "/work/airbnb-hotels",
@@ -88,10 +88,10 @@ export const projects: Project[] = [
     },
     imageLabel: "",
     skills: [
-      "Onboarding Design",
-      "Design Systems",
-      "User Research/Testing",
-      "B2B Partnerships",
+      "Onboarding design",
+      "Design systems",
+      "User research/testing",
+      "B2B partnerships",
     ],
   },
 ];
@@ -110,14 +110,14 @@ export const additionalWorkIntro =
 export const additionalWork: SmallProject[] = [
   {
     company: "Yahoo",
-    title: "data viz & design system",
+    title: "Data viz & design system",
     description:
       "The charting and data visualization system built for the Partner Portal, along with the design system it runs on — built on a shared CMS foundation used across the platform.",
     href: "/coming-soon?p=yahoo-data-viz",
   },
   {
     company: "Headspace",
-    title: "admin portal redesign",
+    title: "Admin portal redesign",
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
@@ -127,7 +127,11 @@ export const additionalWork: SmallProject[] = [
     title: "Harrison's app",
     description:
       "A post-op medication tracker I built for my dog using AI-assisted development. Because the timing logic was genuinely hard to get right by hand.",
-    href: "/coming-soon?p=harrisons-app",
+    // Real route, gated by src/proxy.ts exactly like Airbnb — public
+    // visitors and search engines get redirected to /coming-soon, but the
+    // page itself is live in the codebase for direct preview/editing.
+    // Was a direct /coming-soon link with no real page behind it at all.
+    href: "/work/harrisons-app",
   },
 ];
 
@@ -155,19 +159,19 @@ export const experienceTooling = [
 ];
 
 export const experienceSkills = [
-  "Design-to-Code Prototyping",
-  "User Research",
-  "Systems Design",
-  "Data Visualization",
-  "Design Systems",
-  "Onboarding Design",
-  "Roadmap Prioritization",
+  "Design-to-code prototyping",
+  "User research",
+  "Systems design",
+  "Data visualization",
+  "Design systems",
+  "Onboarding design",
+  "Roadmap prioritization",
 ];
 
 export const roles: Role[] = [
   {
     company: "Yahoo",
-    title: "Principal product designer, platform",
+    title: "Principal Product Designer, Platform",
     period: "2024 — 2026",
     intro:
       "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude.",
@@ -184,7 +188,7 @@ export const roles: Role[] = [
   },
   {
     company: "Headspace",
-    title: "Senior product designer",
+    title: "Senior Product Designer",
     period: "2022 — 2023",
     intro:
       "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees actually needed to use it.",
@@ -200,7 +204,7 @@ export const roles: Role[] = [
   },
   {
     company: "Airbnb",
-    title: "Experience designer",
+    title: "Experience Designer",
     period: "2019 — 2020",
     intro:
       "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality after the HotelTonight acquisition.",
@@ -209,8 +213,8 @@ export const roles: Role[] = [
     tags: ["Onboarding", "Self-service", "Partnerships"],
   },
   {
-    company: "Hotel Tonight",
-    title: "Product designer",
+    company: "HotelTonight",
+    title: "Product Designer",
     period: "2017 — 2019",
     intro:
       "Sole designer across web and mobile during a brand evolution that repositioned HotelTonight from a discount last-minute booking app toward a more premium experience.",
@@ -220,7 +224,7 @@ export const roles: Role[] = [
   },
   {
     company: "Stitch Fix",
-    title: "UX designer",
+    title: "UX Designer",
     period: "2015 — 2017",
     intro:
       "Redesigned the referral program, driving a 52% increase in referred customers.",
