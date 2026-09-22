@@ -15,6 +15,12 @@ import {
   roles,
 } from "@/lib/home";
 
+// Hero eyebrow / "Portfolio 2026" label — shared role (16/24 Medium, white),
+// confirmed identical on both via get_design_context (Portfolio-Playground
+// 66:118321, "Hello & welcome" and the subline share the exact same style).
+const HERO_LABEL_CLASS =
+  "text-[16px] font-medium leading-[24px] text-white [font-family:var(--font-display)]";
+
 export default function Home() {
   return (
     <div className="bg-bg">
@@ -39,208 +45,274 @@ export default function Home() {
         {/* max-w equivalent via w-[min(1376px,...)], centered (mx-auto):
             1376 = confirmed 1440px design width (get_metadata, node
             627:49704) minus the 32px rail on each side. Below that width
-            the min() falls through to the fluid calc(100%-4rem) term
-            (unchanged, still shrinks with --hero-scale as before) — this
-            stops the CONTENT (not the grey background, which stays on
+            the min() falls through to the fluid calc(100%-4rem) term —
+            this stops the CONTENT (not the grey background, which stays on
             the outer wrapper and fills the full width regardless) from
             growing past its real design size once the viewport exceeds
             it, with mx-auto keeping it centered rather than pinned to
             either rail. */}
-        {/* Hero · 627:46433 (supersedes the earlier 540:112651 spec — Figma
-            revised this frame to a denser grid). Figma's box is 1312×468,
-            built as a mosaic of 30px #e4e4df tiles on a #b0b0b0 background
-            with a 1px flex gap — the gap is the "grid line", still the same
-            --line color as before, just drawn as negative space instead of
-            a stroke. Tile + gap = 31px pitch, confirmed exact on both axes
-            (get_metadata's row/column coordinates land on exact multiples
-            of 31, no fractional drift this time).
+        {/* Hero · Portfolio-Playground (fileKey AwPcHO3ssXvBttxqrLdxlR),
+            mobile frame node 66:118321 ("Mobile hero", 402×616) + written
+            desktop spec — coral panel using the same case-study-texture
+            multiply layer as the work cards below, replacing the old
+            Figma-cloned grid hero.
 
-            Per spec this update is density- and radius-only: the box's own
-            outer width/height stay whatever this content box renders at
-            full size (1328×426.857, see the scale wrapper below for how
-            that survives narrower screens) rather than being re-derived to
-            tile the new pitch evenly — so the grid closes on a partial cell
-            at the right/bottom edges, same as it would in Figma at a
-            non-multiple width.
-
-            The corner radius is 8px, confirmed via the corner tile's own
-            `rounded-tl-[8px]` in Figma's source and cross-checked against a
-            screenshot showing all four corners rounded — applied here via
-            `overflow-hidden rounded-[8px]` on this background layer.
-
-            The perimeter is a real `border`, not the old "closing rule"
-            background layers. Those were two flat linear-gradients pinned
-            to the right/bottom edges to fake a border without the `border`
-            property — fine on square corners, but a straight painted line
-            doesn't know about the corner radius, so it got clipped off
-            partway through the arc instead of curving with it, reading as
-            a chopped-off corner. An actual CSS border is drawn together
-            with border-radius and always follows the curve correctly, so
-            it replaces those two layers (the two repeating gradients stay,
-            for the internal grid lines only). */}
-        {/* Scaling strategy: every child below is positioned with absolute
-            pixel coordinates lifted straight from Figma's 1328×426.857
-            frame — there's no sensible way to "reflow" that, so instead of
-            jumping straight to full size at some arbitrary width, the whole
-            fixed layout is scaled down as one rigid unit at every viewport
-            width, down to the smallest phone, and only reaches scale 1
-            (full size) once the content box hits the frame's true 1328px.
-            That's what `hero-scale` is doing — running it unconditionally
-            (rather than only above some breakpoint, as it used to) keeps
-            the headline's ink width and the 31px grid pitch shrinking
-            together, so glyphs stay grid-locked at every size instead of
-            only on desktop.
-
-            `--hero-scale` reads `100cqi` — the available content-box inline
-            size — rather than assuming a fixed viewport-minus-padding
-            formula, via `[container-type:inline-size]` on `<main>` above.
-            Querying the real rendered width instead of guessing at it means
-            this keeps working if the surrounding padding/max-width ever
-            changes, without a second number to keep in sync.
-
-            The container lives on `<main>`, not on this section: a query
-            container's own box is excluded from its own cqi (only
-            descendants can use it) — putting it here instead made `#hero`'s
-            *width*-derived transform resolve fine (its width comes from a
-            child, a true descendant) but its own *height* rule silently
-            fell back to some other containing block and came out wrong.
-
-            Box height is 434 (14 × 31), not the content's incidental
-            426.857 — that number was inherited from the OLD grid's row
-            count (9 × 47.428571) and left an unfinished 14th row (~22px)
-            sliced off at the bottom. 14 full rows is the nearest whole
-            multiple of 31 to the old height, so it grows the box by only
-            ~7px rather than resizing it to Figma's own 468 (15 rows), which
-            would've shifted everything below the hero more than this
-            content actually needed. */}
-        <section
-          id="hero"
-          className="relative [--hero-scale:min(1,calc(100cqi/1328px))] [height:calc(434px*var(--hero-scale))]"
-        >
-          {/* The fixed-size "canvas": Figma's exact 1328×434 box, scaled
-              down by --hero-scale (1 at full size, continuing to shrink all
-              the way to mobile widths) rather than resized — a transform
-              keeps every child's absolute coordinate correct relative to
-              every other one, which resizing the box itself wouldn't. This
-              scaling now runs unconditionally (no `hero:` gate) so the
-              headline stays locked to the grid at every width — the ink
-              width of a glyph and the 31px grid pitch shrink by the same
-              factor together. */}
-          <div className="absolute left-0 top-0 h-[434px] w-[1328px] origin-top-left [transform:scale(var(--hero-scale))]">
-            {/* Background grid · 627:46434/46435-47051 (15 rows × 42 cols of
-                30px tiles). Reproduced as a painted layer rather than actual
-                tiles — same repeating-linear-gradient technique as before,
-                just at the new 31px pitch. */}
+            Mobile and desktop are two separate trees, each hidden at the
+            other's breakpoint, rather than one shared layout reflowed with
+            CSS: the headline overlaps the illustration only on desktop
+            (coral text-stroke so it still reads over the linework where it
+            crosses the face) and sits as two plain lines below the
+            illustration on mobile (per 66:118321, no overlap there at
+            all) — different enough treatments that one DOM structure
+            forcing both was worse than the duplication. */}
+        {/* lg:-mx-8 cancels <main>'s own lg:px-8 — the hero needs to reach
+            the white perimeter (LeftRail/RightRail, PerimeterFrame.tsx),
+            not just <main>'s already-inset content column that every other
+            section stops at. main's box is already capped at the rails'
+            inner edge (lg:w-[min(1376px,...)] = 1440 design width minus
+            the 32px rail on each side, per the comment on <main> above),
+            so pulling out by exactly its own horizontal padding lands the
+            hero flush against that edge without overlapping the rails
+            themselves. lg-only: below that width there's no rail/perimeter
+            chrome to reach, so mobile keeps the ordinary px-6 inset. */}
+        <section id="hero" className="flex flex-col lg:-mx-8 lg:flex-row lg:items-stretch lg:-mt-10">
+          {/* ---------- Phone (<640px): coral panel only, stacked headline ---------- */}
+          {/* sm:hidden (was md:hidden, i.e. <768px): the switch to the
+              overlap lockup was happening well before it needed to — there
+              was still plenty of room for "I'M MARC FAVRO" on one line
+              in the 640–767px range, per direct observation. 640px is
+              close to where that line actually starts needing the extra
+              room the overlap lockup's own width gives it; true phone
+              widths below that keep this stacked, non-overlapping
+              treatment, which is specifically what matches the Figma
+              mobile frame (66:118321).
+              Gaps tightened (mt-6/mt-6/mt-5 → mt-3/mt-3/mt-2, pt-9/pb-10 →
+              pt-6/pb-7): read as too loose next to the 1440 lockup's own
+              tight pt-[9%]/pb-[11%]/gap-2 — this block still uses fixed px
+              (not %) since it's a fundamentally different, stacked
+              composition rather than a scaled copy of the desktop one, so
+              there's no single ratio to carry over exactly; tightened by
+              feel to match that same compactness instead. */}
+          <div className="relative isolate flex flex-col items-center overflow-hidden rounded-[8px] bg-accent px-6 pb-7 pt-6 text-center sm:px-10 sm:hidden">
+            {/* Texture · same asset as the work-card lockups above
+                (public/case-study-texture.svg), but applied as a CSS
+                background with background-size:cover instead of an <img>
+                with h-full/w-full: the SVG has its own intrinsic aspect
+                ratio, and an <img> respects that via preserveAspectRatio
+                even when its box is stretched to h-full/w-full, so on a
+                panel shaped differently from the texture's native ratio it
+                letterboxed — visible as flat, un-grained coral bands top
+                and bottom. A background-image with background-size:cover
+                fills the box edge to edge on any aspect ratio, cropping
+                instead of letterboxing (same spirit as the work card's own
+                scale-[1.06] overscale to crop the source's stray edge
+                pixels). */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 overflow-hidden rounded-[8px] border border-line"
+              className="pointer-events-none absolute inset-0 mix-blend-multiply"
+              style={{
+                backgroundImage: "url(/case-study-texture.svg)",
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                backgroundRepeat: "no-repeat",
+              }}
+            />
+            <p className={`${HERO_LABEL_CLASS} relative`}>Hello &amp; welcome</p>
+            <div className="relative mt-3 w-[78%] max-w-[300px]">
+              <Image
+                src="/marc/hero-illustration-2026.png"
+                alt="Illustrated portrait of Marc Favro"
+                width={1268}
+                height={1241}
+                priority
+                sizes="(min-width: 1024px) 450px, 320px"
+                className="relative block h-auto w-full"
+              />
+            </div>
+            {/* 66:118338 — 53/59 Bold, hard-broken after "I'm" (not a
+                reflow of one line): matches the two-line balance in the
+                mobile frame at any width narrower than it. */}
+            <h1 className="relative mt-3 text-[clamp(2.25rem,11vw,3.25rem)] leading-[0.95] font-bold tracking-tight text-white uppercase [font-family:var(--font-display)]">
+              I&rsquo;m
+              <br />
+              Marc Favro
+            </h1>
+            <p className={`${HERO_LABEL_CLASS} relative mt-2 max-w-[22rem]`}>
+              I&rsquo;m a Principal Product Designer, based in Brooklyn, New York
+            </p>
+          </div>
+
+          {/* ---------- Tablet (640–1023px, capped width) + Desktop (≥1024px, 60%) ---------- */}
+          {/* sm:block (was md:block, i.e. ≥768px): matches the phone
+              block's breakpoint move above, for the same reason — this
+              tier now starts at 640px. */}
+          {/* Three levels, not two, and it matters which one gets which
+              job:
+              A (this div) — sizing within the row (sm:w-full → lg:w-[60%])
+                  PLUS the full-bleed background/texture. Its width is
+                  never capped, so the coral fill always reaches this
+                  column's real edges — capping it here was what made the
+                  background stop short and show bare page margin around
+                  it, per direct request ("the red background should
+                  remain full bleed").
+              B (sm:mx-auto sm:max-w-[825.6px]) — caps and centers the
+                  *content* only, independent of A's background. 825.6px is
+                  the exact width the lockup renders at on desktop (60% of
+                  main's capped 1376px content column) — per direct
+                  request, the lockup should read as the same size as the
+                  1440px version wherever there's room for it, not a
+                  smaller tablet-specific approximation, since removing the
+                  grid/dark column frees up exactly that space. This does
+                  reintroduce a real jump right at 1024px (825.6px → 576px,
+                  once the grid/dark column comes back and the lockup
+                  actually has to share the row) — traded on purpose,
+                  per that same request, against the smoother-but-smaller
+                  620px this replaced. lg:max-w-none lets it go back to
+                  filling A's full 60% at that point.
+              C — the padding/flex-col/content div, identical to before.
+                  It has to be a separate level from B: percentage padding
+                  resolves against the *containing block's* width, and if
+                  the padding lived on B directly, B's own max-w wouldn't
+                  be its own containing block — that's the same bug the
+                  OUTER/INNER split below this comment already fixed once
+                  (px-[4%] etc. resolving against the whole row instead of
+                  the panel). C sitting one level inside B, with no sizing
+                  of its own beyond w-full, is what makes its percentages
+                  finally resolve against B's capped width. */}
+          <div className="hidden sm:block sm:w-full lg:w-[60%]">
+            <div
+              className="relative isolate h-full overflow-hidden bg-accent"
+            >
+              {/* Texture · see the mobile panel's comment above for why this
+                  is a CSS background-size:cover layer, not an <img>. Lives
+                  on A now (full-bleed), not on C (capped) — it has to cover
+                  the same box the coral fill does. */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-0 mix-blend-multiply"
+                style={{
+                  backgroundImage: "url(/case-study-texture.svg)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  backgroundRepeat: "no-repeat",
+                }}
+              />
+              {/* h-full down through B: dormant today (A's own height is
+                  always this content's organic height — the row's shorter
+                  right column never forces A taller — see the OUTER/INNER
+                  comment on the grid/dark column below), but without it a
+                  future case where A *does* get stretched taller would
+                  leave the coral fill and centering correct while the
+                  content silently stopped actually centering inside it. */}
+              {/* [container-type:inline-size] lives here, not on the
+                  padded div one level in: cqw resolves against a
+                  container's own CONTENT box, so putting it on the div
+                  that has px-[4%] would make cqw measure the width AFTER
+                  that 4%+4% padding is already subtracted — 92% of the
+                  panel, not the panel itself, which is what the ratio
+                  below (10.4cqw) was calibrated against (85.6px at
+                  825.6px), and it silently came out ~8% small everywhere
+                  until this was caught by comparing the measured value at
+                  1440px against the pre-cqw baseline. */}
+              <div className="h-full sm:mx-auto sm:max-w-[825.6px] lg:max-w-none [container-type:inline-size]">
+                {/* pt-[9%]/pb-[11%] (was symmetric py-[10%]): measured
+                    directly off a screenshot with a reference line at the
+                    grid/dark-block split height (55% down the panel) — the
+                    headline's ink center sat at ~56.35%, about 1.35% of
+                    panel height (~1% of panel width, this padding's own
+                    basis) low. A justify-center flex column shifts by
+                    (pt−pb)/2 off true center, so trimming pt by 1% and
+                    adding it to pb pushes the whole
+                    eyebrow→illustration→subline stack up by that amount
+                    without touching the headline's own top-[61%] position
+                    within it — the headline moves only because it rides
+                    with the illustration, not because its own rule
+                    changed. */}
+                <div className="relative flex h-full w-full flex-col justify-center gap-2 px-[4%] pt-[9%] pb-[11%] text-center">
+                  <p className={`${HERO_LABEL_CLASS} relative`}>Hello &amp; welcome</p>
+                  <div className="relative w-full">
+                    <Image
+                      src="/marc/hero-illustration-2026.png"
+                      alt="Illustrated portrait of Marc Favro"
+                      width={1268}
+                      height={1241}
+                      priority
+                      sizes="(min-width: 1024px) 450px, 320px"
+                      className="relative mx-auto block h-auto w-[47%]"
+                    />
+                    {/* Real h1, not an image. Coral stroke = the panel's own
+                        background color, so it's invisible on flat coral and
+                        only separates the letterforms from the linework
+                        where they cross the face. paint-order keeps the
+                        stroke from eating into the fill. top-[61%]: measured
+                        headline-ink center off the reference sits ~61% down
+                        the illustration, not 58%.
+                        cqw, not vw: font-size used to be
+                        clamp(3.7rem,5.95vw,5.35rem) — 5.95vw was reverse-
+                        engineered from one specific relationship (this
+                        panel = 60% of a ~1376px row at the 1440px anchor),
+                        so it quietly stopped being correct anywhere that
+                        relationship doesn't hold — which is exactly this
+                        tier: the panel is capped at 825.6px or tracks the
+                        row directly instead of "60% of 1376", so 5.95vw
+                        was systematically wrong here. 10.4cqw reads the
+                        *container's own width* (set two levels up) instead
+                        of the viewport, so it's correct at every width this
+                        lockup ever renders at, including ones no one has
+                        tuned it against by hand — 10.4% is the same
+                        85.6px-at-825.6px-container ratio the old constant
+                        was calibrated to, so 1440px desktop is unchanged. */}
+                    <h1
+                      className="pointer-events-none absolute inset-x-[1.5%] top-[61%] -translate-y-1/2 whitespace-nowrap text-center text-[clamp(2rem,10.4cqw,5.35rem)] leading-[0.9] font-bold tracking-tight text-white uppercase [font-family:var(--font-display)]"
+                      style={{
+                        WebkitTextStroke: "0.05em var(--accent)",
+                        paintOrder: "stroke fill",
+                      }}
+                    >
+                      I&rsquo;m Marc Favro
+                    </h1>
+                  </div>
+                  {/* No max-w: the reference has this on one line — capping
+                      it narrower was what forced a second line that ate
+                      into the height budget. */}
+                  <p className={`${HERO_LABEL_CLASS} relative`}>
+                    I&rsquo;m a Principal Product Designer, based in Brooklyn, New York
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ---------- Desktop: grid (55%) + dark block (45%), 40% column ---------- */}
+          <div className="hidden lg:flex lg:w-[40%] lg:flex-col">
+            {/* Percentage pitch, not px: a fixed-px repeating-gradient tiles
+                from the box's origin and simply gets cut off wherever the
+                box's actual size isn't a whole multiple of that px value —
+                every real render left a visibly narrower partial column at
+                the right edge and a partial row at the bottom, since this
+                box's size is fluid (40% of the row, organic panel height),
+                never an exact multiple of any fixed px. 34 columns × 20
+                rows divides both axes exactly (100%/34 and 100%/20), so
+                there's always a whole number of cells edge to edge with no
+                remainder — chosen to land close to the previous ~16px
+                density at the 1440 anchor width (550×322px ≈ 16.2px
+                cells) while staying near-square (not just non-clipped)
+                across the lg range; re-measure both if the column split
+                (currently 40%) or the row-vs-dark-block split (55/45)
+                ever change, since those drive this box's own aspect. */}
+            <div
+              aria-hidden
+              className="flex-[55_1_0%] bg-white"
               style={{
                 backgroundImage: [
-                  "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 31px)",
-                  "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 31px)",
+                  "repeating-linear-gradient(to right, var(--accent) 0 1px, transparent 1px calc(100% / 34))",
+                  "repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px calc(100% / 20))",
                 ].join(","),
               }}
             />
-
-            {/* Every child takes its Figma coordinate inside the 434px body,
-                reached via the scale wrapper above rather than directly by
-                the viewport — this now applies at all widths. */}
-            <div className="relative block">
-            {/* Portrait · 685:67539 — 274×366, left is 116.5 (raw Figma,
-                never rule-derived, so the new grid doesn't touch it — this
-                frame moved the whole lockup right by ~2 rules from the
-                previous one's 55). Its top IS rule-derived: the hard crop
-                edge at the bottom lands on the same rule as the subhead's
-                baseline (31 × 12 = 372, unchanged from before), so
-                top = 372 − 366 = 6, also unchanged. */}
-            <span className="absolute left-[85.5px] top-[6px] block h-[366px] w-[274px] overflow-hidden">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/marc/hero-illustration.png"
-                alt="Illustrated portrait of Marc Favro"
-                className="absolute left-[-12.95%] top-[0.26%] h-[99.48%] w-[132.49%] max-w-none"
-              />
-            </span>
-
-            {/* The three text layers are aligned by their INK, not their
-                boxes. This frame (685:66888) shrinks only the headline —
-                eyebrow and subhead are byte-for-byte the same font-size/
-                leading/color as the previous frame — and shifts the whole
-                lockup (portrait included) right by ~2 grid rows. So:
-
-                Eyebrow and subhead keep their EXACT old baseline rule and
-                top (unchanged font ⇒ unchanged baseline-offset-from-top ⇒
-                no reason for top to move). Headline's font shrunk
-                (217.62→181.671 / 199.534→166.573 / −2.1762→−1.8167px, all
-                the same ~0.8347 ratio — it's a uniform scale-down, not a
-                new treatment), so its baseline-offset-from-top shrinks too;
-                re-measured live the same way as before (a zero-size
-                vertical-align:baseline probe) rather than trusting the
-                ratio, since the fallback stack's metrics don't necessarily
-                scale identically: 145px (was 173.5). Left ink bearing
-                re-measured the same way: 13.4px (was 16.05).
-
-                Horizontal: all three ink-align to rule 14 (31 × 14 = 434,
-                was rule 12/372) — this frame's raw Figma x's (424–432)
-                cluster tightly around it, and the +2-row shift matches the
-                portrait's own move almost exactly (61.5px raw ≈ 2 × 31).
-                Each `left` is 434 − that element's bearing.
-
-                Vertical: eyebrow stays on rule 5 (155, top 105.5, unchanged).
-                Headline stays on rule 11 (341) — SAME rule as before, only
-                its offset changed, confirmed by this frame's raw box
-                bottom (169 + 167 = 336) landing close to it; top =
-                341 − 145 = 196. Subhead stays on rule 12 (372, top 341,
-                unchanged) — this frame's raw y (342) lands almost exactly
-                on it once you add its own 31px offset back (342 + 31 ≈
-                372), so nothing here moved either.
-
-                Re-measure both probes if the font file is ever updated;
-                CSS has no ink-edge or baseline alignment primitive to do
-                this declaratively.
-
-                CORRECTION (supersedes the "corrected via canvas pixel scan"
-                pass below the old values had): that pass was wrong. It
-                pixel-scanned a fillText() render at a low alpha threshold,
-                which overshoots the true ink edge by a few px of
-                antialiasing fuzz, and it misattributed the resulting gap to
-                DOM Range under-measuring. Re-verified with
-                CanvasRenderingContext2D.measureText(char).actualBoundingBoxLeft
-                (the spec-correct ink-edge metric, no rasterization/alpha
-                threshold involved) at each element's own computed font: the
-                true left bearings are 3.46 / 13.4 / 2.49 (eyebrow/headline/
-                subhead) — exactly the ORIGINAL uncorrected figures above,
-                not the "corrected" 9.81 / 6.93 / 8.8 that had been baked
-                into the `left` values. Confirmed visually too: an absolutely
-                positioned 31px-wide marker painted at x=434 inside the same
-                scaled wrapper sits flush against each glyph's ink only at
-                the original bearings — the "corrected" values shift all
-                three ~6px right of rule 14. */}
-
-            {/* Eyebrow · 685:67538 — 45.657/68.587 SemiBold #ff5841, font
-                unchanged from the previous frame. top = 105.5 (unchanged).
-                left = 434 − actualBoundingBoxLeft(−3.46) = 437.46. */}
-            <p className="absolute left-[399.54px] top-[74.5px] font-semibold text-accent [font-family:var(--font-display)] whitespace-nowrap text-[45.657px] leading-[68.587px]">
-              Hello and welcome
-            </p>
-
-            {/* Headline · 685:67537 — 181.671/166.573 Bold #4f3f3b,
-                letter-spacing −1.8167px (that’s the same −0.01em ratio as
-                before, still has to override .display’s −0.02em). Smaller
-                than the previous frame’s 217.62/199.534/−2.1762 — same
-                relative treatment, uniformly scaled down ~0.8347×.
-                top = 134 (moved up one grid row). left = 420.6. */}
-            <h1 className="display absolute left-[389.6px] top-[134px] whitespace-nowrap text-[200px] leading-[183.2px] tracking-[-1.8167px]">
-              I’m Marc
-            </h1>
-
-            {/* Subhead · 685:67540 — 31.14/41.521 Regular #444440, font
-                unchanged from the previous frame. Placeholder copy, left
-                as-is. top = 310. left = 431.51. */}
-            <p className="absolute left-[400.51px] top-[310px] text-ink-2 [font-family:var(--font-display)] whitespace-nowrap text-[31.14px] leading-[41.521px]">
-              Lorem ipsum dolor sit amet consect
-            </p>
-          </div>
+            <div className="flex flex-[45_1_0%] items-center justify-center bg-ink">
+              <span className={HERO_LABEL_CLASS}>Portfolio 2026</span>
+            </div>
           </div>
         </section>
 
