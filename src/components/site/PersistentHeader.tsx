@@ -33,8 +33,12 @@ import { CASE_STUDY_TITLES, comingSoonProject } from "@/lib/page-titles";
 const RESUME_URL = contact.resume;
 
 function HomeHeader({ active }: { active: "home" | "contact" }) {
+  // Active = the word set bold, not recolored. Accent is reserved for
+  // interactive/landmark type elsewhere, and on this band it was the only
+  // place a nav item changed hue, which read as a link state rather than a
+  // location marker.
   const activeClass = (key: typeof active) =>
-    active === key ? " text-accent hover:text-accent lg:font-semibold" : "";
+    active === key ? " font-semibold" : "";
   // Mobile/tablet: unchanged sticky in-flow header, no frame chrome (Step 5
   // exclusion). At lg+ this becomes the perimeter frame's fixed top band —
   // position switches to fixed and height locks to 42px (nav vertically

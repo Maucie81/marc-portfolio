@@ -21,36 +21,37 @@ import {
 const HERO_LABEL_CLASS =
   "text-[16px] font-medium leading-[24px] text-white [font-family:var(--font-display)]";
 
+/* The content column, applied per band instead of once on <main>.
+   w-[min(1376px,...)], centered (mx-auto): 1376 = confirmed 1440px design
+   width (get_metadata, node 627:49704) minus the 32px rail on each side.
+   Below that width the min() falls through to the fluid calc(100%-4rem)
+   term, so the column always stops exactly at the rails' inner edge.
+   Each band owns its own copy because the paper fill now belongs to the
+   BAND (full-bleed, uncapped) while the content inside it stays capped —
+   the two used to be the same element, which is why they couldn't be
+   separated by a white gutter. */
+const SHELL = "mx-auto px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8";
+
+/* 32px of bare white between bands, matching the perimeter rails' own
+   width — the Figma separates every section this way (72:151644) except
+   Personal inspo → Contact, which run flush into each other. Full-bleed by
+   construction: it sits outside SHELL, so the white it exposes is the
+   <body> itself rather than a strip drawn to some computed width. */
+function BandGap() {
+  return <div aria-hidden className="h-8" />;
+}
+
 export default function Home() {
   return (
-    <div className="bg-bg">
+    <div>
       {/* Header now lives in the root layout as PersistentHeader, outside
           PageTransition's fade — see that component for why.
-          bg-bg here (not bg-white): the grey needs to fill all space
-          between the two 32px white rails unconditionally, independent of
-          <main>'s own width — LeftRail/RightRail are opaque, fixed,
-          higher z-index, so they still paint white over their own 32px
-          regardless of what color sits behind them. Previously this
-          wrapper was white with grey moved onto <main> itself so the
-          grey could be capped separately from the white margin outside
-          it — but capping <main> also capped the actual CONTENT (hero
-          grid, work-card images), which must stay pinned at its real
-          design size, not grow. Splitting the concerns here (background
-          color vs. content sizing) fixes both without trading one bug
-          for the other. */}
-      <main
-        id="home"
-        className="mx-auto px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pt-[82px]"
-      >
-        {/* max-w equivalent via w-[min(1376px,...)], centered (mx-auto):
-            1376 = confirmed 1440px design width (get_metadata, node
-            627:49704) minus the 32px rail on each side. Below that width
-            the min() falls through to the fluid calc(100%-4rem) term —
-            this stops the CONTENT (not the grey background, which stays on
-            the outer wrapper and fills the full width regardless) from
-            growing past its real design size once the viewport exceeds
-            it, with mx-auto keeping it centered rather than pinned to
-            either rail. */}
+          No bg here: the page is white (body), and each section paints its
+          own full-bleed paper band, so the gaps between them read as the
+          same white the rails and top/bottom chrome are drawn in. */}
+      <main id="home">
+        {/* ---------- Band · hero ---------- */}
+        <div className="bg-bg lg:pt-[82px]">
         {/* Hero · Portfolio-Playground (fileKey AwPcHO3ssXvBttxqrLdxlR),
             mobile frame node 66:118321 ("Mobile hero", 402×616) + written
             desktop spec — coral panel using the same case-study-texture
@@ -65,17 +66,24 @@ export default function Home() {
             illustration on mobile (per 66:118321, no overlap there at
             all) — different enough treatments that one DOM structure
             forcing both was worse than the duplication. */}
-        {/* lg:-mx-8 cancels <main>'s own lg:px-8 — the hero needs to reach
-            the white perimeter (LeftRail/RightRail, PerimeterFrame.tsx),
-            not just <main>'s already-inset content column that every other
-            section stops at. main's box is already capped at the rails'
-            inner edge (lg:w-[min(1376px,...)] = 1440 design width minus
-            the 32px rail on each side, per the comment on <main> above),
-            so pulling out by exactly its own horizontal padding lands the
-            hero flush against that edge without overlapping the rails
-            themselves. lg-only: below that width there's no rail/perimeter
-            chrome to reach, so mobile keeps the ordinary px-6 inset. */}
-        <section id="hero" className="flex flex-col lg:-mx-8 lg:flex-row lg:items-stretch lg:-mt-10">
+        {/* SHELL's column, spelled out rather than interpolated, because
+            this is the one section with NO horizontal padding at lg: the
+            hero has to reach the white perimeter (LeftRail/RightRail,
+            PerimeterFrame.tsx), not stop at the inset content column every
+            other section uses. `${SHELL} lg:px-0` does not express that —
+            lg:px-8 and lg:px-0 are the same property, so which one wins is
+            decided by Tailwind's own output order, not by the order they
+            appear in the class string, and px-8 won (visible as a 32px
+            margin of paper between the coral and the rail). The width cap
+            is the same as SHELL's: w-[min(1376px,calc(100%-4rem))] = the
+            1440 design width minus the 32px rail on each side, so with no
+            padding the hero lands flush against the rails' inner edge
+            without overlapping them. Below lg there's no perimeter chrome
+            to reach, so mobile keeps the ordinary px-6 inset. */}
+        <section
+          id="hero"
+          className="mx-auto flex flex-col px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:flex-row lg:items-stretch lg:-mt-10 lg:px-0"
+        >
           {/* ---------- Phone (<640px): coral panel only, stacked headline ---------- */}
           {/* sm:hidden (was md:hidden, i.e. <768px): the switch to the
               overlap lockup was happening well before it needed to — there
@@ -285,29 +293,33 @@ export default function Home() {
 
           {/* ---------- Desktop: grid (55%) + dark block (45%), 40% column ---------- */}
           <div className="hidden lg:flex lg:w-[40%] lg:flex-col">
-            {/* Percentage pitch, not px: a fixed-px repeating-gradient tiles
-                from the box's origin and simply gets cut off wherever the
-                box's actual size isn't a whole multiple of that px value —
-                every real render left a visibly narrower partial column at
-                the right edge and a partial row at the bottom, since this
-                box's size is fluid (40% of the row, organic panel height),
-                never an exact multiple of any fixed px. 34 columns × 20
-                rows divides both axes exactly (100%/34 and 100%/20), so
-                there's always a whole number of cells edge to edge with no
-                remainder — chosen to land close to the previous ~16px
-                density at the 1440 anchor width (550×322px ≈ 16.2px
-                cells) while staying near-square (not just non-clipped)
-                across the lg range; re-measure both if the column split
-                (currently 40%) or the row-vs-dark-block split (55/45)
-                ever change, since those drive this box's own aspect. */}
+            {/* 16px cell, fixed — the same sheet the work cards and the
+                Personal inspo band are drawn on, so the page reads as one
+                piece of graph paper rather than three at different scales.
+                This used to divide the box instead (34 × 20, ≈16.2px at
+                the 1440 anchor) to guarantee whole cells edge to edge. The
+                catch is that a divided cell is only 16px at the width it
+                was calibrated against: this box is 40% of the row while a
+                card's panel is a 1fr track after a fixed 392 + 72px, so
+                the two scale at different rates and their cells drifted
+                apart — 16.19 vs 12.53px at 1440, and further apart as the
+                window narrowed. A fixed pitch can't drift.
+                What it costs is the partial cell the divisors avoided.
+                background-position handles where that lands: `top` starts
+                the rows at this box's top edge so the first row is always
+                full, pushing the remainder to the bottom, where the dark
+                block's hard edge hides it; `center` splits the horizontal
+                remainder into equal half-cells on both sides instead of
+                dumping one narrow column at the right. */}
             <div
               aria-hidden
               className="flex-[55_1_0%] bg-white"
               style={{
                 backgroundImage: [
-                  "repeating-linear-gradient(to right, var(--accent) 0 1px, transparent 1px calc(100% / 34))",
-                  "repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px calc(100% / 20))",
+                  "repeating-linear-gradient(to right, var(--accent) 0 1px, transparent 1px 16px)",
+                  "repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 16px)",
                 ].join(","),
+                backgroundPosition: "center top",
               }}
             />
             <div className="flex flex-[45_1_0%] items-center justify-center bg-ink">
@@ -315,10 +327,15 @@ export default function Home() {
             </div>
           </div>
         </section>
+        </div>
 
-        {/* 01 — Recent Work. No border-t: the hero grid's bottom rule sits
-            directly above it and already divides the two. */}
-        <section id="work" className="sec py-12">
+        <BandGap />
+
+        {/* ---------- Band · 01 Recent work ---------- */}
+        <div className="bg-bg">
+        {/* No border-t any more: the 32px white gutter above this band is
+            the divider now. */}
+        <section id="work" className={`${SHELL} sec py-12`}>
           <SectionRail />
           <SectionNumber number="01" label="Recent work" />
           <div>
@@ -340,28 +357,53 @@ export default function Home() {
                   // ground and shadow masked to transparent (same canvas,
                   // same position — see home.ts), so it lays over the
                   // texture without a matte. No border: the design has none.
+                  // 93.333% = 56 of the old 60 columns, i.e. two cells off
+                  // each side, with ml-auto pinning the right edge to the
+                  // section's so the whole reduction comes off the left.
+                  // The divisors below drop to match, which keeps the CELL
+                  // the same size instead of just scaling the same
+                  // 60-column sheet down into a narrower box.
                   <div
-                    className="product-media relative isolate w-full overflow-hidden rounded-[4px] bg-bg"
+                    className="product-media relative isolate ml-auto w-[93.333%] overflow-hidden rounded-[4px] bg-bg"
                     style={{ aspectRatio: "714 / 402" }}
                   >
-                    {/* Texture · Figma frame 26:2683, the hand-exported SVG
-                        used as-is (Dev Mode MCP guest access blocks
-                        inspect/export), multiply-blended against the page
-                        grey exactly as the frame sits on the Figma canvas —
-                        the ground here has to be --bg, not white (multiply
-                        over white is an identity and left it far too
-                        bright). The export carries a few stray colored
-                        pixels at two corners (Figma's selection handles,
-                        visible in the source screenshot too) and a ~2px
-                        fade from its blur filter, all within the outer
-                        ~2.5%, so it's scaled 6% and the overflow-hidden
-                        parent crops them off. */}
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/case-study-texture.svg"
-                      alt=""
+                    {/* Graph paper, replacing the halftone texture sheet
+                        this card used to sit on (72:155197). Same 16px
+                        cell as the hero column and the Personal inspo
+                        band, only in --line rather than accent — two coral
+                        grids on one screen read as competing, and the
+                        Figma draws this one grey.
+                        Fixed pitch, not divisors (56 × 32 before): see the
+                        hero grid for why — a divided cell only holds its
+                        intended size at the width it was calibrated
+                        against, and this panel and the hero column scale
+                        at different rates, so theirs drifted to 12.53 vs
+                        16.19px at the 1440 anchor. `center top` places the
+                        partial cells the divisors used to avoid: rows
+                        start full at the top, and the horizontal remainder
+                        splits evenly across both edges. The inset ring
+                        below closes all four sides regardless. */}
+                    {/* The inset ring closes the sheet. A repeating
+                        gradient paints its line at the START of each cell,
+                        so the grid gets a rule at 0% but none at 100% on
+                        either axis — the last column and row ran off the
+                        box with no edge, which read as a grid that had
+                        been cropped rather than a sheet of paper. An inset
+                        box-shadow rather than a border: a border would
+                        shrink the background positioning area, and the
+                        calc(100%/n) cell size is measured against it, so
+                        every line would shift a fraction off. */}
+                    <div
                       aria-hidden
-                      className="pointer-events-none absolute inset-0 h-full w-full scale-[1.06] mix-blend-multiply"
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        backgroundImage: [
+                          "repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 16px)",
+                          "repeating-linear-gradient(to bottom, var(--line) 0 1px, transparent 1px 16px)",
+                        ].join(","),
+                        backgroundPosition: "center top",
+                        boxShadow: "inset 0 0 0 1px var(--line)",
+                      }}
                     />
                     <Image
                       src={project.image.src}
@@ -386,21 +428,57 @@ export default function Home() {
                   </div>
                 );
 
+                // lg:gap-x-18 (72px, was 24) — the copy was crowding the
+                // grid panel. Funded by the 48px cut from .sec's number
+                // column (globals.css) rather than taken out of the panel:
+                // 392 text + 72 gutter + 655 panel is exactly the widened
+                // content column, so the image renders at the size it did
+                // before. Column gap only; the row gap still applies below
+                // lg, where the two stack.
                 return (
                   <article
                     key={project.company + project.title}
-                    className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]"
+                    className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)] lg:gap-x-18"
                   >
                     {/* Project Info · 177:111987 */}
-                    <div className="flex flex-col gap-5 lg:pt-3">
+                    <div className="flex flex-col gap-5">
                       <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2">
-                          <p className="t-label text-ink-2">{project.company}</p>
-                          <h3 className="display t-title">
+                          {/* Company · small uppercase mono, one rung below
+                              the title, per 72:155197 — was the same 16px
+                              semibold sans as the title's own label role,
+                              which made the two read as one stacked
+                              headline instead of eyebrow + headline. */}
+                          <p className="t-card-eyebrow">{project.company}</p>
+                          {/* Measure, not the 392px column: at full column
+                              width the titles set one-and-a-bit lines and
+                              read as a run-on. 9.2em reproduces the Figma's
+                              own breaks exactly — Partner portal 1 line,
+                              Unified main door 2, Account creation &
+                              onboarding 3. em, not px: the title is a
+                              clamp() that changes size across the lg range,
+                              and a px measure would flip a card's line count
+                              partway along it. Measured window is
+                              8.6em–9.7em, so this sits mid-range with slack
+                              on both sides rather than on a break point. */}
+                          {/* text-balance evens the lines instead of
+                              filling each one before breaking: "Unified
+                              main door" was setting as "UNIFIED MAIN /
+                              DOOR" (241 / 107) and now breaks "UNIFIED /
+                              MAIN DOOR" (138 / 209). Measured against all
+                              three titles — Partner portal stays on one
+                              line and Account creation & onboarding keeps
+                              the same three breaks, so this only moves the
+                              one that needed moving. Preferred over a
+                              non-breaking space in the copy: the break
+                              stays a typographic decision here rather than
+                              riding along in the string that also feeds
+                              aria-labels and page titles. */}
+                          <h3 className="display t-title max-w-[9.2em] text-balance uppercase">
                             {project.title}
                           </h3>
                         </div>
-                        <p className="t-body max-w-[375px] text-ink-2">
+                        <p className="t-body-alt max-w-[375px] text-ink-2">
                           {project.description}
                         </p>
                       </div>
@@ -458,7 +536,14 @@ export default function Home() {
                             Tooling list, plus the orange "•" divider (Google
                             Sans Flex, 13px, accent — a separate role from the
                             mono tag text, not part of .t-meta-sm). */}
-                        <div className="flex flex-wrap items-center justify-center gap-2.5 bg-bg pb-0 pl-5 pr-1 pt-4">
+                        {/* Right-aligned, flush to the grid panel's own
+                            right edge — this row shares the panel's width,
+                            so justify-end lands the last tag on the same x
+                            the lockup ends at. No horizontal padding: the
+                            old pl-5/pr-1 was optical centering for the
+                            centered row this replaces, and any pr here
+                            would break the alignment it's aligning to. */}
+                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg px-0 pb-0 pt-4">
                           {project.skills.map((skill, i) => (
                             <span key={skill} className="flex items-center gap-2.5">
                               {i > 0 ? (
@@ -483,12 +568,38 @@ export default function Home() {
             </div>
           </div>
         </section>
+        </div>
 
+        <BandGap />
+
+        {/* ---------- Band · 02 Additional work ----------
+            Dark ink panel, full-bleed, per 72:157593 — the section used to
+            sit on the same paper as everything above it and read as more
+            Recent Work; inverting it is what separates "a little bit more"
+            from the three real case studies. Same ink as the hero's
+            "Portfolio 2026" block so the page has one dark, not two. */}
+        <div className="on-dark relative isolate overflow-hidden bg-ink">
+          {/* Halftone · the dot screen the Figma lays over this panel.
+              Drawn rather than imported: the site's one texture asset
+              (case-study-texture.svg) is a multiply sheet built for coral
+              and page-grey, and multiply over a dark ground is very nearly
+              a no-op. A radial-gradient dot at the same ~16px pitch as the
+              grids elsewhere on the page keeps the sheet metaphor without a
+              second asset. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0"
+            style={{
+              backgroundImage:
+                "radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)",
+              backgroundSize: "8px 8px",
+            }}
+          />
         {/* 02 — additional work · 499:55119 — deliberately lighter than the
             primary case studies: headline + intro on the left, a carousel
             list on the right. No images, label only, no case-study link.
             Its own numbered section per Figma, not folded into Recent Work. */}
-        <section id="additional-work" className="sec border-t border-line py-12">
+        <section id="additional-work" className={`${SHELL} sec relative py-12`}>
           <SectionRail />
           <SectionNumber number="02" label="Additional work" />
           <div>
@@ -497,17 +608,29 @@ export default function Home() {
                 work") — previously both said "Additional work", the exact
                 redundant-eyebrow pattern flagged in review. */}
             <h2 className="t-section-title">A little bit more</h2>
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)]">
+            {/* Same 392px + 72px gutter as the Recent Work cards above, so
+                this list's left edge lands on the exact x their grid panels
+                start at — the two sections share a column structure, and at
+                the old 24px gutter this one sat 48px inboard of it. */}
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)] lg:gap-x-18">
               <div className="flex flex-col gap-4">
-                <h3 className="display text-[clamp(1.75rem,3.4vw,2.5rem)]">
+                <h3 className="display text-[clamp(2rem,4vw,2.5rem)] uppercase">
                   Additional work
                 </h3>
-                <p className="t-body max-w-[343px] text-ink-2">
+                <p className="t-body max-w-[343px]">
                   {additionalWorkIntro}
                 </p>
               </div>
 
-              <div className="flex flex-col gap-12">
+              {/* Same 93.333% + ml-auto inset the work cards' grid panels
+                  carry, applied to this column for the same reason: both
+                  sit in an identical 1fr track, so mirroring the inset —
+                  rather than hard-coding the 44px it currently works out
+                  to — keeps this list's left edge on the panels' left edge
+                  at every width, including ones where that gap isn't 44px.
+                  lg-only: below it the grid is one column and there's no
+                  panel to line up with. */}
+              <div className="flex flex-col gap-12 lg:ml-auto lg:w-[93.333%]">
                 {additionalWork.map((item) => {
                   const isDone = Boolean(item.href) && !item.draft;
 
@@ -516,23 +639,30 @@ export default function Home() {
                       {/* company | title on one label line, trailing arrow —
                           shared ArrowIcon, same style as the case-study
                           "Back" link (rotated the other way). */}
-                      <p className="t-label inline-flex items-center gap-2.5 text-ink-2">
+                      <p className="t-label inline-flex items-center gap-2.5">
                         <span>
                           {item.company}
-                          <span aria-hidden className="px-2 font-normal text-muted">
+                          <span
+                            aria-hidden
+                            className="px-2 font-normal text-current opacity-60"
+                          >
                             |
                           </span>
                           {item.title}
                         </span>
                         <ArrowIcon
-                          className={`text-ink-2${
+                          className={`text-current${
                             isDone
                               ? " transition-transform group-hover:translate-x-0.5"
                               : ""
                           }`}
                         />
                       </p>
-                      <p className="t-body max-w-[581px] text-muted">
+                      {/* 520px ≈ 62 characters at this mono's 14px — the
+                          old 581px ran to ~69, past the point the eye
+                          tracks comfortably from line to line, which is
+                          what made this column read as a wall. */}
+                      <p className="t-body max-w-[520px]">
                         {item.description}
                       </p>
                     </>
@@ -559,12 +689,13 @@ export default function Home() {
             </div>
           </div>
         </section>
+        </div>
 
-        {/* 03 — Experience */}
-        <section
-          id="experience"
-          className="sec border-t border-line py-12"
-        >
+        <BandGap />
+
+        {/* ---------- Band · 03 Career history ---------- */}
+        <div className="bg-bg">
+        <section id="experience" className={`${SHELL} sec py-12`}>
           <SectionRail />
           <SectionNumber number="03" label="Career history" />
           <div>
@@ -574,7 +705,7 @@ export default function Home() {
                 pattern as Additional Work above. */}
             <p className="t-section-title">Where I&apos;ve been</p>
             {/* 177:112121 — Playfair headline */}
-            <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
+            <h2 className="display text-[clamp(2rem,4vw,2.5rem)] uppercase">
               Career history
             </h2>
             <div className="mt-8">
@@ -582,101 +713,156 @@ export default function Home() {
             </div>
           </div>
         </section>
+        </div>
 
-        {/* 04 — Personal inspo */}
-        <section id="interests" className="sec border-t border-line py-12">
+        <BandGap />
+
+        {/* ---------- Band · 04 Personal inspo + 05 Contact ----------
+            The only two bands with no white gutter between them: in the
+            Figma the coral graph paper runs straight into the coral contact
+            panel, so they read as one closing block. */}
+        {/* Coral graph paper, per 72:179800. Fixed 16px pitch rather than
+            the percentage divisors used inside fixed-ratio boxes elsewhere:
+            this band is full-bleed and its height is content-driven, so
+            there's no ratio to divide evenly — centering horizontally
+            splits the leftover into equal half-cells on both edges instead
+            of dumping one narrow partial column on the right. 16px matches
+            the hero grid's own ~16.2px cell.
+            The lines are drawn at 45% accent, not full: at full strength a
+            grid this dense over a whole band competed with the photos it
+            sits behind.
+            Vertically the sheet starts at the band's own top edge, so the
+            first row is a full 16px like every other one — an offset here
+            (it was 14px, to put a rule through the header row) buys that
+            rule at the cost of a short first row, which reads as a line
+            spacing bug along the top edge. The rule is bought with the
+            section's 50px top padding instead: that puts the header row's
+            shared centre at 64px, which IS a multiple of 16, so a line
+            lands on it with the sheet still starting at 0. Re-derive that
+            padding if the rail's own py-2 or the type roles' nudge move
+            the centre. */}
+        <div
+          className="bg-bg"
+          style={{
+            backgroundImage: [
+              "repeating-linear-gradient(to right, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
+              "repeating-linear-gradient(to bottom, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
+            ].join(","),
+            backgroundPosition: "center top",
+          }}
+        >
+        {/* pt-[50px], not py-12, and only here: 48 put the header row's
+            centre at 62, which isn't a multiple of the 16px grid, so no
+            rule could land on it without offsetting the whole sheet. 50
+            moves that centre to 64. The 2px is invisible against the other
+            sections; the alternative (offsetting the sheet) was visible as
+            a short first row. */}
+        <section id="interests" className={`${SHELL} sec sec-ink pb-12 pt-[50px]`}>
           <SectionRail />
           <SectionNumber number="04" label="Personal inspo" />
           {/* min-w-0 lets this grid item shrink to the column instead of being
               propped open by content; the ScrollStrip inside clips its own
               overflow. */}
           <div className="min-w-0">
-            {/* Accent section eyebrow, same as every other section header. */}
-            <p className="t-section-title">Personal inspo</p>
-            <p className="t-body mt-4 max-w-[720px] text-muted">
-              Personal list of things that I love, dive deep into, and get
-              inspiration from
+            {/* Ink, not accent, here alone — see .sec-ink in globals.css:
+                the band under it is already coral. --tight pulls the strip
+                up under it; the wrapper below carries no top margin of its
+                own, since an mt-* there would just collapse against this
+                title's larger bottom margin and do nothing. */}
+            <p className="t-section-title t-section-title--tight">
+              Personal inspo
             </p>
-            <div className="mt-8">
-              <InterestGallery />
+            <InterestGallery />
+          </div>
+        </section>
+        </div>
+
+        {/* 05 — Contact · coral panel, full-bleed, per 72:179800, running
+            flush off the graph-paper band above it. The footer credit line
+            now lives inside this same panel rather than as its own white
+            strip below it, which is how the Figma closes the page. */}
+        <div className="on-dark relative isolate overflow-hidden bg-accent">
+          {/* Texture · the same multiply sheet the hero's coral panel
+              carries, so the page's two coral fields read as one ink. See
+              the hero for why this is a background-size:cover layer rather
+              than an <img>. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 mix-blend-multiply"
+            style={{
+              backgroundImage: "url(/case-study-texture.svg)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          />
+          <section id="contact" className={`${SHELL} sec relative py-12`}>
+            <SectionRail />
+            <SectionNumber number="05" label="Contact" />
+            {/* The email address is the headline. */}
+            <div>
+              <p className="t-section-title" style={{ marginBottom: "0.75rem" }}>
+                We should probably chat, right?
+              </p>
+              {/* hover drops to opacity, not accent: accent-on-accent is
+                  invisible here. */}
+              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
+                <a
+                  href={`mailto:${contact.email}`}
+                  className="transition-opacity hover:opacity-75"
+                >
+                  {contact.email}
+                </a>
+              </h2>
+
+              <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tracking-wide">
+                <a
+                  href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
+                  className="t-mark transition-opacity hover:opacity-75"
+                >
+                  {contact.phone}
+                </a>
+                <span aria-hidden className="text-white/50">
+                  |
+                </span>
+                <a
+                  href={contact.resume}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="t-mark transition-opacity hover:opacity-75"
+                >
+                  Resume
+                </a>
+                <span aria-hidden className="text-white/50">
+                  |
+                </span>
+                <a
+                  href={contact.linkedin}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="t-mark transition-opacity hover:opacity-75"
+                >
+                  LinkedIn
+                </a>
+              </p>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* 05 — Contact */}
-        <section id="contact" className="sec border-t border-line py-12">
-          <SectionRail />
-          <SectionNumber number="05" label="Contact" />
-          {/* The email address is the headline. */}
-          <div>
-            <p className="t-section-title" style={{ marginBottom: "0.75rem" }}>
-              We should probably chat, right?
+          {/* lg:pb-16 (64px): the fixed BottomBand (32px tall, position:fixed
+              so it doesn't occupy document flow) overlays the page's last
+              32px of padding rather than pushing content up above it — the
+              previous lg:pb-8 (32px) was entirely hidden underneath the
+              band, leaving 0px of actual visible clearance (confirmed via
+              direct measurement: text bottom and band top were flush, gap
+              0). 64px = 32px to clear the band + 32px of real breathing
+              room above it, per direct correction. */}
+          <footer className={`${SHELL} relative pb-10 lg:pb-16`}>
+            <p className="t-meta-sm border-t border-white/40 pt-5 text-right">
+              Built &amp; designed using Claude Code
             </p>
-            <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
-              <a
-                href={`mailto:${contact.email}`}
-                className="transition-colors hover:text-accent"
-              >
-                {contact.email}
-              </a>
-            </h2>
-
-            <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tracking-wide text-ink-2">
-              <a
-                href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
-                className="t-mark transition-colors hover:text-accent"
-              >
-                {contact.phone}
-              </a>
-              <span aria-hidden className="text-line">
-                |
-              </span>
-              <a
-                href={contact.resume}
-                target="_blank"
-                rel="noreferrer"
-                className="t-mark transition-colors hover:text-accent"
-              >
-                Resume
-              </a>
-              <span aria-hidden className="text-line">
-                |
-              </span>
-              <a
-                href={contact.linkedin}
-                target="_blank"
-                rel="noreferrer"
-                className="t-mark transition-colors hover:text-accent"
-              >
-                LinkedIn
-              </a>
-            </p>
-          </div>
-        </section>
+          </footer>
+        </div>
       </main>
-
-      <footer className="mx-auto border-t border-line px-6 py-10 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pb-16">
-        {/* lg:pb-16 (64px): the fixed BottomBand (32px tall, position:fixed
-            so it doesn't occupy document flow) overlays the page's last
-            32px of padding rather than pushing content up above it — the
-            previous lg:pb-8 (32px) was entirely hidden underneath the
-            band, leaving 0px of actual visible clearance (confirmed via
-            direct measurement: text bottom and band top were flush, gap
-            0). 64px = 32px to clear the band + 32px of real breathing
-            room above it, per direct correction. */}
-        <p className="flex flex-wrap items-center justify-end gap-1.5 text-sm leading-[1.125rem] text-ink-2 [font-family:var(--font-display)]">
-          Built &amp; designed using Claude Code in Brooklyn, New York
-          <span aria-hidden className="text-xs">
-            🕺
-          </span>
-          <span aria-hidden className="text-xs">
-            🪩
-          </span>
-          <span aria-hidden className="text-xs">
-            🤦‍♂️
-          </span>
-        </p>
-      </footer>
     </div>
   );
 }

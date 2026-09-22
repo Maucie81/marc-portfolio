@@ -63,8 +63,14 @@ export default function Experience({ roles }: { roles: Role[] }) {
 
               <div className="pb-6 pt-3">
                 {/* Intro is visible whether or not the row is open;
-                    expanding adds the longer description below it. */}
-                <p className="t-body max-w-[604px] text-muted">{role.intro}</p>
+                    expanding adds the longer description below it.
+                    464px (was 604) is not a readability number — it's the
+                    page's own column line: the section content starts at
+                    160 and the work-card images and Additional work list
+                    both start at 624, so 464 is exactly the distance
+                    between them. At 604 this copy ran 140px past that edge
+                    and was the one block on the page crossing it. */}
+                <p className="t-body max-w-[464px] text-muted">{role.intro}</p>
 
                 {/* Same reveal as the case-study ExpandCollapse: a
                     grid-template-rows 0fr/1fr transition (not a fixed
@@ -103,7 +109,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
                     {/* 499:54867 */}
                     <div className="flex flex-col gap-4 pt-4">
                       {paragraphs.map((p, j) => (
-                        <p key={j} className="t-body max-w-[604px] text-muted">
+                        <p key={j} className="t-body max-w-[464px] text-muted">
                           {p}
                         </p>
                       ))}

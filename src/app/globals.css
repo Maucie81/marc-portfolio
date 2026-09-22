@@ -165,8 +165,17 @@ paints over it. */
 @media (min-width: 1024px) {
   .t-section-title {
     display: block;
-    padding-top: 5px;
+    /* Matches .sec-num's own nudge — see the comment there: both are
+       aligned to the rail circle, not to each other. */
+    padding-top: 2px;
   }
+}
+
+/* Personal inspo only. The strip box is 42vh tall and a focused image fills
+   it top to bottom, so the standard 3rem below the title read as a gap
+   between the title and a very tall image rather than as section rhythm. */
+.t-section-title--tight {
+  margin-bottom: 1.5rem;
 }
 
 /* Desktop - Label · 177:111990. Google Sans Flex SemiBold 16/24 — same role
@@ -199,6 +208,33 @@ paints over it. */
   font-weight: 400;
   font-size: 0.875rem;
   line-height: 1.375rem;
+  letter-spacing: 0;
+}
+
+/* Recent Work card eyebrow · the company name above each project title
+   (72:155197). Roboto Mono 12/20 like .t-meta-sm, but uppercase and tracked
+   out — and at its own #433835 rather than the --muted rung, per direct
+   request. Its own role rather than `.t-meta-sm` + utilities because
+   .t-meta-sm bakes `color: var(--muted)` in unlayered CSS, which outranks
+   any Tailwind text-* utility set alongside it. */
+.t-card-eyebrow {
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 0.75rem;
+  line-height: 1.25rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #433835;
+}
+
+/* Recent Work card description · the one body-copy slot that is NOT mono:
+   the card sets Google Sans Flex 16/24 (Portfolio Playground 72:155197),
+   against .t-body's Roboto Mono used everywhere else on the page. */
+.t-body-alt {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.5rem;
   letter-spacing: 0;
 }
 
@@ -296,24 +332,35 @@ paints over it. */
 }
 
 @media (min-width: 1024px) {
-  /* 177:111959 — rail 24 · 40 gap · number column 80 · content.
-     The gap lives as padding on the number column so content still starts at
-     144, matching the frame exactly. */
+  /* 177:111959 — rail 24 · 40 gap · number column · content.
+     The 40 gap lives as padding on .sec-num, so the "01" glyph itself stays
+     pinned at 64px from the content edge; the column width past it is just
+     trailing slack. That slack was 80px (content started at 144, matching
+     the frame), which is far more than two 16px digits need — it's cut to
+     32px here and the 48px reclaimed is spent on the work cards' own
+     copy↔image gutter (lg:gap-x-18 in page.tsx), which is what actually
+     needed the room. Every numbered section shifts left by the same 48px,
+     so the page keeps one content edge. */
   .sec {
-    grid-template-columns: 1.5rem 7.5rem 1fr;
+    grid-template-columns: 1.5rem 4.5rem 1fr;
     gap: 0;
     scroll-margin-top: 42px;
   }
 
-  /* Circle, number and section title share one vertical centre. The 5px
-     top nudge isn't arbitrary — it's compensating for a real glyph-position
-     difference (measured via Range().getClientRects(), not just the box):
-     the number sits in a flex-centered row (tighter leading above the
-     glyph, ~2px) while the title is a block element with normal text
-     leading (~7px). Confirmed by measurement, not just eyeballed. */
+  /* Circle, number and section title share one vertical centre — the
+     CIRCLE is the anchor, and the other two are nudged onto it. The nudge
+     isn't arbitrary: it compensates for a real glyph-position difference
+     (measured via Range().getClientRects(), not just the box) between the
+     number, which sits in a flex-centered row with tighter leading above
+     the glyph, and the title, a block element with normal text leading.
+     2px, not 5px: at 5px both glyph centres measured 65px from the section
+     top while the rail's first dot sat at 62 — they agreed with each other
+     but all three were supposed to agree. Re-measure all three together if
+     the rail's own padding (SectionRail's py-2) or either type role's
+     line-height changes. */
   .sec-num {
     padding-left: 40px;
-    padding-top: 5px;
+    padding-top: 2px;
   }
 }
 
@@ -396,6 +443,36 @@ paints over it. */
   .sec-num-label {
     display: none;
   }
+}
+
+/* Inverted bands — Additional work (dark ink panel) and Contact (coral
+   panel), both full-bleed in the Figma. Scoped to the band wrapper rather
+   than spelled out per element: .sec-num, .t-section-title, .t-label,
+   .t-meta-sm and .display all bake their own color in unlayered CSS, which
+   outranks any Tailwind text-* utility on the element itself, so a per-usage
+   override wouldn't take. .t-body has no color of its own — it inherits the
+   utility in markup — and is listed here to pull it off --muted onto white,
+   per direct request that this section's copy read white rather than grey. */
+.on-dark .sec-num,
+.on-dark .t-section-title,
+.on-dark .t-label,
+.on-dark .t-body,
+.on-dark .t-body-alt,
+.on-dark .t-meta-sm,
+.on-dark .t-mark,
+.on-dark .display {
+  color: #fff;
+}
+
+.on-dark .rail-dot {
+  border-color: rgba(255, 255, 255, 0.55);
+}
+
+/* Personal inspo sits on the coral graph-paper band, so its own accent
+   number + eyebrow would be accent-on-accent — both drop to ink there. */
+.sec-ink .sec-num,
+.sec-ink .t-section-title {
+  color: var(--ink);
 }
 
 /* ---------- Case study: horizontal track ---------- */
