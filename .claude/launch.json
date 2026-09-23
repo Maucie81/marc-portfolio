@@ -10,6 +10,34 @@
       ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "ypp-prototype",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../ypp-prototype",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "3100"
+      ],
+      "port": 3100
+    },
+    {
+      "name": "ypp-prototype-prod",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "../ypp-prototype",
+        "run",
+        "start",
+        "--",
+        "--port",
+        "3101"
+      ],
+      "port": 3101
     }
   ]
 }

@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "record": "node scripts/walkthrough-recorder/record.mjs"
   },
   "dependencies": {
     "@upstash/redis": "^1.38.4",
