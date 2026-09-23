@@ -909,7 +909,7 @@ export default function Home() {
               0). 64px = 32px to clear the band + 32px of real breathing
               room above it, per direct correction. */}
           <footer className={`${SHELL} relative pb-10 lg:pb-16`}>
-            <p className="t-meta-sm border-t border-white/40 pt-5 text-center lg:text-right">
+            <p className="t-meta-sm font-semibold border-t border-white/40 pt-5 text-center lg:text-right">
               Built &amp; designed using Claude Code
             </p>
           </footer>
