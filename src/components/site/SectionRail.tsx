@@ -15,7 +15,6 @@ export default function SectionRail() {
     >
       <span className="rail-dot" />
       <span className="rail-dot" />
-      <span className="rail-dot" />
     </div>
   );
 }
