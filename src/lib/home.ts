@@ -49,7 +49,6 @@ export const projects: Project[] = [
       "Publisher tooling",
       "Data visualization",
       "UX research",
-      "Partner ecosystems",
       "AI prototyping",
     ],
   },

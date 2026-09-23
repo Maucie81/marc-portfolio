@@ -13,7 +13,7 @@ const MIN_REST_WIDTH = 10;
 /** Hairline gap between slices, in px. */
 const GAP = 4;
 /** Hovered card's max height, as a fraction of viewport height. */
-const PEAK_HEIGHT_VH = 0.42;
+const PEAK_HEIGHT_VH = 0.34;
 /** Hovered card's max width, as a fraction of the container width. The card
  *  grows toward its OWN aspect ratio, capped here so a wide landscape can't run
  *  off the edge; at full size the box matches the image, so it shows uncropped. */
@@ -226,8 +226,15 @@ export default function ScrollStrip({ images }: Props) {
   return (
     <div
       ref={viewportRef}
-      className="relative overflow-hidden"
-      style={{ height: `${PEAK_HEIGHT_VH * 100}vh` }}
+      className="relative h-[var(--strip-rest)] overflow-hidden [@media(hover:hover)]:h-[var(--strip-peak)]"
+      style={
+        {
+          // Touch screens never magnify, so they get no headroom for it —
+          // just the resting row.
+          "--strip-rest": `${REST_HEIGHT}px`,
+          "--strip-peak": `${PEAK_HEIGHT_VH * 100}vh`,
+        } as React.CSSProperties
+      }
     >
       <ul
         ref={trackRef}

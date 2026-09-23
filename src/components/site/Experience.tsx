@@ -51,7 +51,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
             >
               {/* 499:54859 — date leads, above the company | role line. */}
               <div className="flex flex-col gap-2 pt-6">
-                {role.period ? <p className="t-meta-title">{role.period}</p> : null}
+                {role.period ? <p className="t-meta-title t-accent">{role.period}</p> : null}
                 <h3 className="flex flex-wrap items-baseline gap-x-2">
                   <span className="t-label text-ink-2">{role.company}</span>
                   <span aria-hidden className="t-meta-sm">
@@ -161,19 +161,24 @@ export default function Experience({ roles }: { roles: Role[] }) {
           #686868) and the same 24px top padding, so "Skills" and
           "2024 — 2026" sit on one baseline. */}
       <aside className="lg:self-start lg:pl-[136px] lg:pt-6">
-        <dl>
-          <dt className="t-meta-title pb-3">Skills</dt>
-          <dd className="t-meta-sm space-y-1.5 pb-8">
-            {experienceSkills.map((s) => (
-              <p key={s}>{s}</p>
-            ))}
-          </dd>
-          <dt className="t-meta-title pb-3">Tooling</dt>
-          <dd className="t-meta-sm space-y-1.5">
-            {experienceTooling.map((t) => (
-              <p key={t}>{t}</p>
-            ))}
-          </dd>
+        {/* Phone: Skills and Tooling side by side; stacked from lg. */}
+        <dl className="grid grid-cols-2 gap-x-6 lg:block">
+          <div>
+            <dt className="t-meta-title t-accent pb-3">Skills</dt>
+            <dd className="t-meta-sm t-accent space-y-1.5 lg:pb-8">
+              {experienceSkills.map((s) => (
+                <p key={s}>{s}</p>
+              ))}
+            </dd>
+          </div>
+          <div>
+            <dt className="t-meta-title t-accent pb-3">Tooling</dt>
+            <dd className="t-meta-sm t-accent space-y-1.5">
+              {experienceTooling.map((t) => (
+                <p key={t}>{t}</p>
+              ))}
+            </dd>
+          </div>
         </dl>
       </aside>
     </div>

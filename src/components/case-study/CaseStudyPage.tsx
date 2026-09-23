@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, useState } from "react";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
+import CaseStudyFooter from "@/components/case-study/CaseStudyFooter";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import { closingLinksFor } from "@/lib/case-studies";
 import type { Block, ImageSpec } from "@/lib/ypp";
@@ -1035,7 +1036,7 @@ function ClosingBlock({
               href={cta.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-[calc(92px*var(--cs-scale,1)-1rem)] self-start bg-accent px-2 py-0.5 text-xs font-semibold leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
+              className="mt-4 self-start min-[901px]:mt-[calc(92px*var(--cs-scale,1)-1rem)] bg-accent px-2 py-0.5 text-xs font-semibold leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
             >
               {cta.text}
             </a>
@@ -1228,7 +1229,10 @@ function SectionBlock({
       <StepsPanel steps={steps!} />
     ) : (
       <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
-        <div className="flex flex-col gap-6 min-[901px]:h-[calc(609px*var(--cs-media-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch">
+        {/* Phone: `contents` lifts media, quotes and caption into the
+            outer column so `order` can put the caption straight under the
+            image and the quotes/stats after it. */}
+        <div className="contents min-[901px]:flex min-[901px]:h-[calc(609px*var(--cs-media-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch min-[901px]:gap-6">
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
@@ -1246,19 +1250,19 @@ function SectionBlock({
           )}
           {hasQuotes ? (
             <div
-              className={`flex flex-col gap-10 min-[901px]:w-[calc(907px*var(--cs-scale,1))] min-[901px]:shrink-0 ${justifyClass}`}
+              className={`order-2 mt-4 flex flex-col gap-10 min-[901px]:order-none min-[901px]:mt-0 min-[901px]:w-[calc(907px*var(--cs-scale,1))] min-[901px]:shrink-0 ${justifyClass}`}
             >
               {renderQuotes()}
             </div>
           ) : hasStats ? (
-            renderStats()
+            <div className="contents [&>*]:order-2 [&>*]:mt-4 min-[901px]:[&>*]:order-none min-[901px]:[&>*]:mt-0">{renderStats()}</div>
           ) : null}
         </div>
         {/* Matches the image column's own 857px width (not the full row,
             which also includes the 907px quotes/stats column) so the
             caption centers under the image itself instead of under the
             whole wider row. */}
-        <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-media-scale,1))]">
+        <div className="order-1 flex w-full justify-center min-[901px]:order-none min-[901px]:w-[calc(857px*var(--cs-media-scale,1))]">
           <p className="cs-caption text-center">{caption}</p>
         </div>
       </div>
@@ -1430,6 +1434,7 @@ export function CaseStudyPage({
         {blocks.map((block, i) => renderBlock(block, i))}
         <CaseStudyClosing links={closingLinksFor(slug)} />
       </HorizontalTrack>
+      <CaseStudyFooter />
     </main>
   );
 }

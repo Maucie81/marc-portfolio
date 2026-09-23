@@ -51,7 +51,7 @@ export default function Home() {
           same white the rails and top/bottom chrome are drawn in. */}
       <main id="home">
         {/* ---------- Band · hero ---------- */}
-        <div className="bg-bg lg:pt-[82px]">
+        <div className="bg-bg pb-6 lg:pb-0 lg:pt-[82px]">
         {/* Hero · Portfolio-Playground (fileKey AwPcHO3ssXvBttxqrLdxlR),
             mobile frame node 66:118321 ("Mobile hero", 402×616) + written
             desktop spec — coral panel using the same case-study-texture
@@ -126,7 +126,7 @@ export default function Home() {
               }}
             />
             <p className={`${HERO_LABEL_CLASS} relative`}>Hello &amp; welcome</p>
-            <div className="relative mt-3 w-[78%] max-w-[300px]">
+            <div className="relative mt-0 w-[78%] max-w-[300px]">
               <Image
                 src="/marc/hero-illustration-2026.png"
                 alt="Illustrated portrait of Marc Favro"
@@ -322,14 +322,41 @@ export default function Home() {
                 backgroundPosition: "center top",
               }}
             />
-            <div className="flex flex-[45_1_0%] items-center justify-center bg-ink">
-              <span className={HERO_LABEL_CLASS}>Portfolio 2026</span>
+            {/* Figma 97:206178 — two centered lines: "Selected work | 2026"
+                (Google Sans Flex Bold 16/24, cream) over the three companies
+                (Roboto Mono 16/24, accent). */}
+            <div className="flex flex-[45_1_0%] flex-col items-center justify-center gap-0.5 bg-ink-deep text-center">
+              <p
+                className="text-[16px] font-bold leading-[24px] text-bg [font-family:var(--font-display)]"
+                style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
+              >
+                Selected work
+                <span aria-hidden className="px-2">
+                  |
+                </span>
+                2026
+              </p>
+              <p className="text-[16px] leading-[24px] text-accent [font-family:var(--font-mono)]">
+                Yahoo
+                <span aria-hidden className="px-2">
+                  •
+                </span>
+                Headspace
+                <span aria-hidden className="px-2">
+                  •
+                </span>
+                Airbnb
+              </p>
             </div>
           </div>
         </section>
         </div>
 
-        <BandGap />
+        {/* Phone: no white gutter under the hero — the band's own pb-6 is
+            the gap, in paper, matching the card's side inset. */}
+        <div className="hidden lg:block">
+          <BandGap />
+        </div>
 
         {/* ---------- Band · 01 Recent work ---------- */}
         <div className="bg-bg">
@@ -364,7 +391,7 @@ export default function Home() {
                   // the same size instead of just scaling the same
                   // 60-column sheet down into a narrower box.
                   <div
-                    className="product-media relative isolate ml-auto w-[93.333%] overflow-hidden rounded-[4px] bg-bg"
+                    className="product-media relative isolate w-full overflow-hidden bg-bg lg:ml-auto lg:w-[93.333%] lg:rounded-[4px]"
                     style={{ aspectRatio: "714 / 402" }}
                   >
                     {/* Graph paper, replacing the halftone texture sheet
@@ -474,7 +501,7 @@ export default function Home() {
                               stays a typographic decision here rather than
                               riding along in the string that also feeds
                               aria-labels and page titles. */}
-                          <h3 className="display t-title max-w-[9.2em] text-balance uppercase">
+                          <h3 className="display t-title uppercase lg:max-w-[9.2em] lg:text-balance">
                             {project.title}
                           </h3>
                         </div>
@@ -491,13 +518,13 @@ export default function Home() {
                       {isLinked ? (
                         <Link
                           href={project.href!}
-                          className="t-link group inline-flex items-center gap-1.5 self-start"
+                          className="t-link group hidden items-center gap-1.5 self-start lg:inline-flex"
                         >
                           Project preview
                           <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
                         </Link>
                       ) : (
-                        <span className="t-link self-start text-muted">
+                        <span className="t-link hidden self-start text-muted lg:inline">
                           Case study in progress
                         </span>
                       )}
@@ -518,7 +545,7 @@ export default function Home() {
                           briefly (top-only on the image, full on this
                           wrapper), which is what made the bottom corners
                           look unrounded. */}
-                      <div className="overflow-hidden rounded-[4px]">
+                      <div className="-mx-6 overflow-hidden lg:mx-0 lg:rounded-[4px]">
                         {isLinked ? (
                           <Link
                             href={project.href!}
@@ -543,7 +570,7 @@ export default function Home() {
                             old pl-5/pr-1 was optical centering for the
                             centered row this replaces, and any pr here
                             would break the alignment it's aligning to. */}
-                        <div className="flex flex-wrap items-center justify-end gap-2.5 bg-bg px-0 pb-0 pt-4">
+                        <div className="hidden flex-wrap items-center justify-end gap-2.5 bg-bg px-0 pb-0 pt-4 lg:flex">
                           {project.skills.map((skill, i) => (
                             <span key={skill} className="flex items-center gap-2.5">
                               {i > 0 ? (
@@ -554,13 +581,29 @@ export default function Home() {
                                   •
                                 </span>
                               ) : null}
-                              <span className="t-meta-sm whitespace-nowrap">
+                              <span className="t-meta-sm t-accent whitespace-nowrap">
                                 {skill}
                               </span>
                             </span>
                           ))}
                         </div>
+
                       </div>
+                      {/* Phone: the link sits under the image; tags are
+                          dropped below lg. */}
+                      {isLinked ? (
+                        <Link
+                          href={project.href!}
+                          className="t-link group inline-flex items-center gap-1.5 self-start lg:hidden"
+                        >
+                          Project preview
+                          <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
+                        </Link>
+                      ) : (
+                        <span className="t-link self-start text-muted lg:hidden">
+                          Case study in progress
+                        </span>
+                      )}
                     </div>
                   </article>
                 );
@@ -578,21 +621,27 @@ export default function Home() {
             Recent Work; inverting it is what separates "a little bit more"
             from the three real case studies. Same ink as the hero's
             "Portfolio 2026" block so the page has one dark, not two. */}
-        <div className="on-dark relative isolate overflow-hidden bg-ink">
-          {/* Halftone · the dot screen the Figma lays over this panel.
-              Drawn rather than imported: the site's one texture asset
-              (case-study-texture.svg) is a multiply sheet built for coral
-              and page-grey, and multiply over a dark ground is very nearly
-              a no-op. A radial-gradient dot at the same ~16px pitch as the
-              grids elsewhere on the page keeps the sheet metaphor without a
-              second asset. */}
+        {/* z-[39]: above the page grain sheet (.noise-overlay, z-38) and
+            below the fixed chrome (z-40+), same as .cs-pin. The grain
+            lightened this panel and buried the halftone; the Figma band
+            (72:157593) carries only its own texture. */}
+        <div className="on-dark relative isolate z-[39] overflow-hidden bg-ink-deep">
+          {/* Halftone · the Figma's own texture (72:157596): a white sheet
+              of diagonal blue-grey dots, multiplied over the fill (so the
+              white drops out), rotated 180° and blurred 0.5px, exactly as
+              the design layers it. Sized to the design's 1394px frame
+              (source is 1071px, so ~9px between dots) — or the band's full
+              width when wider, which covers the band's height at desktop.
+              On phones it keeps that 1394px scale instead of stretching to
+              the tall band, and the tile's corner marks crop out. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0"
+            className="pointer-events-none absolute inset-0 rotate-180 mix-blend-multiply blur-[0.5px]"
             style={{
-              backgroundImage:
-                "radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)",
-              backgroundSize: "8px 8px",
+              backgroundImage: "url(/additional-work-texture.png)",
+              backgroundSize: "max(100%, 1394px) auto",
+              backgroundPosition: "center top",
+              backgroundRepeat: "repeat",
             }}
           />
         {/* 02 — additional work · 499:55119 — deliberately lighter than the
@@ -612,9 +661,12 @@ export default function Home() {
                 this list's left edge lands on the exact x their grid panels
                 start at — the two sections share a column structure, and at
                 the old 24px gutter this one sat 48px inboard of it. */}
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)] lg:gap-x-18">
+            {/* lg:items-baseline: the first list item's label sits on the
+                "Additional work" headline's baseline instead of sharing its
+                top edge (which left the label 17px high). */}
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,392px)_minmax(0,1fr)] lg:items-baseline lg:gap-x-18">
               <div className="flex flex-col gap-4">
-                <h3 className="display text-[clamp(2rem,4vw,2.5rem)] uppercase">
+                <h3 className="display t-accent text-[clamp(2rem,4vw,2.5rem)] uppercase">
                   Additional work
                 </h3>
                 <p className="t-body max-w-[343px]">
@@ -757,7 +809,7 @@ export default function Home() {
             moves that centre to 64. The 2px is invisible against the other
             sections; the alternative (offsetting the sheet) was visible as
             a short first row. */}
-        <section id="interests" className={`${SHELL} sec sec-ink pb-12 pt-[50px]`}>
+        <section id="interests" className={`${SHELL} sec sec-ink pb-8 pt-[50px]`}>
           <SectionRail />
           <SectionNumber number="04" label="Personal inspo" />
           {/* min-w-0 lets this grid item shrink to the column instead of being
@@ -857,7 +909,7 @@ export default function Home() {
               0). 64px = 32px to clear the band + 32px of real breathing
               room above it, per direct correction. */}
           <footer className={`${SHELL} relative pb-10 lg:pb-16`}>
-            <p className="t-meta-sm border-t border-white/40 pt-5 text-right">
+            <p className="t-meta-sm border-t border-white/40 pt-5 text-center lg:text-right">
               Built &amp; designed using Claude Code
             </p>
           </footer>

@@ -58,9 +58,11 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
         ))}
       </div>
 
+      {/* Hidden on phone: the coral CaseStudyFooter below carries
+          "Get in touch" there. */}
       <Link
         href="/contact"
-        className="flex items-center gap-1 text-[16px] font-semibold leading-[20px] text-ink transition-colors hover:text-accent [font-family:var(--font-display)]"
+        className="hidden items-center gap-1 min-[901px]:flex text-[16px] font-semibold leading-[20px] text-ink transition-colors hover:text-accent [font-family:var(--font-display)]"
         style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
       >
         Get in touch
