@@ -7,6 +7,8 @@ import CompanyLogo from "@/components/site/CompanyLogo";
 import Experience from "@/components/site/Experience";
 import InterestGallery from "@/components/site/InterestGallery";
 import ArrowIcon from "@/components/site/ArrowIcon";
+import CtaArrow from "@/components/site/CtaArrow";
+import SelectedWork from "@/components/site/SelectedWork";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -38,8 +40,30 @@ const SHELL = "mx-auto px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8";
    construction: it sits outside SHELL, so the white it exposes is the
    <body> itself rather than a strip drawn to some computed width. */
 function BandGap() {
-  return <div aria-hidden className="h-8" />;
+  return <div aria-hidden className="hidden h-8 lg:block" />;
 }
+
+/* Band fills are painted, not set as background-color, so they stop at the
+   1376px content column on screens wider than the 1440 design frame and the
+   body's white shows beyond — instead of the paper running all the way out
+   to the rails. Below 1440 the fill is still the band's full width (the
+   rails cover its outer 32px), so nothing changes there. Not a width cap on
+   the band itself: SHELL's calc(100%-4rem) inside it would then subtract
+   the rails a second time. */
+const BAND_SIZE = "min(1376px, 100%) 100%";
+
+function bandFill(color: string, ...layers: string[]) {
+  return {
+    backgroundImage: [...layers, `linear-gradient(${color}, ${color})`].join(","),
+    backgroundSize: BAND_SIZE,
+    backgroundPosition: "center top",
+    backgroundRepeat: "no-repeat",
+  };
+}
+
+/* Same limit for the absolutely-positioned texture sheets inside a band:
+   clipped rather than resized, so their dot scale is untouched. */
+const BAND_CLIP = { clipPath: "inset(0 max(0px, calc((100% - 1376px) / 2)))" };
 
 export default function Home() {
   return (
@@ -51,7 +75,12 @@ export default function Home() {
           same white the rails and top/bottom chrome are drawn in. */}
       <main id="home">
         {/* ---------- Band · hero ---------- */}
-        <div className="bg-bg pb-6 lg:pb-0 lg:pt-[82px]">
+        {/* No bottom padding below lg: the coral panel's bottom edge to
+            "01 Recent work" is 40px, all of it Recent work's own top
+            padding. Every other section boundary below lg is 50px on each
+            side (100px content to content), with no white gutter — the
+            gutter is desktop-only (BandGap). */}
+        <div className="lg:pt-[82px]" style={bandFill("var(--bg)")}>
         {/* Hero · Portfolio-Playground (fileKey AwPcHO3ssXvBttxqrLdxlR),
             mobile frame node 66:118321 ("Mobile hero", 402×616) + written
             desktop spec — coral panel using the same case-study-texture
@@ -79,10 +108,11 @@ export default function Home() {
             1440 design width minus the 32px rail on each side, so with no
             padding the hero lands flush against the rails' inner edge
             without overlapping them. Below lg there's no perimeter chrome
-            to reach, so mobile keeps the ordinary px-6 inset. */}
+            to reach: tablets keep the ordinary px-6 inset, and phones run
+            the coral full bleed (no inset at all). */}
         <section
           id="hero"
-          className="mx-auto flex flex-col px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:flex-row lg:items-stretch lg:-mt-10 lg:px-0"
+          className="mx-auto flex flex-col sm:px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:flex-row lg:items-stretch lg:-mt-10 lg:px-0"
         >
           {/* ---------- Phone (<640px): coral panel only, stacked headline ---------- */}
           {/* sm:hidden (was md:hidden, i.e. <768px): the switch to the
@@ -100,8 +130,10 @@ export default function Home() {
               (not %) since it's a fundamentally different, stacked
               composition rather than a scaled copy of the desktop one, so
               there's no single ratio to carry over exactly; tightened by
-              feel to match that same compactness instead. */}
-          <div className="relative isolate flex flex-col items-center overflow-hidden rounded-[8px] bg-accent px-6 pb-7 pt-6 text-center sm:px-10 sm:hidden">
+              feel to match that same compactness instead.
+              Full bleed on phones: no side inset on the section and square
+              corners, so the coral runs to the screen edges. */}
+          <div className="relative isolate flex flex-col items-center overflow-hidden bg-accent px-6 pb-7 pt-6 text-center sm:px-10 sm:hidden">
             {/* Texture · same asset as the work-card lockups above
                 (public/case-study-texture.svg), but applied as a CSS
                 background with background-size:cover instead of an <img>
@@ -145,9 +177,23 @@ export default function Home() {
               <br />
               Marc Favro
             </h1>
-            <p className={`${HERO_LABEL_CLASS} relative mt-2 max-w-[22rem]`}>
-              I&rsquo;m a Principal Product Designer, based in Brooklyn, New York
+            {/* Full column width, one flowing paragraph: balancing each
+                sentence separately (desktop's treatment) kept these lines
+                short on a phone. `pretty` still keeps a lone word off the
+                last line. */}
+            <p className={`${HERO_LABEL_CLASS} relative mt-2 [text-wrap:pretty]`}>
+              I&rsquo;m a Principal Product Designer, based in Brooklyn, New York.
+              I turn complex problems into products that businesses run on and users love.
             </p>
+            {/* The desktop hero's dark "Selected work" block, as a card
+                closing the coral panel. 16px type like the desktop, so the
+                lines wrap under themselves in the narrower column. */}
+            <SelectedWork
+              className="mt-10 self-stretch text-left"
+              textClassName="px-5 pb-6 pt-8 text-[16px]"
+              labelColumn="7em"
+              wrap
+            />
           </div>
 
           {/* ---------- Tablet (640–1023px, capped width) + Desktop (≥1024px, 60%) ---------- */}
@@ -223,20 +269,19 @@ export default function Home() {
                   until this was caught by comparing the measured value at
                   1440px against the pre-cqw baseline. */}
               <div className="h-full sm:mx-auto sm:max-w-[825.6px] lg:max-w-none [container-type:inline-size]">
-                {/* pt-[9%]/pb-[11%] (was symmetric py-[10%]): measured
-                    directly off a screenshot with a reference line at the
-                    grid/dark-block split height (55% down the panel) — the
-                    headline's ink center sat at ~56.35%, about 1.35% of
-                    panel height (~1% of panel width, this padding's own
-                    basis) low. A justify-center flex column shifts by
-                    (pt−pb)/2 off true center, so trimming pt by 1% and
-                    adding it to pb pushes the whole
-                    eyebrow→illustration→subline stack up by that amount
-                    without touching the headline's own top-[61%] position
-                    within it — the headline moves only because it rides
-                    with the illustration, not because its own rule
-                    changed. */}
-                <div className="relative flex h-full w-full flex-col justify-center gap-2 px-[4%] pt-[9%] pb-[11%] text-center">
+                {/* The O in FAVRO sits exactly on the line where the grid
+                    meets the dark panel (55% down the row), at every width.
+                    Everything above that line scales with the panel width W
+                    except the eyebrow + its gap (32px): the portrait is
+                    0.4232W tall and the O's center is 0.2561W below its top.
+                    So with the subline taken out of the flow (it hangs off
+                    the portrait below), the panel height is pt + 32px +
+                    0.4232W + pb, and O = 55% of that solves to:
+                      pt = 10.648%  → keeps the hero 602px tall at 1440
+                      pb = 12.962% + 26.18px
+                    If the portrait size, eyebrow or the grid/dark split
+                    changes, re-derive these two numbers. */}
+                <div className="relative flex h-full w-full flex-col justify-center gap-2 px-[4%] pt-[10.648%] pb-[calc(12.962%+26.18px)] text-center">
                   <p className={`${HERO_LABEL_CLASS} relative`}>Hello &amp; welcome</p>
                   <div className="relative w-full">
                     <Image
@@ -279,13 +324,23 @@ export default function Home() {
                     >
                       I&rsquo;m Marc Favro
                     </h1>
+                    {/* Figma 94:203651 — two sentences, each its own
+                        balanced block (balance ignores a <br>) so a narrow
+                        width never leaves a one-word orphan. Hangs off the
+                        portrait's bottom edge rather than sitting in the
+                        flow, so its line count can't move the lockup off
+                        the grid/dark line (see the padding note above).
+                        20px below the portrait at 1440 (2.633% of this
+                        759.5px box), scaling down with it. */}
+                    <p className={`${HERO_LABEL_CLASS} absolute inset-x-0 top-full mt-[2.633%]`}>
+                      <span className="block [text-wrap:balance]">
+                        I&rsquo;m a Principal Product Designer, based in Brooklyn, New York.
+                      </span>
+                      <span className="block [text-wrap:balance]">
+                        I turn complex problems into products that businesses run on and users love.
+                      </span>
+                    </p>
                   </div>
-                  {/* No max-w: the reference has this on one line — capping
-                      it narrower was what forced a second line that ate
-                      into the height budget. */}
-                  <p className={`${HERO_LABEL_CLASS} relative`}>
-                    I&rsquo;m a Principal Product Designer, based in Brooklyn, New York
-                  </p>
                 </div>
               </div>
             </div>
@@ -313,7 +368,7 @@ export default function Home() {
                 dumping one narrow column at the right. */}
             <div
               aria-hidden
-              className="flex-[55_1_0%] bg-white"
+              className="relative flex flex-[55_1_0%] items-center justify-center bg-white"
               style={{
                 backgroundImage: [
                   "repeating-linear-gradient(to right, var(--accent) 0 1px, transparent 1px 16px)",
@@ -321,48 +376,43 @@ export default function Home() {
                 ].join(","),
                 backgroundPosition: "center top",
               }}
-            />
-            {/* Figma 97:206178 — two centered lines: "Selected work | 2026"
-                (Google Sans Flex Bold 16/24, cream) over the three companies
-                (Roboto Mono 16/24, accent). */}
-            <div className="flex flex-[45_1_0%] flex-col items-center justify-center gap-0.5 bg-ink-deep text-center">
-              <p
-                className="text-[16px] font-bold leading-[24px] text-bg [font-family:var(--font-display)]"
-                style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
-              >
-                Selected work
-                <span aria-hidden className="px-2">
-                  |
-                </span>
-                2026
-              </p>
-              <p className="text-[16px] leading-[24px] text-accent [font-family:var(--font-mono)]">
-                Yahoo
-                <span aria-hidden className="px-2">
-                  •
-                </span>
-                Headspace
-                <span aria-hidden className="px-2">
-                  •
-                </span>
-                Airbnb
-              </p>
+            >
+              {/* Figma 106:209355 — exploded mechanical pencil, ~432px of
+                  drawing across the 547px panel at 1440 (82.6% incl. the
+                  PNG's own transparent margin). Centered both ways. */}
+              <Image
+                src="/hero/mechanical-pencil.png"
+                alt=""
+                width={1885}
+                height={834}
+                loading="eager"
+                sizes="460px"
+                className="block h-auto w-[82.6%]"
+              />
             </div>
+            {/* Figma 106:209338 — "Selected work" ledger. Sized off one
+                clamp()ed font-size (16px at the 547px 1440 panel, 2.925cqw
+                below that) so it scales down as a unit instead of wrapping
+                at narrower desktop widths. */}
+            <SelectedWork
+              className="flex flex-[45_1_0%] flex-col justify-center [container-type:inline-size]"
+              textClassName="px-[2.375em] text-[clamp(11px,2.925cqw,16px)]"
+            />
           </div>
         </section>
         </div>
 
-        {/* Phone: no white gutter under the hero — the band's own pb-6 is
-            the gap, in paper, matching the card's side inset. */}
+        {/* Phone: no white gutter under the hero — Recent work's 40px top
+            padding is the whole gap. */}
         <div className="hidden lg:block">
           <BandGap />
         </div>
 
         {/* ---------- Band · 01 Recent work ---------- */}
-        <div className="bg-bg">
+        <div style={bandFill("var(--bg)")}>
         {/* No border-t any more: the 32px white gutter above this band is
             the divider now. */}
-        <section id="work" className={`${SHELL} sec py-12`}>
+        <section id="work" className={`${SHELL} sec pb-[50px] pt-10 lg:py-12`}>
           <SectionRail />
           <SectionNumber number="01" label="Recent work" />
           <div>
@@ -505,23 +555,24 @@ export default function Home() {
                             {project.title}
                           </h3>
                         </div>
-                        <p className="t-body-alt max-w-[375px] text-ink-2">
+                        {/* Desktop only — on phones the description sits
+                            under the image instead (see the Body column),
+                            so the card reads company → title → image →
+                            copy → button. */}
+                        <p className="t-body-alt hidden max-w-[375px] text-ink-2 lg:block">
                           {project.description}
                         </p>
                       </div>
 
-                      {/* Link · 177:111993 — text + icon, no pill. Shared
-                          ArrowIcon (straight right, currentColor), same as
-                          every other in-line link on the site — was a
-                          diagonal up-right glyph baked into its own SVG
-                          asset, the only place that arrow appeared. */}
+                      {/* Link · CTA default button, Portfolio-Playground
+                          100:209186 — replaces the text + arrow link. */}
                       {isLinked ? (
                         <Link
                           href={project.href!}
-                          className="t-link group hidden items-center gap-1.5 self-start lg:inline-flex"
+                          className="cta hidden self-start lg:inline-flex"
                         >
                           Project preview
-                          <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
+                          <CtaArrow />
                         </Link>
                       ) : (
                         <span className="t-link hidden self-start text-muted lg:inline">
@@ -589,15 +640,18 @@ export default function Home() {
                         </div>
 
                       </div>
-                      {/* Phone: the link sits under the image; tags are
-                          dropped below lg. */}
+                      {/* Phone: description, then the button, both under
+                          the image; tags are dropped below lg. */}
+                      <p className="t-body-alt max-w-[375px] text-ink-2 lg:hidden">
+                        {project.description}
+                      </p>
                       {isLinked ? (
                         <Link
                           href={project.href!}
-                          className="t-link group inline-flex items-center gap-1.5 self-start lg:hidden"
+                          className="cta self-start lg:hidden"
                         >
                           Project preview
-                          <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
+                          <CtaArrow />
                         </Link>
                       ) : (
                         <span className="t-link self-start text-muted lg:hidden">
@@ -625,7 +679,10 @@ export default function Home() {
             below the fixed chrome (z-40+), same as .cs-pin. The grain
             lightened this panel and buried the halftone; the Figma band
             (72:157593) carries only its own texture. */}
-        <div className="on-dark relative isolate z-[39] overflow-hidden bg-ink-deep">
+        <div
+          className="on-dark relative isolate z-[39] overflow-hidden"
+          style={bandFill("var(--ink-deep)")}
+        >
           {/* Halftone · the Figma's own texture (72:157596): a white sheet
               of diagonal blue-grey dots, multiplied over the fill (so the
               white drops out), rotated 180° and blurred 0.5px, exactly as
@@ -642,13 +699,14 @@ export default function Home() {
               backgroundSize: "max(100%, 1394px) auto",
               backgroundPosition: "center top",
               backgroundRepeat: "repeat",
+              ...BAND_CLIP,
             }}
           />
         {/* 02 — additional work · 499:55119 — deliberately lighter than the
             primary case studies: headline + intro on the left, a carousel
             list on the right. No images, label only, no case-study link.
             Its own numbered section per Figma, not folded into Recent Work. */}
-        <section id="additional-work" className={`${SHELL} sec relative py-12`}>
+        <section id="additional-work" className={`${SHELL} sec relative py-[50px] lg:py-12`}>
           <SectionRail />
           <SectionNumber number="02" label="Additional work" />
           <div>
@@ -669,7 +727,10 @@ export default function Home() {
                 <h3 className="display t-accent text-[clamp(2rem,4vw,2.5rem)] uppercase">
                   Additional work
                 </h3>
-                <p className="t-body max-w-[343px]">
+                {/* mt-9 below lg: puts the intro 58px under the heading,
+                    the same heading-to-content distance Career history
+                    has (its mt-8 plus the first row's 24px top padding). */}
+                <p className="t-body mt-9 max-w-[343px] lg:mt-0">
                   {additionalWorkIntro}
                 </p>
               </div>
@@ -746,10 +807,14 @@ export default function Home() {
         <BandGap />
 
         {/* ---------- Band · 03 Career history ---------- */}
-        <div className="bg-bg">
-        <section id="experience" className={`${SHELL} sec py-12`}>
+        <div style={bandFill("var(--bg)")}>
+        <section id="experience" className={`${SHELL} sec py-[50px] lg:py-12`}>
           <SectionRail />
-          <SectionNumber number="03" label="Career history" />
+          {/* Label reads "Where I've been" (only visible below lg, where it
+              sits directly over the "Career history" heading) — the same
+              wording desktop already uses for its eyebrow, instead of
+              repeating the heading. */}
+          <SectionNumber number="03" label="Where I've been" />
           <div>
             {/* 177:112118 — label line. Distinct wording from the h2 below
                 it ("Where I've been" vs. "Career history") — previously
@@ -794,22 +859,22 @@ export default function Home() {
             padding if the rail's own py-2 or the type roles' nudge move
             the centre. */}
         <div
-          className="bg-bg"
-          style={{
-            backgroundImage: [
-              "repeating-linear-gradient(to right, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
-              "repeating-linear-gradient(to bottom, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
-            ].join(","),
-            backgroundPosition: "center top",
-          }}
+          style={bandFill(
+            "var(--bg)",
+            "repeating-linear-gradient(to right, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
+            "repeating-linear-gradient(to bottom, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
+          )}
         >
         {/* pt-[50px], not py-12, and only here: 48 put the header row's
             centre at 62, which isn't a multiple of the 16px grid, so no
             rule could land on it without offsetting the whole sheet. 50
             moves that centre to 64. The 2px is invisible against the other
             sections; the alternative (offsetting the sheet) was visible as
-            a short first row. */}
-        <section id="interests" className={`${SHELL} sec sec-ink pb-8 pt-[50px]`}>
+            a short first row.
+            Below lg it's the opposite: pt-[44px] lifts "04 Personal inspo"
+            into the 48–64px row so no rule runs through the words, which
+            is what made them hard to read on a phone. */}
+        <section id="interests" className={`${SHELL} sec sec-ink pb-[50px] pt-[44px] lg:pb-8 lg:pt-[50px]`}>
           <SectionRail />
           <SectionNumber number="04" label="Personal inspo" />
           {/* min-w-0 lets this grid item shrink to the column instead of being
@@ -833,7 +898,10 @@ export default function Home() {
             flush off the graph-paper band above it. The footer credit line
             now lives inside this same panel rather than as its own white
             strip below it, which is how the Figma closes the page. */}
-        <div className="on-dark relative isolate overflow-hidden bg-accent">
+        <div
+          className="on-dark relative isolate overflow-hidden"
+          style={bandFill("var(--accent)")}
+        >
           {/* Texture · the same multiply sheet the hero's coral panel
               carries, so the page's two coral fields read as one ink. See
               the hero for why this is a background-size:cover layer rather
@@ -846,25 +914,39 @@ export default function Home() {
               backgroundSize: "cover",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
+              ...BAND_CLIP,
             }}
           />
-          <section id="contact" className={`${SHELL} sec relative py-12`}>
+          <section id="contact" className={`${SHELL} sec relative py-[50px] lg:py-12`}>
             <SectionRail />
-            <SectionNumber number="05" label="Contact" />
-            {/* The email address is the headline. */}
+            {/* Label is only visible below lg, where it stands in for the
+                "We should probably chat, right?" line above the headline. */}
+            <SectionNumber number="05" label="We should probably chat, right?" />
+            {/* The email address is the headline from lg; below that it's
+                the case studies' "Get in touch →" lockup (CaseStudyFooter),
+                to /contact. */}
             <div>
               <p className="t-section-title" style={{ marginBottom: "0.75rem" }}>
                 We should probably chat, right?
               </p>
               {/* hover drops to opacity, not accent: accent-on-accent is
                   invisible here. */}
-              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] break-words">
+              <h2 className="display hidden text-[clamp(2rem,4vw,2.5rem)] break-words lg:block">
                 <a
                   href={`mailto:${contact.email}`}
                   className="transition-opacity hover:opacity-75"
                 >
                   {contact.email}
                 </a>
+              </h2>
+              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] lg:hidden">
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-3 transition-opacity hover:opacity-75"
+                >
+                  Get in touch
+                  <ArrowIcon className="h-[0.7em] w-[0.7em] text-current" />
+                </Link>
               </h2>
 
               <p className="mt-8 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm tracking-wide">
@@ -910,7 +992,7 @@ export default function Home() {
               room above it, per direct correction. */}
           <footer className={`${SHELL} relative pb-10 lg:pb-16`}>
             <p className="t-meta-sm font-bold border-t border-white/40 pt-5 text-center lg:text-right">
-              Built &amp; designed using Claude Code
+              Built using Claude Code
             </p>
           </footer>
         </div>

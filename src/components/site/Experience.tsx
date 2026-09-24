@@ -32,7 +32,10 @@ export default function Experience({ roles }: { roles: Role[] }) {
   const glyphRefs = useRef<(HTMLSpanElement | null)[]>([]);
 
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_495px] lg:gap-0">
+    // gap-1.5 below lg: Skills/Tooling start where the next row's divider
+    // would sit (~32px under the last "+"), reading as the list's next row
+    // rather than a separate block 40px further down.
+    <div className="grid gap-1.5 lg:grid-cols-[minmax(0,1fr)_495px] lg:gap-0">
       <div>
         {roles.map((role, i) => {
           const isOpen = i === open;

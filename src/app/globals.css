@@ -31,6 +31,9 @@
   --line: #b4ada4;
   --line-soft: #dcd6cc;
   --accent: #ff5841;
+  /* Pressed/hover edge of the accent — CTA hover outlines only
+     (Portfolio-Playground 100:209186). */
+  --accent-deep: #a72e1e;
 }
 
 @theme inline {
@@ -324,6 +327,65 @@ paints over it. */
   line-height: 1rem;
   letter-spacing: 0;
   color: var(--accent);
+}
+
+/* CTA buttons · Portfolio-Playground 100:209186 ("CTA"). Google Sans Flex
+   SemiBold 14/24, 12px arrow 4px after the label, 2px radius, 16×4 padding.
+   Default: coral fill, white type; hover adds a 2px --accent-deep edge
+   (1px / #c43b28 in the Figma read as too faint — deepened per direct
+   request).
+   Secondary: 2px coral outline, coral type; hover takes both to
+   --accent-deep. Tertiary: type only, --ink-deep; hover darkens to
+   --ink-strong. Outlines are inset box-shadows, not borders, so a hover
+   never changes the button's size. The Figma text layers set `capitalize`;
+   not carried over — copy stays sentence case, per the site's casing rules.
+   In the components layer so Tailwind's display utilities (hidden,
+   lg:inline-flex) can still switch a button off per breakpoint — unlayered,
+   .cta's own display would beat them. */
+@layer components {
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 16px;
+  border-radius: 2px;
+  background: var(--accent);
+  color: #fff;
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.875rem;
+  line-height: 1.5rem;
+  letter-spacing: 0;
+  font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
+  transition: color 150ms ease, box-shadow 150ms ease;
+}
+
+.cta:not(:disabled):hover {
+  box-shadow: inset 0 0 0 2px var(--accent-deep);
+}
+
+.cta-secondary {
+  background: transparent;
+  color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.cta-secondary:not(:disabled):hover {
+  color: var(--accent-deep);
+  box-shadow: inset 0 0 0 2px var(--accent-deep);
+}
+
+.cta-tertiary {
+  padding: 0;
+  background: transparent;
+  color: var(--ink-deep);
+}
+
+.cta-tertiary:not(:disabled):hover {
+  color: var(--ink-strong);
+  box-shadow: none;
+}
 }
 
 /* ---------- Homepage numbered sections ---------- */

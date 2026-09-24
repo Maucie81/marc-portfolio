@@ -1,4 +1,5 @@
 import Link from "next/link";
+import CtaArrow from "@/components/site/CtaArrow";
 import type { CaseStudyLink } from "@/lib/case-studies";
 
 /**
@@ -46,28 +47,24 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
         >
           Want to see more?
         </p>
+        {/* CTA default buttons, Portfolio-Playground 100:209186 — the
+            closing example in that frame uses them for this pair. */}
         {links.map((cs) => (
-          <Link
-            key={cs.slug}
-            href={cs.href}
-            className="flex items-center justify-center border border-accent bg-accent px-[8px] py-[2px] text-[12px] font-semibold leading-[20px] text-bg transition-opacity hover:opacity-90 [font-family:var(--font-display)]"
-            style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
-          >
+          <Link key={cs.slug} href={cs.href} className="cta">
             {cs.title}
           </Link>
         ))}
       </div>
 
       {/* Hidden on phone: the coral CaseStudyFooter below carries
-          "Get in touch" there. */}
+          "Get in touch" there. Secondary (outline) CTA, per the same
+          frame. */}
       <Link
         href="/contact"
-        className="hidden items-center gap-1 min-[901px]:flex text-[16px] font-semibold leading-[20px] text-ink transition-colors hover:text-accent [font-family:var(--font-display)]"
-        style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
+        className="cta cta-secondary hidden min-[901px]:inline-flex"
       >
         Get in touch
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/icons/arrow-right.svg" alt="" width={16} height={14} />
+        <CtaArrow />
       </Link>
     </div>
   );

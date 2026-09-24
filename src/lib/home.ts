@@ -146,6 +146,17 @@ export type Role = {
   draft?: boolean;
 };
 
+/** Hero "Selected work" ledger (Figma 106:209338): one proof line per
+ * company, each backed by the career history below. */
+export const selectedWork = {
+  period: "2019 — 2026",
+  items: [
+    { company: "Yahoo", line: "Started an AI design-to-code pilot" },
+    { company: "Headspace", line: "Designed tools for Fortune 500 admins" },
+    { company: "Airbnb", line: "Led hotel partner onboarding" },
+  ],
+};
+
 /** Tooling/Skills panel pinned beside the Experience list (177:112200) — a
  * fixed curated set, not derived from the roles below. */
 export const experienceTooling = [
@@ -171,7 +182,7 @@ export const roles: Role[] = [
   {
     company: "Yahoo",
     title: "Principal Product Designer, Platform",
-    period: "2024 — 2026",
+    period: "2023 — Present",
     intro:
       "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude.",
     description: [
@@ -188,7 +199,7 @@ export const roles: Role[] = [
   {
     company: "Headspace",
     title: "Senior Product Designer",
-    period: "2022 — 2023",
+    period: "2020 — 2023",
     intro:
       "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees actually needed to use it.",
     description:

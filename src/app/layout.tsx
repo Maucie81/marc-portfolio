@@ -34,7 +34,8 @@ const dmSans = DM_Sans({
 const robotoMono = Roboto_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  // 700 for the hero ledger's company labels (Figma 106:209338).
+  weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 

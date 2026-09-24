@@ -1028,15 +1028,14 @@ function ClosingBlock({
             ))}
           </div>
           {cta ? (
-            // Figma 837:64875: accent fill, 8px/2px padding, no radius, sits
-            // 92px below the copy. Text is Google Sans Flex SemiBold 12/24.
-            // No `capitalize`: the site sets CTAs in sentence case, and the
-            // transform was overriding the copy into Title Case.
+            // CTA default button (Portfolio-Playground 100:209186, whose
+            // sheet lists this exact label), 92px below the copy per
+            // 837:64875. Sentence case kept — see .cta in globals.css.
             <a
               href={cta.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-4 self-start min-[901px]:mt-[calc(92px*var(--cs-scale,1)-1rem)] bg-accent px-2 py-0.5 text-xs font-semibold leading-6 text-bg [font-family:var(--font-display)] transition-opacity hover:opacity-85"
+              className="cta mt-4 self-start min-[901px]:mt-[calc(92px*var(--cs-scale,1)-1rem)]"
             >
               {cta.text}
             </a>
@@ -1129,7 +1128,10 @@ export function IntroStackBlock({
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" /> : null}
             <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
           </div>
-          <div className="text-sm leading-[20px] text-ink-2">
+          {/* .t-body (Roboto Mono 14/22), same role and color as the
+              Overview and every other section's body copy — was the only
+              intro set in DM Sans 14/20 ink-2, per direct request. */}
+          <div className="t-body">
             {body.map((p, i) => (
               <p key={i} className={i === 0 ? "mb-4" : ""}>
                 {p}

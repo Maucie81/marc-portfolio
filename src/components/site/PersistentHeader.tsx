@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import BackLink from "@/components/site/BackLink";
 import {
@@ -39,6 +39,27 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   // location marker.
   const activeClass = (key: typeof active) =>
     active === key ? " font-semibold" : "";
+
+  // Phones (<640px) fold Home / Contact / Resume into a menu button. Closes
+  // on a link tap, Escape, or any tap outside the header.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const headerRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    const onPointer = (e: PointerEvent) => {
+      if (!headerRef.current?.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointer);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointer);
+    };
+  }, [menuOpen]);
+  const closeMenu = () => setMenuOpen(false);
   // Mobile/tablet: unchanged sticky in-flow header, no frame chrome (Step 5
   // exclusion). At lg+ this becomes the perimeter frame's fixed top band —
   // position switches to fixed and height locks to 42px (nav vertically
@@ -48,7 +69,10 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   // which compensates for this leaving normal document flow at lg+.
   return (
     <>
-      <header className="sticky top-0 z-50 bg-bg lg:fixed lg:inset-x-0 lg:top-0 lg:bg-white">
+      <header
+        ref={headerRef}
+        className="sticky top-0 z-50 bg-bg lg:fixed lg:inset-x-0 lg:top-0 lg:bg-white"
+      >
         <div className="relative">
           <div className="mx-auto flex items-center justify-between px-6 pb-6 pt-6 lg:h-[42px] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-0">
             {/* w-[min(1376px,...)], centered (mx-auto): content must not
@@ -81,7 +105,7 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               />
               Marc Favro
             </Link>
-            <nav className="flex gap-4 text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
+            <nav className="hidden gap-4 text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong sm:flex [font-family:var(--font-mono),ui-monospace,monospace]">
               <Link
                 href="/#hero"
                 className={`transition-colors hover:text-accent${activeClass("home")}`}
@@ -99,6 +123,67 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 target="_blank"
                 rel="noreferrer"
                 className="transition-colors hover:text-accent"
+              >
+                Resume
+              </a>
+            </nav>
+            {/* Two 20px strokes that cross into an × when open. 40px hit
+                area, pulled back by negative margins so the header keeps
+                its height and the icon's right edge sits on the content
+                edge. */}
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              aria-expanded={menuOpen}
+              aria-controls="home-menu"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              className="-my-[10px] -mr-[10px] flex size-10 items-center justify-center text-ink-strong sm:hidden"
+            >
+              <span aria-hidden className="relative block h-[8px] w-5">
+                <span
+                  className={`absolute inset-x-0 h-[1.5px] bg-current transition-transform duration-200 motion-reduce:transition-none ${
+                    menuOpen ? "top-[3.25px] rotate-45" : "top-0"
+                  }`}
+                />
+                <span
+                  className={`absolute inset-x-0 h-[1.5px] bg-current transition-transform duration-200 motion-reduce:transition-none ${
+                    menuOpen ? "top-[3.25px] -rotate-45" : "top-[6.5px]"
+                  }`}
+                />
+              </span>
+            </button>
+          </div>
+          {/* Phone menu: drops from under the header on the same paper,
+              one 48px row per link in the nav's mono uppercase. */}
+          <div
+            id="home-menu"
+            className={`absolute inset-x-0 top-full border-b border-line bg-bg transition-[opacity,transform,visibility] duration-200 motion-reduce:transition-none sm:hidden ${
+              menuOpen
+                ? "visible translate-y-0 opacity-100"
+                : "invisible -translate-y-1 opacity-0"
+            }`}
+          >
+            <nav className="flex flex-col px-6 pb-4 text-[16px] font-normal uppercase leading-[24px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
+              <Link
+                href="/#hero"
+                onClick={closeMenu}
+                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("home")}`}
+              >
+                Home
+              </Link>
+              <Link
+                href="/contact"
+                onClick={closeMenu}
+                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("contact")}`}
+              >
+                Contact
+              </Link>
+              <a
+                href={contact.resume}
+                target="_blank"
+                rel="noreferrer"
+                onClick={closeMenu}
+                className="border-t border-line py-3 transition-colors hover:text-accent"
               >
                 Resume
               </a>

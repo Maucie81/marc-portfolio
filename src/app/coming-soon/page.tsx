@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import ArrowIcon from "@/components/site/ArrowIcon";
+import CtaArrow from "@/components/site/CtaArrow";
 import SectionNumber from "@/components/site/SectionNumber";
 import SectionRail from "@/components/site/SectionRail";
 import { comingSoonTitle } from "@/lib/page-titles";
@@ -51,13 +51,15 @@ export default function ComingSoonPage() {
               <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)] leading-none">
                 Coming soon.
               </h1>
-              {/* 828:63135 — Google Sans Flex SemiBold 20/28 + 16px arrow */}
+              {/* Secondary (outline) CTA, Portfolio-Playground 100:209186 —
+                  the same treatment that frame gives "Get in touch" on the
+                  case-study closing. */}
               <Link
                 href="/contact"
-                className="group mt-2 inline-flex items-center gap-1 self-start text-xl font-semibold leading-7 text-ink transition-colors [font-family:var(--font-display),system-ui,sans-serif] hover:text-accent"
+                className="cta cta-secondary mt-10 self-start"
               >
                 Get in touch
-                <ArrowIcon className="text-current transition-transform group-hover:translate-x-0.5" />
+                <CtaArrow />
               </Link>
             </div>
           </div>

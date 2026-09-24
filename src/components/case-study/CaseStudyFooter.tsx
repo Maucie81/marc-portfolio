@@ -65,7 +65,7 @@ export default function CaseStudyFooter() {
       </section>
       <footer className="relative px-6 pb-10 pt-12">
         <p className="t-meta-sm border-t border-white/40 pt-5 text-center">
-          Built &amp; designed using Claude Code
+          Built using Claude Code
         </p>
       </footer>
     </div>
