@@ -225,6 +225,7 @@ function CaseStudyTopBar({
   title,
   fallbackHref,
   capped = false,
+  active,
 }: {
   title: string;
   /** Where "Back" goes when there's no in-app history to step through
@@ -239,6 +240,8 @@ function CaseStudyTopBar({
    * study stays full-bleed: the horizontal track underneath isn't capped
    * either, and its title pins to the track's own 129.6px start. */
   capped?: boolean;
+  /** Nav item for the page being shown — set bold, as HomeHeader does. */
+  active?: "contact";
 }) {
   const bandType =
     "text-[12px] font-normal uppercase leading-[20px] tracking-normal [font-family:var(--font-mono),ui-monospace,monospace]";
@@ -283,7 +286,12 @@ function CaseStudyTopBar({
               <Link href="/#hero" className="transition-colors hover:text-accent">
                 Home
               </Link>
-              <Link href="/#contact" className="transition-colors hover:text-accent">
+              <Link
+                href="/#contact"
+                className={`transition-colors hover:text-accent${
+                  active === "contact" ? " font-semibold" : ""
+                }`}
+              >
                 Contact
               </Link>
               <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
@@ -325,7 +333,7 @@ export default function PersistentHeader() {
     return <HomeHeader active="home" />;
   }
   if (pathname === "/contact") {
-    return <CaseStudyTopBar title="Contact" fallbackHref="/" capped />;
+    return <CaseStudyTopBar title="Contact" fallbackHref="/" capped active="contact" />;
   }
   if (pathname === "/coming-soon") {
     return (

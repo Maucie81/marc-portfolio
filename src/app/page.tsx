@@ -109,10 +109,14 @@ export default function Home() {
             padding the hero lands flush against the rails' inner edge
             without overlapping them. Below lg there's no perimeter chrome
             to reach: tablets keep the ordinary px-6 inset, and phones run
-            the coral full bleed (no inset at all). */}
+            the coral full bleed (no inset at all).
+            scroll-mt = the header's height (68px sticky on phones, 42px
+            fixed from lg), so the nav's "/#hero" link — and a fresh load
+            of that address — lands exactly where a plain "/" load does,
+            instead of tucking the top of the hero under the header. */}
         <section
           id="hero"
-          className="mx-auto flex flex-col sm:px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:flex-row lg:items-stretch lg:-mt-10 lg:px-0"
+          className="mx-auto flex scroll-mt-[68px] flex-col sm:px-6 [container-type:inline-size] lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-[42px] lg:flex-row lg:items-stretch lg:-mt-10 lg:px-0"
         >
           {/* ---------- Phone (<640px): coral panel only, stacked headline ---------- */}
           {/* sm:hidden (was md:hidden, i.e. <768px): the switch to the
