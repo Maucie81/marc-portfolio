@@ -20,7 +20,6 @@ import { NextResponse, type NextRequest } from "next/server";
  * (page-titles.ts) so the coming-soon page shows the right breadcrumb.
  */
 const HIDDEN: Record<string, string> = {
-  "/work/airbnb-hotels": "/coming-soon?p=airbnb-hotels",
   "/work/harrisons-app": "/coming-soon?p=harrisons-app",
 };
 
@@ -61,5 +60,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/work/airbnb-hotels", "/work/harrisons-app"],
+  matcher: ["/work/harrisons-app"],
 };

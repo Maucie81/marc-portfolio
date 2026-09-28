@@ -81,6 +81,10 @@ body {
      the variable font's default axis values render measurably wider
      without this. */
   font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
+  /* Google Sans Flex's stylistic set 1 — the single-story "a" — everywhere,
+     per direct request (Figma's "Single-story a" toggle). Only Google Sans
+     Flex carries stylistic sets; DM Sans and Roboto Mono ignore it. */
+  font-feature-settings: "ss01" 1;
 }
 
 ::selection {
@@ -739,6 +743,38 @@ paints over it. */
   color: var(--ink-2);
 }
 
+/* Outlined case-study title · Figma "Project Opening" 917:129486: Google
+   Sans Flex Bold 80/92, 5% (4px) tracking, uppercase, a --bg fill with a
+   2px coral stroke outside it (Figma: stroke FF5841, Outside, weight 2).
+   Built from two copies (see OutlineTitle): the stroke layer's
+   4px centered stroke puts 2px outside the glyphs, and the --bg fill on
+   top hides the inner 2px along with the font's internal overlaps. The
+   page grain sits above both, so the fill textures like the paper. */
+.cs-outline-title {
+  font-family: var(--font-display), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 80px;
+  line-height: 92px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--bg);
+  --outline: 4px;
+}
+
+.cs-outline-title-stroke {
+  color: var(--accent);
+  -webkit-text-stroke: var(--outline) var(--accent);
+}
+
+@media (max-width: 900px) {
+  .cs-outline-title {
+    font-size: 2.75rem;
+    line-height: 3.125rem;
+    letter-spacing: 2px;
+    --outline: 3px;
+  }
+}
+
 .cs-frame {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -778,8 +814,7 @@ paints over it. */
 
      --cs-media-scale is the separate, height-driven knob for the media
      boxes ONLY — every recording/placeholder/steps panel sized off the
-     shared 857×609 box and its 687.3px row (and the row's own anchor,
-     .cs-anchor-687). The row has to fit between the fixed chrome with
+     shared 857×609 box and its 687.3px row. The row has to fit between the fixed chrome with
      --cs-pad of clear space above and below it; a ~1440×780 laptop window
      used to leave it jammed under the top band. Above the height where it
      fits at 1:1 the row just sits centered with more than --cs-pad to
@@ -797,7 +832,7 @@ paints over it. */
        top of that band (.cs-progress). Not multiplied by either scale —
        the chrome is fixed-size regardless of the track's own geometry.
        Every vertical budget on this page (--cs-media-scale, the track's
-       padding, .cs-anchor-687, CaseStudyHero's --hero-scale) derives from
+       padding, CaseStudyHero's --hero-scale) derives from
        these so the story is always centered in the area actually left
        between them. --cs-pad is the minimum clear space between that
        chrome and any block's content, top and bottom. */
@@ -845,26 +880,30 @@ paints over it. */
     width: var(--w, 26rem);
   }
 
-  /* Anchors a block's title to the same viewport position every numbered
-     section lands on via track-centering (see the header-alignment work in
-     SectionBlock) — independent of the block's own content height, which
-     varies with quote/text length. Defined only in this desktop-only media
-     query on purpose: inline-styling this on the element directly would
-     also apply on mobile, where blocks should just follow normal top-to-
-     bottom flow with .cs-track's own gap instead. */
-  .cs-anchor-687 {
+  /* Every block hangs from one shared top line, so titles land on the same
+     row while scrolling — and that line sits where the whole story, taken
+     as one strip from the opening to "Thank you", is centered between the
+     fixed chrome (per direct request). The strip's height is its tallest
+     block, measured into --cs-content-h by HorizontalTrack. It used to be a
+     fixed 687.3px budget that included 80px of empty padding under every
+     media section, which left the strip sitting high. Defined only in this
+     desktop-only query: the vertical/mobile fallback just stacks blocks.
+     .cs-block-centered opts a block out (the grid-hero cover, which is
+     sized to fill the height on its own). */
+  .cs-track > .cs-block {
     align-self: flex-start;
-    /* Centers the shared 687.3px media row in the space between the fixed
-       chrome (.cs-track's padding), i.e. the same place a 687.3px-tall
-       block would land via the track's own centering. Formerly
-       `(100vh - (72px + 687.3px)) / 2` against the raw viewport: the 72px
-       was headroom for a section title that has since moved beside the
-       media instead of above it, so it had become pure bottom slack —
-       dropped now that the top band + bottom band + scrubber leave less
-       vertical room than the old 64px bar + scrubber did. */
-    margin-top: calc(
-      (100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - 687.3px * var(--cs-media-scale, 1)) / 2
+    margin-top: max(
+      0px,
+      calc(
+        (100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - var(--cs-content-h, 687.3px * var(--cs-media-scale, 1))) /
+          2
+      )
     );
+  }
+
+  .cs-track > .cs-block-centered {
+    align-self: center;
+    margin-top: 0;
   }
 
   /* The Problem's horizontal inset — desktop only, for the same reason. */
@@ -876,8 +915,8 @@ paints over it. */
   /* Closing section · Figma 387:66552, frame height 518px. Fixes the block's
      own height so its flex-1 middle group (see CaseStudyClosing) has real
      free space to grow into, pinning "Get in touch" to the frame's bottom
-     edge exactly as in Figma — same trick as .cs-anchor-687, desktop-only
-     since the vertical/mobile fallback has no matching row to align to.
+     edge exactly as in Figma — desktop-only since the vertical/mobile
+     fallback just stacks blocks in flow.
      margin-left tops up .cs-track's own 144px block gap to 293px, matching
      ClosingBlock's Learnings→stats column gap so the rhythm reads the same
      going into the stats→Thank-you transition. */

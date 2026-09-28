@@ -219,7 +219,7 @@ export const roles: Role[] = [
     intro:
       "Led design for hotel partner onboarding as Airbnb expanded into professional hospitality after the HotelTonight acquisition.",
     description:
-      "Designed onboarding as one system across Hubble, the internal tool account managers used to set up each hotel, and the hotel's own signup flow. Three rounds of usability testing with properties from boutique hotels to 200+ room chains. Launched Q1 2020, weeks before the Hotels team was cut in Airbnb's COVID-19 layoffs, so no post-launch data exists.",
+      "Designed onboarding as one system across Hubble, the internal tool account managers used to set up each hotel, and the hotel's own signup flow. Three rounds of usability testing with properties from boutique hotels to 200+ room chains. Launched Q1 2020.",
     tags: ["Onboarding", "Self-service", "Partnerships"],
   },
   {

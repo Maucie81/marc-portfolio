@@ -7,9 +7,8 @@ import type { CaseStudyLink } from "@/lib/case-studies";
  * Figma canvas this frame is a sibling slide in the same horizontal row as
  * the preceding stats block (same y, same 518px height), not a section
  * below it — so it renders as a `.cs-block` inside `HorizontalTrack`,
- * matching that frame's exact 809px width. `cs-anchor-687` (same class
- * `ClosingBlock` uses) anchors its top to that block's top regardless of
- * either block's actual content height. The middle "Want to see more?"
+ * matching that frame's exact 809px width, and centers between the fixed
+ * chrome like every other block. The middle "Want to see more?"
  * group carries the file's own `flex: 1 0 0`, which is what pins "Get in
  * touch" to the frame's bottom edge once `.cs-closing-block` (globals.css)
  * gives the block its literal 518px height.
@@ -20,7 +19,7 @@ import type { CaseStudyLink } from "@/lib/case-studies";
 export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) {
   return (
     <div
-      className="flex flex-col items-start gap-4 cs-block cs-closing-block cs-anchor-687"
+      className="flex flex-col items-start gap-4 cs-block cs-closing-block"
       style={{ ["--w" as string]: "calc(809px * var(--cs-scale, 1))" }}
     >
       <div className="flex w-full flex-col items-start gap-2">

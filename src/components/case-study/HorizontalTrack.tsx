@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -47,6 +47,29 @@ export default function HorizontalTrack({ children }: Props) {
   useEffect(() => {
     const timeoutId = window.setTimeout(() => setContentVisible(true), 400);
     return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  // The story's height — its tallest top-aligned block — as --cs-content-h
+  // on the track. globals.css places the shared top line every block hangs
+  // from so a strip this tall sits centered between the fixed chrome.
+  // Re-measured whenever any block resizes (fonts landing, media scaling
+  // with the window). Before paint, so the line doesn't visibly settle.
+  useLayoutEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+    const measure = () => {
+      const tallest = Math.max(
+        0,
+        ...Array.from(track.children)
+          .filter((el) => el.classList.contains("cs-block") && !el.classList.contains("cs-block-centered"))
+          .map((el) => (el as HTMLElement).offsetHeight),
+      );
+      if (tallest) track.style.setProperty("--cs-content-h", `${tallest}px`);
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    Array.from(track.children).forEach((el) => ro.observe(el));
+    return () => ro.disconnect();
   }, []);
 
   useEffect(() => {

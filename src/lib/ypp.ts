@@ -52,6 +52,27 @@ export const sidebar = {
 export type Bullet = { title: string; body: string };
 export type PullQuote = { quote: string; attribution: string };
 
+/** Line illustration beside a step (Airbnb's inherited flow). `labels`
+ * are the two text marks set under a vector-only icon — Figma draws the
+ * "A." / "B." of the transfer step as live text, not paths. */
+export type StepIcon = {
+  src: string;
+  width: number;
+  height: number;
+  labels?: [string, string];
+};
+
+/** A section's media. `aspect` ("w/h") sizes the box to a recording's own
+ * shape at the shared 609px height instead of the default 1440:1024 box —
+ * for clips whose prototype frame doesn't fit that box without bars. */
+export type SectionImage = {
+  src?: string;
+  alt: string;
+  frame?: "canvas" | "plain";
+  type?: "video";
+  aspect?: string;
+};
+
 export type Block =
   | { kind: "cover" }
   | {
@@ -74,7 +95,7 @@ export type Block =
       heading: string;
       body: string[];
       stat?: { value: string; label: string };
-      quote: { text: string; attribution: string };
+      quote?: { text: string; attribution: string };
       sectionNumber?: string;
     }
   | {
@@ -94,8 +115,10 @@ export type Block =
         text: string;
       }>;
       /** Replaces the media placeholder with a dark step-by-step panel
-       * (Figma's "Steps" component) instead of an image + caption. */
-      steps?: Bullet[];
+       * (Figma's "Steps" component) instead of an image + caption. When
+       * every step carries an `icon`, renders the illustrated two-column
+       * list instead (Airbnb's inherited flow, Figma 917:130955). */
+      steps?: (Bullet & { icon?: StepIcon })[];
       /** Replaces the media placeholder with a real, isolated interaction
        * clip — one component cropped tight, no browser chrome, not
        * a full-dashboard screenshot. `frame` picks the presentation:
@@ -108,10 +131,11 @@ export type Block =
        * "video"` renders `src` as an autoplay/muted/loop <video> instead
        * of an <img> — for a real screen recording (.webm) rather than a
        * static screenshot. */
-      image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
+      image?: SectionImage;
     }
   | {
       kind: "closing";
+      sectionNumber?: string;
       heading: string;
       body: string[];
       stats: { value: string; label: string }[];
@@ -139,7 +163,7 @@ export type Block =
         body: string;
         caption: string;
         /** Same options as `section.image`; omitted = placeholder box. */
-        image?: { src?: string; alt: string; frame?: "canvas" | "plain"; type?: "video" };
+        image?: SectionImage;
       }[];
     }
   | {

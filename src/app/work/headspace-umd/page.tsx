@@ -23,9 +23,8 @@ export const metadata: Metadata = {
  * closing ring (case-studies.ts): this page's own two ring-neighbors. */
 const CLOSING_LINKS = closingLinksFor("headspace-umd");
 
-/** Recorded prototype walkthrough, anchored to the same 687px row as every
- * YPP section's media (and as the Context stack before it, so the two tops
- * line up). Same treatment as the shared `PlainMedia` box — bg-white,
+/** Recorded prototype walkthrough, centered between the fixed chrome like
+ * every other block. Same treatment as the shared `PlainMedia` box — bg-white,
  * rounded-lg, drop shadow, 609px tall — but NOT the shared 1440:1024 shape:
  * this prototype was built at a wider 1.6:1 frame (2982×1862 after cropping
  * the recording to the frame's interior), and holding it in the 4:3 box
@@ -37,8 +36,8 @@ const CLOSING_LINKS = closingLinksFor("headspace-umd");
  * fills it edge to edge. Kept local rather than adding a ratio override to `PlainMedia`,
  * which stays a fixed box on purpose.
  *
- * Mirrors SectionBlock's panel column — 609px media row, gap-6, 80px bottom
- * pad — with the Figma link taking the caption's slot, left-aligned to the
+ * Mirrors SectionBlock's panel column — 609px media row, gap-6 — with the
+ * Figma link taking the caption's slot, left-aligned to the
  * media's own left edge. Block width is the media width, so the 144px
  * track gap plus CaseStudyClosing's own 149px margin-left gives the same
  * 293px run-in to "Thank you." that YPP has. */
@@ -48,10 +47,10 @@ const WALKTHROUGH_WIDTH = `calc(609px * ${WALKTHROUGH_ASPECT} * var(--cs-media-s
 function WalkthroughBlock({ href }: { href: string }) {
   return (
     <div
-      className="cs-block cs-anchor-687"
+      className="cs-block"
       style={{ ["--w" as string]: WALKTHROUGH_WIDTH }}
     >
-      <div className="flex flex-col gap-6 min-[901px]:pb-[calc(80px*var(--cs-scale,1))]">
+      <div className="flex flex-col gap-6">
         <div
           className="product-media w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-media-scale,1))]"
           style={{ aspectRatio: WALKTHROUGH_ASPECT }}

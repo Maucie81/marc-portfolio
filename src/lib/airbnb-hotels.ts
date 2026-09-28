@@ -1,16 +1,34 @@
-import type { Block, ImageSpec } from "@/lib/ypp";
+import type { Block, Bullet, ImageSpec } from "@/lib/ypp";
 
 /**
  * Airbnb Account Creation & Onboarding — case-study content.
  *
- * Source of truth: Figma "Portfolio-2026", node 511:56659 ("Airbnb Case
- * Study"). Copy is pulled directly from that frame's text layers — see the
- * PR/commit notes for the handful of open items still unresolved in the
- * Figma file itself (Design Principles section content, a stray "six" vs
- * "7" handoff count). [PLACEHOLDER] marks the image/media captions only,
- * same convention as the YPP and Headspace case studies — those slots can't
- * be built out until the surrounding structure is locked.
+ * Source of truth: Figma "Portfolio-2026", node 917:129463 ("Airbnb Case
+ * Study", the 2026-09-28 rewrite). This version replaces the earlier
+ * Research / Design principles / Key decisions / Outcome structure with a
+ * walk through the shipped system — Hubble, then each step of the hotel's
+ * own flow. Copy is Figma's, with headings in sentence case per the site's
+ * casing rules. Figma numbers both Welcome and Account creation "04"; the
+ * numbers here run in sequence instead.
+ *
+ * Media are the walkthrough recordings in /public/airbnb/videos, cropped to
+ * the prototype frame (Figma's presentation toolbar, slide arrows and file
+ * switcher painted or trimmed out), plus one still for Room types. They
+ * share one shape, a little taller than the standard media box, so the
+ * box takes their shape at the shared 609px height — see SectionImage.
  */
+
+/** Every recording/still here is 2496×1822 — see the header note. */
+const MEDIA_ASPECT = "2496/1822";
+
+/** The same points drive the expand-to-read list and the plain fallback,
+ * as on the Yahoo sections. */
+function points(list: Bullet[]) {
+  return {
+    bullets: list,
+    expandedPoints: list.map((p) => ({ label: p.title, text: p.body })),
+  };
+}
 
 export const meta = {
   // Lowercase per direct request, scoped to this cover only — same
@@ -23,9 +41,11 @@ export const meta = {
   // onboarding" string.
   title: "account creation & onboarding",
   subtitle:
-    "Airbnb's acquisition of HotelTonight brought a new class of partner onto the platform: professional hospitality businesses with onboarding needs the existing host flow wasn't built for. Getting a single hotel live required six manual handoffs across account managers, contractors, and ops teams. I redesigned that process into a self-service flow built entirely on existing Airbnb infrastructure — no net-new engineering required.",
+    "Airbnb's acquisition of HotelTonight brought hotels onto a platform built for individual hosts. Getting a single hotel live took seven steps, three people and a Google Form. I redesigned it as one onboarding system: account managers set each hotel up in Hubble, an existing Airbnb tool, and hotels finished their own signup in a guided flow.",
   company: "Airbnb",
   years: "2019 — 2020",
+  // Figma's outlined opening (917:129483) — three lines, uppercased by CSS.
+  heroLines: ["account", "creation", "& onboarding"],
 };
 
 export const sidebar = {
@@ -41,23 +61,24 @@ export const sidebar = {
     {
       label: "Audience",
       items: [
-        "Hotel revenue managers, general managers, front desk agents",
-        "Airbnb market managers and ops team",
+        "Hotel revenue managers, general managers and front desk staff",
+        "Airbnb account managers and Content Ops",
       ],
     },
     {
       label: "Areas of influence",
       items: [
+        "End-to-end onboarding system across Hubble and the hotel flow",
         "Account creation and onboarding UX",
         "Competitive and systems audit",
-        "Research synthesis and question development",
+        "Usability testing, three rounds",
         "Design Language System migration",
       ],
     },
   ],
   highlights: [
-    "Built on existing Airbnb infrastructure — no net-new engineering",
-    "Launched Q1 2020",
+    "Removed the contractor from onboarding",
+    "One flow built for both managed and self-starting hotels",
   ],
 };
 
@@ -67,173 +88,197 @@ export const blocks: Block[] = [
   // 1. Cover
   { kind: "cover" },
 
-  // 2. The Problem
+  // 2. The problem — no pull quote in this version, just the stat
   {
     kind: "intro-stack",
     sectionNumber: "01",
     heading: "The problem",
     body: [
-      "Airbnb acquired HotelTonight in early 2019 and inherited something its platform wasn't designed for: professional hospitality businesses. Revenue managers, directors of operations, COOs. People who ran their properties across 15 to 20 OTA channels simultaneously through purpose-built PMS and channel management systems. They expected extranet parity. They expected to be treated like the operators they were.",
-      "What they got was a flow built for individual hosts. The onboarding process had six steps and required a human handoff at every one of them. No hotel could get a single room live on Airbnb without going through an account manager, a contractor, and back again. The Google Form sitting at the center of that process wasn't just inefficient. It was the wrong signal to send to a partner you were asking to trust you with their inventory.",
+      "Airbnb acquired HotelTonight in 2019 and, with it, a new kind of partner: hotels. Airbnb's onboarding was built for individual hosts renting out a room or a home. Hotels are run by revenue managers who sell dozens of room types across fifteen to twenty booking channels at once. They needed to list those room types, supply state and local tax details, and be treated like the businesses they were.",
+      "Every hotel that went live on Airbnb passed through an account manager, a contractor and a Google Form. That worked for a handful of properties. It couldn't scale as more hotels signed on.",
     ],
     stat: {
-      value: "7",
-      label:
-        "Manual handoffs from initial outreach to a property going live, none self-service",
-    },
-    quote: {
-      text: "It doesn't feel like we are already in a relationship. It feels like we are just starting one.",
-      attribution: "Michael, Director of Revenue Management, Paligroup Hotels",
+      value: "3",
+      label: "People needed to get a single hotel room live: an account manager, a contractor and the hotel",
     },
   },
 
-  // 3. The Inherited Flow — now seven steps, not six
+  // 3. The inherited flow — illustrated two-column steps (Figma 917:130955)
   {
     kind: "section",
     sectionNumber: "02",
     eyebrow: "",
     title: "The inherited flow",
-    body: "Every hotel went through the same sequence before a single room could be booked. Seven steps, seven handoffs, no way in without a Market Manager and no way to finish without a contractor.",
+    body: "Every hotel went through the same sequence before a single room could be booked. Seven steps and three people: no way in without an account manager, and no way to finish without a contractor.",
     bullets: [],
     caption: "",
     steps: [
       {
         title: "Step 1: Establish contract",
-        body: "The Market Manager reached out to the hotel's Revenue Manager and established a contract. This was the only entry point. There was no self-initiated path for hotels.",
+        body: "The account manager reached out to the hotel's revenue manager and established a contract. This was the only way in. Hotels had no path to start on their own.",
+        icon: { src: "/airbnb/steps/step-1-contract.svg", width: 76.7564, height: 74.7446 },
       },
       {
         title: "Step 2: Create account",
-        body: "The Revenue Manager created an Airbnb account through a flow built for individual hosts. It didn't account for room-type listing, state and locally mandated information, or the level of professionalism hotels expected.",
+        body: "The revenue manager created an Airbnb account through a flow built for individual hosts. It had no way to list room types, capture state and local requirements, or speak to hotels as the businesses they were.",
+        icon: { src: "/airbnb/steps/step-2-account.svg", width: 97.9077, height: 74 },
       },
       {
         title: "Step 3: Collect data",
-        body: "The Market Manager collected key hotel data from the Revenue Manager — room types, property amenities, and other listing details. Hotels often didn't know where to find their EI number or how to input random numbers required by the form.",
+        body: "The account manager collected room types, amenities and other listing details through a Google Form. Hotels often didn't know where to find their tax ID or what some of the required numbers meant.",
+        icon: { src: "/airbnb/steps/step-3-collect.svg", width: 56.1172, height: 74 },
       },
       {
         title: "Step 4: Create listings",
-        body: "A contractor manually built the hotel's listings inside the hotel's personal Airbnb account. Features needed included multiple room types within a single property and editable property-level content.",
+        body: "A contractor built the hotel's listings by hand in the contractor's own personal Airbnb account.",
+        icon: { src: "/airbnb/steps/step-4-listings.svg", width: 74.0144, height: 74 },
       },
       {
         title: "Step 5: Transfer listings",
-        body: "The contractor transferred the completed listings to the Revenue Manager's Airbnb account. Ideally this step would be removed from the flow entirely.",
+        body: "The contractor transferred the finished listings to the revenue manager's account. The new flow removed this step entirely.",
+        icon: { src: "/airbnb/steps/step-5-transfer.svg", width: 72.7553, height: 39.9567, labels: ["A.", "B."] },
       },
       {
         title: "Step 6: Review listings",
-        body: "The Revenue Manager reviewed all listings, checked for errors, edited prices, and published.",
+        body: "The revenue manager reviewed every listing, checked for errors, edited prices and published.",
+        icon: { src: "/airbnb/steps/step-6-review.svg", width: 89.7788, height: 74 },
       },
       {
         title: "Step 7: Ready to publish",
-        body: "Inventory was now live and bookable on Airbnb.",
+        body: "Inventory was live and bookable on Airbnb.",
+        icon: { src: "/airbnb/steps/step-7-publish.svg", width: 69.8267, height: 73.9999 },
       },
     ],
   },
 
-  // 4. Research — Figma (519:72601): the heading sits above item 01 in the
-  // same column; 02 and 03 follow, each with its own media panel.
+  // 4. Hubble — the account manager's side of the system
   {
-    kind: "panel-group",
+    kind: "section",
     sectionNumber: "03",
-    heading: "Research",
-    eyebrow: "What the market already knew",
-    items: [
+    eyebrow: "No invite until the setup is done",
+    title: "Hubble",
+    body: "HotelTonight's account managers tracked every hotel in a Google spreadsheet. We moved them onto Hubble, an existing Airbnb tool, and I designed one system across both sides: set the hotel up first, then send the invite.",
+    ...points([
       {
-        number: "01",
-        title: "Competitive audit",
-        body: "Expedia, Booking.com, and Agoda audited against three questions: how they sequenced onboarding versus ongoing property setup, how professional their language was, and how they handled task complexity. Every mature OTA already treated hotels as operators. That became the baseline.",
-        caption: "[PLACEHOLDER — competitive audit artifact]",
+        title: "The rate travels with the invite",
+        body: "Manual forms meant wrong rates and missed updates. Now every hotel arrives with its terms attached, and Airbnb has a record of each acceptance.",
       },
       {
-        number: "02",
-        title: "Systems audit",
-        body: "Three internal tools reviewed: the Trust and Safety signup flow, Luxury Retreats' stepped onboarding, and Hubble, the account manager tool the Luxury Retreats team had built. All three became direct building blocks. One early constraint: Hubble didn't store signed contracts, which would have required net-new engineering to solve.",
-        caption: "[PLACEHOLDER — systems audit diagram]",
+        title: "One flow, two kinds of hotel",
+        body: "Managed hotels arrive with their details filled in while smaller hotels filled them in manually. This path was held back at launch, but the flow was built for it.",
       },
-      {
-        number: "03",
-        title: "User testing",
-        body: "Three rounds over the course of the project, five to ten hotels per round. Two findings drove the most consequential decisions: hotels were confused and frustrated when asked for room type and tax information upfront, and the welcome email felt like a cold introduction rather than a continuation of their existing HotelTonight relationship.",
-        caption: "[PLACEHOLDER — user testing session]",
-      },
-    ],
+    ]),
+    caption: "The new journey, showing where the account manager's setup in Hubble hands off to the hotel's onboarding.",
+    image: {
+      src: "/airbnb/videos/Hubble.webm",
+      alt: "Setting up a hotel host in Hubble: host details, agreement template, commission rates, then the invitation",
+      frame: "plain",
+      type: "video",
+      aspect: MEDIA_ASPECT,
+    },
   },
 
-  // 5. Design Principles — the dark full-bleed panel now matches Figma's
-  // structure (518:70506) exactly: sectionNumber, heading, and intro
-  // paragraph are real Figma copy. The three item titles/bodies in Figma
-  // are still a verbatim, unedited duplicate of the Research panel copy
-  // above (same "Competitive audit / Systems audit / User testing" text) —
-  // that's unresolved on the Figma side, not a structural gap, so these
-  // stay placeholder until real principle copy exists.
+  // 5. Welcome — the invite email and landing page
   {
-    kind: "principles",
+    kind: "section",
     sectionNumber: "04",
-    heading: "Design principles",
-    intro:
-      "Developing principles served as a constant reminder of our priorities, allowing us to course-correct quickly if we began to stray from our objectives or misrepresent our end users.",
-    items: [
+    eyebrow: "A continuation, not an introduction",
+    title: "Welcome",
+    body: "Once setup was done, Hubble sent the hotel its invite. In testing, early versions of that email read like a cold introduction to hotels that already had a relationship with HotelTonight. The final email and landing page picked up where that relationship left off and told hotels what the next few steps would ask of them.",
+    ...points([
       {
-        number: "01",
-        title: "[PLACEHOLDER — principle 01 title]",
-        body: "[PLACEHOLDER — principle 01 supporting copy]",
+        title: "An invite nobody had to type",
+        body: "Hubble couldn't send email, so the ops team would have written every invite by hand as plain text. Connecting Hubble to Airbnb's email system meant each hotel got a branded invite automatically the moment its setup was finished.",
       },
-      {
-        number: "02",
-        title: "[PLACEHOLDER — principle 02 title]",
-        body: "[PLACEHOLDER — principle 02 supporting copy]",
-      },
-      {
-        number: "03",
-        title: "[PLACEHOLDER — principle 03 title]",
-        body: "[PLACEHOLDER — principle 03 supporting copy]",
-      },
-    ],
+    ]),
+    caption: "The invite email and landing page: what hotels saw first, and what they'd be asked for next.",
+    image: {
+      src: "/airbnb/videos/Welcome.webm",
+      alt: "The Welcome to Airbnb invite email, then the onboarding landing page it opens",
+      frame: "plain",
+      type: "video",
+      aspect: MEDIA_ASPECT,
+    },
   },
 
-  // 6. Key Decisions — Figma (520:72979) treats the intro as item 01 in the
-  // heading's own column, with its own media panel, then the decisions
-  // follow as 02–04.
+  // 6. Account creation
   {
-    kind: "panel-group",
+    kind: "section",
     sectionNumber: "05",
-    heading: "Key decisions",
-    items: [
+    eyebrow: "The form already knew them",
+    title: "Account creation",
+    body: "Hotels started by creating a business account and confirming their business details. Everything the account manager had entered in Hubble arrived already filled in, so hotels checked their information instead of typing it again. A progress bar showed from the first screen that the flow was short.",
+    ...points([
       {
-        number: "01",
-        title: "Choices that shaped the flow",
-        body: "Three decisions defined the final shape of the flow — each a fork where a more obvious path existed and was set aside for a specific reason.",
-        caption: "[PLACEHOLDER — the three decisions mapped onto the final flow]",
+        title: "Support we couldn't ship",
+        body: "Testing showed that a built-in support option put hotels at ease, but real-time support wasn't possible in this release. Instead, each step linked to a Hotels FAQ written for exactly what that step asked of them.",
       },
-      {
-        number: "02",
-        title: "Extended Hubble instead of building new",
-        body: "The Hotels team extended Hubble — the account manager tool built by the Luxury Retreats team — to create host accounts for hotels, track property progress through onboarding, manage commission rates and contracts, and let account managers build a property details page per hotel. The team also integrated Rookery into Hubble so the ops team could trigger templated, branded emails automatically, replacing manually written plain-text messages and making the trigger step scalable.",
-        caption: "[PLACEHOLDER — Hubble property details page]",
-      },
-      {
-        number: "03",
-        title: "Replaced full support with a Hotels FAQ",
-        body: "Research showed that embedding a support feature gave hotels ease and trust. The team knew before testing that real-time support wasn't shippable in this flow. Rather than omitting it entirely, they linked to a Hotels-specific FAQ with articles directly relevant to what partners were being asked to do at each step. Form fields were also pre-populated with data already gathered by account managers in Hubble.",
-        caption: "[PLACEHOLDER — Hotels FAQ / pre-populated form fields]",
-      },
-      {
-        number: "04",
-        title: "Moved complex tasks out of the critical path",
-        body: "Room information, taxes and fees, and property photos had all been collected upfront via Google Form. User testing confirmed the bigger issue: the person completing account creation was often not the person who had that information, making those fields a bottleneck that stopped the whole flow. Moving complex tasks to the post-account-creation property dashboard let hotels complete the critical path quickly and return to detailed setup with the right people.",
-        caption: "[PLACEHOLDER — before/after: Google Form vs. property dashboard]",
-      },
-    ],
+    ]),
+    caption: "Business account and business details, pre-filled from the account manager's setup in Hubble.",
+    image: {
+      src: "/airbnb/videos/AccountCreation.webm",
+      alt: "Creating the business account with pre-filled details, then reviewing the business details step",
+      frame: "plain",
+      type: "video",
+      aspect: MEDIA_ASPECT,
+    },
   },
 
-  // 7. Outcome — no stats in this version of the design
+  // 7. Room types — a still, not a recording
+  {
+    kind: "section",
+    sectionNumber: "06",
+    eyebrow: "What we stopped asking",
+    title: "Room types",
+    body: "Hotels listed the room types they wanted to sell on the platform, and the flow created a field for each one. Tax details came out of the hotel's signup entirely, and photos, pricing and calendars moved to the property dashboard, where hotels could return to after their account was live.",
+    ...points([
+      {
+        title: "The wrong person had the answers",
+        body: "In testing, the person creating the account often wasn't the one who knew the property's tax details. Asking for them during signup stopped the whole flow. Taking them out let hotels finish and bring in the right colleague later.",
+      },
+    ]),
+    caption: "Room type setup: hotels name their room types, and the flow builds a field for each.",
+    image: {
+      src: "/airbnb/RoomTypes.webp",
+      alt: "The room types step: a count of room types, a name and max occupancy field for each, and a channel manager picker",
+      frame: "plain",
+      aspect: MEDIA_ASPECT,
+    },
+  },
+
+  // 8. Agreements
+  {
+    kind: "section",
+    sectionNumber: "07",
+    eyebrow: "Declining isn't a dead end",
+    title: "Agreements",
+    body: "The last steps were agreements: Airbnb's Community Commitment, which every host signs, and the hotel's partnership terms, including the commission rate set in Hubble. Signing led straight to the property dashboard, where the rest of setup was waiting.",
+    ...points([
+      {
+        title: "A decline with a warning",
+        body: "If a hotel declined the terms, a modal explained what declining meant before anything changed, then returned them to the start of the flow.",
+      },
+    ]),
+    caption: "Community Commitment, partnership terms, and the confirmation that hands hotels to their property dashboard.",
+    image: {
+      src: "/airbnb/videos/Agreements.webm",
+      alt: "Accepting the hotel terms of service and the commission rate agreement, then landing on the property page handoff",
+      frame: "plain",
+      type: "video",
+      aspect: MEDIA_ASPECT,
+    },
+  },
+
+  // 9. Learnings
   {
     kind: "closing",
-    heading: "Outcome",
+    sectionNumber: "08",
+    heading: "Learnings",
     body: [
-      "V1 of the account creation and onboarding flow launched Q1 2020. Hotels could now set up their account through a structured, brand-consistent self-service flow — form fields pre-populated from Hubble data, a progress bar signaling scope, and complex property setup tasks moved to a post-account-creation dashboard.",
-      "Airbnb laid off 25% of its staff in May 2020. The Hotels vertical was among the first casualties. The new flow had been live for weeks, not months.",
-      "What it did establish: that professional hospitality businesses could onboard onto Airbnb without a human in the loop. For a platform that had never built for that audience, that was the proof of concept.",
+      "The first version launched in Q1 2020. Weeks later, Airbnb cut a quarter of its staff in response to COVID-19, and the Hotels team was among the first to go. The flow was live for weeks, not months, so there is no post-launch data.",
+      "The clearest signal came from testing. The hotels who had been through the old process said the new one felt far more professional than the Google Form. The flow also left something built but unused: the path for smaller hotels to start on their own was already in place, waiting for Airbnb to open it.",
+      "In a review, I can walk through the competitive and systems audits, three rounds of usability testing, and the design principles behind the flow.",
     ],
     stats: [],
-    caption: "[PLACEHOLDER — journey map or final flow screenshots]",
   },
 ];
