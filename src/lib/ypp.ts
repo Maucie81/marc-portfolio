@@ -17,6 +17,9 @@ export const meta = {
     'Yahoo\'s Partner Portal had stagnated in "keep lights on" mode — no new investment, no roadmap, and 8,700+ media partners without the tools to understand how their content was performing on Yahoo. Partner Portal 2.0 set out to change that: self-service visibility, actionable diagnostics, and the administrative controls partners had been asking for.',
   company: "Yahoo",
   years: "2024 — 2026",
+  // The outlined opening's title, one line each (uppercased by CSS).
+  // The outlined opening's title, one line each (uppercased by CSS).
+  heroLines: ["partner", "portal"],
 };
 
 export const sidebar = {
@@ -24,6 +27,12 @@ export const sidebar = {
     {
       label: "Role",
       items: ["Sole designer, concept through launch"],
+    },
+    {
+      // Added when the opening's date line became the company name — the
+      // dates had no other home on this cover.
+      label: "Timeline",
+      items: ["2024 — 2026"],
     },
     {
       label: "Audience",
@@ -109,6 +118,10 @@ export type Block =
       pullQuotes?: PullQuote[];
       pullQuotePosition?: "top" | "middle" | "bottom";
       stats?: { value: string; label: string }[];
+      /** Sets `stats` inside the media box instead of in their own column
+       * beside it (Headspace's Admin survey, Figma 917:127264). Phones list
+       * them under the box, which is too small there to hold them. */
+      statsInMedia?: boolean;
       sectionNumber?: string;
       expandedPoints?: Array<{
         label: string;
@@ -229,7 +242,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Eight KPI cards — views, reach, uniques, dwell, CTR, comments, video streams, content volume — each with period-over-period movement.",
+      "Eight KPI cards — views, reach, uniques, dwell, CTR, comments, video streams, content volume\n— each with period-over-period movement.",
     image: {
       src: "/ypp/videos/Overview.webm",
       alt: "Filtering the Overview page and reading KPI cards and charts",
@@ -279,7 +292,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Rank your best-performing stories by any metric, then slice the results by region, device, type, category, and license to find what's actually working.",
+      "Rank your best-performing stories by any metric, then slice the results by region, device, type, category,\nand license to find what's actually working.",
     image: {
       src: "/ypp/videos/TopContent.webm",
       alt: "Ranking and filtering Top Content and opening a story's placement data",
@@ -324,7 +337,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Drill into any KPI with full historical trend lines, median and average breakdowns, and an export of every row in the filtered view.",
+      "Drill into any KPI with full historical trend lines, median and average breakdowns, and an export\nof every row in the filtered view.",
     image: {
       src: "/ypp/videos/KPIDeepDives.webm",
       alt: "Viewing the Views KPI's historical trend line and hourly breakdown table",
@@ -406,7 +419,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Watch how specific issues trend across your entire feed over time, drill into affected content, and see the impact on performance.",
+      "Watch how specific issues trend across your entire feed over time, drill into affected content,\nand see the impact on performance.",
     image: {
       src: "/ypp/videos/IssueTrend.webm",
       alt: "Viewing a specific issue's hourly trend chart and the affected content list",
@@ -439,7 +452,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Click into any piece of content to see performance, metadata, warnings, and actionable next steps — no guessing, no tickets required.",
+      "Click into any piece of content to see performance, metadata, warnings,\nand actionable next steps — no guessing, no tickets required.",
     image: {
       src: "/ypp/videos/StoryDetails.webm",
       alt: "Opening a story from the issues list to view its warning and remediation details",
@@ -472,7 +485,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID, then jump straight to its performance data.",
+      "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID,\nthen jump straight to its performance data.",
     image: {
       src: "/ypp/videos/Search.webm",
       alt: "Searching for a story and opening its Content Item Detail",
@@ -505,7 +518,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Request content removal directly from a story's details — include metadata, get confirmation, self-serve without support tickets.",
+      "Request content removal directly from a story's details — include metadata, get confirmation,\nself-serve without support tickets.",
     image: {
       src: "/ypp/videos/Takedowns.webm",
       alt: "Filing a pre-filled takedown request from a story's details",
@@ -538,7 +551,7 @@ export const blocks: Block[] = [
       },
     ],
     caption:
-      "Add and remove team members, assign roles, control brand access, and manage organizational permissions — all without involving Yahoo.",
+      "Add and remove team members, assign roles, control brand access, and manage organizational permissions\n— all without involving Yahoo.",
     image: {
       src: "/ypp/videos/UserManagement.webm",
       alt: "Browsing the user list and reviewing a team member's role and brand access",

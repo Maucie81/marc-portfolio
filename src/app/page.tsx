@@ -65,6 +65,19 @@ function bandFill(color: string, ...layers: string[]) {
    clipped rather than resized, so their dot scale is untouched. */
 const BAND_CLIP = { clipPath: "inset(0 max(0px, calc((100% - 1376px) / 2)))" };
 
+/* The coral panels' halftone (hero + contact band): a seamless tile cut from
+   the dot art inside public/case-study-texture.svg, repeated at one fixed
+   size so the dots come out the same size on both panels. Each used to
+   stretch the whole sheet to fill its own panel (background-size: cover),
+   so the wide, short contact band blew the dots up ~35% past the hero's.
+   987×588 is the hero's dot scale at the 1440 frame, per direct request. */
+const CORAL_TEXTURE = {
+  backgroundImage: "url(/coral-texture-tile.png)",
+  backgroundSize: "987px 588px",
+  backgroundPosition: "center",
+  backgroundRepeat: "repeat",
+} as const;
+
 export default function Home() {
   return (
     <div>
@@ -138,28 +151,15 @@ export default function Home() {
               Full bleed on phones: no side inset on the section and square
               corners, so the coral runs to the screen edges. */}
           <div className="relative isolate flex flex-col items-center overflow-hidden bg-accent px-6 pb-7 pt-6 text-center sm:px-10 sm:hidden">
-            {/* Texture · same asset as the work-card lockups above
-                (public/case-study-texture.svg), but applied as a CSS
-                background with background-size:cover instead of an <img>
-                with h-full/w-full: the SVG has its own intrinsic aspect
-                ratio, and an <img> respects that via preserveAspectRatio
-                even when its box is stretched to h-full/w-full, so on a
-                panel shaped differently from the texture's native ratio it
-                letterboxed — visible as flat, un-grained coral bands top
-                and bottom. A background-image with background-size:cover
-                fills the box edge to edge on any aspect ratio, cropping
-                instead of letterboxing (same spirit as the work card's own
-                scale-[1.06] overscale to crop the source's stray edge
-                pixels). */}
+            {/* Texture · the repeating coral halftone (CORAL_TEXTURE), a
+                CSS background rather than an <img> so it fills the panel
+                edge to edge on any aspect ratio — an <img> of the SVG sheet
+                letterboxed here, leaving flat, un-grained coral bands top
+                and bottom. */}
             <div
               aria-hidden
               className="pointer-events-none absolute inset-0 mix-blend-multiply"
-              style={{
-                backgroundImage: "url(/case-study-texture.svg)",
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                backgroundRepeat: "no-repeat",
-              }}
+              style={CORAL_TEXTURE}
             />
             <p className={`${HERO_LABEL_CLASS} relative`}>Hello &amp; welcome</p>
             <div className="relative mt-0 w-[78%] max-w-[300px]">
@@ -187,7 +187,7 @@ export default function Home() {
                 last line. */}
             <p className={`${HERO_LABEL_CLASS} relative mt-2 [text-wrap:pretty]`}>
               I&rsquo;m a Principal Product Designer, based in Brooklyn, New York.
-              I turn complex problems into products that businesses run on and users love.
+              I design platforms that bring disconnected workflows together and put people in control.
             </p>
             {/* The desktop hero's dark "Selected work" block, as a card
                 closing the coral panel. 16px type like the desktop, so the
@@ -242,18 +242,13 @@ export default function Home() {
               className="relative isolate h-full overflow-hidden bg-accent"
             >
               {/* Texture · see the mobile panel's comment above for why this
-                  is a CSS background-size:cover layer, not an <img>. Lives
-                  on A now (full-bleed), not on C (capped) — it has to cover
-                  the same box the coral fill does. */}
+                  is a CSS background, not an <img>. Lives on A now
+                  (full-bleed), not on C (capped) — it has to cover the same
+                  box the coral fill does. */}
               <div
                 aria-hidden
                 className="pointer-events-none absolute inset-0 mix-blend-multiply"
-                style={{
-                  backgroundImage: "url(/case-study-texture.svg)",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                  backgroundRepeat: "no-repeat",
-                }}
+                style={CORAL_TEXTURE}
               />
               {/* h-full down through B: dormant today (A's own height is
                   always this content's organic height — the row's shorter
@@ -341,7 +336,7 @@ export default function Home() {
                         I&rsquo;m a Principal Product Designer, based in Brooklyn, New York.
                       </span>
                       <span className="block [text-wrap:balance]">
-                        I turn complex problems into products that businesses run on and users love.
+                        I design platforms that bring disconnected workflows together and put people in control.
                       </span>
                     </p>
                   </div>
@@ -430,7 +425,7 @@ export default function Home() {
             <div className="space-y-24 lg:space-y-32">
               {projects.map((project) => {
                 const isLinked = Boolean(project.href);
-                const image = project.image ? (
+                const image = project.image || project.screenColor ? (
                   // Card = texture sheet with the device mockup sitting on
                   // it (Figma card frame 784:121621 / 784:121479 /
                   // 791:129913, node "Homepage artwork" 835:64874). The
@@ -486,16 +481,42 @@ export default function Home() {
                         boxShadow: "inset 0 0 0 1px var(--line)",
                       }}
                     />
-                    <Image
-                      src={project.image.src}
-                      alt={project.image.alt}
-                      width={project.image.width}
-                      height={project.image.height}
-                      // 4x Figma export served as-is: the optimizer's q75
-                      // re-encode of small UI text was visibly soft.
-                      unoptimized
-                      className="relative block h-full w-full"
-                    />
+                    {project.image ? (
+                      <Image
+                        src={project.image.src}
+                        alt={project.image.alt}
+                        width={project.image.width}
+                        height={project.image.height}
+                        // 4x Figma export served as-is: the optimizer's q75
+                        // re-encode of small UI text was visibly soft.
+                        unoptimized
+                        className="relative block h-full w-full"
+                      />
+                    ) : (
+                      // No artwork yet: the device the other cards' exports
+                      // bake in, drawn to the same footprint (measured off
+                      // those 2848×1600 cutouts) with the screen a flat
+                      // `screenColor`, so the real mockup can drop in later
+                      // without the card shifting.
+                      <div
+                        aria-hidden
+                        className="absolute"
+                        style={{
+                          left: "13.87%",
+                          top: "12.69%",
+                          width: "71.56%",
+                          height: "73.13%",
+                          padding: "1.5%",
+                          borderRadius: "3.83% / 6.67%",
+                          background: "#4f453b",
+                        }}
+                      >
+                        <div
+                          className="h-full w-full"
+                          style={{ background: project.screenColor, borderRadius: "2.4% / 4.3%" }}
+                        />
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="relative">
@@ -734,7 +755,7 @@ export default function Home() {
                 {/* mt-9 below lg: puts the intro 58px under the heading,
                     the same heading-to-content distance Career history
                     has (its mt-8 plus the first row's 24px top padding). */}
-                <p className="t-body mt-9 max-w-[343px] lg:mt-0">
+                <p className="t-body-sans mt-9 max-w-[343px] lg:mt-0">
                   {additionalWorkIntro}
                 </p>
               </div>
@@ -749,13 +770,15 @@ export default function Home() {
                   panel to line up with. */}
               <div className="flex flex-col gap-12 lg:ml-auto lg:w-[93.333%]">
                 {additionalWork.map((item) => {
-                  const isDone = Boolean(item.href) && !item.draft;
+                  const isDone = Boolean(item.href) && !item.draft && !item.comingSoon;
 
                   const content = (
                     <>
-                      {/* company | title on one label line, trailing arrow —
-                          shared ArrowIcon, same style as the case-study
-                          "Back" link (rotated the other way). */}
+                      {/* company | title on one label line, then a trailing
+                          arrow (shared ArrowIcon, same style as the
+                          case-study "Back" link, rotated the other way) —
+                          or, for work that isn't viewable yet, "— Coming
+                          soon" in the separator's lighter weight. */}
                       <p className="t-label inline-flex items-center gap-2.5">
                         <span>
                           {item.company}
@@ -766,14 +789,19 @@ export default function Home() {
                             |
                           </span>
                           {item.title}
+                          {item.comingSoon ? (
+                            <span className="font-normal opacity-60"> — Coming soon</span>
+                          ) : null}
                         </span>
-                        <ArrowIcon
-                          className={`text-current${
-                            isDone
-                              ? " transition-transform group-hover:translate-x-0.5"
-                              : ""
-                          }`}
-                        />
+                        {item.comingSoon ? null : (
+                          <ArrowIcon
+                            className={`text-current${
+                              isDone
+                                ? " transition-transform group-hover:translate-x-0.5"
+                                : ""
+                            }`}
+                          />
+                        )}
                       </p>
                       {/* 520px ≈ 62 characters at this mono's 14px — the
                           old 581px ran to ~69, past the point the eye
@@ -906,20 +934,13 @@ export default function Home() {
           className="on-dark relative isolate overflow-hidden"
           style={bandFill("var(--accent)")}
         >
-          {/* Texture · the same multiply sheet the hero's coral panel
-              carries, so the page's two coral fields read as one ink. See
-              the hero for why this is a background-size:cover layer rather
-              than an <img>. */}
+          {/* Texture · the same repeating halftone the hero's coral panel
+              carries, at the same dot size, so the page's two coral fields
+              read as one ink. */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 mix-blend-multiply"
-            style={{
-              backgroundImage: "url(/case-study-texture.svg)",
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              backgroundRepeat: "no-repeat",
-              ...BAND_CLIP,
-            }}
+            style={{ ...CORAL_TEXTURE, ...BAND_CLIP }}
           />
           <section id="contact" className={`${SHELL} sec relative py-[50px] lg:py-12`}>
             <SectionRail />

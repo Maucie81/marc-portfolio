@@ -27,6 +27,10 @@ export type Project = {
       }
     | null;
   imageLabel: string;
+  /** No artwork yet: with `image` null, the card still draws its graph-paper
+   * frame and device bezel, with the screen filled flat in this color —
+   * instead of the labeled placeholder box. */
+  screenColor?: string;
   skills: string[];
   draft?: boolean;
 };
@@ -53,18 +57,19 @@ export const projects: Project[] = [
     ],
   },
   {
+    // Swapped with Unified main door (now under Additional work), per
+    // direct request. No artwork yet, so the screen is a flat 50% tint of
+    // the device frame's #4f453b over the paper, per direct request — mixed
+    // solid rather than 50% opacity, so the bezel and grid don't show
+    // through it.
     company: "Headspace",
-    title: "Unified main door",
+    title: "Admin portal redesign",
     description:
-      "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
-    href: "/work/headspace-umd",
-    image: {
-      src: "/headspace/thumbnail-cutout.webp",
-      alt: "Screenshot of the Headspace enrollment eligibility screen from the Unified Main Door admin portal, with the device bezel baked into the image",
-      width: 2848,
-      height: 1600,
-    },
+      "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
+    href: "/work/headspace-admin-portal",
+    image: null,
     imageLabel: "",
+    screenColor: "color-mix(in srgb, #4f453b 50%, var(--bg))",
     skills: [
       "B2B platform",
       "Design systems",
@@ -100,6 +105,10 @@ export type SmallProject = {
   title: string;
   description: string;
   href: string | null;
+  /** Not viewable yet: the label reads "— Coming soon" in place of the
+   * arrow and the entry isn't a link, instead of sending people to the
+   * /coming-soon dead end. */
+  comingSoon?: boolean;
   draft?: boolean;
 };
 
@@ -107,19 +116,21 @@ export const additionalWorkIntro =
   "Shorter engagements and internal work that didn't warrant a full case study, but shaped how I approach the bigger ones.";
 
 export const additionalWork: SmallProject[] = [
+  // The one entry people can open leads, per direct request.
+  {
+    company: "Headspace",
+    title: "Unified main door",
+    description:
+      "The cross-functional initiative that gave Headspace and Ginger's separately-built products one shared front door — eligibility and enrollment unified into a single flow for the first time.",
+    href: "/work/headspace-umd",
+  },
   {
     company: "Yahoo",
     title: "Data viz & design system",
     description:
       "The charting and data visualization system built for the Partner Portal, along with the design system it runs on — built on a shared CMS foundation used across the platform.",
-    href: "/coming-soon?p=yahoo-data-viz",
-  },
-  {
-    company: "Headspace",
-    title: "Admin portal redesign",
-    description:
-      "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
-    href: "/work/headspace-admin-portal",
+    href: null,
+    comingSoon: true,
   },
   {
     company: "Personal",
@@ -127,10 +138,11 @@ export const additionalWork: SmallProject[] = [
     description:
       "A post-op medication tracker I built for my dog using AI-assisted development. Because the timing logic was genuinely hard to get right by hand.",
     // Real route, gated by src/proxy.ts exactly like Airbnb — public
-    // visitors and search engines get redirected to /coming-soon, but the
-    // page itself is live in the codebase for direct preview/editing.
-    // Was a direct /coming-soon link with no real page behind it at all.
+    // visitors and search engines get redirected to /coming-soon, so the
+    // homepage marks it coming soon rather than linking there. Drop
+    // `comingSoon` once the gate comes off.
     href: "/work/harrisons-app",
+    comingSoon: true,
   },
 ];
 

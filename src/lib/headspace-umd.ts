@@ -20,6 +20,8 @@ export const meta = {
     "Designing the enrollment front door for a bundled mental health benefit, from eligibility to booked care.",
   company: "Headspace",
   years: "2022 — 2023",
+  // The outlined opening's title, one line each (uppercased by CSS).
+  heroLines: ["unified", "main door"],
 };
 
 export const context = [

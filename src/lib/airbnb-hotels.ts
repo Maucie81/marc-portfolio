@@ -44,7 +44,7 @@ export const meta = {
     "Airbnb's acquisition of HotelTonight brought hotels onto a platform built for individual hosts. Getting a single hotel live took seven steps, three people and a Google Form. I redesigned it as one onboarding system: account managers set each hotel up in Hubble, an existing Airbnb tool, and hotels finished their own signup in a guided flow.",
   company: "Airbnb",
   years: "2019 — 2020",
-  // Figma's outlined opening (917:129483) — three lines, uppercased by CSS.
+  // The outlined opening's title, one line each (uppercased by CSS).
   heroLines: ["account", "creation", "& onboarding"],
 };
 
@@ -275,9 +275,9 @@ export const blocks: Block[] = [
     sectionNumber: "08",
     heading: "Learnings",
     body: [
-      "The first version launched in Q1 2020. Weeks later, Airbnb cut a quarter of its staff in response to COVID-19, and the Hotels team was among the first to go. The flow was live for weeks, not months, so there is no post-launch data.",
-      "The clearest signal came from testing. The hotels who had been through the old process said the new one felt far more professional than the Google Form. The flow also left something built but unused: the path for smaller hotels to start on their own was already in place, waiting for Airbnb to open it.",
-      "In a review, I can walk through the competitive and systems audits, three rounds of usability testing, and the design principles behind the flow.",
+      "The first version of the account creation and onboarding flow launched in Q1 2020. Hotels could now set up their account through a structured, brand-consistent flow, with fields pre-filled from Hubble, a progress bar signaling scope, and complex property setup moved to a dashboard they could return to after signup.",
+      "Airbnb laid off 25% of its staff in May 2020, and the Hotels vertical was among the first casualties. The new flow had been live for weeks, not months, so there is no post-launch data on what it changed.",
+      "What it did establish: professional hospitality businesses could onboard onto Airbnb without a contractor building their listings for them. Hotels completed their own signup, and the path for smaller hotels to start without an account manager was already built. For a platform that had never built for that audience, that was the proof of concept.",
     ],
     stats: [],
   },

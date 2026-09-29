@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
@@ -27,9 +27,10 @@ export type Meta = {
   subtitle: string;
   company: string;
   years: string;
-  /** Opts the cover into the outlined-title opening (Airbnb, Figma
-   * 917:129483): these lines, uppercased and outlined, replace the grid
-   * hero. The company name stays in the <h1> for screen readers only. */
+  /** The outlined-title opening's lines (Figma 917:129483), uppercased by
+   * CSS — every case study sets these. Leaving it out falls back to the
+   * grid hero (CaseStudyHero), kept on purpose for later embellishment
+   * work. The company name stays in the <h1> for screen readers only. */
   heroLines?: string[];
 };
 
@@ -80,11 +81,13 @@ function Frame({ image }: { image: ImageSpec }) {
   );
 }
 
-function MediaPlaceholder({ className = "" }: { className?: string }) {
+function MediaPlaceholder({ className = "", children }: { className?: string; children?: ReactNode }) {
   return (
     <div
-      className={`product-media ${PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
-    />
+      className={`product-media ${PLACEHOLDER_ASPECT} flex w-full items-center justify-center overflow-hidden rounded-lg bg-white shadow-[0_18px_40px_-28px_rgba(25,23,19,0.45)] ${className}`}
+    >
+      {children}
+    </div>
   );
 }
 
@@ -343,6 +346,14 @@ export function BottomRule() {
   );
 }
 
+/** Width of a section's copy column: Figma's "Project Info" frame — 39px
+ * left inset + 295px of text (was 19rem, i.e. 265px of text). Widened per
+ * direct request so expanded points fit on shorter laptop windows; titles
+ * like "KPI deep-dives" also hold one line again. Blocks add the 30px to
+ * their own width so the 650px run to the next section doesn't shrink. */
+const COPY_COL = "calc(334px*var(--cs-scale,1))";
+const COPY_COL_EXTRA = 30;
+
 /** Small orange section number ("01", "02", ...) beside a section's title.
  * Positioned against the title's first line only via an explicit
  * `titleLineHeight`, not the ancestor's full height, so a two-line title
@@ -351,7 +362,7 @@ function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeig
   return (
     <span
       aria-hidden
-      className="cs-kicker hidden w-10 -translate-y-1/2 min-[901px]:absolute min-[901px]:-left-16 min-[901px]:block"
+      className="cs-kicker cs-section-num hidden w-10 -translate-y-1/2 min-[901px]:absolute min-[901px]:-left-16 min-[901px]:block"
       style={{ top: `calc((${titleLineHeight}) / 2 + 1.3px)` }}
     >
       {number}
@@ -815,8 +826,7 @@ function CoverBlockMobileText({ meta }: { meta: Meta }) {
  * stacked copies: a thick coral stroke behind, the fill on top covering its
  * inner half. A plain text-stroke would also trace the variable font's
  * overlapping contours, putting stray lines inside R, E, A and &. The
- * company leads the <h1> for screen readers; Figma shows only the project
- * name. */
+ * company leads the <h1> for screen readers; on screen it's the line above. */
 function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string }) {
   const lines = (meta.heroLines ?? []).map((line, i, all) => (
     <Fragment key={line}>
@@ -838,29 +848,39 @@ function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string
 }
 
 /** How much the outlined opening shrinks on short windows: 1 wherever its
- * ~600px of copy fits between the fixed chrome with --cs-pad to spare. */
+ * ~600px of copy fits between the fixed chrome with --cs-pad to spare.
+ * (Scaling it down with window width too, like the grid hero, was tried
+ * and rejected — it stays at Figma size.) */
 const OUTLINE_FIT =
   "min(1, calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / 600px))";
 
-/** Outlined-title opening — Figma "Project Opening" (917:129483): 16/24
- * date line, the title 32px below its top (80/92, 4px tracking, 2px coral
- * outline), the 20/34 subtitle 16px after, and the scroll hint 241px below
- * the subtitle's top — all on the title frame's 703px width. `zoom` (not a
+/** Outlined-title opening — Figma "Project Opening" (917:129483): a 16/24
+ * line above the title (Figma's date line; the company name instead, per
+ * direct request — the dates live in the metadata column), the title 32px
+ * below its top (80/92, 4px tracking, 2px coral outline), the 20/34
+ * subtitle 16px after, and the scroll hint 241px below the subtitle's top.
+ * At least the title frame's 703px wide; wider when a title line is (each
+ * line holds on one line here — "Partner Portal" runs 741px). `zoom` (not a
  * transform) shrinks it on short windows so the box it takes up shrinks
  * too, keeping the cover centered on what's actually drawn. */
 function OutlineHero({ meta }: { meta: Meta }) {
   return (
-    <div className="cs-only-horizontal w-[703px] shrink-0" style={{ zoom: "var(--outline-fit)" }}>
+    <div className="cs-only-horizontal relative w-max min-w-[703px] shrink-0" style={{ zoom: "var(--outline-fit)" }}>
       <p className="ml-[6px] text-[16px] font-semibold leading-6 text-[#433835] [font-family:var(--font-display)]">
-        {meta.years}
+        {meta.company}
       </p>
-      <OutlineTitle meta={meta} className="mt-2" />
-      <p className="mt-4 max-w-[695px] text-[20px] font-medium leading-[34px] text-ink-2 [font-family:var(--font-display)]">
+      <OutlineTitle meta={meta} className="mt-2 whitespace-nowrap" />
+      {/* 555px, not Figma's 695: the same measure as the grid hero's
+          paragraph (Yahoo's live cover), per direct request. */}
+      <p className="mt-4 max-w-[555px] text-[20px] font-medium leading-[34px] text-ink-2 [font-family:var(--font-display)]">
         {meta.subtitle}
       </p>
       {/* 241px from the subtitle's top in Figma = 71px after its five
-          lines; kept as a gap so a longer subtitle can't run into it. */}
-      <p className="mt-[71px] flex items-center gap-3 text-[14px] font-semibold leading-[22px] text-accent [font-family:var(--font-display)]">
+          lines; kept as a gap so a longer subtitle can't run into it. Hung
+          below the lockup (absolute) rather than in its flow, so the box
+          ends at the paragraph — CoverBlock bottom-aligns that edge with
+          the metadata column, per direct request. */}
+      <p className="absolute left-0 top-full mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-accent [font-family:var(--font-display)]">
         <span aria-hidden className="h-[3px] w-[50px] bg-accent" />
         Scroll to move through the story
       </p>
@@ -875,7 +895,7 @@ function OutlineHeroMobileText({ meta }: { meta: Meta }) {
     <div className="cs-only-vertical flex w-full flex-col gap-4">
       <div className="flex flex-col gap-2">
         <p className="text-[14px] font-semibold leading-5 text-[#433835] [font-family:var(--font-display)]">
-          {meta.years}
+          {meta.company}
         </p>
         <OutlineTitle meta={meta} />
       </div>
@@ -903,32 +923,30 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
     <div
       className={outline ? "cs-block" : "cs-block cs-block-centered"}
       style={{
-        ["--w" as string]: outline
-          ? `calc(703px * var(--outline-fit) + ${OUTLINE_COVER_GAP} + 295px * var(--cs-scale, 1))`
-          : "calc(76rem * var(--cs-scale, 1))",
+        // Outlined opening: sized to its content, since the opening
+        // widens for a long title line (see OutlineHero).
+        ["--w" as string]: outline ? "max-content" : "calc(76rem * var(--cs-scale, 1))",
         ["--cover-gap" as string]: outline ? OUTLINE_COVER_GAP : "calc(300px * var(--cs-scale, 1))",
         ["--outline-fit" as string]: OUTLINE_FIT,
       }}
     >
       {/* The outlined opening hangs from the story's shared top line like
-          every section, both columns top-aligned so the date line and
-          "Role" share a line, as in Figma. The grid hero is sized to fill
-          the height on its own, so that cover centers instead
-          (.cs-block-centered) with the list centered beside the grid. */}
+          every section, its two columns aligned on their last baselines —
+          the paragraph's last line sitting on the same line as the
+          metadata's, per direct request (Figma top-aligns them); the scroll
+          hint hangs below (see OutlineHero). The grid hero is sized to fill the height on its
+          own, so that cover centers instead (.cs-block-centered) with the
+          list centered beside the grid. */}
       <div
         className={`flex flex-col gap-16 min-[901px]:flex-row min-[901px]:gap-0 ${
-          outline ? "min-[901px]:items-start" : "min-[901px]:items-center"
+          outline ? "min-[901px]:[align-items:last_baseline]" : "min-[901px]:items-center"
         }`}
       >
         {outline ? <OutlineHeroMobileText meta={meta} /> : <CoverBlockMobileText meta={meta} />}
         {outline ? <OutlineHero meta={meta} /> : <CaseStudyHero meta={meta} />}
 
-        {/* pt-1 (outlined opening only): lines the "Role" label's midline up
-            with the date line's (24px line vs .cs-label's 16px). */}
         <div
-          className={`w-full min-[901px]:ml-[var(--cover-gap)] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0 ${
-            outline ? "min-[901px]:pt-1" : ""
-          }`}
+          className="w-full min-[901px]:ml-[var(--cover-gap)] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0"
         >
           <dl className="flex flex-col gap-5">
             {sidebar.groups.map((group) => (
@@ -1000,7 +1018,7 @@ function CopyBlock({
           {eyebrow ? <p className="cs-section-title mt-2">{eyebrow}</p> : null}
         </div>
       ) : null}
-      <div className="t-body space-y-4">
+      <div className="t-body-sans space-y-4">
         {body.map((p, i) => (
           <p key={i}>{p}</p>
         ))}
@@ -1015,7 +1033,7 @@ function CopyBlock({
  * item's column, sitting above that item's numeral; later columns carry
  * the same heading lockup invisibly so every item numeral lands on the
  * same row. Each item is its own `.cs-block` on `SectionBlock`'s geometry
- * (19rem text column, 3rem gap, 857px media, 108.75rem block) so the
+ * (COPY_COL text column, 3rem gap, 857px media, 108.75rem block) so the
  * group scrolls with the same rhythm as the plain sections around it —
  * Figma's own per-item pitch (758 + 957 = 1715px) is within 25px of it. */
 function PanelGroupBlocks({
@@ -1046,11 +1064,14 @@ function PanelGroupBlocks({
           <div
             key={item.number}
             className="cs-block"
-            style={{ ["--w" as string]: "calc(108.75rem * var(--cs-scale, 1))" }}
+            style={{
+              ["--w" as string]: `calc((108.75rem + ${COPY_COL_EXTRA}px) * var(--cs-scale, 1))`,
+              ["--cs-copy-col" as string]: COPY_COL,
+            }}
           >
             <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
               <div
-                className={`flex w-full flex-col min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
+                className={`flex w-full flex-col min-[901px]:w-[var(--cs-copy-col)] min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
                   eyebrow ? "gap-8" : "gap-6"
                 }`}
               >
@@ -1077,7 +1098,7 @@ function PanelGroupBlocks({
                     <p className="display text-[40px] leading-[50px] text-accent">{item.number}</p>
                     <p className="cs-section-title">{item.title}</p>
                   </div>
-                  <p className="t-body">{item.body}</p>
+                  <p className="t-body-sans">{item.body}</p>
                 </div>
               </div>
               <div className="flex flex-col gap-6">
@@ -1162,10 +1183,9 @@ function ClosingBlock({
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px" /> : null}
             <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
           </div>
-          {/* Figma 594:122506 "Description": the .t-body role (Roboto Mono
-              14/22), 16px between paragraphs — not the DM Sans 14/20 the
-              section bodies use. */}
-          <div className="t-body flex flex-col text-ink-2">
+          {/* Figma 594:122506 "Description": the .t-body-sans role (Google Sans
+              14/22, like every section body), 16px between paragraphs. */}
+          <div className="t-body-sans flex flex-col text-ink-2">
             {body.map((p, i) => (
               <p key={i} className={i < body.length - 1 ? "mb-4" : ""}>
                 {p}
@@ -1273,10 +1293,9 @@ export function IntroStackBlock({
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" /> : null}
             <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
           </div>
-          {/* .t-body (Roboto Mono 14/22), same role and color as the
-              Overview and every other section's body copy — was the only
-              intro set in DM Sans 14/20 ink-2, per direct request. */}
-          <div className="t-body">
+          {/* .t-body-sans (Google Sans 14/22), same role and color as every
+              other section's body copy. */}
+          <div className="t-body-sans">
             {body.map((p, i) => (
               <p key={i} className={i === 0 ? "mb-4" : ""}>
                 {p}
@@ -1285,12 +1304,15 @@ export function IntroStackBlock({
           </div>
         </div>
 
+        {/* Label left, number right — Figma's Problem stat on both the
+            Airbnb (917:129463) and Headspace (917:127726) studies, and the
+            same order as every other stat row on these pages. */}
         {stat ? (
           <div className="flex items-center gap-6 border-y border-line py-5">
-            <p className="display -translate-y-[2.6px] shrink-0 text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+            <p className="cs-quote flex-1">{stat.label}</p>
+            <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
               {stat.value}
             </p>
-            <p className="cs-quote flex-1">{stat.label}</p>
           </div>
         ) : quote ? (
           <div className="border-t border-line" />
@@ -1323,6 +1345,7 @@ function SectionBlock({
   expandedPoints,
   steps,
   image,
+  statsInMedia,
 }: {
   eyebrow: string;
   title: string;
@@ -1337,10 +1360,13 @@ function SectionBlock({
   expandedPoints?: { label: string; text: string }[];
   steps?: { title: string; body: string; icon?: StepIcon }[];
   image?: SectionImage;
+  statsInMedia?: boolean;
 }) {
   const position = pullQuotePosition ?? "bottom";
   const hasQuotes = Boolean(pullQuotes?.length);
-  const hasStats = Boolean(stats?.length);
+  // Stats set inside the media box don't get their own column beside it.
+  const hasStats = Boolean(stats?.length) && !statsInMedia;
+  const hasMediaStats = Boolean(stats?.length) && Boolean(statsInMedia);
   const hasSteps = Boolean(steps?.length);
   const hasIllustratedSteps = hasSteps && steps!.every((s) => s.icon);
   const hasImage = Boolean(image);
@@ -1351,6 +1377,12 @@ function SectionBlock({
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
+  // How much narrower an `aspect` box is than the standard 857px one. Taken
+  // off the block width below so the empty run to the next section stays
+  // the same 650px Yahoo's sections leave, not 650px plus the difference.
+  const narrowerBy = image?.aspect
+    ? 857 - 609 * image.aspect.split("/").map(Number).reduce((w, h) => w / h)
+    : 0;
 
   const renderQuotes = () =>
     pullQuotes ? (
@@ -1359,19 +1391,22 @@ function SectionBlock({
       />
     ) : null;
 
+  const statRows = () =>
+    stats?.map((stat, i) => (
+      <div
+        key={stat.label}
+        className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
+      >
+        <p className="cs-quote flex-1">{stat.label}</p>
+        <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+          {stat.value}
+        </p>
+      </div>
+    ));
+
   const renderStats = () => (
     <div className="flex flex-col min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:ml-[calc(200px*var(--cs-scale,1))] min-[901px]:self-center">
-      {stats?.map((stat, i) => (
-        <div
-          key={stat.label}
-          className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
-        >
-          <p className="cs-quote flex-1">{stat.label}</p>
-          <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
-            {stat.value}
-          </p>
-        </div>
-      ))}
+      {statRows()}
     </div>
   );
 
@@ -1401,6 +1436,18 @@ function SectionBlock({
                 className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start"
               />
             )
+          ) : hasMediaStats ? (
+            <>
+              {/* Laid out at the box's 1:1 size (560px rows in the 857px
+                  box) and scaled with it, so the rows keep their place in
+                  the box when short windows shrink the media. */}
+              <MediaPlaceholder className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start">
+                <div className="hidden w-[560px] shrink-0 flex-col min-[901px]:flex min-[901px]:scale-[var(--cs-media-scale,1)]">
+                  {statRows()}
+                </div>
+              </MediaPlaceholder>
+              <div className="order-2 mt-4 flex flex-col min-[901px]:hidden">{statRows()}</div>
+            </>
           ) : (
             <MediaPlaceholder className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start" />
           )}
@@ -1418,9 +1465,11 @@ function SectionBlock({
             which also includes the 907px quotes/stats column) so the
             caption centers under the image itself instead of under the
             whole wider row. */}
-        <div className="order-1 flex w-full justify-center min-[901px]:order-none min-[901px]:w-[var(--cs-media-w)]">
-          <p className="cs-caption text-center">{caption}</p>
-        </div>
+        {caption ? (
+          <div className="order-1 flex w-full justify-center min-[901px]:order-none min-[901px]:w-[var(--cs-media-w)]">
+            <p className="cs-caption text-center">{caption}</p>
+          </div>
+        ) : null}
       </div>
     );
 
@@ -1429,16 +1478,15 @@ function SectionBlock({
       className="cs-block"
       style={{
         // Illustrated steps (Figma 917:129573): 374px copy column, 120px
-        // lead-in, the 1196px two-column list, then the same trailing
-        // space every other section leaves.
+        // lead-in, the 1196px two-column list, then trailing space trimmed
+        // by the ~31px the right column's copy stops short of its box — so
+        // the empty run to the next section is the same 650px Yahoo's
+        // sections leave, measured from the last word, per direct request.
         ["--w" as string]: hasIllustratedSteps
-          ? "calc(141.25rem * var(--cs-scale, 1))"
-          : hasStats
-          ? "calc(133.75rem * var(--cs-scale, 1))"
-          : hasQuotes
-          ? "calc(121.25rem * var(--cs-scale, 1))"
-          : "calc(108.75rem * var(--cs-scale, 1))",
+          ? "calc(139.3125rem * var(--cs-scale, 1))"
+          : `calc((${hasStats ? "133.75rem" : hasQuotes ? "121.25rem" : "108.75rem"} + ${COPY_COL_EXTRA}px) * var(--cs-scale, 1) - ${narrowerBy}px)`,
         ["--cs-media-w" as string]: mediaWidth,
+        ["--cs-copy-col" as string]: COPY_COL,
       }}
     >
       <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
@@ -1449,7 +1497,7 @@ function SectionBlock({
             read (see HorizontalTrack's --cs-content-h). */}
         <div
           className={`flex w-full flex-col gap-5 min-[901px]:h-0 min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
-            hasIllustratedSteps ? "min-[901px]:w-[calc(413px*var(--cs-scale,1))]" : "min-[901px]:w-[calc(19rem*var(--cs-scale,1))]"
+            hasIllustratedSteps ? "min-[901px]:w-[calc(413px*var(--cs-scale,1))]" : "min-[901px]:w-[var(--cs-copy-col)]"
           }`}
         >
           <div className="flex flex-col gap-2">
@@ -1460,7 +1508,7 @@ function SectionBlock({
             <p className="cs-section-title">{eyebrow}</p>
           </div>
           {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <div className="t-body -mt-2 flex flex-col gap-3">
+          <div className="t-body-sans -mt-2 flex flex-col gap-3">
             {(Array.isArray(body) ? body : [body]).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
@@ -1472,7 +1520,7 @@ function SectionBlock({
               {bullets.map((bullet) => (
                 <div key={bullet.title}>
                   <p className="cs-sub-label">{bullet.title}</p>
-                  <p className="t-body mt-1">{bullet.body}</p>
+                  <p className="t-body-sans mt-1">{bullet.body}</p>
                 </div>
               ))}
             </div>
@@ -1555,6 +1603,7 @@ function renderBlock(block: Block, i: number) {
           expandedPoints={block.expandedPoints}
           steps={block.steps}
           image={block.image}
+          statsInMedia={block.statsInMedia}
         />
       );
     case "closing":

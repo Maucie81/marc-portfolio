@@ -13,7 +13,7 @@ export default function SectionNumber({
   return (
     <div className={`sec-num ${className}`}>
       <div className="sec-num-inner">
-        <span>{number}</span>
+        <span className="sec-num-digits">{number}</span>
         <span aria-hidden className="sec-num-bar" />
         <span className="sec-num-label">{label}</span>
       </div>

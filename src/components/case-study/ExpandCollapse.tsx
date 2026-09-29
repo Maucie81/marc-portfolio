@@ -19,7 +19,7 @@ export default function ExpandCollapse({ points }: Props) {
 
   return (
     <div className="-mt-2">
-      <button type="button" onClick={handleClick} aria-expanded={expanded} className="group">
+      <button type="button" onClick={handleClick} aria-expanded={expanded} className="group cursor-pointer">
         <ExpandGlyph
           ref={glyphRef}
           expanded={expanded}
@@ -50,7 +50,7 @@ export default function ExpandCollapse({ points }: Props) {
             {points.map((point) => (
               <div key={point.label}>
                 <p className="cs-sub-label">{point.label}</p>
-                <p className="t-body mt-1">{point.text}</p>
+                <p className="t-body-sans mt-1">{point.text}</p>
               </div>
             ))}
           </div>

@@ -116,6 +116,13 @@ body {
   }
 }
 
+/* Case-study headings ("The problem", "Research", "Thank you.") at 0
+   tracking instead of .display's -2%, per direct request — Figma sets them
+   at 5%; 0 was the pick between the two. The homepage keeps -2%. */
+.cs-track h2.display {
+  letter-spacing: 0;
+}
+
 /* Case-study pages and placeholder frames only. That surface isn't part of the
    Portfolio-2026 homepage frame, so it keeps its own eyebrow treatment. */
 .eyebrow {
@@ -217,6 +224,18 @@ paints over it. */
    the display face. */
 .t-body {
   font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 400;
+  font-size: 0.875rem;
+  line-height: 1.375rem;
+  letter-spacing: 0;
+}
+
+/* .t-body's 14/22 in Google Sans instead of Roboto Mono, per direct
+   request — every case-study section's copy (paragraphs, bullet and
+   expand-to-read text, the Problem stack, the Outcome) and the homepage's
+   Additional work intro. */
+.t-body-sans {
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 400;
   font-size: 0.875rem;
   line-height: 1.375rem;
@@ -509,6 +528,13 @@ paints over it. */
   display: inline;
 }
 
+/* Just the "01" itself in Roboto Mono, per direct request — matches the
+   case-study section numbers (.cs-section-num). The label beside it on
+   narrow screens keeps the display face. */
+.sec-num-digits {
+  font-family: var(--font-mono), ui-monospace, monospace;
+}
+
 @media (min-width: 1024px) {
   .sec-num-bar,
   .sec-num-label {
@@ -528,6 +554,7 @@ paints over it. */
 .on-dark .t-section-title,
 .on-dark .t-label,
 .on-dark .t-body,
+.on-dark .t-body-sans,
 .on-dark .t-body-alt,
 .on-dark .t-meta-sm,
 .on-dark .t-mark,
@@ -630,11 +657,18 @@ paints over it. */
   border-top: 7px solid var(--accent);
 }
 
+/* Roboto Mono, per direct request — the case-study body copy moved to
+   Google Sans (.t-body-sans), and the captions took the mono instead.
+   No width cap of its own: it runs the width of the media above it, so a
+   caption stays on one line (the old 36rem cap wrapped the wider mono).
+   pre-line honors a "\n" in the caption string, for a hand-placed break
+   where one line won't fit. */
 .cs-caption {
+  font-family: var(--font-mono), ui-monospace, monospace;
   font-size: 0.75rem;
   line-height: 1rem;
   color: var(--muted);
-  max-width: 36rem;
+  white-space: pre-line;
 }
 
 /* ---------- Case-study type roles (Figma Desktop System, 467:102944) ----------
@@ -652,6 +686,12 @@ paints over it. */
   letter-spacing: 0;
   text-transform: uppercase;
   color: var(--accent);
+}
+
+/* Section numbers beside each case-study title ("01", "02", ...) — the
+   .cs-kicker role, set in Roboto Mono per direct request. */
+.cs-section-num {
+  font-family: var(--font-mono), ui-monospace, monospace;
 }
 
 /* Meta Data Label · sidebar group labels ("Role", "Timeline", ...), company
@@ -697,12 +737,11 @@ paints over it. */
   color: var(--ink-2);
 }
 
-/* Pull-quote text only (the blockquotes beside a section's media) — the
-   .cs-quote role stepped down to 16/24 per direct request; the 20px read
-   too loud next to the recordings. Stat labels keep .cs-quote's 20px. */
+/* The Problem stack's pull quote (IntroStackBlock) — 20/28 per direct
+   request, up from the 16/24 it had been stepped down to. */
 .cs-pull-quote {
-  font-size: 1rem;
-  line-height: 1.5rem;
+  font-size: 1.25rem;
+  line-height: 1.75rem;
 }
 
 /* Pull quotes outside the Context/Problem intro stack · Figma 43:3729 (one)
@@ -744,21 +783,26 @@ paints over it. */
 }
 
 /* Outlined case-study title · Figma "Project Opening" 917:129486: Google
-   Sans Flex Bold 80/92, 5% (4px) tracking, uppercase, a --bg fill with a
+   Sans Flex Bold 80/92, uppercase, a --bg fill with a
    2px coral stroke outside it (Figma: stroke FF5841, Outside, weight 2).
    Built from two copies (see OutlineTitle): the stroke layer's
    4px centered stroke puts 2px outside the glyphs, and the --bg fill on
    top hides the inner 2px along with the font's internal overlaps. The
-   page grain sits above both, so the fill textures like the paper. */
+   page grain sits above both, so the fill textures like the paper.
+   Currently FILLED instead, per direct request (trying it solid): the fill
+   is coral and --outline is 0, so the stroke copy adds nothing. To go back
+   to the outline: color var(--bg), --outline 4px (3px on phones).
+   Tracking tightened from Figma's 5% (4px) to 2px (1px on phones), per
+   direct request. */
 .cs-outline-title {
   font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 700;
   font-size: 80px;
   line-height: 92px;
-  letter-spacing: 4px;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--bg);
-  --outline: 4px;
+  color: var(--accent);
+  --outline: 0px;
 }
 
 .cs-outline-title-stroke {
@@ -770,8 +814,8 @@ paints over it. */
   .cs-outline-title {
     font-size: 2.75rem;
     line-height: 3.125rem;
-    letter-spacing: 2px;
-    --outline: 3px;
+    letter-spacing: 1px;
+    --outline: 0px;
   }
 }
 

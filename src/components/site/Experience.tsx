@@ -141,7 +141,7 @@ export default function Experience({ roles }: { roles: Role[] }) {
                   aria-expanded={isOpen}
                   aria-controls={panelId}
                   aria-label={`${isOpen ? "Hide" : "Show"} more about ${role.company}`}
-                  className="group mt-3"
+                  className="group mt-3 cursor-pointer"
                 >
                   <ExpandGlyph
                     ref={(el) => {
