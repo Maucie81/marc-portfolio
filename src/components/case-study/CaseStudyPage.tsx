@@ -2,6 +2,7 @@
 
 import { Fragment, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
+import LazyVideo from "@/components/case-study/LazyVideo";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import CaseStudyFooter from "@/components/case-study/CaseStudyFooter";
@@ -159,18 +160,7 @@ export function PlainMedia({
           instead. */}
       {image.src ? (
         image.type === "video" ? (
-          // playsInline is required for autoplay to actually fire on iOS
-          // Safari, not part of the requested attribute list but silently
-          // needed for it to work there at all.
-          <video
-            src={image.src}
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-label={image.alt}
-            className="size-full object-contain"
-          />
+          <LazyVideo src={image.src} label={image.alt} className="size-full object-contain" />
         ) : (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={image.src} alt={image.alt} loading="eager" decoding="async" className="size-full object-contain" />
@@ -948,31 +938,28 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
         <div
           className="w-full min-[901px]:ml-[var(--cover-gap)] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0"
         >
+          {/* A <dl> may only hold dt/dd (optionally one <div> per pair), so
+              the arrow lives inside the <dt> and both are indented by the
+              arrow + gap — same layout as an arrow column beside a dt/dd
+              stack. The arrow is absolute so its 17px (16 + mt-px) can't
+              make the 16px label line taller. */}
           <dl className="flex flex-col gap-5">
-            {sidebar.groups.map((group) => (
-              <div key={group.label} className="flex gap-[calc(21px*var(--cs-scale,1))]">
-                <ArrowIcon />
-                <div className="flex flex-1 flex-col gap-2">
-                  <dt className="cs-label">{group.label}</dt>
-                  <dd className="flex flex-col gap-2 cs-meta">
-                    {group.items.map((item) => (
-                      <p key={item}>{item}</p>
-                    ))}
-                  </dd>
-                </div>
-              </div>
-            ))}
-            <div className="flex gap-[calc(21px*var(--cs-scale,1))]">
-              <ArrowIcon />
-              <div className="flex flex-1 flex-col gap-2">
-                <dt className="cs-label">{sidebar.highlightsLabel ?? "Highlights"}</dt>
-                <dd className="flex flex-col gap-2 cs-meta">
-                  {sidebar.highlights.map((h) => (
-                    <p key={h}>{h}</p>
+            {[
+              ...sidebar.groups,
+              { label: sidebar.highlightsLabel ?? "Highlights", items: sidebar.highlights },
+            ].map((group) => (
+              <div key={group.label} className="flex flex-col gap-2">
+                <dt className="cs-label relative pl-[calc(16px+21px*var(--cs-scale,1))]">
+                  <ArrowIcon className="text-muted absolute left-0 top-0" />
+                  {group.label}
+                </dt>
+                <dd className="flex flex-col gap-2 cs-meta pl-[calc(16px+21px*var(--cs-scale,1))]">
+                  {group.items.map((item) => (
+                    <p key={item}>{item}</p>
                   ))}
                 </dd>
               </div>
-            </div>
+            ))}
           </dl>
         </div>
       </div>

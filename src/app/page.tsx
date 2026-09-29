@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { preload } from "react-dom";
 import SectionNumber from "@/components/site/SectionNumber";
 import SectionRail from "@/components/site/SectionRail";
 import Placeholder from "@/components/site/Placeholder";
@@ -71,14 +72,20 @@ const BAND_CLIP = { clipPath: "inset(0 max(0px, calc((100% - 1376px) / 2)))" };
    stretch the whole sheet to fill its own panel (background-size: cover),
    so the wide, short contact band blew the dots up ~35% past the hero's.
    987×588 is the hero's dot scale at the 1440 frame, per direct request. */
+const CORAL_TEXTURE_SRC = "/coral-texture-tile.webp";
 const CORAL_TEXTURE = {
-  backgroundImage: "url(/coral-texture-tile.png)",
+  backgroundImage: `url(${CORAL_TEXTURE_SRC})`,
   backgroundSize: "987px 588px",
   backgroundPosition: "center",
   backgroundRepeat: "repeat",
 } as const;
 
 export default function Home() {
+  // The hero's halftone is the page's largest paint, but as a CSS background
+  // the browser only finds it once the stylesheet has loaded — fetch it up
+  // front instead.
+  preload(CORAL_TEXTURE_SRC, { as: "image", fetchPriority: "high" });
+
   return (
     <div>
       {/* Header now lives in the root layout as PersistentHeader, outside
@@ -720,7 +727,7 @@ export default function Home() {
             aria-hidden
             className="pointer-events-none absolute inset-0 rotate-180 mix-blend-multiply blur-[0.5px]"
             style={{
-              backgroundImage: "url(/additional-work-texture.png)",
+              backgroundImage: "url(/additional-work-texture.webp)",
               backgroundSize: "max(100%, 1394px) auto",
               backgroundPosition: "center top",
               backgroundRepeat: "repeat",

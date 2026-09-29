@@ -39,10 +39,29 @@ const robotoMono = Roboto_Mono({
   display: "swap",
 });
 
+// Vercel sets this to the project's primary domain (marcfavro.com once it's
+// connected), so share-card links follow the domain switch on their own.
+const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
+// Link previews: the card image is opengraph-image.jpg / twitter-image.jpg
+// beside this file (source + render script in scripts/og-card). No title or
+// description here on purpose — Next fills both from each page's own, so a
+// shared case study previews under its own name.
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "Marc Favro — Principal Product Designer",
   description:
     "Principal Product Designer working on enterprise and B2B platforms — partner portals, legacy modernization, and systems built to last.",
+  openGraph: {
+    type: "website",
+    siteName: "Marc Favro",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+  },
 };
 
 export default function RootLayout({

@@ -178,12 +178,24 @@ paints over it. */
   letter-spacing: 0;
   color: var(--accent);
   margin: 0 0 3rem;
-  display: none;
+}
+
+/* Below desktop the title is visually hidden rather than display:none, so
+   screen readers still get the h2 between the hero's h1 and each card's h3. */
+@media (max-width: 1023.98px) {
+  .t-section-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 @media (min-width: 1024px) {
   .t-section-title {
-    display: block;
     /* Matches .sec-num's own nudge — see the comment there: both are
        aligned to the rail circle, not to each other. */
     padding-top: 2px;
@@ -1032,7 +1044,7 @@ paints over it. */
   inset: 0;
   z-index: 38;
   pointer-events: none;
-  background-image: url("/noise.png");
+  background-image: url("/noise.webp");
   background-repeat: repeat;
   background-size: 500px 500px;
   mix-blend-mode: soft-light;

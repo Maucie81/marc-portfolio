@@ -253,6 +253,10 @@ export default function ScrollStrip({ images }: Props) {
             <img
               src={img.src}
               alt={img.alt ?? ""}
+              // Sits near the foot of the homepage: fetched as it nears the
+              // viewport, not alongside the hero.
+              loading="lazy"
+              decoding="async"
               draggable={false}
               className="h-full w-full object-cover"
               style={{

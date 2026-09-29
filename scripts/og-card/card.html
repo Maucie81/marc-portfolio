@@ -1,0 +1,128 @@
+<!doctype html>
+<!--
+  Link-preview card (the image iMessage, LinkedIn, Slack etc. show when the
+  site's URL is shared). The homepage hero redrawn at 1200×630 from the same
+  assets: coral panel with the portrait lockup (60%), graph-paper + pencil
+  over the "Selected work" ledger (40%), the O in FAVRO on the grid/ledger
+  line. Render with ./render.sh — it writes src/app/opengraph-image.jpg and
+  twitter-image.jpg.
+-->
+<html>
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&display=block" rel="stylesheet" />
+<style>
+  @font-face {
+    font-family: "Google Sans Flex";
+    src: url("../../src/app/fonts/google-sans-flex.woff2") format("woff2");
+    font-weight: 300 800;
+    font-display: block;
+  }
+  :root {
+    --bg: #f8f4eb;
+    --accent: #ff5841;
+    --ink-deep: #433835;
+    --display: "Google Sans Flex", system-ui, sans-serif;
+    --mono: "Roboto Mono", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1200px; height: 630px; overflow: hidden; background: #fff; }
+  body {
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
+    font-feature-settings: "ss01" 1;
+  }
+  .card { position: relative; display: flex; width: 1200px; height: 630px; }
+
+  /* ---- Coral panel ---- */
+  .coral {
+    position: relative; isolation: isolate; overflow: hidden;
+    width: 720px; height: 100%; background: var(--accent);
+    color: #fff; text-align: center; font-family: var(--display);
+  }
+  .coral::before {
+    content: ""; position: absolute; inset: 0; mix-blend-mode: multiply;
+    background: url("../../public/coral-texture-tile.webp") center / 987px 588px repeat;
+  }
+  .label { font-size: 18px; font-weight: 500; line-height: 26px; }
+  .eyebrow { position: absolute; left: 0; right: 0; top: 107px; }
+  /* Portrait top = 346.5 (grid/ledger line) − 61% of its 333px height. */
+  .portrait { position: absolute; left: 50%; top: 143px; width: 340px; transform: translateX(-50%); }
+  .portrait img { display: block; width: 100%; height: auto; }
+  h1 {
+    position: absolute; left: 0; right: 0; top: 346.5px; transform: translateY(-50%);
+    font-size: 78px; line-height: 0.9; font-weight: 700; letter-spacing: -0.025em;
+    text-transform: uppercase; white-space: nowrap;
+    -webkit-text-stroke: 0.05em var(--accent); paint-order: stroke fill;
+  }
+  .subline { position: absolute; left: 0; right: 0; top: 496px; }
+
+  /* ---- Right column ---- */
+  .side { display: flex; flex-direction: column; width: 480px; height: 100%; }
+  .grid {
+    flex: 0 0 346.5px; display: flex; align-items: center; justify-content: center;
+    background-color: #fff;
+    background-image:
+      repeating-linear-gradient(to right, var(--accent) 0 1px, transparent 1px 16px),
+      repeating-linear-gradient(to bottom, var(--accent) 0 1px, transparent 1px 16px);
+    background-position: center top;
+  }
+  .grid img { display: block; width: 82.6%; height: auto; }
+
+  .ledger {
+    position: relative; isolation: isolate; overflow: hidden; flex: 1;
+    display: flex; flex-direction: column; justify-content: center;
+    background: var(--ink-deep); font-size: 14px;
+  }
+  .ledger .tex { position: absolute; left: -3px; top: -2px; right: 0; bottom: 0; overflow: hidden; mix-blend-mode: multiply; }
+  .ledger .tex img { position: absolute; left: -3.13%; top: -26.67%; width: 106.72%; height: 153.88%; max-width: none; }
+  .ledger .text { position: relative; padding: 0 2.375em; }
+  .ledger .head {
+    font-family: var(--display); font-weight: 500; text-transform: uppercase;
+    line-height: 1.5em; color: var(--accent);
+  }
+  .ledger .head span { padding: 0 0.5em; }
+  .ledger dl { margin-top: 1.594em; line-height: 1.5em; color: var(--bg); font-family: var(--mono); }
+  .ledger .row {
+    display: grid; grid-template-columns: 7.25em 1fr;
+    padding: calc(0.594em + 1px) 0 0.594em;
+    background: repeating-linear-gradient(to right, rgb(255 255 255 / 0.5) 0 3px, transparent 3px 6px) left top / 100% 1px no-repeat;
+  }
+  .ledger .row:last-child { padding-bottom: 0; }
+  .ledger dt { font-weight: 700; }
+  .ledger dd { white-space: nowrap; }
+
+  /* Sitewide paper grain (NoiseOverlay). */
+  .card::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: url("../../public/noise.webp") 0 0 / 500px 500px repeat;
+    mix-blend-mode: soft-light; opacity: 0.5;
+  }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="coral">
+      <p class="label eyebrow">Hello &amp; welcome</p>
+      <div class="portrait"><img src="../../public/marc/hero-illustration-2026.png" alt="" /></div>
+      <h1>I&rsquo;m Marc Favro</h1>
+      <p class="label subline">I&rsquo;m a Principal Product Designer, based in Brooklyn, New York.</p>
+    </div>
+    <div class="side">
+      <div class="grid"><img src="../../public/hero/mechanical-pencil.png" alt="" /></div>
+      <div class="ledger">
+        <div class="tex"><img src="../../public/hero/dark-panel-texture.png" alt="" /></div>
+        <div class="text">
+          <p class="head">Selected work<span>|</span>2019 — 2026</p>
+          <dl>
+            <div class="row"><dt>Yahoo:</dt><dd>Started an AI design-to-code pilot</dd></div>
+            <div class="row"><dt>Headspace:</dt><dd>Designed tools for Fortune 500 admins</dd></div>
+            <div class="row"><dt>Airbnb:</dt><dd>Led hotel partner onboarding</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -22,7 +22,11 @@ const CMYK_OPACITIES = [1, 0.8, 0.6, 0.4, 0.2];
 export default function ProofTrigger({ variant }: { variant: "rail" | "floating" }) {
   const proof = useProof();
   const count = proof.pins.length;
-  const label = proof.panelOpen ? "Close proof notes" : "Proof notes — leave a note on this page";
+  // The button's visible bits (CMYK letters, count badge, "Notes") are
+  // aria-hidden: this label is the whole accessible name, count included.
+  const label = proof.panelOpen
+    ? "Close proof notes"
+    : `Proof notes${count > 0 ? ` (${count})` : ""} — leave a note on this page`;
 
   if (variant === "rail") {
     return (
@@ -38,6 +42,7 @@ export default function ProofTrigger({ variant }: { variant: "rail" | "floating"
         {CMYK_GROUPS.map((group) => (
           <span key={group.label} className="flex flex-col items-center gap-0.5">
             <span
+              aria-hidden
               className="font-display text-[8px] font-semibold leading-none"
               style={{ color: group.color }}
             >
@@ -79,7 +84,7 @@ export default function ProofTrigger({ variant }: { variant: "rail" | "floating"
           ))}
         </span>
       ))}
-      <span className="t-frame-mono leading-none!">Notes{count > 0 ? ` · ${count}` : ""}</span>
+      <span aria-hidden className="t-frame-mono leading-none!">Notes{count > 0 ? ` · ${count}` : ""}</span>
       <Tip className="bottom-full left-0 mb-2" />
     </button>
   );
@@ -88,6 +93,7 @@ export default function ProofTrigger({ variant }: { variant: "rail" | "floating"
 function Badge({ count, className = "" }: { count: number; className?: string }) {
   return (
     <span
+      aria-hidden
       className={`absolute left-1/2 flex h-4 min-w-4 -translate-x-1/2 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-semibold leading-none text-white [font-family:var(--font-mono),ui-monospace,monospace] ${className}`}
     >
       {count}

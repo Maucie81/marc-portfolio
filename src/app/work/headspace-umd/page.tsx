@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
+import LazyVideo from "@/components/case-study/LazyVideo";
 import {
   BottomRule,
   CoverBlock,
@@ -58,15 +59,10 @@ function WalkthroughBlock({ href }: { href: string }) {
           {/* object-cover, not object-contain: the box already has the
               recording's exact ratio, so cover only ever trims sub-pixel
               rounding — and can never leave a hairline of bg-white showing
-              along an edge the way contain could. playsInline is required
-              for autoplay to fire on iOS Safari. */}
-          <video
+              along an edge the way contain could. */}
+          <LazyVideo
             src="/headspace/videos/UMDWalkthrough.webm"
-            autoPlay
-            muted
-            loop
-            playsInline
-            aria-label="Headspace Unified Main Door prototype walkthrough"
+            label="Headspace Unified Main Door prototype walkthrough"
             className="size-full object-cover"
           />
         </div>
