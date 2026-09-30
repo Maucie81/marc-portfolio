@@ -19,7 +19,7 @@ export const meta = {
   years: "2024 — 2026",
   // The outlined opening's title, one line each (uppercased by CSS).
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["partner", "portal"],
+  heroLines: ["partner portal"],
 };
 
 export const sidebar = {
@@ -73,11 +73,13 @@ export type StepIcon = {
 
 /** A section's media. `aspect` ("w/h") sizes the box to a recording's own
  * shape at the shared 609px height instead of the default 1440:1024 box —
- * for clips whose prototype frame doesn't fit that box without bars. */
+ * for clips whose prototype frame doesn't fit that box without bars.
+ * `frame: "bare"` drops the white card, radius and shadow for artwork that
+ * brings its own cards (Headspace's journey-map collage, Figma 1002:62386). */
 export type SectionImage = {
   src?: string;
   alt: string;
-  frame?: "canvas" | "plain";
+  frame?: "canvas" | "plain" | "bare";
   type?: "video";
   aspect?: string;
 };
@@ -106,6 +108,10 @@ export type Block =
       stat?: { value: string; label: string };
       quote?: { text: string; attribution: string };
       sectionNumber?: string;
+      /** Media beside the stack, with its caption under it (Headspace's
+       * Problem, Figma 1002:62316). */
+      image?: SectionImage;
+      caption?: string;
     }
   | {
       kind: "section";

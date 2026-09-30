@@ -5,7 +5,7 @@ import { additionalWork, projects } from "@/lib/home";
 export const CASE_STUDY_TITLES: Record<string, string> = {
   "/work/yahoo-partner-portal": "Yahoo Partner Portal",
   "/work/airbnb-hotels": "Airbnb account creation & onboarding",
-  "/work/headspace-admin-portal": "Headspace admin portal redesign",
+  "/work/headspace-admin-portal": "Headspace admin portal research & proposal",
   "/work/headspace-umd": "Headspace unified main door",
   // "Personal" (its company field everywhere else) isn't a brand name, so
   // it's dropped here rather than concatenated the way the others are —

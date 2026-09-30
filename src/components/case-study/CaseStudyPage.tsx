@@ -141,15 +141,18 @@ export function PlainMedia({
   image,
   className = "",
 }: {
-  image: { src?: string; alt: string; type?: "video"; aspect?: string };
+  image: { src?: string; alt: string; type?: "video"; aspect?: string; frame?: SectionImage["frame"] };
   className?: string;
 }) {
   // `aspect` swaps the shared 1440:1024 box for the recording's own shape
   // (the caller sizes the width to match at 609px tall), so a clip cropped
-  // to that shape fills the box with no bars — see SectionImage.
+  // to that shape fills the box with no bars — see SectionImage. "bare"
+  // artwork carries its own cards, so it gets no card of its own.
+  const card =
+    image.frame === "bare" ? "" : "overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]";
   return (
     <div
-      className={`product-media ${image.aspect ? "" : PLACEHOLDER_ASPECT} w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] ${className}`}
+      className={`product-media ${image.aspect ? "" : PLACEHOLDER_ASPECT} w-full ${card} ${className}`}
       style={image.aspect ? { aspectRatio: image.aspect } : undefined}
     >
       {/* object-contain, not object-cover: real recordings are captured
@@ -839,25 +842,27 @@ function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string
   );
 }
 
-/** How much the outlined opening shrinks on short windows: 1 wherever its
- * ~600px of copy fits between the fixed chrome with --cs-pad to spare.
- * (Scaling it down with window width too, like the grid hero, was tried
- * and rejected — it stays at Figma size.) */
+/** How much the outlined opening shrinks on short windows — the first-paint
+ * guess, sized to the tallest cover column (590px, Airbnb's metadata list).
+ * CoverBlock replaces it with each cover's exact fit once it can measure.
+ * Applied to the whole cover row, list included. (Scaling it down with
+ * window width too, like the grid hero, was tried and rejected — it stays
+ * at full size wherever it fits.) */
 const OUTLINE_FIT =
-  "min(1, tan(atan2(100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px), 600px)))";
+  "min(1, tan(atan2(100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px), 590px)))";
 
 /** Outlined-title opening — Figma "Project Opening" (917:129483): a 16/24
  * line above the title (Figma's date line; the company name instead, per
  * direct request — the dates live in the metadata column), the title 32px
- * below its top (80/92, 4px tracking, 2px coral outline), the 20/34
+ * below its top (56/64.4 here, not Figma's 80/92 — see .cs-outline-title), the 20/34
  * subtitle 16px after, and the scroll hint 241px below the subtitle's top.
- * At least the title frame's 703px wide; wider when a title line is (each
- * line holds on one line here — "Partner Portal" runs 741px). `zoom` (not a
+ * At least the title frame's 703px wide; wider if a title line ever is
+ * (each line holds on one line here). `zoom` (not a
  * transform) shrinks it on short windows so the box it takes up shrinks
  * too, keeping the cover centered on what's actually drawn. */
 function OutlineHero({ meta }: { meta: Meta }) {
   return (
-    <div className="cs-only-horizontal relative w-max min-w-[703px] shrink-0" style={{ zoom: "var(--outline-fit)" }}>
+    <div className="cs-only-horizontal relative w-max min-w-[703px] shrink-0">
       <p className="ml-[6px] text-[16px] font-semibold leading-6 text-[#433835] [font-family:var(--font-display)]">
         {meta.company}
       </p>
@@ -868,11 +873,10 @@ function OutlineHero({ meta }: { meta: Meta }) {
         {meta.subtitle}
       </p>
       {/* 241px from the subtitle's top in Figma = 71px after its five
-          lines; kept as a gap so a longer subtitle can't run into it. Hung
-          below the lockup (absolute) rather than in its flow, so the box
-          ends at the paragraph — CoverBlock bottom-aligns that edge with
-          the metadata column, per direct request. */}
-      <p className="absolute left-0 top-full mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-accent [font-family:var(--font-display)]">
+          lines; kept as a gap so a longer subtitle can't run into it. In
+          the lockup's flow, so the lockup CoverBlock centers runs from the
+          company line down to this hint. */}
+      <p className="mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-accent [font-family:var(--font-display)]">
         <span aria-hidden className="h-[3px] w-[50px] bg-accent" />
         Scroll to move through the story
       </p>
@@ -898,22 +902,58 @@ function OutlineHeroMobileText({ meta }: { meta: Meta }) {
   );
 }
 
-/** Space between the outlined opening and the metadata column: Figma's
- * 468px where the viewport has room, otherwise whatever keeps the column's
- * right edge the track's own 129.6px lead-in from the viewport edge
- * (1257.2 = 2 × 129.6 + the 703px opening + the 295px column), floored at
- * 120px — Figma's frame is wider than a 1440px window, and at its literal
- * spacing the column would start the page half off-screen. */
-const OUTLINE_COVER_GAP = "clamp(120px, 100vw - 1257.2px, 468px)";
+/** Space between the outlined opening and the metadata column: whatever
+ * puts the column's right edge 100px from the window's right edge, per
+ * direct request for the 1440px-wide target screen (1227.6 = the track's
+ * 129.6px lead-in + the 703px opening + the 295px column + 100), capped at
+ * Figma's 468px and floored at 120px. */
+const OUTLINE_COVER_GAP = "clamp(120px, 100vw - 1227.6px, 468px)";
 
 /** Exported (with `IntroStackBlock` and `PlainMedia`) so Headspace Unified
  * Main Door's own page.tsx composes the same cover — grid hero, tinted
  * lockup, scroll hint on the rule — instead of a plain-text local copy. */
 export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   const outline = Boolean(meta.heroLines?.length);
+  const rowRef = useRef<HTMLDivElement>(null);
+
+  // Outlined opening: the lockup and the metadata list are both centered
+  // between the fixed chrome. Shrink the row (zoom) just enough that the
+  // taller of the two keeps --cs-pad of clear space above and below — full
+  // size wherever it already fits.
+  useLayoutEffect(() => {
+    const row = rowRef.current;
+    const lockup = row?.querySelector<HTMLElement>(".cs-only-horizontal");
+    const list = row?.querySelector<HTMLElement>("dl");
+    if (!outline || !row || !lockup || !list) return;
+    const fit = () => {
+      if (window.innerWidth < 901) {
+        row.style.removeProperty("zoom");
+        return;
+      }
+      const cs = getComputedStyle(row);
+      const px = (name: string) => parseFloat(cs.getPropertyValue(name)) || 0;
+      const zoom = parseFloat(cs.zoom) || 1;
+      // Natural (unzoomed) heights.
+      const lockupH = lockup.getBoundingClientRect().height / zoom;
+      const listH = list.getBoundingClientRect().height / zoom;
+      const room = window.innerHeight - px("--cs-chrome-top") - px("--cs-chrome-bottom") - 2 * px("--cs-pad");
+      const next = Math.max(0.5, Math.min(1, room / Math.max(lockupH, listH)));
+      if (Math.abs(next - zoom) > 0.001) row.style.zoom = String(next);
+    };
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(lockup);
+    ro.observe(list);
+    window.addEventListener("resize", fit);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", fit);
+    };
+  }, [outline]);
+
   return (
     <div
-      className={outline ? "cs-block" : "cs-block cs-block-centered"}
+      className="cs-block cs-block-centered"
       style={{
         // Outlined opening: sized to its content, since the opening
         // widens for a long title line (see OutlineHero).
@@ -922,16 +962,15 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
         ["--outline-fit" as string]: OUTLINE_FIT,
       }}
     >
-      {/* The outlined opening hangs from the story's shared top line like
-          every section, its two columns aligned on their last baselines —
-          the paragraph's last line sitting on the same line as the
-          metadata's, per direct request (Figma top-aligns them); the scroll
-          hint hangs below (see OutlineHero). The grid hero is sized to fill the height on its
-          own, so that cover centers instead (.cs-block-centered) with the
-          list centered beside the grid. */}
+      {/* Both openings center between the fixed chrome (.cs-block-centered)
+          rather than hanging from the story's shared top line, with the
+          metadata list centered beside the opening — for the outlined one,
+          its lockup from company line to scroll hint — per direct request
+          (Figma top-aligns them). */}
       <div
+        ref={rowRef}
         className={`flex flex-col gap-16 min-[901px]:flex-row min-[901px]:gap-0 ${
-          outline ? "min-[901px]:[align-items:last_baseline]" : "min-[901px]:items-center"
+          outline ? "min-[901px]:items-center min-[901px]:[zoom:var(--outline-fit)]" : "min-[901px]:items-center"
         }`}
       >
         {outline ? <OutlineHeroMobileText meta={meta} /> : <CoverBlockMobileText meta={meta} />}
@@ -1264,19 +1303,38 @@ export function IntroStackBlock({
   stat,
   quote,
   sectionNumber,
+  image,
+  caption,
 }: {
   heading: string;
   body: string[];
   stat?: { value: string; label: string };
   quote?: { text: string; attribution: string };
   sectionNumber?: string;
+  image?: SectionImage;
+  caption?: string;
 }) {
+  // Media beside the stack (Headspace's Problem, Figma 1002:62316): 100px
+  // after the 560px column, sized to its own shape at the shared 609px
+  // height, top-aligned with the heading like every section's media. The
+  // block grows by the media and that gap plus 192px, so with the inset's
+  // 300px right margin the run to the next section matches a section's.
+  const mediaWidth = image?.aspect
+    ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
+    : "calc(857px * var(--cs-media-scale, 1))";
   return (
     <div
-      className="cs-block cs-problem-inset min-[901px]:pl-[calc(3rem*var(--cs-scale,1))]"
-      style={{ ["--w" as string]: "calc(38rem * var(--cs-scale, 1))" }}
+      className={`cs-block cs-problem-inset min-[901px]:pl-[calc(3rem*var(--cs-scale,1))] ${
+        image ? "min-[901px]:flex min-[901px]:items-start min-[901px]:gap-[calc(100px*var(--cs-scale,1))]" : ""
+      }`}
+      style={{
+        ["--w" as string]: image
+          ? `calc(${38 * 16 + 100 + 192}px * var(--cs-scale, 1) + ${mediaWidth})`
+          : "calc(38rem * var(--cs-scale, 1))",
+        ["--cs-media-w" as string]: mediaWidth,
+      }}
     >
-      <div className="flex w-full flex-col gap-8 min-[901px]:w-[calc(560px*var(--cs-scale,1))]">
+      <div className="flex w-full flex-col gap-8 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
         <div className="flex flex-col gap-4">
           <div className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" /> : null}
@@ -1316,6 +1374,13 @@ export function IntroStackBlock({
           </div>
         ) : null}
       </div>
+
+      {image ? (
+        <div className="mt-10 flex w-full flex-col gap-6 min-[901px]:mt-0 min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0">
+          <PlainMedia image={image} />
+          {caption ? <p className="cs-caption text-center">{caption}</p> : null}
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -1359,19 +1424,25 @@ function SectionBlock({
   const hasSteps = Boolean(steps?.length);
   const hasIllustratedSteps = hasSteps && steps!.every((s) => s.icon);
   const hasImage = Boolean(image);
-  const isPlainImage = hasImage && image!.frame === "plain";
+  const isPlainImage = hasImage && (image!.frame === "plain" || image!.frame === "bare");
+  // Stats inside the media with an image as well: the stats get their own
+  // 760px card, 100px ahead of the image (Headspace's Admin survey, Figma
+  // 1002:62238). Phones drop the card and list the stats under the image.
+  const hasStatsCard = hasMediaStats && hasImage;
   // Media column width: the shared 857px box, or the recording's own shape
   // at the same 609px height when `image.aspect` is set. One variable so the
   // media and the caption centered under it stay the same width.
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
-  // How much narrower an `aspect` box is than the standard 857px one. Taken
+  // How much narrower the media row is than the standard 857px box. Taken
   // off the block width below so the empty run to the next section stays
-  // the same 650px Yahoo's sections leave, not 650px plus the difference.
-  const narrowerBy = image?.aspect
-    ? 857 - 609 * image.aspect.split("/").map(Number).reduce((w, h) => w / h)
-    : 0;
+  // the same 650px Yahoo's sections leave, not 650px plus the difference
+  // (negative for rows wider than the standard box).
+  const narrowerBy =
+    857 -
+    (image?.aspect ? 609 * image.aspect.split("/").map(Number).reduce((w, h) => w / h) : 857) -
+    (hasStatsCard ? 760 + 100 : 0);
 
   const renderQuotes = () =>
     pullQuotes ? (
@@ -1413,6 +1484,17 @@ function SectionBlock({
             outer column so `order` can put the caption straight under the
             image and the quotes/stats after it. */}
         <div className="contents min-[901px]:flex min-[901px]:h-[calc(609px*var(--cs-media-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch min-[901px]:gap-6">
+          {hasStatsCard ? (
+            <>
+              {/* Same card as the PlainMedia image beside it; the 560px rows
+                  sit centered at 1:1 and scale with the box. 76px + the
+                  row's 24px gap = Figma's 100px. */}
+              <div className="product-media hidden aspect-[760/609] w-[calc(760px*var(--cs-media-scale,1))] shrink-0 items-center justify-center self-start overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:mr-[calc(76px*var(--cs-media-scale,1))] min-[901px]:flex">
+                <div className="flex w-[560px] shrink-0 flex-col scale-[var(--cs-media-scale,1)]">{statRows()}</div>
+              </div>
+              <div className="order-2 mt-4 flex flex-col min-[901px]:hidden">{statRows()}</div>
+            </>
+          ) : null}
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
@@ -1573,6 +1655,8 @@ function renderBlock(block: Block, i: number) {
           stat={block.stat}
           quote={block.quote}
           sectionNumber={block.sectionNumber}
+          image={block.image}
+          caption={block.caption}
         />
       );
     case "section":

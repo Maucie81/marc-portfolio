@@ -1,22 +1,26 @@
 /**
- * Headspace Admin Portal Redesign — case-study content.
+ * Headspace Admin portal research & proposal — case-study content.
  *
  * Source of truth: the portfolio copy doc (Google Doc 1Y5ZCQfpgUOKFFOQdDQqiW8HxOHPUC275jJPcAHZO1JA,
  * "Headspace Admin Portal Redesign") for copy, and Figma "Portfolio-2026"
  * node 916:62808 ("Headspace Case Study") for layout and section order —
  * The proposal now comes before Wireframe explorations. Headings stay in
- * sentence case per the site's casing rules. The Outcome isn't in the doc,
- * so it keeps the live copy.
+ * sentence case per the site's casing rules.
  *
  * This is a research-and-vision deliverable, not a shipped product: a
  * prioritized roadmap and wireframe explorations presented to Headspace
  * leadership. Copy stays honest about that; no shipped-impact language.
  *
- * Media are empty placeholder boxes until the journey map, matrix, split
- * diagram and wireframes are exported.
+ * Media and the 2026-09-30 copy pass come from the same Figma frame. The
+ * two walkthroughs are the user's Figma-prototype screen recordings, cropped
+ * just inside the prototype frame (the old portal's frame has rounded
+ * corners and a gray edge baked in); the stills are Figma exports. Every
+ * box is sized to its media's own shape at the shared 609px height.
  */
 
 import type { Block, Bullet, ImageSpec } from "@/lib/ypp";
+
+const MEDIA = "/headspace/admin-portal";
 
 /** The same points drive the expand-to-read list and the plain fallback,
  * as on the Airbnb sections. */
@@ -28,13 +32,13 @@ function points(list: Bullet[]) {
 }
 
 export const meta = {
-  title: "Admin portal redesign",
+  title: "Admin portal research & proposal",
   subtitle:
     "Headspace's B2B Admin Portal hadn't been redesigned since 2017, and the merger with Ginger exposed how poorly it served the companies using it. Twelve interviews and the first direct survey of Admins led to one recommendation: split the portal in two, one for Admins and one for Headspace's own teams.",
   company: "Headspace",
   years: "2021 — 2022",
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["admin portal", "redesign"],
+  heroLines: ["admin portal", "research & proposal"],
 };
 
 export const sidebar = {
@@ -69,7 +73,6 @@ export const sidebar = {
   highlights: [
     "First direct survey of Headspace's Admins",
     "147 responses, no incentive",
-    "Proposed splitting one portal into two",
   ],
 };
 
@@ -85,7 +88,7 @@ export const blocks: Block[] = [
     sectionNumber: "01",
     heading: "The problem",
     body: [
-      "By 2022, the Admin Portal served 2,000+ partner companies on a structure built in 2017. Features had been added for years, but nobody had asked Admins directly what they needed. Everything Headspace knew about them came secondhand, through its Partner Success Managers.",
+      "By 2022, the Admin Portal served 2,000+ partner companies on a structure built in 2017. Features had been added for years, but nobody had asked Admins directly what they needed.",
       "The portal also served two audiences at once. Admins used it to manage their company's benefit, while Headspace's own teams used it to troubleshoot eligibility files and investigate member issues. The merger with Ginger, which brought its own internal platform, made the overlap impossible to ignore.",
     ],
     stat: {
@@ -96,6 +99,14 @@ export const blocks: Block[] = [
       text: "The engagement reports are pretty underwhelming. It doesn't give us much detail and I am not super fond of it being a PDF. I wish it was an actual dashboard where we could filter the information and slice and dice it.",
       attribution: "Admin survey respondent, 2022",
     },
+    image: {
+      src: `${MEDIA}/videos/CurrentPortal.webm`,
+      alt: "The 2022 Admin Portal: a General Electric account's Members, Insights, Settings and Toolkit tabs",
+      frame: "plain",
+      type: "video",
+      aspect: "2858/1834",
+    },
+    caption: "The Admin Portal as Admins used it in 2022, largely unchanged since 2017.",
   },
 
   // 3. Research — journey map and stakeholder interviews
@@ -107,30 +118,42 @@ export const blocks: Block[] = [
     body: "Before the first interview, I mapped the portal end to end, from setting up a company to resolving a member issue. Twelve interviews with seventeen people across Headspace, Ginger and partner companies then tested what the map suggested.",
     ...points([
       {
-        title: "Same needs, different words",
-        body: "Every group asked for the same three things: better reporting, cleaner data integration and a clear view of company hierarchy. They just described them differently.",
+        title: "One need, five teams",
+        body: "Data integration made the top three for four of the five groups. The toolkit and company hierarchy each made it for two.",
       },
     ]),
     caption:
       "The Admin Portal journey across five user types, from company setup to member support.",
+    image: {
+      src: `${MEDIA}/journey-map.webp`,
+      alt: "The Admin Portal journey map: dashboard tasks and phases for new org creation, synthesis categories, and the full journey board of sticky notes",
+      frame: "bare",
+      aspect: "3882/1220",
+    },
   },
 
-  // 4. The admin survey — the stats sit inside the media box (Figma
-  // 917:127264). Figma's caption is still lorem ipsum, so none here yet.
+  // 4. The admin survey — the stats get their own card, ahead of the Kano
+  // results (Figma 1002:62238). No caption in Figma.
   {
     kind: "section",
     sectionNumber: "03",
-    eyebrow: "Agreement across the board",
+    eyebrow: "Size matters",
     title: "The admin survey",
-    body: "Headspace had never surveyed its Admins directly. With our PM and UX researcher, I designed the first survey, split by company size so each segment's priorities stayed visible instead of being averaged away.",
+    body: "Headspace had never surveyed its Admins directly. I partnered with a UX researcher to design the first survey, split by company size so each segment's priorities stayed visible instead of being averaged away.",
     ...points([
       {
         title: "Only one must-have",
-        body: "Customizable reporting was the only feature every segment called essential. Everything else split by company size.",
+        body: "Customizable reporting was the only must-have overall, but only the smallest and largest companies called it essential. Admins at companies with 1,000 to 4,999 employees ranked a searchable toolkit and a performance homepage first.",
       },
     ]),
     caption: "",
     statsInMedia: true,
+    image: {
+      src: `${MEDIA}/kano-results.webp`,
+      alt: "Kano results, priorities by company size: customizable reporting is a must-have for all Admins, SMB and Strategic; a searchable toolkit and performance homepage are must-haves for mid-market",
+      frame: "plain",
+      aspect: "2880/1694",
+    },
     stats: [
       { value: "700", label: "Admins surveyed through the PSM team" },
       { value: "147", label: "Direct responses received" },
@@ -154,6 +177,12 @@ export const blocks: Block[] = [
     ]),
     caption:
       "Every opportunity plotted by need and impact, with the Admin community in the low-priority corner.",
+    image: {
+      src: `${MEDIA}/synthesis.webp`,
+      alt: "Synthesized interview data and how-might-we statements beside the need × impact matrix: top priority, nice to have, differentiators and low priority",
+      frame: "plain",
+      aspect: "2976/1220",
+    },
   },
 
   // 6. The proposal — one portal split into two
@@ -162,15 +191,24 @@ export const blocks: Block[] = [
     sectionNumber: "05",
     eyebrow: "Two audiences, neither served",
     title: "The proposal",
-    body: "Comparing Ginger's internal platform with the Admin Portal showed internal tools crowding out what Admins came for. I proposed two portals: one built only for Admins, and an Implementation Portal for Headspace's own teams.",
+    body: "Comparing Ginger's internal platform with the Admin Portal showed internal tools crowding out what Admins came for. I proposed an Admin Portal built only for Admins, with internal work moving to tools built for Headspace's own teams.",
     ...points([
       {
-        title: "A path, not just a pitch",
-        body: "The proposal went to leadership in Q3 2022 as a phased roadmap, and foundational work started soon after.",
+        title: "The features Admins never found",
+        body: "Up to 44% of Admins didn't know the settings features existed, and 65% had never heard of SFTP uploads. Those were the screens internal teams lived in.",
+      },
+      {
+        title: "A list that couldn't carry over",
+        body: "For Ginger, showing employers who had enrolled would reveal who was seeking mental health care. The Headspace portal's most-used feature was a legal problem for the combined offering.",
       },
     ]),
-    caption:
-      "The proposed split: what moves to the Implementation Portal, and what the Admin Portal keeps.",
+    caption: "The proposed split: what moves to internal tools, and what the Admin Portal keeps.",
+    image: {
+      src: `${MEDIA}/proposal-split.webp`,
+      alt: "The proposed split: the Admin Portal for external Admins, with Salesforce, Croc Pit and a new Implementation Portal serving internal teams",
+      frame: "plain",
+      aspect: "1714/1218",
+    },
   },
 
   // 7. Wireframe explorations
@@ -182,23 +220,30 @@ export const blocks: Block[] = [
     body: "Research is easy to dismiss as a slide deck. I wireframed what an Admin-only portal could be, starting with what Admins asked for most: reporting they could explore instead of a PDF.",
     ...points([
       {
-        title: "Every module earned its place",
-        body: "The insights dashboard answers the one universal must-have. The toolkit and company settings answer the next most common requests.",
+        title: "A feature that had lost clients",
+        body: "Headspace had lost clients for not offering Challenges, but the old version was too buggy and manual to offer beyond top-tier accounts. The Features tab put launching one in every Admin's hands.",
       },
     ]),
     caption:
-      "The insights module: engagement reports and wellbeing surveys inside the portal, not in a PDF.",
+      "Open the proposed Home tab to see live enrollment, engagement and content reports, then move\nthrough Members, Settings, Features, Resources and Reports.",
+    image: {
+      src: `${MEDIA}/videos/WireframeWalkthrough.webm`,
+      alt: "Wireframe walkthrough of the proposed Admin Portal: Home reports, Members, Settings, Features, Resources and Reports",
+      frame: "plain",
+      type: "video",
+      aspect: "2296/1394",
+    },
   },
 
-  // 8. Outcome — not in the copy doc; the live copy stands
+  // 8. Learnings (Figma 917:127552)
   {
     kind: "closing",
     sectionNumber: "07",
-    heading: "Outcome",
+    heading: "Learnings",
     body: [
-      "Before this project, Headspace had never gone directly to its Admin population for research. Every insight about what Admins needed had been filtered through PSM conversations — secondhand, incomplete, and shaped by what internal teams thought Admins wanted rather than what they actually said.",
-      "Seventeen stakeholders across twelve interviews, a 147-respondent survey with a 21% unincentivized response rate, four additional validation sources, an in-person working session, and a Need × Impact framework that overruled instinct — including my own — produced a proposal that reframed the entire problem. This wasn't a portal that needed a redesign. It was a portal that had been asked to serve two completely different audiences for years, and had failed both of them as a result.",
-      "The proposal went to leadership in Q3 2022 and was approved. Foundational Phase 0 work began rolling out before the year was out. That outcome matters — but what I'm most proud of is that the research program itself changed how the team thought about Admins. Not as a user type to design for, but as a constituency that had never been properly heard.",
+      "Before this project, Headspace had never gone directly to its Admin population for research. Every insight about what Admins needed had been filtered through PSM conversations: secondhand, incomplete, and shaped by what internal teams thought Admins wanted rather than what they actually said.",
+      "Seventeen stakeholders across twelve interviews, a survey of 700 Admins, four additional validation sources, an in-person working session, and a Need × Impact framework that overruled instinct, including my own, produced a proposal that reframed the entire problem. This wasn't a portal that needed a redesign. It was a portal that had been asked to serve two completely different audiences for years, and had failed both of them as a result.",
+      "The proposal went to leadership in Q3 2022 and was approved. Foundational Phase 0 work began rolling out before the year was out. That outcome matters, but what I'm most proud of is that the research program itself changed how the team thought about Admins. Not as a user type to design for, but as a constituency that had never been properly heard.",
     ],
     stats: [],
   },

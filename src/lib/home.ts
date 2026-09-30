@@ -63,7 +63,7 @@ export const projects: Project[] = [
     // solid rather than 50% opacity, so the bezel and grid don't show
     // through it.
     company: "Headspace",
-    title: "Admin portal redesign",
+    title: "Admin portal research & proposal",
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",

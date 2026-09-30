@@ -624,6 +624,8 @@ paints over it. */
   /* Only draggable once it's actually on screen — otherwise it'd swallow
      clicks meant for whatever sits behind this fixed strip while hidden. */
   pointer-events: auto;
+  /* Hand on hover, per direct request — it's clickable and draggable. */
+  cursor: pointer;
 }
 
 /* Static comb of tick marks — evenly spaced regardless of viewport width. */
@@ -814,12 +816,14 @@ paints over it. */
    is coral and --outline is 0, so the stroke copy adds nothing. To go back
    to the outline: color var(--bg), --outline 4px (3px on phones).
    Tracking tightened from Figma's 5% (4px) to 2px (1px on phones), per
-   direct request. */
+   direct request. Set at 56/64.4 rather than Figma's 80/92 (same ratio),
+   per direct request: 80 read far too big, and "Research & proposal" ran
+   979px wide at it. */
 .cs-outline-title {
   font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 700;
-  font-size: 80px;
-  line-height: 92px;
+  font-size: 56px;
+  line-height: 64.4px;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--accent);

@@ -960,24 +960,16 @@ export default function Home() {
             {/* Label is only visible below lg, where it stands in for the
                 "We should probably chat, right?" line above the headline. */}
             <SectionNumber number="05" label="We should probably chat, right?" />
-            {/* The email address is the headline from lg; below that it's
-                the case studies' "Get in touch →" lockup (CaseStudyFooter),
-                to /contact. */}
+            {/* The headline is the case studies' "Get in touch →" lockup
+                (CaseStudyFooter), to /contact, at every size — the email
+                address no longer headlines the page, per direct request. */}
             <div>
               <p className="t-section-title" style={{ marginBottom: "0.75rem" }}>
                 We should probably chat, right?
               </p>
               {/* hover drops to opacity, not accent: accent-on-accent is
                   invisible here. */}
-              <h2 className="display hidden text-[clamp(2rem,4vw,2.5rem)] break-words lg:block">
-                <a
-                  href={`mailto:${contact.email}`}
-                  className="transition-opacity hover:opacity-75"
-                >
-                  {contact.email}
-                </a>
-              </h2>
-              <h2 className="display text-[clamp(2rem,4vw,2.5rem)] lg:hidden">
+              <h2 className="display text-[clamp(2rem,4vw,2.5rem)]">
                 <Link
                   href="/contact"
                   className="inline-flex items-center gap-3 transition-opacity hover:opacity-75"

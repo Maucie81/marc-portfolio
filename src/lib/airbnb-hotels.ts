@@ -45,7 +45,7 @@ export const meta = {
   company: "Airbnb",
   years: "2019 — 2020",
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["account", "creation", "& onboarding"],
+  heroLines: ["account creation", "& onboarding"],
 };
 
 export const sidebar = {

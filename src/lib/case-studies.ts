@@ -29,7 +29,7 @@ export const caseStudies: CaseStudyLink[] = [
   },
   {
     slug: "headspace-admin-portal",
-    title: "Headspace admin portal redesign",
+    title: "Headspace admin portal research & proposal",
     href: "/work/headspace-admin-portal",
     // Not offered by any other case study's own closing (only Yahoo,
     // Airbnb, and UMD point to each other, per this same table) — reachable
