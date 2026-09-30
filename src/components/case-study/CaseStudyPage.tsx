@@ -606,7 +606,9 @@ function CaseStudyHero({
       <div
         className="relative"
         style={{
-          ["--hero-scale" as string]: `min(1, calc(100cqi / ${width}px), calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / ${height + GRID_TOP_EXTEND}px))`,
+          // tan(atan2(a, b)) = a / b as a number — see --cs-media-scale in
+          // globals.css for why not calc(a / b).
+          ["--hero-scale" as string]: `min(1, tan(atan2(100cqi, ${width}px)), tan(atan2(100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px), ${height + GRID_TOP_EXTEND}px)))`,
           height: `calc(${height + GRID_TOP_EXTEND}px * var(--hero-scale))`,
         }}
       >
@@ -842,7 +844,7 @@ function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string
  * (Scaling it down with window width too, like the grid hero, was tried
  * and rejected — it stays at Figma size.) */
 const OUTLINE_FIT =
-  "min(1, calc((100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px)) / 600px))";
+  "min(1, tan(atan2(100vh - var(--cs-chrome-top, 0px) - var(--cs-chrome-bottom, 0px) - 2 * var(--cs-pad, 0px), 600px)))";
 
 /** Outlined-title opening — Figma "Project Opening" (917:129483): a 16/24
  * line above the title (Figma's date line; the company name instead, per

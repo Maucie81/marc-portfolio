@@ -683,6 +683,15 @@ paints over it. */
   white-space: pre-line;
 }
 
+/* The \n in caption copy is placed for the desktop measure; on a phone it
+   stranded a word or two on a line of their own ("export" / "of every
+   row…"), so captions wrap freely there. */
+@media (max-width: 900px) {
+  .cs-caption {
+    white-space: normal;
+  }
+}
+
 /* ---------- Case-study type roles (Figma Desktop System, 467:102944) ----------
    Roles not already covered by .display (Page Title / Desktop - Headlines,
    both var(--ink)) or .t-body (Desktop - Body Copy). Shared across every
@@ -824,8 +833,11 @@ paints over it. */
 
 @media (max-width: 900px) {
   .cs-outline-title {
-    font-size: 2.75rem;
-    line-height: 3.125rem;
+    /* 44/50 from 375px up; narrower than that (1st-gen iPhone SE, 320px)
+       "ONBOARDING" ran ~14px past the screen edge, so the pair shrinks with
+       the 24px-gutter column there. */
+    font-size: min(2.75rem, (100vw - 48px) * 0.135);
+    line-height: min(3.125rem, (100vw - 48px) * 0.1534);
     letter-spacing: 1px;
     --outline: 0px;
   }
@@ -895,9 +907,13 @@ paints over it. */
     --cs-chrome-top: 42px;
     --cs-chrome-bottom: 64px;
     --cs-pad: 40px;
+    /* tan(atan2(a, b)) is a / b as a plain number. Dividing a length by a
+       length directly (calc(a / 687.3px)) is newer CSS that Firefox and
+       older Safari reject, which voided every size built on this and blew
+       the media up to full size there. */
     --cs-media-scale: min(
       1,
-      calc((100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - 2 * var(--cs-pad)) / 687.3px)
+      tan(atan2(100vh - var(--cs-chrome-top) - var(--cs-chrome-bottom) - 2 * var(--cs-pad), 687.3px))
     );
   }
 

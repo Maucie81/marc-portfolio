@@ -72,6 +72,12 @@ const BAND_CLIP = { clipPath: "inset(0 max(0px, calc((100% - 1376px) / 2)))" };
    stretch the whole sheet to fill its own panel (background-size: cover),
    so the wide, short contact band blew the dots up ~35% past the hero's.
    987×588 is the hero's dot scale at the 1440 frame, per direct request. */
+/* --accent (#ff5841) at 45%, for the Personal inspo graph paper. Spelled
+   out rather than color-mix(in srgb, var(--accent) 45%, transparent): same
+   color, but Firefox drew nothing for the color-mix version inside a
+   repeating gradient, leaving that band blank. */
+const INSPO_GRID_LINE = "rgb(255 88 65 / 0.45)";
+
 const CORAL_TEXTURE_SRC = "/coral-texture-tile.webp";
 const CORAL_TEXTURE = {
   backgroundImage: `url(${CORAL_TEXTURE_SRC})`,
@@ -884,9 +890,9 @@ export default function Home() {
             splits the leftover into equal half-cells on both edges instead
             of dumping one narrow partial column on the right. 16px matches
             the hero grid's own ~16.2px cell.
-            The lines are drawn at 45% accent, not full: at full strength a
-            grid this dense over a whole band competed with the photos it
-            sits behind.
+            The lines are drawn at 45% accent (INSPO_GRID_LINE), not full:
+            at full strength a grid this dense over a whole band competed
+            with the photos it sits behind.
             Vertically the sheet starts at the band's own top edge, so the
             first row is a full 16px like every other one — an offset here
             (it was 14px, to put a rule through the header row) buys that
@@ -900,8 +906,8 @@ export default function Home() {
         <div
           style={bandFill(
             "var(--bg)",
-            "repeating-linear-gradient(to right, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
-            "repeating-linear-gradient(to bottom, color-mix(in srgb, var(--accent) 45%, transparent) 0 1px, transparent 1px 16px)",
+            `repeating-linear-gradient(to right, ${INSPO_GRID_LINE} 0 1px, transparent 1px 16px)`,
+            `repeating-linear-gradient(to bottom, ${INSPO_GRID_LINE} 0 1px, transparent 1px 16px)`,
           )}
         >
         {/* pt-[50px], not py-12, and only here: 48 put the header row's
