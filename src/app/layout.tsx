@@ -39,11 +39,16 @@ const robotoMono = Roboto_Mono({
   display: "swap",
 });
 
-// Vercel sets this to the project's primary domain (marcfavro.com once it's
-// connected), so share-card links follow the domain switch on their own.
-const SITE_URL = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
+// The address share-card links are built on. www is the primary domain on
+// Vercel (marcfavro.com 308s to it), so production names it outright —
+// Vercel's own VERCEL_PROJECT_PRODUCTION_URL picks the shortest domain,
+// which is the redirecting apex.
+const SITE_URL =
+  process.env.VERCEL_ENV === "production"
+    ? "https://www.marcfavro.com"
+    : process.env.VERCEL_URL
+      ? `https://${process.env.VERCEL_URL}`
+      : "http://localhost:3000";
 
 // Link previews: the card image is opengraph-image.jpg / twitter-image.jpg
 // beside this file (source + render script in scripts/og-card). No title or
