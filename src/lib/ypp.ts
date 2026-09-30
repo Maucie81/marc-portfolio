@@ -471,6 +471,16 @@ export const blocks: Block[] = [
         text: "Each affected item shows the specific issue — restricted word, low word count, duplicate photo — with a human-readable fix at the surface and the raw code detail one tap deeper for whoever needs to hand it to a developer.",
       },
     ],
+    // Figma (302:51432) places this under Takedowns; moved here per direct
+    // request, since it's about pinpointing problems, not removing content.
+    pullQuotes: [
+      {
+        quote:
+          "I really like what you showed us. Almost like a product developers perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
+        attribution: "DotDash Meredith",
+      },
+    ],
+    pullQuotePosition: "top",
   },
 
   // 9. Search
@@ -545,11 +555,14 @@ export const blocks: Block[] = [
         text: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need — a different constraint determined the form.",
       },
     ],
+    // PMC's reaction to the one-click takedown concept, from the case-study
+    // draft (Phase 2). Their words are a fragment; the bracketed subject is
+    // an editorial clarification, per direct request, so the quote reads
+    // on its own without putting words in their mouth.
     pullQuotes: [
       {
-        quote:
-          "I really like what you showed us. Almost like a product developers perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
-        attribution: "DotDash Meredith",
+        quote: "[Taking content down right from the portal] would significantly improve the current process of emailing an alias.",
+        attribution: "PMC",
       },
     ],
     pullQuotePosition: "top",
