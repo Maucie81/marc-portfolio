@@ -508,6 +508,14 @@ export const blocks: Block[] = [
         text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
       },
     ],
+    pullQuotes: [
+      {
+        quote:
+          "For something like the Oscars, I can pull a link to this story's performance and share it with my team. That makes it a lot easier than just giving them a breakdown.",
+        attribution: "Gannett",
+      },
+    ],
+    pullQuotePosition: "middle",
   },
 
   // 10. Takedowns
@@ -537,6 +545,14 @@ export const blocks: Block[] = [
         text: "Legal takedowns carry data-preservation and proof-of-notification obligations a silent delete button can't satisfy. The research confirmed the need — a different constraint determined the form.",
       },
     ],
+    pullQuotes: [
+      {
+        quote:
+          "I really like what you showed us. Almost like a product developers perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
+        attribution: "DotDash Meredith",
+      },
+    ],
+    pullQuotePosition: "top",
   },
 
   // 11. User Management
@@ -582,6 +598,7 @@ export const blocks: Block[] = [
   // "76% satisfied" stat beside it would contradict the text.
   {
     kind: "closing",
+    sectionNumber: "11",
     heading: "Learnings",
     body: [
       "We set publisher satisfaction as the primary success measure and support-ticket volume as the counter-metric. I left the project before the follow-up survey that would have measured either, so I can't point to a number.",

@@ -58,18 +58,22 @@ export const projects: Project[] = [
   },
   {
     // Swapped with Unified main door (now under Additional work), per
-    // direct request. No artwork yet, so the screen is a flat 50% tint of
-    // the device frame's #4f453b over the paper, per direct request — mixed
-    // solid rather than 50% opacity, so the bezel and grid don't show
-    // through it.
+    // direct request. Artwork is Figma 1028:61611, a coral card of the case
+    // study's media rather than a device mockup, placed on the same
+    // 2848x1600 canvas as the other cutouts at its spot in the 713x402
+    // mockup frame.
     company: "Headspace",
     title: "Admin portal research & proposal",
     description:
       "Headspace's B2B Admin Portal had become antiquated. When a merger with Ginger introduced a second internal platform, the gap between what Admins needed and what existed became impossible to ignore.",
     href: "/work/headspace-admin-portal",
-    image: null,
+    image: {
+      src: "/headspace/admin-portal/thumbnail-cutout.webp",
+      alt: "Collage from the Headspace Admin Portal project on a coral card: the journey map, Admin survey stats, Kano results by company size and the wireframed portal home",
+      width: 2848,
+      height: 1600,
+    },
     imageLabel: "",
-    screenColor: "color-mix(in srgb, #4f453b 50%, var(--bg))",
     skills: [
       "B2B platform",
       "Design systems",
