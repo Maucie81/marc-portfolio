@@ -200,11 +200,9 @@ export const roles: Role[] = [
     title: "Principal Product Designer, Platform",
     period: "2023 — Present",
     intro:
-      "Conceived and led the YPP Design-to-Engineering Pilot, a formal AI-assisted prototyping program that embedded design directly into the production codebase using Cursor and Claude.",
-    description: [
-      "Built 13 production-adjacent dashboard pages with real components, defined a four-tier AI maturity model for the org, and established a collaboration framework between design and engineering that had never existed before.",
-      "Sole design lead on the Partner Portal serving 8,700+ media partners including Gannett, Business Insider, and Penske. Ran two phases of publisher UXR that directly reshaped the roadmap, made the scoping call to focus a sprawling self-service platform into a targeted analytics product, and shipped capabilities competitors hadn't built: feed diagnostics and discovery source breakdowns that let publishers understand exactly why content underperformed.",
-    ],
+      "Sole design lead on the Yahoo Partner Portal from its start in 2024 through its June 2026 launch to 8,700+ media partners, including Gannett, Business Insider, and Penske.",
+    description:
+      "Led research across discovery interviews, a publisher satisfaction survey, and two rounds of prototype testing that reshaped the roadmap, and made the scoping call to focus a sprawling self-service platform into a targeted analytics product. Authored the data visualization accessibility guidelines the Lightyear design system's chart documentation is based on. Conceived and led an AI-assisted prototyping pilot inside the production repository: thirteen working dashboard pages built with Cursor and Claude on the team's real components.",
     tags: [
       "B2B platform",
       "Publisher tooling",
@@ -217,9 +215,9 @@ export const roles: Role[] = [
     title: "Senior Product Designer",
     period: "2020 — 2023",
     intro:
-      "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees actually needed to use it.",
+      "Designed enterprise wellness products for Fortune 500 partners, balancing what employers needed to administer the benefit with what employees needed to use it. That work helped enable Headspace's largest B2B deal to date ($3.6M).",
     description:
-      "Led a 17-interview stakeholder study and a 147-respondent Admin survey that both fed directly into the roadmap. Partner adoption up 15%, retention up 10%, support requests down 25%.",
+      "Led a seventeen-interview stakeholder study and a 147-respondent Admin survey, the first significant research on the Admin population, and used the findings to propose separating internal and external use cases into distinct portal experiences, a reframe that reoriented the product roadmap.",
     tags: [
       "B2B platform",
       "Enterprise",
@@ -240,12 +238,12 @@ export const roles: Role[] = [
   },
   {
     company: "HotelTonight",
-    title: "Product Designer",
+    title: "Senior Product Designer",
     period: "2017 — 2019",
     intro:
-      "Sole designer across web and mobile during a brand evolution that repositioned HotelTonight from a discount last-minute booking app toward a more premium experience.",
+      "Led design across web and mobile during a brand evolution that repositioned HotelTonight from a discount last-minute booking app toward a more premium experience.",
     description:
-      "Led the iOS app redesign, conducted user research to surface booking flow friction, and maintained the design system across both platforms. This is where most of my consumer product instincts were built: tight feedback loops, opinionated visual design, and designing for someone making a fast personal decision rather than an administrative one.",
+      "Led the iOS app redesign, maintained the design system across both platforms, mentored junior designers, and ran user research to surface booking flow friction. This is where most of my consumer product instincts were built: tight feedback loops, opinionated visual design, and designing for someone making a fast personal decision rather than an administrative one.",
     tags: ["Design systems", "Mobile", "Booking flows", "iOS", "Brand alignment"],
   },
   {
