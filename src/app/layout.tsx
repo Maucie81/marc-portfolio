@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { DM_Sans, Roboto_Mono } from "next/font/google";
 import PageTransition from "@/components/site/PageTransition";
@@ -67,6 +67,13 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+};
+
+// iMessage paints the caption bar under the link-preview image in the
+// page's theme-color; without one it samples the card image and comes out
+// coral. --ink-strong, so the bar reads as black.
+export const viewport: Viewport = {
+  themeColor: "#1a1512",
 };
 
 export default function RootLayout({
