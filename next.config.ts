@@ -21,14 +21,23 @@ const nextConfig: NextConfig = {
   // reaches production, but it's what local dev testing was actually
   // showing. Off here so what you see in `next dev` matches production.
   reactStrictMode: false,
-  // Short link for applications and email signatures. Temporary (307) so
-  // browsers don't cache it if the PDF's filename ever changes.
-  async redirects() {
+  // The resume is served at /resume itself (rewrite, not redirect) so the
+  // address bar keeps the short link. Content-Disposition names the file
+  // when someone saves it; otherwise browsers would call it "resume.pdf".
+  // The direct /Marc-Favro-Resume.pdf URL keeps working for old links.
+  async rewrites() {
+    return [{ source: "/resume", destination: "/Marc-Favro-Resume.pdf" }];
+  },
+  async headers() {
     return [
       {
         source: "/resume",
-        destination: "/Marc-Favro-Resume.pdf",
-        permanent: false,
+        headers: [
+          {
+            key: "Content-Disposition",
+            value: 'inline; filename="Marc-Favro-Resume.pdf"',
+          },
+        ],
       },
     ];
   },
