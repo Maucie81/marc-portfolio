@@ -21,6 +21,17 @@ const nextConfig: NextConfig = {
   // reaches production, but it's what local dev testing was actually
   // showing. Off here so what you see in `next dev` matches production.
   reactStrictMode: false,
+  // Short link for applications and email signatures. Temporary (307) so
+  // browsers don't cache it if the PDF's filename ever changes.
+  async redirects() {
+    return [
+      {
+        source: "/resume",
+        destination: "/Marc-Favro-Resume.pdf",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

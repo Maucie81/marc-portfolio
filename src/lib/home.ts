@@ -261,7 +261,8 @@ export const roles: Role[] = [
 export const contact = {
   email: "marcfavro@gmail.com",
   phone: "916-202-6702",
-  resume:
-    "https://drive.google.com/file/d/1eH-USxlLh24SYEIUtEZJGOLgwV_v7qrQ/view?usp=share_link",
+  // Served from public/. To update, replace that file (keep the name).
+  // www.marcfavro.com/resume redirects here — see next.config.ts.
+  resume: "/Marc-Favro-Resume.pdf",
   linkedin: "https://linkedin.com/in/marcfavro",
 };
