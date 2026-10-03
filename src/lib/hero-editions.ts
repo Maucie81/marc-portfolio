@@ -53,18 +53,23 @@ export type HeroText = {
 
 export type HeroEdition = {
   id: 1 | 2 | 3 | 4 | 5 | 6;
-  /** "ED.02 / 12" etc. — the edition's own production metadata. */
+  /** "ED.03 / 06" — which of the six editions this is. */
   label: string;
+  /** The inks on the board, for the "PLATE:" line. */
+  plate: string;
+  /** Registration tolerance for the "REG." line — 00 for one ink, looser
+   * the more the inks overprint. */
+  reg: string;
   background: string;
   texture?: { x: number; y: number; w: number; h: number; blend: "multiply" | "color-burn" };
-  /** Hero 4 only: the oversized statement and the metadata are masked to
+  /** Hero 4 only: the oversized statement is masked to
    * this rect (Figma "Mask group" 254:273443). */
   clip?: { x: number; y: number; w: number; h: number };
   eyebrow: HeroText;
   name: HeroText;
   statement: HeroText;
   subline: HeroText;
-  meta: { right: number; y: number; color: string; z: number };
+  meta: { color: string; z: number };
   portrait: {
     w: number;
     h: number;
@@ -117,7 +122,9 @@ export const HERO_EDITIONS: HeroEdition[] = [
   // ---------- hero 1 · 254:273242 — paper, halftone, ink ----------
   {
     id: 1,
-    label: "ED.02 / 12",
+    label: "ED.01 / 06",
+    plate: "BLACK",
+    reg: "00",
     background: "#f8f4eb",
     texture: { x: 24, y: 24, w: 1328, h: 518, blend: "multiply" },
     statement: { lines: block(HERO_STATEMENT, 513, 148, 68.848), size: 86.736, lineHeight: 68.848, color: INK, weight: 700, z: 2 },
@@ -129,14 +136,16 @@ export const HERO_EDITIONS: HeroEdition[] = [
       clip: rect(207.67, 61.24, 265.99, 424.59), z: 3,
     },
     rules: [{ x: 473, y: 55, w: 10, h: 456, color: "#fff", z: 4 }],
-    meta: { right: 1332, y: 482, color: META_GREY, z: 6 },
+    meta: { color: META_GREY, z: 6 },
     cluster: { x: 66, y: 40, w: 441, h: 486 },
     mobileStatementColor: INK,
   },
   // ---------- Hero 2 · 254:273303 — paper, slashed overprint ----------
   {
     id: 2,
-    label: "ED.04 / 12",
+    label: "ED.02 / 06",
+    plate: "CORAL / BLACK",
+    reg: "02",
     background: "#f8f4eb",
     statement: {
       lines: [
@@ -167,14 +176,16 @@ export const HERO_EDITIONS: HeroEdition[] = [
     // The white slash: a 500 × 20 bar turned −74.23°, centered on its
     // Figma bounding box (337, 39.7, 155.1 × 486.6).
     rules: [{ x: 164.55, y: 272.97, w: 500, h: 20, color: "#fff", rotate: -74.23, z: 5 }],
-    meta: { right: 1356.5, y: 493.9, color: META_GREY, z: 1 },
+    meta: { color: META_GREY, z: 1 },
     cluster: { x: 127, y: 30, w: 502, h: 506 },
     mobileStatementColor: "#f84d2d",
   },
   // ---------- hero 3 · 254:273366 — flat coral, white ----------
   {
     id: 3,
-    label: "ED.09 / 12",
+    label: "ED.03 / 06",
+    plate: "CORAL / WHITE",
+    reg: "01",
     background: CORAL,
     statement: { lines: block(HERO_STATEMENT, 518, 120.7, 84), size: 87, lineHeight: 84, color: "#fff", weight: 700, z: 2 },
     subline: { lines: block(SUBLINE_A, 523.8, 462.7, 28.04), size: 22.253, color: "#fff", weight: 600, tracking: -0.02, z: 2 },
@@ -185,7 +196,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
       clip: rect(212.45, 48.95, 265.99, 424.59), z: 3,
     },
     rules: [{ x: 477.8, y: 30.7, w: 10, h: 494, color: "#fff", z: 4 }],
-    meta: { right: 1355.8, y: 497.7, color: META_PINK, z: 6 },
+    meta: { color: META_PINK, z: 6 },
     cluster: { x: 55, y: 20, w: 453, h: 515 },
     mobileStatementColor: "#fff",
     stack: { ruleH: 411, nameShift: 20, portraitShift: -32, clusterH: 424 },
@@ -193,21 +204,25 @@ export const HERO_EDITIONS: HeroEdition[] = [
   // ---------- Hero 4 · 254:273423 — oversized statement, coral name ----------
   {
     id: 4,
-    label: "ED.11 / 12",
+    label: "ED.04 / 06",
+    plate: "BLACK / CORAL",
+    reg: "03",
     background: "#f8f4eb",
-    clip: { x: 1.8, y: 0.2, w: 1374, h: 554 },
+    // Extended past the Figma mask (1.8, 0.2, 1374 × 554) to the full board,
+    // so the statement runs off every edge of the frame.
+    clip: { x: 0, y: 0, w: 1376, h: 566 },
     // −1.25% (vs −0.8% on the other Bold lines): at 165px the gap to
     // Figma's tighter display setting is wider — measured line for line.
-    statement: { lines: block(HERO_STATEMENT, -7.2, -15.8, 156.012), size: 164.802, lineHeight: 156.012, color: INK, weight: 700, tracking: -0.0125, blend: "multiply", z: 1 },
-    subline: { lines: block(SUBLINE_A, 815.8, 473.2, 28.04), size: 22.253, color: CORAL, weight: 600, tracking: -0.02, z: 2 },
-    eyebrow: { lines: [{ text: HERO_EYEBROW, x: 187.9, y: 112.2 }], size: 22.253, color: CORAL, weight: 600, tracking: -0.02, z: 3 },
+    statement: { lines: block(HERO_STATEMENT, -7.2, -4.8, 156.012), size: 164.802, lineHeight: 156.012, color: INK, weight: 700, tracking: -0.0125, blend: "multiply", z: 1 },
+    subline: { lines: block(SUBLINE_A, 815.8, 483.2, 28.04), size: 22.253, color: CORAL, weight: 600, tracking: -0.02, z: 2 },
+    eyebrow: { lines: [{ text: HERO_EYEBROW, x: 187.9, y: 124.2 }], size: 22.253, color: CORAL, weight: 600, tracking: -0.02, z: 3 },
     name: { lines: block(HERO_NAME, 360.8, 163.2, 81, "right"), size: 100, lineHeight: 81, color: CORAL, weight: 700, z: 3 },
     portrait: {
       w: 401.088, h: 392.548, matrix: [-0.9789, -0.2043, -0.2043, 0.9789], x: 634.5967, y: 109.0376,
       clip: rect(384.78, 72.25, 258, 382), z: 4,
     },
     rules: [{ x: 370.8, y: 45.2, w: 14, h: 482, color: CORAL, z: 5 }],
-    meta: { right: 1355.8, y: 20.2, color: META_GREY, z: 1 },
+    meta: { color: META_GREY, z: 1 },
     cluster: { x: 69, y: 35, w: 594, h: 502 },
     mobileStatementColor: INK,
     stack: { statementAlign: "center" },
@@ -215,7 +230,9 @@ export const HERO_EDITIONS: HeroEdition[] = [
   // ---------- Hero 5 · 254:273459 — ink, color-burn halftone ----------
   {
     id: 5,
-    label: "ED.12 / 12",
+    label: "ED.05 / 06",
+    plate: "BLACK / CORAL / WHITE",
+    reg: "02",
     background: INK,
     texture: { x: 23.78, y: 23.79, w: 1328, h: 511, blend: "color-burn" },
     statement: { lines: block(HERO_STATEMENT, 552.8, 145.8, 71), size: 75, lineHeight: 71, color: CORAL, weight: 700, z: 2 },
@@ -227,14 +244,16 @@ export const HERO_EDITIONS: HeroEdition[] = [
       clip: rect(370.78, 85.29, 225, 359.16), z: 4,
     },
     rules: [{ x: 359.8, y: 76.8, w: 11, h: 405, color: CORAL, z: 4 }],
-    meta: { right: 1331.8, y: 473.8, color: "#b19790", z: 5 },
+    meta: { color: "#b19790", z: 5 },
     cluster: { x: 120, y: 57, w: 496, h: 445 },
     mobileStatementColor: CORAL,
   },
   // ---------- Hero 6 · 254:273498 — coral, multiply halftone ----------
   {
     id: 6,
-    label: "ED.07 / 12",
+    label: "ED.06 / 06",
+    plate: "CORAL / WHITE / BLACK",
+    reg: "02",
     background: CORAL,
     texture: { x: 24.1, y: 27.5, w: 1328, h: 511, blend: "multiply" },
     statement: { lines: block(HERO_STATEMENT, 553.1, 149.5, 71), size: 75, lineHeight: 71, color: "#fff", weight: 700, z: 2 },
@@ -246,13 +265,17 @@ export const HERO_EDITIONS: HeroEdition[] = [
       clip: rect(371.1, 102.5, 225, 359.16), blend: "multiply", z: 4,
     },
     rules: [{ x: 360.1, y: 57.5, w: 11, h: 450, color: "#fff", z: 4 }],
-    meta: { right: 1332.1, y: 477.5, color: META_PINK, z: 5 },
+    meta: { color: META_PINK, z: 5 },
     cluster: { x: 120, y: 38, w: 496, h: 489 },
     mobileStatementColor: "#fff",
   },
 ];
 
-export const HERO_META_LINES = (label: string) => [label, "PLATE: CORAL / BLACK", "REG. ±02"];
+export const HERO_META_LINES = (e: Pick<HeroEdition, "label" | "plate" | "reg">) => [
+  e.label,
+  `PLATE: ${e.plate}`,
+  `REG. ±${e.reg}`,
+];
 
 /**
  * Edition rotation. While false, every visit gets HERO_DEFAULT unless the

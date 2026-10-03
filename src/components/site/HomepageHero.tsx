@@ -132,7 +132,7 @@ function Rules({ edition }: { edition: HeroEdition }) {
 function Meta({ edition, style, className = "" }: { edition: HeroEdition; style?: CSSProperties; className?: string }) {
   return (
     <p aria-hidden className={`hero-meta ${className}`} style={{ color: edition.meta.color, ...style }}>
-      {HERO_META_LINES(edition.label).map((line, i) => (
+      {HERO_META_LINES(edition).map((line, i) => (
         <Fragment key={line}>
           {i > 0 ? <br /> : null}
           {line}
@@ -147,10 +147,13 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
     <Meta
       edition={edition}
       style={{
+        // Same corner on every edition: 20px in from the right and bottom
+        // (the last line's baseline), regardless of the Figma placement.
         zIndex: edition.meta.z,
-        right: u(BOARD_W - edition.meta.right),
-        top: u(edition.meta.y),
-        fontSize: `max(10px, ${u(12)})`,
+        right: 20,
+        bottom: 20,
+        marginBottom: "-0.27em",
+        fontSize: `max(9px, ${u(11)})`,
       }}
     />
   );
@@ -176,8 +179,8 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
       <BoardText spec={edition.eyebrow} />
       <BoardText spec={edition.name} as="h1" />
       {edition.clip ? (
-        // Hero 4's oversized statement and metadata are masked to the
-        // board's inner rect, exactly like the Figma mask group.
+        // Hero 4's oversized statement is masked to the board's inner rect,
+        // exactly like the Figma mask group.
         <div
           className="absolute inset-0"
           style={{
@@ -186,7 +189,6 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
           }}
         >
           {statement}
-          {meta}
         </div>
       ) : (
         statement
@@ -194,7 +196,7 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
       <BoardText spec={edition.subline} />
       <Portrait edition={edition} sizes="(min-width: 768px) 30vw, 1px" />
       <Rules edition={edition} />
-      {edition.clip ? null : meta}
+      {meta}
     </div>
   );
 }
