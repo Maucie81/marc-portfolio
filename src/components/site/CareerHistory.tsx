@@ -10,9 +10,11 @@ import { rv, rvGroup } from "@/lib/motion";
  * dot; then the skills set in the Figma's four lines with accent "•"
  * dividers, 70px below.
  *
- * Motion: minimal — the heading and each role fade up 4px as they scroll
- * in (roles 75ms apart when they arrive together), and the skills follow a
- * row at a time, 40ms apart, with a 3px lift.
+ * Motion: quieter than Additional work — closer to text becoming visible
+ * than entering. The heading only fades; each role fades up 3px over
+ * 500ms (100ms apart when they arrive together) once it's properly on
+ * screen. The skills fade in as one block, without moving, as soon as they
+ * cross the bottom of the screen.
  */
 export default function CareerHistory({
   roles,
@@ -26,19 +28,24 @@ export default function CareerHistory({
       <h2
         id="experience-title"
         data-reveal="view"
-        className="rv-rise text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
-        style={rv(0, { y: 4 })}
+        className="rv-fade text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
+        style={rv(0, { dur: 500, ease: "quiet" })}
       >
         Career history
       </h2>
 
       <ol
         data-reveal-group
-        style={rvGroup(75, { y: 4 })}
+        style={rvGroup(100, { y: 3, ease: "quiet" })}
         className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]"
       >
         {roles.map((role, i) => (
-          <li key={role.company} data-reveal="view" className="rv-rise flex gap-2">
+          <li
+            key={role.company}
+            data-reveal="view"
+            className="rv-rise flex gap-2"
+            style={rv(0, { dur: 500 })}
+          >
             {/* Ellipse 623 — 12px accent dot with the row number in white
                 9px; the list's own numbering carries it for assistive
                 tech. */}
@@ -59,7 +66,12 @@ export default function CareerHistory({
 
       {/* Indented 20px (the 12px dot + 8px gap) so the skills share the
           company lockups' text edge, per direct request. */}
-      <div className="mt-[70px] pl-5">
+      <div
+        data-reveal="view"
+        data-reveal-quiet
+        className="rv-fade mt-[70px] pl-5"
+        style={rv(0, { dur: 350, ease: "quiet" })}
+      >
         <h3 className="text-[16px] font-semibold leading-6 text-ink-2">
           Skills &amp; Specializations
         </h3>
@@ -69,15 +81,10 @@ export default function CareerHistory({
             after a dot, never before one — and SkillRun hides any dot
             left at a line's end. */}
         <SkillRun
-          style={rvGroup(40, { y: 3 })}
           className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal"
         >
           {skills.map((line, row) => (
-            <div
-              key={line.join()}
-              data-reveal="view"
-              className="rv-rise inline md:flex md:flex-wrap md:items-center md:gap-x-1.5"
-            >
+            <div key={line.join()} className="inline md:flex md:flex-wrap md:items-center md:gap-x-1.5">
               {line.map((skill, i) => (
                 <Fragment key={skill}>
                   {i > 0 || row > 0 ? (

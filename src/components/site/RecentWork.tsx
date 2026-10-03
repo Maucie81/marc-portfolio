@@ -1,8 +1,9 @@
+import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import CtaArrow from "@/components/site/CtaArrow";
 import type { Project } from "@/lib/home";
-import { MOTION, rv } from "@/lib/motion";
+import { rv } from "@/lib/motion";
 
 /* Panel geometry · Figma "Mockup" 215:210133 — 714 × 412, 12px corners.
    The graph paper is 23 × 15 cells (30 × 26.5 + 1px #ccc57c rules), so it's
@@ -18,14 +19,21 @@ const GRID_LINE = "#e7e1cb";
 
 /* Motion: each card plays once as it scrolls in, and the image carries it —
    a slow, hard wipe running away from the copy (left → right when the panel
-   sits on the right, right → left when it sits on the left) while the
-   device inside settles 12px the same way. The company and title only fade
-   up a few px. A right-hand panel follows its title, a left-hand one leads
-   it — the order the eye meets them. */
-const WIPE_MS = 850;
+   sits on the right, right → left when it sits on the left), its edge
+   easing in and out, while the device inside settles 12px the same way.
+   The copy barely moves: company and title, then the description and CTA,
+   fade up 4px; the skill tags fade in once the wipe has passed over them.
+   A right-hand panel follows its title, a left-hand one leads it — the
+   order the eye meets them. */
+const WIPE_MS = 900;
 const WIPE_DRIFT = 12;
 const MEDIA_LAG = 120;
 const TITLE_LAG = 200;
+const COPY = { dur: 320, y: 4, ease: "quiet" } as const;
+/** Description and CTA follow the title by this much. */
+const COPY_LAG = 90;
+/** The tags, under the panel, wait for most of the wipe. */
+const TAGS_LAG = 520;
 
 function MockupPanel({
   project,
@@ -43,7 +51,7 @@ function MockupPanel({
     <div
       className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]`}
       style={{
-        ...rv(delay, { dur: WIPE_MS }),
+        ...rv(delay, { dur: WIPE_MS, ease: "wipe" }),
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
           `linear-gradient(to right, ${GRID_LINE} 1px, transparent 1px)`,
@@ -96,10 +104,12 @@ function SkillTags({
   skills,
   align,
   overhang,
+  delay,
 }: {
   skills: string[];
   align: "start" | "end";
   overhang: boolean;
+  delay: number;
 }) {
   // The row's width at a 1px font: mono glyphs are 0.6em, and each skill
   // after the first adds its dot (~0.7em) and two 1em gaps. 4% spare.
@@ -107,10 +117,13 @@ function SkillTags({
   return (
     <ul
       aria-label="Project focus"
-      className={`hidden flex-wrap items-center gap-x-[1em] pb-1 pt-2 sm:flex sm:justify-end ${align === "start" ? "md:justify-start" : ""} ${
+      className={`rv-fade hidden flex-wrap items-center gap-x-[1em] pb-1 pt-2 sm:flex sm:justify-end ${align === "start" ? "md:justify-start" : ""} ${
         overhang ? "md:-mb-2.5" : ""
       }`}
-      style={{ fontSize: `max(8px, min(10px, ${(100 / em).toFixed(3)}cqw))` }}
+      style={{
+        ...rv(delay, { dur: COPY.dur, ease: COPY.ease }),
+        fontSize: `max(8px, min(10px, ${(100 / em).toFixed(3)}cqw))`,
+      }}
     >
       {skills.map((skill, i) => (
         <li key={skill} className="flex items-center gap-[1em]">
@@ -128,9 +141,17 @@ function SkillTags({
   );
 }
 
-function ProjectCta({ project, className }: { project: Project; className: string }) {
+function ProjectCta({
+  project,
+  className,
+  style,
+}: {
+  project: Project;
+  className: string;
+  style?: CSSProperties;
+}) {
   return project.href ? (
-    <Link href={project.href} className={`cta self-start justify-self-start ${className}`}>
+    <Link href={project.href} className={`cta self-start justify-self-start ${className}`} style={style}>
       Project Preview
       <CtaArrow />
     </Link>
@@ -157,7 +178,8 @@ function Lines({ lines }: { lines: string[] }) {
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const mediaLeft = project.media === "left";
   const titleAt = mediaLeft ? TITLE_LAG : 0;
-  const panel = <MockupPanel project={project} eager={index === 0} delay={mediaLeft ? 0 : MEDIA_LAG} />;
+  const mediaAt = mediaLeft ? 0 : MEDIA_LAG;
+  const panel = <MockupPanel project={project} eager={index === 0} delay={mediaAt} />;
 
   return (
     <article
@@ -181,7 +203,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
       >
         <div className="flex flex-col gap-1">
-          <div className="rv-rise flex flex-col gap-2" style={rv(titleAt, { dur: MOTION.standard, y: 6 })}>
+          <div className="rv-rise flex flex-col gap-2" style={rv(titleAt, COPY)}>
             <p className="text-[16px] font-medium tracking-[-0.01em] text-muted">
               {project.company}
             </p>
@@ -189,11 +211,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               {project.title}
             </h3>
           </div>
-          <p className="max-w-[375px] text-[14px] leading-[22px] text-ink-2">
+          <p className="rv-rise max-w-[375px] text-[14px] leading-[22px] text-ink-2" style={rv(titleAt + COPY_LAG, COPY)}>
             <Lines lines={project.description} />
           </p>
         </div>
-        <ProjectCta project={project} className="inline-flex mb-3 md:mb-0" />
+        <ProjectCta
+          project={project}
+          className="rv-rise inline-flex mb-3 md:mb-0"
+          style={rv(titleAt + COPY_LAG, COPY)}
+        />
       </div>
 
       {/* Panel + its metadata row. The whole panel opens the case study. */}
@@ -216,6 +242,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           skills={project.skills}
           align={mediaLeft ? "start" : "end"}
           overhang={index > 0}
+          delay={mediaAt + TAGS_LAG}
         />
       </div>
     </article>

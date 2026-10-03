@@ -1,6 +1,6 @@
 "use client";
 
-import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
+import { type ReactNode, useEffect, useRef } from "react";
 
 /**
  * The skills list's wrapper. On phones the skills flow as one run with a
@@ -9,15 +9,7 @@ import { type CSSProperties, type ReactNode, useEffect, useRef } from "react";
  * hides any dot whose next skill starts on a lower line; from md up, where
  * the designed rows never end on a dot, it leaves them all visible.
  */
-export default function SkillRun({
-  children,
-  className,
-  style,
-}: {
-  children: ReactNode;
-  className?: string;
-  style?: CSSProperties;
-}) {
+export default function SkillRun({ children, className }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -50,7 +42,7 @@ export default function SkillRun({
   }, []);
 
   return (
-    <div ref={ref} role="list" data-reveal-group style={style} className={className}>
+    <div ref={ref} role="list" className={className}>
       {children}
     </div>
   );

@@ -22,14 +22,13 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * sheet in reading order; Esc, the × or a click on the dimmed area closes
  * it.
  *
- * Motion: once, as it scrolls in, the window (the frame) is uncovered left
- * to right, then the whole sheet glides the last 40px into place inside it;
- * after that nothing moves on its own again. No tile animates by itself,
- * and scrolling works throughout (the sheet is only translated, never
- * scrolled).
+ * Motion: once, as it scrolls in, the whole sheet fades in and glides the
+ * last 36px into place inside its frame, as one piece — no mask, so it
+ * reads differently from Recent work's wipes. The frame itself never
+ * moves, no tile animates by itself, and scrolling works throughout (the
+ * sheet is only translated, never scrolled).
  */
-/** The glide starts once the frame's wipe is most of the way across. */
-const SHEET_GLIDE_AT = 260;
+const SHEET_GLIDE = { dur: 760, dx: -36 };
 
 export default function ReferenceLibrary() {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -69,7 +68,7 @@ export default function ReferenceLibrary() {
   return (
     <div data-reveal="view" className="lib-panel">
       <div
-        className="lib-window rv-wipe rv-wipe-ltr"
+        className="lib-window"
         data-at-top={edges.top || undefined}
         data-at-bottom={edges.bottom || undefined}
       >
@@ -81,9 +80,9 @@ export default function ReferenceLibrary() {
           tabIndex={0}
         >
           <ul
-            className="lib-sheet rv-drift"
+            className="lib-sheet rv-glide"
             style={{
-              ...rv(SHEET_GLIDE_AT, { dur: 650, dx: -40 }),
+              ...rv(0, SHEET_GLIDE),
               width: `calc(${SHEET_WIDTH} * var(--u))`,
               height: `calc(${SHEET_HEIGHT} * var(--u))`,
             }}

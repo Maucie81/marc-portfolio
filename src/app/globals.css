@@ -1472,19 +1472,27 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
    changes the final layout. Only transform, opacity and clip-path move. */
 :root {
   /* Durations mirror MOTION in src/lib/motion.ts. --motion-hero is the
-     hero's type (and the footer CTA): the slowest thing on the page. */
+     hero's type: the slowest thing on the page. */
   --motion-fast: 200ms;
   --motion-standard: 420ms;
   --motion-major: 700ms;
   --motion-hero: 800ms;
   --motion-stagger: 60ms;
   --motion-hero-stagger: 100ms;
+  /* The expressive moments: a long exponential settle, no overshoot. */
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Recent work's image wipes: a gentle in-out (sine), so the edge crosses
+     the panel at a nearly even pace — drawn open, not flashed open. */
+  --motion-ease-wipe: cubic-bezier(0.37, 0, 0.63, 1);
+  /* The quiet sections: a soft start, so a fade reads as text becoming
+     visible, not popping in. */
+  --motion-ease-quiet: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Per-element, never inherited: a parent's delay or duration must not leak
-   into the reveals nested inside it. (--rv-i, --rv-stagger, --rv-y and
-   --rv-dx DO inherit — a trigger or group sets them for its children.) */
+   into the reveals nested inside it. (--rv-i, --rv-stagger, --rv-y, --rv-dx
+   and --rv-ease DO inherit — a trigger or group sets them for its
+   children.) */
 @property --rv-d {
   syntax: "<time>";
   inherits: false;
@@ -1508,14 +1516,13 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 
 .rv-rise,
 .rv-fade,
-.rv-drift {
+.rv-drift,
+.rv-glide {
   --rv-dur: var(--motion-standard);
 }
 
 .rv-wipe-ltr { --rv-wipe-from: inset(0 100% 0 0); }
 .rv-wipe-rtl { --rv-wipe-from: inset(0 0 0 100%); }
-.rv-wipe-btt { --rv-wipe-from: inset(100% 0 0 0); }
-.rv-wipe-ttb { --rv-wipe-from: inset(0 0 100% 0); }
 
 /* Masked line. The mask is fixed on the page just under the last line's
    descenders (0.6em below its middle); the text starts 1.15em lower — its
@@ -1570,10 +1577,17 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   }
 }
 
+@keyframes rv-glide {
+  from {
+    opacity: 0;
+    transform: translateX(var(--rv-dx, 0px));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
-  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
     animation-duration: var(--rv-dur);
-    animation-timing-function: var(--motion-ease);
+    animation-timing-function: var(--rv-ease, var(--motion-ease));
     animation-delay: calc(var(--rv-d) + var(--rv-i, 0) * var(--rv-stagger, 0ms));
     animation-fill-mode: backwards;
   }
@@ -1584,18 +1598,19 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   html[data-motion] .rv-wipe { animation-name: rv-wipe; }
   html[data-motion] .rv-clip { animation-name: rv-clip; }
   html[data-motion] .rv-drift { animation-name: rv-drift; }
+  html[data-motion] .rv-glide { animation-name: rv-glide; }
 
   /* Waiting — paused on the first frame, i.e. hidden: the hero until its
      font and portrait are in, a view trigger until it scrolls into view. */
-  html[data-motion="hold"] [data-reveal="load"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
-  html[data-motion] [data-reveal="view"]:not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
-  html[data-motion] [data-reveal="view"]:not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+  html[data-motion="hold"] [data-reveal="load"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
+  html[data-motion] [data-reveal="view"]:not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
+  html[data-motion] [data-reveal="view"]:not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
     animation-play-state: paused;
   }
 
   /* Played (or already scrolled past): retired for good. */
-  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
-  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
+  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
     animation: none;
   }
 }

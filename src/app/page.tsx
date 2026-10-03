@@ -1,4 +1,4 @@
-import type { CSSProperties } from "react";
+import { Fragment, type CSSProperties } from "react";
 import Link from "next/link";
 import { preload } from "react-dom";
 import SectionNumber from "@/components/site/SectionNumber";
@@ -9,7 +9,7 @@ import AdditionalWork from "@/components/site/AdditionalWork";
 import ReferenceLibrary from "@/components/site/ReferenceLibrary";
 import CareerHistory from "@/components/site/CareerHistory";
 import RevealObserver from "@/components/site/motion/RevealObserver";
-import { MOTION, rv } from "@/lib/motion";
+import { rv, rvGroup } from "@/lib/motion";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -158,25 +158,34 @@ export default function Home() {
             label="Reference library"
             className="lg:mt-[calc(0.918*var(--lib-f)-18px)]"
           />
-          <div className="min-w-0">
+          {/* The title block and the gallery are separate triggers; when
+              they arrive together the gallery follows 250ms behind. */}
+          <div className="min-w-0" data-reveal-group style={rvGroup(250)}>
             {/* 247:272660 — title right-set against an accent bar, the
                 copy 30px on; the group centers on the 271.8px bar. */}
-            {/* Motion: kept quiet so the gallery (its own trigger, see
-                ReferenceLibrary) leads — the title fades up 8px, the copy
-                fades in after it. */}
+            {/* Motion: one of the page's two expressive moments, after the
+                hero — the title's three lines rise out of their masks
+                (720ms, 90ms apart), the copy simply fades in after them,
+                then the gallery's sheet glides into its frame (see
+                ReferenceLibrary). */}
             <div
               data-reveal="view"
               className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]"
             >
               <div className="flex items-center gap-[0.36em] text-[clamp(2.75rem,5.56vw,5rem)]">
-                <h2 id="library-title" className="lib-title rv-rise" style={rv(0, { dur: 600 })}>
-                  <span className="block">My personal</span>{" "}
-                  <span className="block">reference</span>{" "}
-                  <span className="block">library</span>
+                <h2 id="library-title" className="lib-title">
+                  {["My personal", "reference", "library"].map((line, i) => (
+                    <Fragment key={line}>
+                      {i > 0 ? " " : null}
+                      <span className="rv-line block" style={rv(i * 90, { dur: 720 })}>
+                        {line}
+                      </span>
+                    </Fragment>
+                  ))}
                 </h2>
                 <span aria-hidden className="lib-bar shrink-0" />
               </div>
-              <p className="lib-copy rv-fade max-w-[498px]" style={rv(180, { dur: 600 })}>
+              <p className="lib-copy rv-fade max-w-[498px]" style={rv(320, { dur: 500, ease: "quiet" })}>
                 <span className="md:block">A collection of images, objects,</span>{" "}
                 <span className="md:block">and environments that continue to</span>{" "}
                 <span className="md:block">shape my taste and influence how</span>{" "}
@@ -220,34 +229,38 @@ export default function Home() {
         {/* The footer panel sits at half the other sections' side inset
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}
-        <div className="mx-auto px-3 pb-2 pt-6 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:pt-[27px]">
-          {/* Motion: the halftone field is uncovered by a hard wipe from the
-              bottom up, then the CTA sets as a masked line — the hero's own
-              treatment, bookending the page — and the contact line fades
-              in last. */}
-          <div data-reveal="view" className="relative">
-            {/* The halftone panel behind the lockup, as before — on the ink
+        <div className="mx-auto px-3 pb-2 pt-4 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8">
+          {/* Motion: restrained — no mask, no movement. It starts as soon as
+              the panel is on screen: the halftone field fades up over 550ms
+              and the copy fades in on top of it almost at once, so the CTA is
+              readable straight away; the contact line follows. */}
+          <div data-reveal="view" data-reveal-quiet className="relative">
+            {/* The halftone runs out to the band's top, left and right
+                edges (the wrapper's own padding), ending under the lockup.
+                On the ink
                 it's colour-burned (Hero 5's dark-board treatment), since a
                 multiply sheet vanishes on a dark fill. It's turned 180°, so
                 its top-to-bottom wipe reads bottom to top. */}
             <div
               aria-hidden
-              className="rv-wipe rv-wipe-ttb pointer-events-none absolute -inset-x-3 -top-6 bottom-0 rotate-180 mix-blend-color-burn blur-[0.5px] md:-inset-x-6 lg:-inset-x-8 lg:-top-[27px]"
-              style={{ ...rv(0, { dur: 800 }), background: `url(${TEXTURE_SRC}) center / 900px auto repeat` }}
+              className="rv-fade pointer-events-none absolute -inset-x-3 -top-4 bottom-0 rotate-180 mix-blend-color-burn blur-[0.5px] md:-inset-x-6 lg:-inset-x-8"
+              style={{ ...rv(0, { dur: 550, ease: "quiet" }), background: `url(${TEXTURE_SRC}) center / 900px auto repeat` }}
             />
             {/* No section number here: the lockup starts where the other
-                sections' "0" sits, 64px in (24px rail column + 40px gap). */}
-            <div className="relative px-3 pb-[33px] pt-[9px] md:px-6 lg:pb-[35px] lg:pl-16 lg:pr-0 lg:pt-[8px]">
+                sections' "0" sits, 64px in (24px rail column + 40px gap).
+                Its padding centers it in the halftone, which also takes in
+                the wrapper's top padding above it. */}
+            <div className="relative px-3 pb-6 pt-2 md:px-6 lg:pl-16 lg:pr-0">
               <div className="min-w-0">
                 <p
                   className="rv-fade mb-5 pt-0.5 text-[16px] font-semibold leading-6 text-white"
-                  style={rv(380)}
+                  style={rv(60, { dur: 400, ease: "quiet" })}
                 >
                   We should probably chat, right?
                 </p>
                 <h2
-                  className="rv-line text-[20px] font-bold leading-[1.26] tracking-[-0.01em] text-white"
-                  style={rv(450, { dur: MOTION.major })}
+                  className="rv-fade text-[20px] font-bold leading-[1.26] tracking-[-0.01em] text-white"
+                  style={rv(60, { dur: 400, ease: "quiet" })}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
                     Get in touch →
@@ -255,7 +268,7 @@ export default function Home() {
                 </h2>
                 <p
                   className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-normal leading-6 text-white"
-                  style={rv(850)}
+                  style={rv(180, { dur: 400, ease: "quiet" })}
                 >
                     <a
                       href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}

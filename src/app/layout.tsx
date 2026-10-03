@@ -62,6 +62,11 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
   },
+  // iOS Safari otherwise turns the phone number (and anything that looks
+  // like a date, address or email) into a link before React hydrates; the
+  // HTML no longer matches, React re-creates the page, and <html> loses the
+  // data-hero / data-motion the head scripts set — no motion, always Hero 2.
+  formatDetection: { telephone: false, date: false, address: false, email: false },
 };
 
 export default function RootLayout({
