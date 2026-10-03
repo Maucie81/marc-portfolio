@@ -229,7 +229,7 @@ export default function Home() {
         {/* The footer panel sits at half the other sections' side inset
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}
-        <div className="mx-auto px-3 pb-2 pt-4 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8">
+        <div className="mx-auto px-3 pt-4 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8">
           {/* Motion: restrained — no mask, no movement. It starts as soon as
               the panel is on screen: the halftone field fades up over 550ms
               and the copy fades in on top of it almost at once, so the CTA is
@@ -305,10 +305,11 @@ export default function Home() {
               </div>
             </div>
           </div>
-          {/* Under the panel, on the plain paper, in the career dates' style
-              (14px muted): centered on phones; from sm up its right edge meets
-              the panel's. */}
-          <p className="px-3 pt-2 text-center text-[14px] leading-6 tracking-[-0.01em] text-white/70 sm:pr-0 sm:text-right md:pl-6 lg:pl-16">
+          {/* Under the panel, in the career dates' style (14px muted):
+              centered on phones; from sm up its right edge meets the
+              panel's. It spans the band edge to edge at z 39 on its own
+              ink, so the page grain (z 38) stops at the halftone panel. */}
+          <p className="relative z-[39] -mx-3 bg-[var(--ink-deep)] px-6 pb-2 pt-2 text-center text-[14px] leading-6 tracking-[-0.01em] text-white/50 sm:pr-3 sm:text-right md:-mx-6 md:pl-12 md:pr-6 lg:-mx-8 lg:pl-24 lg:pr-8">
             Built using way too many AI platforms to remember
           </p>
         </div>
