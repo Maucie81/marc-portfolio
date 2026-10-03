@@ -266,7 +266,8 @@ export const HERO_EDITIONS: HeroEdition[] = [
     },
     rules: [{ x: 360.1, y: 57.5, w: 11, h: 450, color: "#fff", z: 4 }],
     meta: { color: META_PINK, z: 5 },
-    cluster: { x: 120, y: 38, w: 496, h: 489 },
+    // x starts at "Favro" so the stacked name lines up with the copy below.
+    cluster: { x: 139, y: 38, w: 496, h: 489 },
     mobileStatementColor: "#fff",
   },
 ];

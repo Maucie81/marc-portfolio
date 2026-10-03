@@ -59,7 +59,13 @@ function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
 
 /** Platform design • Research • … — Roboto Mono 10/20 in accent with a
  * Google Sans 14px "•" between, under the panel (215:210859). Right-aligned
- * under a right-hand panel, left-aligned under a left-hand one. */
+ * to the panel's edge when stacked; side by side, right under a right-hand
+ * panel and left under a left-hand one.
+ *
+ * Kept to one line: everything is sized in em off the row's font size,
+ * which is 10px unless the row wouldn't fit the panel's width (the
+ * wrapper is a size container), then shrinks to fit — never below 8px;
+ * past that it wraps instead. Hidden on phones (< 640px). */
 function SkillTags({
   skills,
   align,
@@ -69,21 +75,25 @@ function SkillTags({
   align: "start" | "end";
   overhang: boolean;
 }) {
+  // The row's width at a 1px font: mono glyphs are 0.6em, and each skill
+  // after the first adds its dot (~0.7em) and two 1em gaps. 4% spare.
+  const em = (skills.join("").length * 0.6 + (skills.length - 1) * 2.7) * 1.04;
   return (
     <ul
       aria-label="Project focus"
-      className={`hidden flex-wrap items-center gap-x-2.5 pb-1 pt-2 md:flex ${align === "end" ? "md:justify-end" : ""} ${
+      className={`hidden flex-wrap items-center gap-x-[1em] pb-1 pt-2 sm:flex sm:justify-end ${align === "start" ? "md:justify-start" : ""} ${
         overhang ? "md:-mb-2.5" : ""
       }`}
+      style={{ fontSize: `max(8px, min(10px, ${(100 / em).toFixed(3)}cqw))` }}
     >
       {skills.map((skill, i) => (
-        <li key={skill} className="flex items-center gap-2.5">
+        <li key={skill} className="flex items-center gap-[1em]">
           {i > 0 ? (
-            <span aria-hidden className="text-[14px] leading-none text-accent">
+            <span aria-hidden className="text-[1.4em] leading-none text-accent">
               •
             </span>
           ) : null}
-          <span className="whitespace-nowrap text-[10px] leading-5 text-accent [font-family:var(--font-mono),ui-monospace,monospace]">
+          <span className="whitespace-nowrap leading-5 text-accent [font-family:var(--font-mono),ui-monospace,monospace]">
             {skill}
           </span>
         </li>
@@ -159,7 +169,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       </div>
 
       {/* Panel + its metadata row. The whole panel opens the case study. */}
-      <div className={`md:row-start-1 ${mediaLeft ? "md:col-start-1" : "md:col-start-2"}`}>
+      <div className={`[container-type:inline-size] md:row-start-1 ${mediaLeft ? "md:col-start-1" : "md:col-start-2"}`}>
         {project.href ? (
           <Link
             href={project.href}
@@ -186,7 +196,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 export default function RecentWork({ projects }: { projects: Project[] }) {
   return (
-    <div className="flex flex-col gap-20 lg:gap-[160px]">
+    <div className="flex flex-col gap-[100px] lg:gap-[200px]">
       {projects.map((project, i) => (
         <ProjectCard key={project.company + project.title} project={project} index={i} />
       ))}

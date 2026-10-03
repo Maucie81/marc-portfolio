@@ -199,8 +199,7 @@ export default function Home() {
       {/* Figma 284:301333 — paper band; the section sits on a halftone
           panel (the footer's Background layer: multiplied, turned 180°,
           softened 0.5px) that starts at the rail column, with equal paper
-          above and below it. The credit line sits inside it, right-set on
-          the links row. */}
+          above and below it. The credit line sits under it. */}
       <footer id="contact" style={bandFill("var(--bg)")}>
         {/* The footer panel sits at half the other sections' side inset
             (12px on phones, 24px to lg), with its copy padded back in line
@@ -224,8 +223,7 @@ export default function Home() {
                     Get in touch →
                   </Link>
                 </h2>
-                <div className="mt-1 flex flex-wrap items-center justify-between gap-x-6 gap-y-3 text-[16px] font-semibold leading-6 text-ink-deep">
-                  <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-ink-deep">
                     <a
                       href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
                       className="transition-opacity hover:opacity-75"
@@ -254,14 +252,16 @@ export default function Home() {
                     >
                       LinkedIn
                     </a>
-                  </p>
-                  {/* Set right, inside the panel, in the links' own style; on phones it
-                    drops below them, smaller and center-aligned. */}
-                  <p className="w-full text-center text-[14px] leading-[22px] md:w-auto md:text-left md:text-[16px] md:leading-6 lg:pr-8">Built using way too many AI platforms to remember</p>
-                </div>
+                </p>
               </div>
             </div>
           </div>
+          {/* Under the panel, on the plain paper, in the career dates' style
+              (14px muted): centered on phones; from sm up its right edge meets
+              the panel's. */}
+          <p className="px-3 pt-4 text-center text-[14px] leading-6 tracking-[-0.01em] text-muted sm:pr-0 sm:text-right md:pl-6 lg:pl-16">
+            Built using way too many AI platforms to remember
+          </p>
         </div>
       </footer>
 

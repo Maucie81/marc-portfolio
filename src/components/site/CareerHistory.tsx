@@ -48,17 +48,31 @@ export default function CareerHistory({
         <h3 className="text-[16px] font-semibold leading-6 text-ink-2">
           Skills &amp; Specializations
         </h3>
-        <div role="list" className="flex flex-col gap-1.5 pb-1 pt-2">
-          {skills.map((line) => (
-            <div key={line.join()} className="flex flex-wrap items-center gap-x-1.5">
+        {/* md+: the designed rows. Phones: one continuous run, so a skill
+            fills the line above when it fits; skills stay whole and each
+            dot is glued to the skill before it (nbsp), so lines break
+            after a dot, never before one. */}
+        <div role="list" className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal">
+          {skills.map((line, row) => (
+            <div key={line.join()} className="inline md:flex md:flex-wrap md:items-center md:gap-x-1.5">
               {line.map((skill, i) => (
                 <Fragment key={skill}>
-                  {i > 0 ? (
-                    <span aria-hidden className="w-1.5 text-center text-[14px] leading-none text-accent">
-                      •
-                    </span>
+                  {i > 0 || row > 0 ? (
+                    <>
+                      <span
+                        aria-hidden
+                        className={`text-[14px] leading-none text-accent md:w-1.5 md:text-center ${i === 0 ? "md:hidden" : ""}`}
+                      >
+                        <span className="md:hidden">{"\u00a0"}</span>•
+                      </span>{" "}
+                    </>
                   ) : null}
-                  <span role="listitem" className="text-[16px] leading-6 text-ink-2">
+                  {/* Whole skills never split, except one too long for a
+                      phone line. */}
+                  <span
+                    role="listitem"
+                    className={`text-[16px] leading-6 text-ink-2 ${skill.length > 36 ? "" : "whitespace-nowrap"}`}
+                  >
                     {skill}
                   </span>
                 </Fragment>

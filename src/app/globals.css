@@ -60,6 +60,16 @@ html:has(#home) {
   scroll-behavior: smooth;
 }
 
+/* Phones/tablets: Safari fills the strip behind its bottom toolbar with the
+   page's base colour. White read as a gap under the paper footer, so the
+   base is the footer's paper; <body> keeps its own white. (Desktop's fixed
+   white bottom band covers that edge.) */
+@media (max-width: 1023.98px) {
+  html {
+    background: var(--bg);
+  }
+}
+
 body {
   /* Positioned so .noise-overlay's inset:0 stretches to the full document
      height (the page grain sheet), not just the viewport. */
