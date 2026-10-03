@@ -8,7 +8,6 @@ import RecentWork from "@/components/site/RecentWork";
 import AdditionalWork from "@/components/site/AdditionalWork";
 import ReferenceLibrary from "@/components/site/ReferenceLibrary";
 import CareerHistory from "@/components/site/CareerHistory";
-import RevealLines from "@/components/site/motion/RevealLines";
 import RevealObserver from "@/components/site/motion/RevealObserver";
 import { MOTION, rv } from "@/lib/motion";
 import {
@@ -162,22 +161,22 @@ export default function Home() {
           <div className="min-w-0">
             {/* 247:272660 — title right-set against an accent bar, the
                 copy 30px on; the group centers on the 271.8px bar. */}
-            {/* Motion: the title sets line by line, then the copy fades
-                up; the gallery is its own trigger (ReferenceLibrary). */}
+            {/* Motion: kept quiet so the gallery (its own trigger, see
+                ReferenceLibrary) leads — the title fades up 8px, the copy
+                fades in after it. */}
             <div
               data-reveal="view"
               className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]"
             >
               <div className="flex items-center gap-[0.36em] text-[clamp(2.75rem,5.56vw,5rem)]">
-                <RevealLines
-                  as="h2"
-                  id="library-title"
-                  className="lib-title"
-                  lines={["My personal", "reference", "library"]}
-                />
+                <h2 id="library-title" className="lib-title rv-rise" style={rv(0, { dur: 600 })}>
+                  <span className="block">My personal</span>{" "}
+                  <span className="block">reference</span>{" "}
+                  <span className="block">library</span>
+                </h2>
                 <span aria-hidden className="lib-bar shrink-0" />
               </div>
-              <p className="lib-copy rv-fade max-w-[498px]" style={rv(3 * MOTION.stagger)}>
+              <p className="lib-copy rv-fade max-w-[498px]" style={rv(180, { dur: 600 })}>
                 <span className="md:block">A collection of images, objects,</span>{" "}
                 <span className="md:block">and environments that continue to</span>{" "}
                 <span className="md:block">shape my taste and influence how</span>{" "}
@@ -222,8 +221,10 @@ export default function Home() {
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}
         <div className="mx-auto px-3 py-6 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[27px]">
-          {/* Motion: the halftone field is uncovered bottom to top, then
-              the heading sets and the contact line fades up. */}
+          {/* Motion: the halftone field is uncovered by a hard wipe from the
+              bottom up, then the CTA sets as a masked line — the hero's own
+              treatment, bookending the page — and the contact line fades
+              in last. */}
           <div data-reveal="view" className="relative">
             {/* The halftone panel behind the lockup — on the ink it's
                 colour-burned (Hero 5's dark-board treatment), since a
@@ -232,21 +233,21 @@ export default function Home() {
             <div
               aria-hidden
               className="rv-wipe rv-wipe-ttb pointer-events-none absolute inset-0 rotate-180 mix-blend-color-burn blur-[0.5px]"
-              style={{ background: `url(${TEXTURE_SRC}) center / 1168px auto repeat` }}
+              style={{ ...rv(0, { dur: 800 }), background: `url(${TEXTURE_SRC}) center / 1168px auto repeat` }}
             />
             {/* No section number here: the lockup starts where the other
                 sections' "0" sits, 64px in (24px rail column + 40px gap). */}
             <div className="relative px-3 py-[21px] md:px-6 lg:pb-[22px] lg:pl-16 lg:pr-0">
               <div className="min-w-0">
                 <p
-                  className="rv-line mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-white"
-                  style={rv(260)}
+                  className="rv-fade mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-white"
+                  style={rv(380)}
                 >
                   We should probably chat, right?
                 </p>
                 <h2
                   className="rv-line text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-white"
-                  style={rv(260 + MOTION.stagger)}
+                  style={rv(450, { dur: MOTION.major })}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
                     Get in touch →
@@ -254,7 +255,7 @@ export default function Home() {
                 </h2>
                 <p
                   className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-white"
-                  style={rv(620)}
+                  style={rv(850)}
                 >
                     <a
                       href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}

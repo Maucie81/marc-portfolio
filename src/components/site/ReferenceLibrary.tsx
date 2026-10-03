@@ -22,11 +22,15 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * sheet in reading order; Esc, the × or a click on the dimmed area closes
  * it.
  *
- * Motion: once, as it scrolls in, the window is uncovered left to right and
- * the whole sheet settles 40px into place under it; then nothing moves on
- * its own again. No tile animates by itself, and scrolling works
- * throughout (the sheet is only translated, never scrolled).
+ * Motion: once, as it scrolls in, the window (the frame) is uncovered left
+ * to right, then the whole sheet glides the last 40px into place inside it;
+ * after that nothing moves on its own again. No tile animates by itself,
+ * and scrolling works throughout (the sheet is only translated, never
+ * scrolled).
  */
+/** The glide starts once the frame's wipe is most of the way across. */
+const SHEET_GLIDE_AT = 260;
+
 export default function ReferenceLibrary() {
   const closeRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState<number | null>(null);
@@ -79,7 +83,7 @@ export default function ReferenceLibrary() {
           <ul
             className="lib-sheet rv-drift"
             style={{
-              ...rv(0, { dur: 600, dx: -40 }),
+              ...rv(SHEET_GLIDE_AT, { dur: 650, dx: -40 }),
               width: `calc(${SHEET_WIDTH} * var(--u))`,
               height: `calc(${SHEET_HEIGHT} * var(--u))`,
             }}

@@ -13,14 +13,16 @@ const PANEL_W = 714;
 const PANEL_H = 412;
 const GRID_LINE = "#ccc57c";
 
-/* Motion: each card plays once as it scrolls in. The panel is uncovered by
-   a hard wipe running away from the copy (left → right when it sits on the
-   right, right → left when it sits on the left) while the device inside
-   settles 12px the same way; the company and title set as masked lines.
-   A right-hand panel follows its title, a left-hand one leads it — the
-   order the eye meets them. */
+/* Motion: each card plays once as it scrolls in, and the image carries it —
+   a slow, hard wipe running away from the copy (left → right when the panel
+   sits on the right, right → left when it sits on the left) while the
+   device inside settles 12px the same way. The company and title only fade
+   up a few px. A right-hand panel follows its title, a left-hand one leads
+   it — the order the eye meets them. */
+const WIPE_MS = 850;
 const WIPE_DRIFT = 12;
-const MEDIA_LAG = 140;
+const MEDIA_LAG = 120;
+const TITLE_LAG = 200;
 
 function MockupPanel({
   project,
@@ -38,7 +40,7 @@ function MockupPanel({
     <div
       className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[6px] bg-bg md:rounded-[12px]`}
       style={{
-        ...rv(delay),
+        ...rv(delay, { dur: WIPE_MS }),
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
           `linear-gradient(to right, ${GRID_LINE} 1px, transparent 1px)`,
@@ -64,7 +66,7 @@ function MockupPanel({
         priority={eager}
         className="rv-drift absolute block max-w-none"
         style={{
-          ...rv(delay, { dur: MOTION.major, dx: ltr ? -WIPE_DRIFT : WIPE_DRIFT }),
+          ...rv(delay, { dur: WIPE_MS, dx: ltr ? -WIPE_DRIFT : WIPE_DRIFT }),
           left: `${(box.x / PANEL_W) * 100}%`,
           top: `${(box.y / PANEL_H) * 100}%`,
           width: `${(box.w / PANEL_W) * 100}%`,
@@ -151,7 +153,7 @@ function Lines({ lines }: { lines: string[] }) {
  */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const mediaLeft = project.media === "left";
-  const titleAt = mediaLeft ? MEDIA_LAG : 0;
+  const titleAt = mediaLeft ? TITLE_LAG : 0;
   const panel = <MockupPanel project={project} eager={index === 0} delay={mediaLeft ? 0 : MEDIA_LAG} />;
 
   return (
@@ -176,17 +178,11 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
       >
         <div className="flex flex-col gap-1">
-          <div className="flex flex-col gap-2">
-            <p
-              className="rv-line text-[16px] font-medium tracking-[-0.01em] text-muted"
-              style={rv(titleAt, { dur: MOTION.standard })}
-            >
+          <div className="rv-rise flex flex-col gap-2" style={rv(titleAt, { dur: MOTION.standard, y: 6 })}>
+            <p className="text-[16px] font-medium tracking-[-0.01em] text-muted">
               {project.company}
             </p>
-            <h3
-              className="rv-line text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
-              style={rv(titleAt + MOTION.stagger, { dur: MOTION.standard })}
-            >
+            <h3 className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
               {project.title}
             </h3>
           </div>

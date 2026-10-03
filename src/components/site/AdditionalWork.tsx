@@ -19,8 +19,9 @@ function Lines({ lines }: { lines: string[] }) {
  * quieter than Recent work: a 236px intro, then (188px over) a 560px list
  * of company / title → / description lockups, 26px apart.
  *
- * Motion: each row (the intro, then every lockup) fades up 8px once as it
- * scrolls in; rows arriving together step 60ms apart.
+ * Motion: the plainest on the page — each row (the intro, then every
+ * lockup) fades up 6px once as it scrolls in; rows arriving together step
+ * 60ms apart.
  */
 export default function AdditionalWork({
   intro,
@@ -32,7 +33,7 @@ export default function AdditionalWork({
   return (
     <div
       data-reveal-group
-      style={rvGroup(MOTION.stagger)}
+      style={rvGroup(MOTION.stagger, { y: 6 })}
       className="grid gap-10 md:grid-cols-[236px_minmax(0,560px)] md:gap-x-[clamp(2.5rem,13vw,188px)]"
     >
       <div data-reveal="view" className="rv-rise flex flex-col gap-2">

@@ -4,6 +4,12 @@ import { HERO_DEFAULT } from "@/lib/hero-editions";
 /**
  * Homepage motion system — the page is typeset into place, not flown in.
  *
+ * Art-directed, not uniform: one easing family everywhere, but each band
+ * has its own pattern and weight. The masked line is the hero's signature
+ * (and the footer CTA's, as a bookend) — slowest, most deliberate. Recent
+ * work leads with its image wipes, the library with its frame and sheet;
+ * Additional work and Career only fade up a few px.
+ *
  * The animation itself is plain CSS (globals.css, "Motion system"): a few
  * reveal classes, each a keyframe that runs once and leaves nothing behind
  * (backwards fill), so the finished page is exactly the static page.
@@ -30,23 +36,30 @@ import { HERO_DEFAULT } from "@/lib/hero-editions";
  * and portrait, "play" = go.
  */
 
-/** Durations (ms) — mirrored by the --motion-* tokens in globals.css. */
+/** Durations and staggers (ms) — mirrored by the --motion-* tokens in
+ * globals.css. `hero` / `heroStagger` are the hero's type only. */
 export const MOTION = {
   fast: 200,
   standard: 420,
-  major: 620,
+  major: 700,
+  hero: 800,
   stagger: 60,
+  heroStagger: 100,
 } as const;
 
-/** The hero's opening, in ms from release — about 1.1s end to end: name,
- * portrait, statement, subline, edition metadata. */
+/** The hero's opening, in ms from release — about 1.5s end to end: name,
+ * portrait, statement (lines MOTION.heroStagger apart), subline, edition
+ * metadata. */
 export const HERO_SEQUENCE = {
   eyebrow: 0,
-  name: 60,
-  portrait: 200,
-  statement: 300,
-  subline: 620,
-  meta: 900,
+  name: 100,
+  portrait: 250,
+  portraitDur: 900,
+  statement: 400,
+  subline: 900,
+  sublineDur: 500,
+  meta: 1250,
+  metaDur: 250,
 } as const;
 
 /** Inline vars for one reveal element: its delay (ms) and any overrides. */

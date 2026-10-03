@@ -1471,11 +1471,14 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
    once it ends the element is back to its own styles — the animation never
    changes the final layout. Only transform, opacity and clip-path move. */
 :root {
-  /* Durations mirror MOTION in src/lib/motion.ts. */
+  /* Durations mirror MOTION in src/lib/motion.ts. --motion-hero is the
+     hero's type (and the footer CTA): the slowest thing on the page. */
   --motion-fast: 200ms;
   --motion-standard: 420ms;
-  --motion-major: 620ms;
+  --motion-major: 700ms;
+  --motion-hero: 800ms;
   --motion-stagger: 60ms;
+  --motion-hero-stagger: 100ms;
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -1494,7 +1497,10 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   initial-value: 420ms;
 }
 
-.rv-line,
+.rv-line {
+  --rv-dur: var(--motion-hero);
+}
+
 .rv-wipe,
 .rv-clip {
   --rv-dur: var(--motion-major);
@@ -1512,16 +1518,17 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 .rv-wipe-ttb { --rv-wipe-from: inset(0 0 100% 0); }
 
 /* Masked line. The mask is fixed on the page just under the last line's
-   descenders (0.6em below its middle); the text starts one line-box plus
-   ~1em lower, wholly under it, and rises into place. The clip-path rides
-   along with the transform, so its bottom inset grows by exactly the
-   distance the text has left to travel — the two share one easing, so the
-   mask edge holds still. Works for any number of lines (100% − 1lh is the
-   extra height of a wrapped block). */
+   descenders (0.6em below its middle); the text starts 1.15em lower — its
+   ascenders (up to ~0.45em above the middle) clear the mask by 0.1em, so
+   nothing peeks out while a line waits its turn — and rises into place.
+   The clip-path rides along with the transform, so its bottom inset grows
+   by exactly the distance the text has left to travel; the two share one
+   easing, so the mask edge holds still. Works for any number of lines
+   (100% − 1lh is the extra height of a wrapped block). */
 @keyframes rv-line {
   from {
-    transform: translateY(calc(100% - 1lh + 1.05em));
-    clip-path: inset(-1em -0.5em calc(100% - 0.5lh + 0.45em) -0.5em);
+    transform: translateY(calc(100% - 1lh + 1.15em));
+    clip-path: inset(-1em -0.5em calc(100% - 0.5lh + 0.55em) -0.5em);
   }
   to {
     clip-path: inset(-1em -0.5em calc(0.5lh - 0.6em) -0.5em);

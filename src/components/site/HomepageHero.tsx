@@ -23,9 +23,10 @@ import { HERO_SEQUENCE as SEQ, MOTION, rv } from "@/lib/motion";
  * metadata as flowing text below it.
  *
  * Motion (src/lib/motion.ts): the hero section is a data-reveal="load"
- * trigger. Eyebrow and name set as masked lines, the portrait is uncovered
- * top to bottom through its own crop, then the statement line by line, the
- * subline rises in and the edition metadata fades up last — HERO_SEQUENCE.
+ * trigger and the slowest, most deliberate reveal on the page. Eyebrow and
+ * name set as masked lines, the portrait is uncovered top to bottom through
+ * its own crop, then the statement line by line, the subline rises in and
+ * the edition metadata fades up last — HERO_SEQUENCE.
  */
 
 const BOARD_W = 1376;
@@ -56,7 +57,7 @@ function BoardText({
     <Tag
       className={`hero-text ${reveal?.kind === "rise" ? "rv-rise" : ""} ${className}`}
       style={{
-        ...(reveal?.kind === "rise" ? rv(reveal.start) : null),
+        ...(reveal?.kind === "rise" ? rv(reveal.start, { dur: SEQ.sublineDur }) : null),
         zIndex: spec.z,
         color: spec.color,
         fontSize: u(spec.size),
@@ -75,7 +76,7 @@ function BoardText({
           <span
             className={lineReveal === null ? "hero-line" : "hero-line rv-line"}
             style={{
-              ...(lineReveal === null ? null : rv(lineReveal + i * MOTION.stagger)),
+              ...(lineReveal === null ? null : rv(lineReveal + i * MOTION.heroStagger)),
               ...(line.anchor === "right"
                 ? { right: u(BOARD_W - line.x), top: u(line.y), textAlign: "right" }
                 : { left: u(line.x), top: u(line.y) }),
@@ -102,7 +103,7 @@ function Portrait({ edition, sizes }: { edition: HeroEdition; sizes: string }) {
     <div
       className="hero-portrait rv-clip"
       style={{
-        ...rv(SEQ.portrait),
+        ...rv(SEQ.portrait, { dur: SEQ.portraitDur }),
         ["--rv-clip-from" as string]: polygon([tl, tr, tr, tl]),
         zIndex: p.z,
         clipPath: polygon(p.clip),
@@ -158,7 +159,7 @@ function Meta({ edition, style, className = "" }: { edition: HeroEdition; style?
     <p
       aria-hidden
       className={`hero-meta rv-fade ${className}`}
-      style={{ ...rv(SEQ.meta, { dur: MOTION.fast }), color: edition.meta.color, ...style }}
+      style={{ ...rv(SEQ.meta, { dur: SEQ.metaDur }), color: edition.meta.color, ...style }}
     >
       {HERO_META_LINES(edition).map((line, i) => (
         <Fragment key={line}>
@@ -282,13 +283,16 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
         {HERO_STATEMENT.map((line, i) => (
           <Fragment key={line}>
             {i > 0 ? " " : null}
-            <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.stagger)}>
+            <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.heroStagger)}>
               {line}
             </span>
           </Fragment>
         ))}
       </p>
-      <p className="hero-stack-subline rv-rise" style={{ ...rv(SEQ.subline), color: edition.subline.color }}>
+      <p
+        className="hero-stack-subline rv-rise"
+        style={{ ...rv(SEQ.subline, { dur: SEQ.sublineDur }), color: edition.subline.color }}
+      >
         {edition.subline.lines.map((l) => l.text).join(" ")}
       </p>
     </div>

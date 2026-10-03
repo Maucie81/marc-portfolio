@@ -1,8 +1,7 @@
 import { Fragment } from "react";
-import RevealLines from "@/components/site/motion/RevealLines";
 import SkillRun from "@/components/site/SkillRun";
 import type { Role } from "@/lib/home";
-import { MOTION, rvGroup } from "@/lib/motion";
+import { rv, rvGroup } from "@/lib/motion";
 
 /**
  * 04 Career history + Skills & Specializations · Figma 247:272775.
@@ -11,9 +10,9 @@ import { MOTION, rvGroup } from "@/lib/motion";
  * dot; then the skills set in the Figma's four lines with accent "•"
  * dividers, 70px below.
  *
- * Motion: the heading sets as a masked line; each role fades up 8px as it
- * scrolls in (70ms apart when they arrive together), and the skills follow
- * a row at a time, 40ms apart, with only a 4px lift.
+ * Motion: minimal — the heading and each role fade up 4px as they scroll
+ * in (roles 75ms apart when they arrive together), and the skills follow a
+ * row at a time, 40ms apart, with a 3px lift.
  */
 export default function CareerHistory({
   roles,
@@ -24,18 +23,18 @@ export default function CareerHistory({
 }) {
   return (
     <>
-      <RevealLines
-        as="h2"
+      <h2
         id="experience-title"
-        className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
-        lines={["Career history"]}
-        dur={MOTION.standard}
-        trigger
-      />
+        data-reveal="view"
+        className="rv-rise text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
+        style={rv(0, { y: 4 })}
+      >
+        Career history
+      </h2>
 
       <ol
         data-reveal-group
-        style={rvGroup(70)}
+        style={rvGroup(75, { y: 4 })}
         className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]"
       >
         {roles.map((role, i) => (
@@ -70,7 +69,7 @@ export default function CareerHistory({
             after a dot, never before one — and SkillRun hides any dot
             left at a line's end. */}
         <SkillRun
-          style={rvGroup(40, { y: 4 })}
+          style={rvGroup(40, { y: 3 })}
           className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal"
         >
           {skills.map((line, row) => (
