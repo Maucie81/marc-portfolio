@@ -28,6 +28,9 @@
      (Figma 72:151655 / 72:157595). Darker than --ink, which stays the
      text color. */
   --ink-deep: #433835;
+  /* The footer credit strip — three steps under --ink-deep, same warm hue,
+     so it reads apart from the contact panel above it. */
+  --ink-deeper: #2c2523;
   --line: #b4ada4;
   --line-soft: #dcd6cc;
   --accent: #ff5841;
@@ -63,16 +66,17 @@ html:has(#home) {
 /* Phones/tablets: Safari fills the strip behind its bottom toolbar with the
    page's base colour — and iOS Safari takes it from <body>, not <html>.
    White read as a gap under the footer, so on the homepage both are the
-   footer's ink; the white gaps between bands paint their own white
-   (BandGap in page.tsx). (Desktop's fixed white bottom band covers that
-   edge.) */
+   ink of its last line, the footer credit strip; the white gaps between
+   bands paint their own white (BandGap in page.tsx). (Desktop's fixed white
+   bottom band covers that edge.) */
 @media (max-width: 1023.98px) {
   html {
     background: var(--ink-deep);
   }
 
+  html:has(#home),
   html:has(#home) body {
-    background: var(--ink-deep);
+    background: var(--ink-deeper);
   }
 }
 

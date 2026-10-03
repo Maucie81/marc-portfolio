@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import Link from "next/link";
 import SkillRun from "@/components/site/SkillRun";
 import type { Role } from "@/lib/home";
 import { rv, rvGroup } from "@/lib/motion";
@@ -7,8 +8,9 @@ import { rv, rvGroup } from "@/lib/motion";
  * 04 Career history + Skills & Specializations · Figma 247:272775.
  * Compact provenance, not a résumé: company / title / dates in 220px
  * columns (56px apart, rows 36px apart), each marked by a numbered accent
- * dot; then the skills set in the Figma's four lines with accent "•"
- * dividers, 70px below.
+ * dot, with small links to that company's case studies under it (any
+ * Recent work or Additional work entry that's live); then the skills set in
+ * the Figma's four lines with accent "•" dividers, 70px below.
  *
  * Motion: quieter than Additional work — closer to text becoming visible
  * than entering. The heading only fades; each role fades up 3px over
@@ -35,12 +37,23 @@ function InkSplotchDefs() {
   );
 }
 
+/** Any homepage project — Recent work or Additional work. */
+type Work = {
+  company: string;
+  title: string;
+  href: string | null;
+  comingSoon?: boolean;
+  careerLabel?: string;
+};
+
 export default function CareerHistory({
   roles,
   skills,
+  work,
 }: {
   roles: Role[];
   skills: string[][];
+  work: Work[];
 }) {
   return (
     <>
@@ -59,35 +72,54 @@ export default function CareerHistory({
         style={rvGroup(100, { y: 3, ease: "quiet" })}
         className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]"
       >
-        {roles.map((role, i) => (
-          <li
-            key={role.company}
-            data-reveal="view"
-            className="rv-rise flex gap-2"
-            style={rv(0, { dur: 500 })}
-          >
-            {/* Ellipse 623 — the accent dot (16px, up from the Figma's 12 so
-                the number reads), set as a printer's-ink splotch: the disc
-                alone runs through an edge-roughening filter (its own seed
-                per row, so no two match) and the number sits crisp on top.
-                The list's own numbering carries it for assistive tech. */}
-            <span
-              aria-hidden
-              className="relative mt-1 flex size-4 shrink-0 items-center justify-center text-[11px] font-semibold leading-none text-white"
+        {roles.map((role, i) => {
+          const links = work.filter((w) => w.company === role.company && w.href && !w.comingSoon);
+          return (
+            <li
+              key={role.company}
+              data-reveal="view"
+              className="rv-rise flex gap-2"
+              style={rv(0, { dur: 500 })}
             >
+              {/* Ellipse 623 — the accent dot (16px, up from the Figma's 12 so
+                  the number reads), set as a printer's-ink splotch: the disc
+                  alone runs through an edge-roughening filter (its own seed
+                  per row, so no two match) and the number sits crisp on top.
+                  The list's own numbering carries it for assistive tech. */}
               <span
-                className="absolute inset-0 rounded-full bg-accent"
-                style={{ filter: `url(#ink-splotch-${i % SPLOTCH_SEEDS.length})` }}
-              />
-              <span className="relative">{i + 1}</span>
-            </span>
-            <div className="flex flex-col gap-0.5">
-              <p className="text-[16px] font-semibold leading-6 text-ink-2">{role.company}</p>
-              <p className="text-[16px] leading-6 text-ink-2">{role.title}</p>
-              <p className="text-[14px] tracking-[-0.01em] text-muted">{role.period}</p>
-            </div>
-          </li>
-        ))}
+                aria-hidden
+                className="relative mt-1 flex size-4 shrink-0 items-center justify-center text-[11px] font-semibold leading-none text-white"
+              >
+                <span
+                  className="absolute inset-0 rounded-full bg-accent"
+                  style={{ filter: `url(#ink-splotch-${i % SPLOTCH_SEEDS.length})` }}
+                />
+                <span className="relative">{i + 1}</span>
+              </span>
+              <div className="flex flex-col gap-0.5">
+                <p className="text-[16px] font-semibold leading-6 text-ink-2">{role.company}</p>
+                <p className="text-[16px] leading-6 text-ink-2">{role.title}</p>
+                <p className="text-[14px] tracking-[-0.01em] text-muted">{role.period}</p>
+                {/* The company's case studies: plain underlined links a size
+                    under the dates, in their grey. */}
+                {links.length ? (
+                  <ul className="mt-2 flex flex-col gap-1 text-[13px] leading-5 tracking-[-0.01em] text-muted">
+                    {links.map((w) => (
+                      <li key={w.href}>
+                        <Link
+                          href={w.href!}
+                          className="underline decoration-1 underline-offset-[3px] transition-colors hover:text-ink-2"
+                        >
+                          {w.careerLabel ?? w.title}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
       </ol>
 
       {/* Indented 24px (the 16px dot + 8px gap) so the skills share the

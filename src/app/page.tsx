@@ -248,7 +248,7 @@ export default function Home() {
             <p data-reveal="open" className="t-section-title rv-rise" style={{ ...TITLE_REVEAL, marginBottom: 60 }}>
               Where I’ve been
             </p>
-            <CareerHistory roles={roles} skills={skills} />
+            <CareerHistory roles={roles} skills={skills} work={[...projects, ...additionalWork]} />
           </div>
         </section>
       </Band>
@@ -343,7 +343,7 @@ export default function Home() {
               centered on phones; from sm up its right edge meets the
               panel's. It spans the band edge to edge at z 39 on its own
               ink, so the page grain (z 38) stops at the halftone panel. */}
-          <p className="footer-credit relative z-[39] -mx-3 bg-[var(--ink-deep)] px-6 pb-0 pt-2 text-center sm:pb-2 text-[14px] leading-6 tracking-[-0.01em] text-white/50 sm:pr-3 sm:text-right md:-mx-6 md:pl-12 md:pr-6 lg:-mx-8 lg:pl-24 lg:pr-8">
+          <p className="footer-credit relative z-[39] -mx-3 bg-[var(--ink-deeper)] px-6 pb-0 pt-2 text-center sm:pb-2 text-[14px] leading-6 tracking-[-0.01em] text-white/65 sm:pr-3 sm:text-right md:-mx-6 md:pl-12 md:pr-6 lg:-mx-8 lg:pl-24 lg:pr-8">
             Built using way too many AI platforms to remember
           </p>
         </div>

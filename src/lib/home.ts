@@ -27,6 +27,9 @@ export type Project = {
   copyAlign: "start" | "center";
   /** Project-specific production metadata under the panel. */
   skills: string[];
+  /** Shorter name for its link under the company in Career history, when
+   * the title is too long for that column. */
+  careerLabel?: string;
 };
 
 export const projects: Project[] = [
@@ -62,6 +65,7 @@ export const projects: Project[] = [
       "after Headspace and Ginger merged.",
     ],
     href: "/work/headspace-admin-portal",
+    careerLabel: "Admin portal research",
     mockup: {
       src: "/headspace/admin-portal/home-mockup.webp",
       alt: "Headspace Admin Portal research on a tablet: the admin journey map, survey stats, Kano priorities by company size and the redesigned portal home",
@@ -86,6 +90,7 @@ export const projects: Project[] = [
       "to join Airbnb.",
     ],
     href: "/work/airbnb-hotels",
+    careerLabel: "Account creation",
     mockup: {
       src: "/airbnb/home-mockup.webp",
       alt: "The Airbnb hotel partner signup welcome screen with a Get started button, on a tablet",
@@ -116,6 +121,9 @@ export type SmallProject = {
   /** The coming-soon page's breadcrumb for this project, when it differs
    * from "company | title". */
   crumb?: string;
+  /** Shorter name for its link under the company in Career history, when
+   * the title is too long for that column. */
+  careerLabel?: string;
 };
 
 export const additionalWorkIntro = [
@@ -134,6 +142,7 @@ export const additionalWork: SmallProject[] = [
       "and enrollment unified into a single flow for the first time.",
     ],
     href: "/work/headspace-umd",
+    careerLabel: "Admin portal redesign",
   },
   {
     company: "Yahoo",
