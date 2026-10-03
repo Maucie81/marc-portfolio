@@ -92,10 +92,13 @@ export default function CareerHistory({
                       <span
                         aria-hidden
                         data-skill-dot
-                        className={`text-[14px] leading-none text-accent md:w-1.5 md:text-center ${i === 0 ? "md:hidden" : ""}`}
+                        className={`text-[18px] leading-none text-accent md:w-2 md:text-center ${i === 0 ? "md:hidden" : ""}`}
                       >
                         <span className="md:hidden">{"\u00a0"}</span>•
-                      </span>{" "}
+                      </span>
+                      {/* The last skill is glued to the one before it, so
+                          on phones it never sits alone on the final line. */}
+                      {row === skills.length - 1 && i === line.length - 1 ? "\u00a0" : " "}
                     </>
                   ) : null}
                   {/* Whole skills never split, except one too long for a

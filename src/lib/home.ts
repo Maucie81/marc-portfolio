@@ -176,12 +176,12 @@ export const roles: Role[] = [
   { company: "Stitch Fix", title: "User Experience Designer", period: "2015 — 2017" },
 ];
 
-/** Skills & Specializations, grouped into the Figma's four lines. */
+/** Skills & Specializations — the desktop/tablet rows (phones flow them as
+ * one run). Rebalanced into three fuller lines so no skill sits alone. */
 export const skills = [
-  ["AI-Integrated Product Design & Development", "Systems Design"],
-  ["Platform B2B", "Visual / UI Design", "Data Visualization & Analytics UX"],
-  ["Product Strategy", "Design Systems", "Information Architecture"],
-  ["Accessibility", "User Research"],
+  ["AI Product Development", "Systems Design", "Platform B2B"],
+  ["Visual / UI Design", "Data Visualization", "Product Strategy", "Design Systems"],
+  ["Information Architecture", "Accessibility", "User Research"],
 ];
 
 export const contact = {
