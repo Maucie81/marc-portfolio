@@ -148,12 +148,14 @@ export const HERO_EDITIONS: HeroEdition[] = [
       size: 91.333, lineHeight: 86.462, color: "#f84d2d", weight: 700, blend: "multiply", z: 3,
     },
     subline: { lines: block(SUBLINE_B, 833, 426.7, 27.55), size: 21.863, color: INK, weight: 600, tracking: -0.02, z: 3 },
-    eyebrow: { lines: [{ text: HERO_EYEBROW, x: 304, y: 95.7 }], size: 22.253, color: INK, weight: 600, tracking: -0.02, z: 4 },
+    eyebrow: { lines: [{ text: HERO_EYEBROW, x: 292, y: 95.7 }], size: 22.253, color: INK, weight: 600, tracking: -0.02, z: 4 },
+    // Eyebrow + name sit 12px left of the Figma so the slash clears the
+    // opening of "Marc"'s c.
     name: {
       lines: [
-        { text: HERO_NAME[0], x: 449, y: 145.7, anchor: "right" },
-        { text: HERO_NAME[1], x: 429, y: 231.7, anchor: "right" },
-        { text: HERO_NAME[2], x: 409, y: 318.7, anchor: "right" },
+        { text: HERO_NAME[0], x: 437, y: 145.7, anchor: "right" },
+        { text: HERO_NAME[1], x: 417, y: 231.7, anchor: "right" },
+        { text: HERO_NAME[2], x: 397, y: 318.7, anchor: "right" },
       ],
       size: 91.333, lineHeight: 86.462, color: INK, weight: 700, z: 4,
     },
@@ -166,7 +168,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     // Figma bounding box (337, 39.7, 155.1 × 486.6).
     rules: [{ x: 164.55, y: 272.97, w: 500, h: 20, color: "#fff", rotate: -74.23, z: 5 }],
     meta: { right: 1356.5, y: 493.9, color: META_GREY, z: 1 },
-    cluster: { x: 139, y: 30, w: 490, h: 506 },
+    cluster: { x: 127, y: 30, w: 502, h: 506 },
     mobileStatementColor: "#f84d2d",
   },
   // ---------- hero 3 · 254:273366 — flat coral, white ----------
