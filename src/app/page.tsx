@@ -257,7 +257,7 @@ export default function Home() {
                   </p>
                   {/* Set right, inside the panel, in the links' own style; on phones it
                     drops below them, smaller and center-aligned. */}
-                  <p className="w-full text-center text-[14px] leading-[22px] md:w-auto md:text-left md:text-[16px] md:leading-6 lg:pr-8">Built &amp; designed using way too many AI platforms to remember</p>
+                  <p className="w-full text-center text-[14px] leading-[22px] md:w-auto md:text-left md:text-[16px] md:leading-6 lg:pr-8">Built using way too many AI platforms to remember</p>
                 </div>
               </div>
             </div>
