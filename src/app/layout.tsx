@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
-import { DM_Sans, Roboto_Mono } from "next/font/google";
+import { Roboto_Mono } from "next/font/google";
 import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
 import NoiseOverlay from "@/components/site/NoiseOverlay";
 import ProofNotes from "@/components/proof/ProofNotes";
 import { ProofProvider } from "@/components/proof/ProofProvider";
+import { HERO_EDITION_SCRIPT } from "@/lib/hero-editions";
 import "./globals.css";
 
 // Google Sans Flex isn't in next/font/google's generated catalog yet, even
@@ -21,13 +22,6 @@ const googleSansFlex = localFont({
   src: "./fonts/google-sans-flex.woff2",
   variable: "--font-display",
   weight: "300 800",
-  display: "swap",
-});
-
-const dmSans = DM_Sans({
-  variable: "--font-body",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -75,9 +69,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // suppressHydrationWarning: HERO_EDITION_SCRIPT sets data-hero on this
+    // element before React hydrates.
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Picks the homepage hero edition before first paint — see
+            src/lib/hero-editions.ts. Runs on every route so the session's
+            edition is fixed no matter which page it starts on. */}
+        <script dangerouslySetInnerHTML={{ __html: HERO_EDITION_SCRIPT }} />
+      </head>
       <body
-        className={`${googleSansFlex.variable} ${dmSans.variable} ${robotoMono.variable} antialiased`}
+        className={`${googleSansFlex.variable} ${robotoMono.variable} antialiased`}
       >
         {/* Proof notes (Figma-style comments a visitor can pin anywhere)
             wrap everything so the CMYK lockup in PersistentHeader's rail

@@ -44,8 +44,8 @@ export default function ComingSoonPage() {
           />
           <div className="relative flex flex-col self-stretch lg:justify-center">
             <div className="flex flex-col gap-2 py-12 lg:py-0">
-              {/* 828:63126 — DM Sans Bold 16/20 */}
-              <p className="text-base font-bold leading-5 text-accent [font-family:var(--font-body),system-ui,sans-serif]">
+              {/* 828:63126 — Bold 16/20 */}
+              <p className="text-base font-bold leading-5 text-accent [font-family:var(--font-display),system-ui,sans-serif]">
                 Sorry for the delay
               </p>
               <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)] leading-none">

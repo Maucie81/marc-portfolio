@@ -23,7 +23,7 @@ export const stampLabel: CSSProperties = {
 };
 
 /**
- * Body copy in this system deliberately does NOT use the site's DM Sans —
+ * Body copy in this system deliberately does NOT use the site's sans —
  * a geometric grotesque reads as friendly/product, not press. A workhorse
  * serif is the standard editorial pairing against a heavy display
  * grotesque (masthead type over a serif deck), so body text stays a

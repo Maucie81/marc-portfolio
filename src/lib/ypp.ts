@@ -122,7 +122,6 @@ export type Block =
       bullets: Bullet[];
       caption: string;
       pullQuotes?: PullQuote[];
-      pullQuotePosition?: "top" | "middle" | "bottom";
       stats?: { value: string; label: string }[];
       /** Sets `stats` inside the media box instead of in their own column
        * beside it (Headspace's Admin survey, Figma 917:127264). Phones list
@@ -222,7 +221,7 @@ export const blocks: Block[] = [
     ],
     stat: {
       value: "41%",
-      label: "Only 41% of publishers were satisfied with their Yahoo syndication experience pre redesign.",
+      label: "Only 41% of publishers were satisfied with their Yahoo syndication experience pre-redesign.",
     },
     quote: {
       text: "The disconnect between publisher portals' massiveness and how absolutely crappy they usually are — it's just so insane to me.",
@@ -277,7 +276,6 @@ export const blocks: Block[] = [
         attribution: "Gannett",
       },
     ],
-    pullQuotePosition: "top",
   },
 
   // 4. Top Content
@@ -322,7 +320,6 @@ export const blocks: Block[] = [
         attribution: "Apartment Therapy",
       },
     ],
-    pullQuotePosition: "bottom",
   },
 
   // 5. KPI deep-dives
@@ -401,10 +398,9 @@ export const blocks: Block[] = [
       {
         quote:
           "Viewing the detailed content issue, the highlighted code responsible for the error — extremely helpful and unique compared to other partners like MSN.",
-        attribution: "DotDash Meredith",
+        attribution: "Dotdash Meredith",
       },
     ],
-    pullQuotePosition: "middle",
   },
 
   // 7. Issue Trends
@@ -476,11 +472,10 @@ export const blocks: Block[] = [
     pullQuotes: [
       {
         quote:
-          "I really like what you showed us. Almost like a product developers perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
-        attribution: "DotDash Meredith",
+          "I really like what you showed us. Almost like a product developer's perspective. That is really critical and I would even recommend other partners do that because the amount of time it takes to assess and pinpoint a problem is time consuming for multiple people in our organization.",
+        attribution: "Dotdash Meredith",
       },
     ],
-    pullQuotePosition: "top",
   },
 
   // 9. Search
@@ -525,7 +520,6 @@ export const blocks: Block[] = [
         attribution: "Gannett",
       },
     ],
-    pullQuotePosition: "middle",
   },
 
   // 10. Takedowns
@@ -565,7 +559,6 @@ export const blocks: Block[] = [
         attribution: "PMC",
       },
     ],
-    pullQuotePosition: "top",
   },
 
   // 11. User Management

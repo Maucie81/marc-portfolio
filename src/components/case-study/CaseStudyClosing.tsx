@@ -24,8 +24,8 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
     >
       <div className="flex w-full flex-col items-start gap-2">
         <p
-          className="text-[16px] font-bold leading-[20px] text-accent [font-family:var(--font-body)]"
-          style={{ fontVariationSettings: '"opsz" 14' }}
+          className="text-[16px] font-bold leading-[20px] text-accent [font-family:var(--font-display)]"
+          style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
         >
           The end
         </p>
@@ -39,7 +39,7 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
 
       <div className="flex min-h-px flex-1 flex-col items-start gap-3">
         {/* 495:49633 — 16/24 SemiBold, was 20px/normal and (like the pill
-            links below) on --font-body/DM Sans instead of Google Sans Flex. */}
+            links below) on a second sans instead of Google Sans Flex. */}
         <p
           className="text-[16px] font-semibold leading-[20px] text-ink [font-family:var(--font-display)]"
           style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}

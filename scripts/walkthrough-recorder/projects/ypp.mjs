@@ -1,6 +1,9 @@
 // Yahoo Partner Portal case study (public/ypp/videos). One function per clip;
 // each mirrors the original hand-made recording's sequence, and the timestamps
-// in comments are from that original.
+// in comments are from that original. Every clip opens on its own feature
+// screen: where the original navigated there first, that navigation is now
+// set-up (before r.start) and isn't filmed, so the clips don't all open on
+// the same Overview dashboard.
 //
 // Prototype: ~/Documents/Web Projects/ypp-prototype, served as a production
 // build on port 3101 (npm run build && npm run start -- --port 3101, or the
@@ -12,8 +15,9 @@ export const baseUrl = "http://localhost:3101";
 export const outputDir = "public/ypp/videos";
 const DIALOG = "[role=dialog]";
 
-/** Lengths of the original recordings, in seconds. */
-export const TARGET = { Overview: 49.65, TopContent: 38.97, KPIDeepDives: 33.47, FeedHealth: 73.32, IssueTrend: 13.7, StoryDetails: 35.48, Search: 33.38, Takedowns: 25.85, UserManagement: 40.57 };
+/** Lengths of the original recordings, in seconds — only for clips that still
+ * film the whole original sequence; the rest now skip its opening. */
+export const TARGET = { Overview: 49.65, FeedHealth: 73.32, IssueTrend: 13.7 };
 /** Pause multipliers that bring each clip to its original length. */
 export const STRETCH = { Search: 0.989, Overview: 1.133, TopContent: 1.061, KPIDeepDives: 1.179, IssueTrend: 1.423, StoryDetails: 1.426, FeedHealth: 1.359, Takedowns: 1.377, UserManagement: 1.177 };
 
@@ -29,13 +33,10 @@ export const clips = {
   async Search(r) {
     await r.open("/overview");
     await setRange(r, "Last 24 hours");
-    r.place({ x: 1342, y: 141 });
-    await r.wait(0.3);
-    r.start(r.outDir);
-    await r.wait(1.3);                                                  // 0.0  Overview, idle
-    await r.move({ sel: "[aria-label='Open search']" }, { dur: 0.9 });  // 1.0→1.9
-    await r.wait(0.35); await r.click();                                // 2.3  open search
+    await r.move({ sel: "[aria-label='Open search']" }, { dur: 0.05 }); await r.click(); // 2.3  open search
     await r.wait(0.9);
+    r.start(r.outDir);
+    await r.wait(1.0);
     await r.move({ text: "Recently published" }, { dur: 0.8 });        // →4.2
     await r.wait(0.9);
     await r.move({ sel: "button.px-8.py-5", nth: 1, ax: 0.55 }, { dur: 0.7 }); // hover 2nd item ~6.2
@@ -142,14 +143,10 @@ export const clips = {
 
   async TopContent(r) {
     await r.open("/overview");
-    r.place({ x: 255, y: 856 });
-    await r.wait(0.3);
+    await r.move({ text: "Content performance" }, { dur: 0.05 }); await r.click(); await r.wait(0.7); // 2.5 expand
+    await r.move({ text: "Top content", within: "aside" }, { dur: 0.05 }); await r.click();         // 4.8
+    await r.wait(1.0);
     r.start(r.outDir);
-    await r.wait(1.3);
-    await r.moveClick({ text: "Content performance" }, { dur: 0.9 });          // 2.5 expand
-    await r.wait(0.7);
-    await r.move({ text: "Top content", within: "aside" }, { dur: 0.6 }); // 4.2
-    await r.wait(0.4); await r.click();                                        // 4.8
     await r.wait(1.0);
     await r.moveClick({ text: "Last 7 days" }, { dur: 0.8 });                  // 7.0
     await r.wait(0.4);
@@ -195,15 +192,10 @@ export const clips = {
   async KPIDeepDives(r) {
     await r.open("/overview");
     await setRange(r, "Last 24 hours");
-    r.place({ x: 1157, y: 827 });
-    await r.wait(0.3);
+    await r.move({ text: "Views", exact: false, after: "Licenses" }, { dur: 0.05 }); await r.click(); // 4.5 open Views
+    await r.wait(0.8);
     r.start(r.outDir);
-    await r.wait(1.3);
-    await r.move({ text: "Last 24 hours" }, { dur: 0.8 });                     // 2.2
-    await r.wait(0.8);
-    await r.move({ text: "Views", exact: false, after: "Licenses" }, { dur: 0.7 }); // 3.8
-    await r.wait(0.5); await r.click();                                         // 4.5 open Views
-    await r.wait(0.8);
+    await r.wait(1.0);
     await r.move({ text: "Median views", exact: false }, { dur: 0.7 });        // 6.2
     await r.wait(0.4);
     await r.moveClick({ text: "Last 24 hours" }, { dur: 0.7 });                // 7.6
@@ -267,15 +259,12 @@ export const clips = {
     await r.open("/feed-health");
     await setRange(r, "Last 24 hours");
     r.place({ x: 1099, y: 382 });
-    await r.wait(0.3);
+    await r.scroll(420, { dur: 0.3 });                                          // 2.2
+    await r.scroll(560, { dur: 0.3 });                                          // 4.2 issues detected
+    await r.move({ text: "Warning", inRow: "Stale sitemap detected" }, { dur: 0.05 }); await r.click(); // 7.0 open warning
+    await r.wait(0.8);
     r.start(r.outDir);
     await r.wait(1.0);
-    await r.scroll(420, { dur: 0.9 });                                          // 2.2
-    await r.wait(0.5);
-    await r.scroll(560, { dur: 1.0 });                                          // 4.2 issues detected
-    await r.move({ text: "Warning", inRow: "Stale sitemap detected" }, { dur: 0.9 }); // 6.2
-    await r.wait(0.6); await r.click();                                         // 7.0 open warning
-    await r.wait(0.8);
     await r.moveClick({ text: "Content warning: Restricted word", within: DIALOG }, { dur: 0.7 }); // 8.7 expand
     await r.wait(0.5);
     await r.move({ text: "Our system detected a restricted word", exact: false, within: DIALOG, ax: 0.3 }, { dur: 0.8 }); // 10.2
@@ -408,21 +397,13 @@ export const clips = {
     await setRange(r, "Last 14 days");
     await r.move({ text: "Yahoo News · EN · US", after: "List of feeds" }, { dur: 0.05 }); await r.click();
     await r.until("/^\\/feed-health\\/[^/]+$/.test(location.pathname)"); await r.wait(1.2);
-    r.place({ x: 775, y: 168 });
-    await r.wait(0.3);
+    r.place({ x: 1234, y: 170 });
+    await r.scroll(750, { dur: 0.3 });                                                    // 4.2 issues
+    await r.scroll(720, { dur: 0.3 });                                                    // 8.2 recent items
+    await r.move({ sel: ".gap-6.py-5", after: "Most recent items", nth: 2, ax: 0.08 }, { dur: 0.05 }); await r.click(); // 11.0 open item
+    await r.wait(0.9);
     r.start(r.outDir);
     await r.wait(1.0);
-    await r.scroll(330, { dur: 0.9 });                                                    // 2.2 reliability
-    await r.move({ sel: "canvas", after: "Feed reliability", ax: 0.62, ay: 0.3 }, { dur: 0.6 });
-    await r.wait(0.5);
-    await r.scroll(420, { dur: 0.9 });                                                    // 4.2 issues
-    await r.move({ x: 1234, y: 170 }, { dur: 0.7 });
-    await r.scroll(420, { dur: 0.9 });                                                    // 6.2 recent items
-    await r.wait(0.4);
-    await r.scroll(300, { dur: 0.8 });                                                    // 8.2
-    await r.move({ sel: ".gap-6.py-5", after: "Most recent items", nth: 2, ax: 0.08 }, { dur: 0.9 }); // 10.2
-    await r.wait(0.6); await r.click();                                                   // 11.0 open item
-    await r.wait(0.9);
     await r.moveClick({ re: "^last \\d+ (days|hours)$", within: DIALOG }, { dur: 0.6 });
     await r.move({ text: "Last 7 days" }, { dur: 0.3 }); await r.wait(0.2); await r.click();
     await r.move({ sel: `${DIALOG} canvas`, ax: 0.18, ay: 0.25 }, { dur: 0.6 });    // 14.2
@@ -447,14 +428,11 @@ export const clips = {
 
   async UserManagement(r) {
     await r.open("/overview");
-    r.place({ x: 340, y: 360 });
-    await r.wait(0.3);
+    await r.move({ sel: "[aria-label='Expand Business settings']" }, { dur: 0.05 }); await r.click(); await r.wait(0.6); // 2.2
+    await r.move({ text: "User management" }, { dur: 0.05 }); await r.click();          // 3.6
+    await r.wait(0.9);
     r.start(r.outDir);
     await r.wait(1.0);
-    await r.moveClick({ sel: "[aria-label='Expand Business settings']" }, { dur: 0.9 }); // 2.2
-    await r.wait(0.6);
-    await r.moveClick({ text: "User management" }, { dur: 0.6 });                         // 3.6
-    await r.wait(0.9);
     await r.move({ sel: "tbody tr", nth: 2, ax: 0.45 }, { dur: 0.8 });                    // 6.2
     await r.wait(0.5);
     await r.moveClick({ text: "Taylor Labadie" }, { dur: 0.5 });                          // 7.4

@@ -41,7 +41,7 @@ export function comingSoonProject(
   );
   if (small) {
     return {
-      title: `${small.company} | ${small.title}`,
+      title: small.crumb ?? `${small.company} | ${small.title}`,
       backHref: "/#additional-work",
     };
   }

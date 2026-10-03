@@ -30,8 +30,8 @@ export default function ContactPage() {
                 field absorbs the remainder so the page never scrolls at lg. */}
             <div className="flex flex-col gap-12 pt-12 lg:min-h-0 lg:flex-1 lg:gap-[clamp(16px,calc(10.5dvh-60px),48px)] lg:pt-[clamp(24px,calc(28.6dvh-182px),111px)] lg:pb-[clamp(8px,calc(10.5dvh-68px),40px)]">
               <div className="flex max-w-[565px] flex-col gap-2">
-                {/* 828:64264 — DM Sans Bold 16/20, not the display face */}
-                <p className="text-base font-bold leading-5 text-accent [font-family:var(--font-body),system-ui,sans-serif]">
+                {/* 828:64264 — Bold 16/20 */}
+                <p className="text-base font-bold leading-5 text-accent [font-family:var(--font-display),system-ui,sans-serif]">
                   I&apos;d love to hear from you
                 </p>
                 <h1 className="display text-[clamp(2.5rem,6vw,3.75rem)] leading-none">

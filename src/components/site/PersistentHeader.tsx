@@ -40,7 +40,7 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   const activeClass = (key: typeof active) =>
     active === key ? " font-semibold" : "";
 
-  // Phones (<640px) fold Home / Contact / Resume into a menu button. Closes
+  // Phones (<640px) fold Home / Work / Contact / Resume into a menu button. Closes
   // on a link tap, Escape, or any tap outside the header.
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
@@ -112,6 +112,9 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               >
                 Home
               </Link>
+              <Link href="/#work" className="transition-colors hover:text-accent">
+                Work
+              </Link>
               <Link
                 href="/contact"
                 className={`transition-colors hover:text-accent${activeClass("contact")}`}
@@ -170,6 +173,13 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("home")}`}
               >
                 Home
+              </Link>
+              <Link
+                href="/#work"
+                onClick={closeMenu}
+                className="border-t border-line py-3 transition-colors hover:text-accent"
+              >
+                Work
               </Link>
               <Link
                 href="/contact"
@@ -285,6 +295,9 @@ function CaseStudyTopBar({
             >
               <Link href="/#hero" className="transition-colors hover:text-accent">
                 Home
+              </Link>
+              <Link href="/#work" className="transition-colors hover:text-accent">
+                Work
               </Link>
               <Link
                 href="/#contact"

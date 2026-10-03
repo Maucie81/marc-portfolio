@@ -50,7 +50,7 @@
   --color-accent: var(--accent);
 
   --font-display: var(--font-display);
-  --font-sans: var(--font-body), var(--font-alt), system-ui, sans-serif;
+  --font-sans: var(--font-display), system-ui, sans-serif;
   --font-alt: var(--font-alt), system-ui, sans-serif;
 }
 
@@ -75,7 +75,7 @@ body {
      (confirmed by sampling the rendered design screenshot directly). */
   background: #fff;
   color: var(--ink);
-  font-family: var(--font-body), var(--font-alt), system-ui, sans-serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   /* Matches every text node's explicit axis settings in the Figma file —
      the variable font's default axis values render measurably wider
@@ -83,7 +83,7 @@ body {
   font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
   /* Google Sans Flex's stylistic set 1 — the single-story "a" — everywhere,
      per direct request (Figma's "Single-story a" toggle). Only Google Sans
-     Flex carries stylistic sets; DM Sans and Roboto Mono ignore it. */
+     Flex carries stylistic sets; Roboto Mono ignores it. */
   font-feature-settings: "ss01" 1;
 }
 
@@ -202,13 +202,6 @@ paints over it. */
   }
 }
 
-/* Personal inspo only. The strip box is 42vh tall and a focused image fills
-   it top to bottom, so the standard 3rem below the title read as a gap
-   between the title and a very tall image rather than as section rhythm. */
-.t-section-title--tight {
-  margin-bottom: 0.75rem;
-}
-
 /* Desktop - Label · 177:111990. Google Sans Flex SemiBold 16/24 — same role
    used by case-study section numbers and kickers, see .cs-kicker/.cs-label
    below. Sentence case: Figma sets `capitalize` on this role (e.g. "Yahoo",
@@ -254,33 +247,6 @@ paints over it. */
   letter-spacing: 0;
 }
 
-/* Recent Work card eyebrow · the company name above each project title
-   (72:155197). Roboto Mono 12/20 like .t-meta-sm, but uppercase and tracked
-   out — and at its own #433835 rather than the --muted rung, per direct
-   request. Its own role rather than `.t-meta-sm` + utilities because
-   .t-meta-sm bakes `color: var(--muted)` in unlayered CSS, which outranks
-   any Tailwind text-* utility set alongside it. */
-.t-card-eyebrow {
-  font-family: var(--font-mono), ui-monospace, monospace;
-  font-weight: 400;
-  font-size: 0.75rem;
-  line-height: 1.25rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #433835;
-}
-
-/* Recent Work card description · the one body-copy slot that is NOT mono:
-   the card sets Google Sans Flex 16/24 (Portfolio Playground 72:155197),
-   against .t-body's Roboto Mono used everywhere else on the page. */
-.t-body-alt {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 400;
-  font-size: 1rem;
-  line-height: 1.5rem;
-  letter-spacing: 0;
-}
-
 /* Meta data · 177:112153. Color baked in (like .cs-meta, the same role) since
    every usage pairs it with --muted anyway. */
 .t-meta {
@@ -289,20 +255,6 @@ paints over it. */
   line-height: 1.25rem;
   letter-spacing: 0;
   color: var(--muted);
-}
-
-/* Meta Data Title · 499:54864 (Experience row dates: "2024 — 2026") — a
-   distinct, smaller-line-height role from .t-meta above; Figma's published
-   styles give the two different sizes even though both read as "meta". */
-.t-meta-title {
-  font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 500;
-  font-size: 0.875rem;
-  line-height: 1rem;
-  letter-spacing: 0;
-  /* Label rung (--ink-2), one step above the --muted values it titles —
-     same pairing as .cs-label / .cs-meta on the case studies. */
-  color: var(--ink-2);
 }
 
 /* Meta Data · 499:54925 (Experience Skills/Tooling list items) and 543:114278
@@ -340,28 +292,6 @@ paints over it. */
   letter-spacing: 0;
   text-transform: uppercase;
   color: var(--ink-strong);
-}
-
-/* Shared display level for work project titles (177:111991) and the interest
-   category tabs (177:112235). Use with `.display`. One definition so the two
-   can't drift apart. */
-.t-title {
-  font-size: clamp(1.5rem, 2.71vw, 2.4375rem);
-}
-
-/* Desktop - Link · 499:54561 ("Case study") — text + icon only, never a
-   pill. Sentence case, not uppercase — see .t-label. Same weight/size as
-   .t-meta-title (the "Skills"/"Tooling" labels and Experience row dates),
-   at accent instead of ink-2 — was its own larger/lighter size (16/24,
-   weight 400) before, which read as a different, heavier role than the
-   rest of the meta-label family it's meant to match. */
-.t-link {
-  font-family: var(--font-alt), system-ui, sans-serif;
-  font-weight: 500;
-  font-size: 0.875rem;
-  line-height: 1rem;
-  letter-spacing: 0;
-  color: var(--accent);
 }
 
 /* CTA buttons · Portfolio-Playground 100:209186 ("CTA"). Google Sans Flex
@@ -423,6 +353,419 @@ paints over it. */
 }
 }
 
+/* ---------- Homepage hero editions (HomepageHero.tsx) ----------
+   All six editions are in the HTML; this shows the one <html data-hero>
+   names, set before first paint by HERO_EDITION_SCRIPT (layout.tsx).
+   Edition 1 is the fallback when the attribute is missing. */
+.hero-edition {
+  display: none;
+}
+
+html:not([data-hero]) .hero-edition[data-edition="2"],
+html[data-hero="1"] .hero-edition[data-edition="1"],
+html[data-hero="2"] .hero-edition[data-edition="2"],
+html[data-hero="3"] .hero-edition[data-edition="3"],
+html[data-hero="4"] .hero-edition[data-edition="4"],
+html[data-hero="5"] .hero-edition[data-edition="5"],
+html[data-hero="6"] .hero-edition[data-edition="6"] {
+  display: block;
+}
+
+/* The query container the board measures itself against. */
+.hero-desktop {
+  container-type: inline-size;
+}
+
+/* The Figma board, 1376 × 566. --hu is one Figma px at the board's current
+   width, so every layer (position, size, type) scales together. Isolated so
+   the multiply/color-burn layers blend with the edition's own fill. */
+.hero-board {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  aspect-ratio: 1376 / 566;
+  --hu: calc(100cqw / 1376);
+}
+
+/* A full-board text layer; its lines sit at their own Figma positions. */
+.hero-text {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+/* Figma places these layers by their cap height (vertical trim), not by
+   the line box. Google Sans Flex: ascent 0.97em, descent 0.29em, caps
+   0.716em — so in a line box `lh` tall the caps start 0.5lh − 0.376em down.
+   Pulling the line up by that much puts the caps exactly on `top`. */
+.hero-line {
+  position: absolute;
+  white-space: nowrap;
+  margin-top: calc(0.376em - 0.5lh);
+}
+
+/* ED.0X / 12 · PLATE · REG — Roboto Mono Bold 12, right-aligned. Same cap
+   trim as .hero-line with Roboto Mono's metrics (normal line height 1.32,
+   caps 0.711em, ascent 1.05em, descent 0.27em). */
+.hero-meta {
+  position: absolute;
+  margin: -0.339em 0 0;
+  font-family: var(--font-mono), ui-monospace, monospace;
+  font-weight: 700;
+  line-height: 1.32;
+  letter-spacing: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.hero-portrait {
+  position: absolute;
+  inset: 0;
+}
+
+/* The halftone sheet (additional-work-texture.webp is the Figma
+   "Background" fill byte for byte), turned 180° and softened 0.5px as the
+   Figma layer is. */
+.hero-texture {
+  position: absolute;
+  background: url("/additional-work-texture.webp") center / cover no-repeat;
+  transform: rotate(180deg);
+  filter: blur(0.5px);
+}
+
+/* ----- Stacked hero, below 768px ----- */
+.hero-stack {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  container-type: inline-size;
+  padding: 2rem 1.5rem 1.5rem;
+  /* The cluster is cut from the board at --cluster-w Figma px wide; --hu
+     scales the board so that cut fills the column (capped on tablets). */
+  --hu: calc(min(100cqw, 460px) / var(--cluster-w));
+}
+
+.hero-texture-fill {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: url("/additional-work-texture.webp") center top / calc(1328 * var(--hu)) auto repeat;
+  transform: rotate(180deg);
+  filter: blur(0.5px);
+}
+
+.hero-cluster {
+  position: relative;
+  z-index: 1;
+  width: min(100%, 460px);
+  overflow: hidden;
+}
+
+.hero-stack-statement,
+.hero-stack-subline,
+.hero-stack-meta {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-stack-statement {
+  margin: 1.75rem 0 0;
+  font-size: clamp(2.25rem, 9vw, 3.75rem);
+  font-weight: 700;
+  line-height: 0.95;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.hero-stack-subline {
+  margin: 1rem 0 0;
+  max-width: 28rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+}
+
+.hero-stack-meta {
+  margin: 1.5rem 0 0;
+  font-size: 10px;
+}
+
+/* ---------- Reference library (ReferenceLibrary.tsx) ----------
+   Figma 247:268290: the title and copy are set on cap height to baseline
+   (vertical trim), so the pair centers on the visible type, not on the
+   line boxes. Same Google Sans Flex metrics as .hero-line. */
+.lib-title,
+.lib-copy {
+  margin-top: calc(0.376em - 0.5lh);
+  margin-bottom: calc(0.34em - 0.5lh);
+}
+
+/* 80/70 Bold at the 1440 frame, right-aligned in a 475px box. */
+.lib-title {
+  width: max-content;
+  min-width: 5.94em;
+  white-space: nowrap;
+  font-size: clamp(2.75rem, 5.56vw, 5rem);
+  font-weight: 700;
+  line-height: 0.875;
+  letter-spacing: 0;
+  text-align: right;
+  color: var(--ink-deep);
+}
+
+/* The 8.45 × 271.8 accent bar beside it, in the title's own em. */
+.lib-bar {
+  width: 0.106em;
+  height: 3.4em;
+  font-size: clamp(2.75rem, 5.56vw, 5rem);
+  background: var(--accent);
+}
+
+/* 27/32 Bold. */
+.lib-copy {
+  font-size: clamp(1.25rem, 1.875vw, 1.6875rem);
+  font-weight: 700;
+  line-height: 1.185;
+  letter-spacing: 0;
+  color: var(--ink-deep);
+}
+
+/* The shell: Figma "Photos" 263:280507 — #433835, 23.56px padding, 12px
+   corners, 3/4/7 shadow at 15%. It's the query container the sheet scales
+   against. No max-width: it runs to the same right edge as every other
+   section. */
+.lib-panel {
+  --lib-pad: 12px;
+  container-type: inline-size;
+  padding: var(--lib-pad);
+  border-radius: 12px;
+  background: var(--ink-deep);
+  box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 1024px) {
+  .lib-panel {
+    --lib-pad: 23.557px;
+  }
+}
+
+/* The window: 1124 × 637 in the Figma. It keeps a white frame one gutter
+   (12 sheet px) wide on the left and right; the top and bottom gutters
+   live in .lib-scroll and scroll away, so mid-scroll the photos run off the
+   edge and read as "more to scroll". --u is one Figma
+   px of the sheet: frame + 1124px sheet + frame fill the window, hence
+   1148. The inner shadow at the top and bottom edges, drawn over the
+   scrolling sheet, sells the depth. */
+.lib-window {
+  --u: calc(100cqw / 1148);
+  position: relative;
+  height: max(26rem, 100cqw * 637 / 1124);
+  padding: 0 calc(12 * var(--u));
+  background: #fff;
+}
+
+/* Edge shadows, one per edge: each shows only while there's more sheet
+   beyond it. ReferenceLibrary sets data-at-top / data-at-bottom from the
+   scroll position, so at rest on first view there's no top shadow, and at
+   the very bottom the bottom one fades out — the "you've hit the end" cue. */
+.lib-window::before,
+.lib-window::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+
+.lib-window::before {
+  box-shadow: inset 0 16px 18px -12px rgba(0, 0, 0, 0.35);
+}
+
+.lib-window::after {
+  box-shadow: inset 0 -16px 18px -12px rgba(0, 0, 0, 0.35);
+}
+
+.lib-window[data-at-top]::before,
+.lib-window[data-at-bottom]::after {
+  opacity: 0;
+}
+
+.lib-scroll {
+  height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+/* The white frame's top and bottom gutters scroll with the sheet: shown at
+   the very top and very bottom, gone once photos run under the edges. */
+.lib-scroll::before,
+.lib-scroll::after {
+  content: "";
+  display: block;
+  height: calc(12 * var(--u));
+}
+
+.lib-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.lib-scroll:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: calc(12 * var(--u) + 2px);
+  border-radius: 0;
+}
+
+/* Isolated so the tiles' Figma stacking (z 1–71) stays inside the sheet —
+   it can't climb over the fixed header and rails, and the window's inner
+   shadow still paints on top. */
+.lib-sheet {
+  position: relative;
+  isolation: isolate;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Square-cornered panels; the white between them is the window itself. */
+.lib-tile {
+  position: absolute;
+  overflow: hidden;
+  background: #fff;
+}
+
+.lib-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: zoom-in;
+}
+
+.lib-open:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+/* Click-to-enlarge viewer: a modal <dialog>, photo centered on a dark
+   wash of the shell's ink, caption and count beneath it. */
+.lib-lightbox {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overflow: hidden;
+  cursor: zoom-out;
+}
+
+.lib-lightbox[open] {
+  display: grid;
+  place-items: center;
+  animation: lib-fade 160ms ease-out;
+}
+
+.lib-lightbox::backdrop {
+  background: rgb(67 56 53 / 0.92);
+}
+
+@keyframes lib-fade {
+  from { opacity: 0; }
+}
+
+.lib-lightbox-figure {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+  cursor: default;
+}
+
+.lib-lightbox-img {
+  display: block;
+  height: auto;
+  background: #fff;
+  border: 10px solid #fff;
+  box-shadow: 3px 4px 24px rgba(0, 0, 0, 0.35);
+}
+
+.lib-lightbox-caption {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 88vw;
+}
+
+.lib-lightbox-count {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+}
+
+.lib-lightbox-btn {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.lib-lightbox-btn:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.lib-lightbox-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.lib-lightbox-close {
+  top: 16px;
+  right: 16px;
+}
+
+.lib-lightbox-prev,
+.lib-lightbox-next {
+  top: 50%;
+  translate: 0 -50%;
+}
+
+.lib-lightbox-prev {
+  left: 16px;
+}
+
+.lib-lightbox-next {
+  right: 16px;
+}
+
+@media (max-width: 767px) {
+  .lib-lightbox-prev,
+  .lib-lightbox-next {
+    top: auto;
+    bottom: 16px;
+    translate: none;
+  }
+}
+
 /* ---------- Homepage numbered sections ---------- */
 
 .sec {
@@ -443,8 +786,11 @@ paints over it. */
      copy↔image gutter (lg:gap-x-18 in page.tsx), which is what actually
      needed the room. Every numbered section shifts left by the same 48px,
      so the page keeps one content edge. */
+  /* Homepage redesign (215:205616): rail 24 · 40 gap · 64 number column,
+     so content starts 128px in (Figma x = 191–197 at 1440). The contact and
+     coming-soon pages override this with their own columns. */
   .sec {
-    grid-template-columns: 1.5rem 4.5rem 1fr;
+    grid-template-columns: 1.5rem 6.5rem 1fr;
     gap: 0;
     scroll-margin-top: 42px;
   }
@@ -514,6 +860,12 @@ paints over it. */
   transform: translateX(11.714px);
 }
 
+/* Homepage rail (SectionRail `flush`): the circle sits at x = 4 in its
+   column, as in the redesign, not on the old hero-mark line. */
+.rail-dot--flush {
+  transform: none;
+}
+
 /* Section number · 499:54321 ("03") — always full accent color, matching
    the static Figma file (no scroll-driven active/inactive state). */
 .sec-num {
@@ -567,7 +919,6 @@ paints over it. */
 .on-dark .t-label,
 .on-dark .t-body,
 .on-dark .t-body-sans,
-.on-dark .t-body-alt,
 .on-dark .t-meta-sm,
 .on-dark .t-mark,
 .on-dark .display {
@@ -585,13 +936,6 @@ paints over it. */
 .t-accent,
 .on-dark .t-accent {
   color: var(--accent);
-}
-
-/* Personal inspo sits on the coral graph-paper band, so its own accent
-   number + eyebrow would be accent-on-accent — both drop to ink there. */
-.sec-ink .sec-num,
-.sec-ink .t-section-title {
-  color: var(--ink);
 }
 
 /* ---------- Case study: horizontal track ---------- */
@@ -752,7 +1096,7 @@ paints over it. */
 
 /* Quotes/Stats · stat call-out labels and pull-quote text */
 .cs-quote {
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 600;
   font-size: 1.25rem;
   line-height: 1.5rem;
@@ -769,7 +1113,7 @@ paints over it. */
 
 /* Pull quotes outside the Context/Problem intro stack · Figma 43:3729 (one)
    / 43:3730 (two), minus that card's graph-paper backdrop (dropped per
-   direct request). Google Sans Flex SemiBold — not the DM Sans .cs-quote
+   direct request). Google Sans Flex SemiBold — not the 20px .cs-quote
    used by stat labels — stepped down from the Figma's 20/28 to 16/24, also
    per direct request. The 3px accent rule spans the quote AND its
    attribution (one bordered figure, 8px gap — see PullQuoteStack in
@@ -797,7 +1141,7 @@ paints over it. */
    sub-feature titles. Not scoped to case studies despite the prefix; kept
    here with the rest of this role set rather than duplicated. */
 .cs-sub-label {
-  font-family: var(--font-body), system-ui, sans-serif;
+  font-family: var(--font-display), system-ui, sans-serif;
   font-weight: 700;
   font-size: 1rem;
   line-height: 1.25rem;
@@ -939,7 +1283,13 @@ paints over it. */
     /* 1440px-baseline values: gap resolved from the old clamp(7rem,10vw,13rem)
        at 1440px (144px); padding-left/right resolved from the old 9vw/18vw
        at 1440px (129.6px/259.2px). */
-    gap: calc(144px * var(--cs-scale));
+    --cs-gap: calc(144px * var(--cs-scale));
+    /* Figma (Portfolio 2026, 1028:61706): every section frame leaves 400px
+       of empty space after its last element, and the next section's number
+       sits 24px inside its own frame — so 424px from the end of one section
+       to the next number, and 400px into "Thank you", which has no number. */
+    --cs-run: calc(400px * var(--cs-scale));
+    gap: var(--cs-gap);
     padding-left: calc(129.6px * var(--cs-scale));
     padding-right: calc(259.2px * var(--cs-scale));
     /* Pads out exactly the fixed chrome on each edge, so `align-items:
@@ -982,23 +1332,37 @@ paints over it. */
     margin-top: 0;
   }
 
+  /* Every block after the cover hugs its own content and carries the rest
+     of Figma's 400px run (--cs-run) itself, on top of the track's gap.
+     --cs-tail-trim takes back however far a block's last line of copy stops
+     short of its box, so the run is measured from the last word. */
+  .cs-track > .cs-block:not(.cs-block-centered):not(.cs-closing-block) {
+    margin-right: calc(var(--cs-run) - var(--cs-gap) - var(--cs-tail-trim, 0px));
+  }
+
+  /* Numbered blocks: Figma's 24px number inset, plus however far the
+     number hangs left of the block — 25px in a section (64px left of a
+     title that's itself 39px in), the full 64px in Learnings. */
+  .cs-section-block {
+    margin-left: calc(24px * var(--cs-scale, 1) + 25px);
+  }
+
+  .cs-learnings-block {
+    margin-left: calc(24px * var(--cs-scale, 1) + 64px);
+  }
+
   /* The Problem's horizontal inset — desktop only, for the same reason. */
   .cs-problem-inset {
     margin-left: calc(200px * var(--cs-scale, 1));
-    margin-right: calc(300px * var(--cs-scale, 1));
   }
 
   /* Closing section · Figma 387:66552, frame height 518px. Fixes the block's
      own height so its flex-1 middle group (see CaseStudyClosing) has real
      free space to grow into, pinning "Get in touch" to the frame's bottom
      edge exactly as in Figma — desktop-only since the vertical/mobile
-     fallback just stacks blocks in flow.
-     margin-left tops up .cs-track's own 144px block gap to 293px, matching
-     ClosingBlock's Learnings→stats column gap so the rhythm reads the same
-     going into the stats→Thank-you transition. */
+     fallback just stacks blocks in flow. */
   .cs-closing-block {
     height: calc(518px * var(--cs-scale, 1));
-    margin-left: calc(149px * var(--cs-scale, 1));
   }
 
   .cs-only-vertical {

@@ -342,8 +342,9 @@ export function BottomRule() {
 /** Width of a section's copy column: Figma's "Project Info" frame — 39px
  * left inset + 295px of text (was 19rem, i.e. 265px of text). Widened per
  * direct request so expanded points fit on shorter laptop windows; titles
- * like "KPI deep-dives" also hold one line again. Blocks add the 30px to
- * their own width so the 650px run to the next section doesn't shrink. */
+ * like "KPI deep-dives" also hold one line again. Fixed-width blocks add
+ * the 30px to their own width so their run to the next section doesn't
+ * shrink. */
 const COPY_COL = "calc(334px*var(--cs-scale,1))";
 const COPY_COL_EXTRA = 30;
 
@@ -714,7 +715,7 @@ function CaseStudyHero({
               {/* Eyebrow "2024 - 2026" (594:122068): Roboto Mono SemiBold,
                   16px/24px, uppercase, `--accent`. var(--font-mono) is this
                   exact typeface (Roboto_Mono, layout.tsx) — an earlier pass
-                  used var(--font-body) (DM Sans) at 20px, matching the
+                  used the old body sans at 20px, matching the
                   unrelated .cs-quote role instead of this node's own spec. */}
               <p
                 className="font-semibold uppercase text-accent [font-family:var(--font-mono)]"
@@ -746,7 +747,7 @@ function CaseStudyHero({
               </h1>
               {/* Paragraph (594:122070): Google Sans Flex SemiBold,
                   20px/28px, #444440 (= --ink-2 exactly). An earlier pass
-                  inherited the page's default body font (DM Sans) at
+                  inherited the page's old default body font at
                   14px/20px instead of this node's own spec — that mismatch
                   is most of why line lengths read wrong (a 14px paragraph
                   wraps far more words per line at the same 555px width
@@ -1197,15 +1198,16 @@ function ClosingBlock({
   const hasCaption = Boolean(caption);
   return (
     <div
-      className="cs-block"
+      className="cs-block cs-learnings-block"
       style={{
         ["--w" as string]:
           hasStats || hasCaption
-            ? "calc(88.3125rem * var(--cs-scale, 1))"
+            ? "calc(95rem * var(--cs-scale, 1))"
             : "calc(35rem * var(--cs-scale, 1))",
       }}
     >
-      <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(293px*var(--cs-scale,1))]">
+      {/* 400px between columns, Figma's run between sections. */}
+      <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(400px*var(--cs-scale,1))]">
         <div className="flex w-full flex-col gap-4 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
           <div className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px" /> : null}
@@ -1317,8 +1319,7 @@ export function IntroStackBlock({
   // Media beside the stack (Headspace's Problem, Figma 1002:62316): 100px
   // after the 560px column, sized to its own shape at the shared 609px
   // height, top-aligned with the heading like every section's media. The
-  // block grows by the media and that gap plus 192px, so with the inset's
-  // 300px right margin the run to the next section matches a section's.
+  // block grows by the media and that gap.
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
@@ -1329,7 +1330,7 @@ export function IntroStackBlock({
       }`}
       style={{
         ["--w" as string]: image
-          ? `calc(${38 * 16 + 100 + 192}px * var(--cs-scale, 1) + ${mediaWidth})`
+          ? `calc(${38 * 16 + 100}px * var(--cs-scale, 1) + ${mediaWidth})`
           : "calc(38rem * var(--cs-scale, 1))",
         ["--cs-media-w" as string]: mediaWidth,
       }}
@@ -1393,7 +1394,6 @@ function SectionBlock({
   bullets,
   caption,
   pullQuotes,
-  pullQuotePosition,
   stats,
   sectionNumber,
   expandedPoints,
@@ -1408,7 +1408,6 @@ function SectionBlock({
   bullets: { title: string; body: string }[];
   caption: string;
   pullQuotes?: { quote: string; attribution: string }[];
-  pullQuotePosition?: "top" | "middle" | "bottom";
   stats?: { value: string; label: string }[];
   sectionNumber?: string;
   expandedPoints?: { label: string; text: string }[];
@@ -1416,7 +1415,6 @@ function SectionBlock({
   image?: SectionImage;
   statsInMedia?: boolean;
 }) {
-  const position = pullQuotePosition ?? "bottom";
   const hasQuotes = Boolean(pullQuotes?.length);
   // Stats set inside the media box don't get their own column beside it.
   const hasStats = Boolean(stats?.length) && !statsInMedia;
@@ -1435,14 +1433,6 @@ function SectionBlock({
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
-  // How much narrower the media row is than the standard 857px box. Taken
-  // off the block width below so the empty run to the next section stays
-  // the same 650px Yahoo's sections leave, not 650px plus the difference
-  // (negative for rows wider than the standard box).
-  const narrowerBy =
-    857 -
-    (image?.aspect ? 609 * image.aspect.split("/").map(Number).reduce((w, h) => w / h) : 857) -
-    (hasStatsCard ? 760 + 100 : 0);
 
   const renderQuotes = () =>
     pullQuotes ? (
@@ -1469,9 +1459,6 @@ function SectionBlock({
       {statRows()}
     </div>
   );
-
-  const justifyClass =
-    position === "top" ? "justify-start" : position === "bottom" ? "justify-end" : "justify-center";
 
   const renderPanelArea = () =>
     hasIllustratedSteps ? (
@@ -1524,7 +1511,7 @@ function SectionBlock({
           )}
           {hasQuotes ? (
             <div
-              className={`order-2 mt-4 flex flex-col gap-10 min-[901px]:order-none min-[901px]:mt-0 min-[901px]:w-[calc(907px*var(--cs-scale,1))] min-[901px]:shrink-0 ${justifyClass}`}
+              className="order-2 mt-4 flex flex-col gap-10 min-[901px]:order-none min-[901px]:mt-0 min-[901px]:shrink-0"
             >
               {renderQuotes()}
             </div>
@@ -1533,7 +1520,7 @@ function SectionBlock({
           ) : null}
         </div>
         {/* Matches the image column's own 857px width (not the full row,
-            which also includes the 907px quotes/stats column) so the
+            which also includes the quotes/stats column) so the
             caption centers under the image itself instead of under the
             whole wider row. */}
         {caption ? (
@@ -1546,16 +1533,14 @@ function SectionBlock({
 
   return (
     <div
-      className="cs-block"
+      className="cs-block cs-section-block"
       style={{
-        // Illustrated steps (Figma 917:129573): 374px copy column, 120px
-        // lead-in, the 1196px two-column list, then trailing space trimmed
-        // by the ~31px the right column's copy stops short of its box — so
-        // the empty run to the next section is the same 650px Yahoo's
-        // sections leave, measured from the last word, per direct request.
-        ["--w" as string]: hasIllustratedSteps
-          ? "calc(139.3125rem * var(--cs-scale, 1))"
-          : `calc((${hasStats ? "133.75rem" : hasQuotes ? "121.25rem" : "108.75rem"} + ${COPY_COL_EXTRA}px) * var(--cs-scale, 1) - ${narrowerBy}px)`,
+        // Hugs its content; globals.css adds the run to the next section.
+        // Illustrated steps (Figma 917:129573): the right column's copy stops
+        // ~31px short of its box, trimmed so the run is measured from the
+        // last word, per direct request.
+        ["--w" as string]: "max-content",
+        ...(hasIllustratedSteps ? { ["--cs-tail-trim" as string]: "31px" } : {}),
         ["--cs-media-w" as string]: mediaWidth,
         ["--cs-copy-col" as string]: COPY_COL,
       }}
@@ -1599,7 +1584,7 @@ function SectionBlock({
         </div>
 
         <div
-          className={`flex w-full flex-col gap-6 ${hasIllustratedSteps ? "min-[901px]:ml-[calc(72px*var(--cs-scale,1))] min-[901px]:w-auto" : hasStats ? "min-[901px]:w-[calc(111.75rem*var(--cs-scale,1))]" : hasQuotes ? "min-[901px]:w-[calc(99.25rem*var(--cs-scale,1))]" : "min-[901px]:w-[calc(86.75rem*var(--cs-scale,1))]"}`}
+          className={`flex w-full flex-col gap-6 min-[901px]:w-auto ${hasIllustratedSteps ? "min-[901px]:ml-[calc(72px*var(--cs-scale,1))]" : ""}`}
         >
           {renderPanelArea()}
         </div>
@@ -1670,7 +1655,6 @@ function renderBlock(block: Block, i: number) {
           bullets={block.bullets}
           caption={block.caption}
           pullQuotes={block.pullQuotes}
-          pullQuotePosition={block.pullQuotePosition}
           stats={block.stats}
           sectionNumber={block.sectionNumber}
           expandedPoints={block.expandedPoints}
