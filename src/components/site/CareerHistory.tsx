@@ -16,6 +16,25 @@ import { rv, rvGroup } from "@/lib/motion";
  * screen. The skills fade in as one block, without moving, as soon as they
  * cross the bottom of the screen.
  */
+/** One edge-roughening filter per seed: fine fractal noise displaces the
+ * disc's edge by ~1.3px, like ink spreading into uncoated paper. */
+const SPLOTCH_SEEDS = [3, 11, 7, 19, 2];
+
+function InkSplotchDefs() {
+  return (
+    <svg aria-hidden width="0" height="0" className="absolute">
+      <defs>
+        {SPLOTCH_SEEDS.map((seed, i) => (
+          <filter key={seed} id={`ink-splotch-${i}`} x="-25%" y="-25%" width="150%" height="150%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed={seed} result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.6" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        ))}
+      </defs>
+    </svg>
+  );
+}
+
 export default function CareerHistory({
   roles,
   skills,
@@ -34,6 +53,7 @@ export default function CareerHistory({
         Career history
       </h2>
 
+      <InkSplotchDefs />
       <ol
         data-reveal-group
         style={rvGroup(100, { y: 3, ease: "quiet" })}
@@ -46,14 +66,20 @@ export default function CareerHistory({
             className="rv-rise flex gap-2"
             style={rv(0, { dur: 500 })}
           >
-            {/* Ellipse 623 — accent dot (16px, up from the Figma's 12 so the number reads) with the row number in white
-                9px; the list's own numbering carries it for assistive
-                tech. */}
+            {/* Ellipse 623 — the accent dot (16px, up from the Figma's 12 so
+                the number reads), set as a printer's-ink splotch: the disc
+                alone runs through an edge-roughening filter (its own seed
+                per row, so no two match) and the number sits crisp on top.
+                The list's own numbering carries it for assistive tech. */}
             <span
               aria-hidden
-              className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold leading-none text-white"
+              className="relative mt-1 flex size-4 shrink-0 items-center justify-center text-[11px] font-semibold leading-none text-white"
             >
-              {i + 1}
+              <span
+                className="absolute inset-0 rounded-full bg-accent"
+                style={{ filter: `url(#ink-splotch-${i % SPLOTCH_SEEDS.length})` }}
+              />
+              <span className="relative">{i + 1}</span>
             </span>
             <div className="flex flex-col gap-0.5">
               <p className="text-[16px] font-semibold leading-6 text-ink-2">{role.company}</p>
@@ -98,7 +124,13 @@ export default function CareerHistory({
                       </span>
                       {/* The last skill is glued to the one before it, so
                           on phones it never sits alone on the final line. */}
-                      {row === skills.length - 1 && i === line.length - 1 ? "\u00a0" : " "}
+                      {row === skills.length - 1 && i === line.length - 1 ? (
+                        // A no-break space only on phones: from md up the
+                        // row is a flex line, where it would add a gap.
+                        <span className="md:hidden">{"\u00a0"}</span>
+                      ) : (
+                        " "
+                      )}
                     </>
                   ) : null}
                   {/* Whole skills never split, except one too long for a
