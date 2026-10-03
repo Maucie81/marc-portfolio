@@ -211,14 +211,13 @@ export default function Home() {
         </section>
       </div>
 
-      <BandGap />
+      {/* No white gap here: the ink footer sits flush under 04. */}
 
       {/* ---------- 05 Contact ---------- */}
-      {/* Figma 284:301333 — paper band; the section sits on a halftone
-          panel (the footer's Background layer: multiplied, turned 180°,
-          softened 0.5px) that starts at the rail column, with equal paper
-          above and below it. The credit line sits under it. */}
-      <footer id="contact" style={bandFill("var(--bg)")}>
+      {/* Figma 297:301541 — the ink band, white type, the halftone panel
+          behind the lockup; the copy starts at the rail column's 64px edge
+          and the credit line sits under the panel. */}
+      <footer id="contact" style={bandFill("var(--ink-deep)")}>
         {/* The footer panel sits at half the other sections' side inset
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}
@@ -226,11 +225,13 @@ export default function Home() {
           {/* Motion: the halftone field is uncovered bottom to top, then
               the heading sets and the contact line fades up. */}
           <div data-reveal="view" className="relative">
-            {/* The layer is turned 180°, so its clip-path runs upside down:
-                a top-to-bottom wipe in its own frame reads bottom to top. */}
+            {/* The halftone panel behind the lockup — on the ink it's
+                colour-burned (Hero 5's dark-board treatment), since a
+                multiply sheet vanishes on a dark fill. The layer is turned
+                180°, so its top-to-bottom wipe reads bottom to top. */}
             <div
               aria-hidden
-              className="rv-wipe rv-wipe-ttb pointer-events-none absolute inset-0 rotate-180 mix-blend-multiply blur-[0.5px]"
+              className="rv-wipe rv-wipe-ttb pointer-events-none absolute inset-0 rotate-180 mix-blend-color-burn blur-[0.5px]"
               style={{ background: `url(${TEXTURE_SRC}) center / 1168px auto repeat` }}
             />
             {/* No section number here: the lockup starts where the other
@@ -238,13 +239,13 @@ export default function Home() {
             <div className="relative px-3 py-[21px] md:px-6 lg:pb-[22px] lg:pl-16 lg:pr-0">
               <div className="min-w-0">
                 <p
-                  className="rv-line mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-ink-deep"
+                  className="rv-line mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-white"
                   style={rv(260)}
                 >
                   We should probably chat, right?
                 </p>
                 <h2
-                  className="rv-line text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-ink-deep"
+                  className="rv-line text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-white"
                   style={rv(260 + MOTION.stagger)}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
@@ -252,7 +253,7 @@ export default function Home() {
                   </Link>
                 </h2>
                 <p
-                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-ink-deep"
+                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-white"
                   style={rv(620)}
                 >
                     <a
@@ -290,7 +291,7 @@ export default function Home() {
           {/* Under the panel, on the plain paper, in the career dates' style
               (14px muted): centered on phones; from sm up its right edge meets
               the panel's. */}
-          <p className="px-3 pt-4 text-center text-[14px] leading-6 tracking-[-0.01em] text-muted sm:pr-0 sm:text-right md:pl-6 lg:pl-16">
+          <p className="px-3 pt-4 text-center text-[14px] leading-6 tracking-[-0.01em] text-white/70 sm:pr-0 sm:text-right md:pl-6 lg:pl-16">
             Built using way too many AI platforms to remember
           </p>
         </div>

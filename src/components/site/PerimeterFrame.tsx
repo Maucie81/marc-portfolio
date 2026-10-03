@@ -236,7 +236,7 @@ export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint
             the address to the clipboard. */}
         <div className="pointer-events-none absolute right-16 top-1/2 -translate-y-1/2 text-right max-lg:hidden">
           <span className="t-frame-mono whitespace-nowrap normal-case">
-            2026 get a new job campaign • M.Favro / {contact.phone} /{" "}
+            2026 get a new job campaign / M.Favro / {contact.phone} /{" "}
             <CopyEmail email={contact.email} />
           </span>
         </div>

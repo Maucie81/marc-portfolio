@@ -61,12 +61,12 @@ html:has(#home) {
 }
 
 /* Phones/tablets: Safari fills the strip behind its bottom toolbar with the
-   page's base colour. White read as a gap under the paper footer, so the
-   base is the footer's paper; <body> keeps its own white. (Desktop's fixed
-   white bottom band covers that edge.) */
+   page's base colour. White read as a gap under the footer, so the base
+   is the footer's ink; <body> keeps its own white. (Desktop's fixed white
+   bottom band covers that edge.) */
 @media (max-width: 1023.98px) {
   html {
-    background: var(--bg);
+    background: var(--ink-deep);
   }
 }
 
