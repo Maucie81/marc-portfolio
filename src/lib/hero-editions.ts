@@ -16,7 +16,9 @@
  *   drawn here — a CSS shadow showed as a halo (alpha) or hard edges (box).
  * - `cluster` is the part of the board the stacked (< 1024px) layout keeps:
  *   eyebrow, name, divider and portrait. The statement, subline and edition
- *   metadata reflow as text below it there.
+ *   metadata reflow as text below it there. Its x centers the cut on what's
+ *   actually visible in it (measured pixels, portrait included), since the
+ *   stacked layout centers the cut on the column.
  */
 
 export const HERO_EYEBROW = "Hello & welcome";
@@ -93,8 +95,6 @@ export type HeroEdition = {
     nameShift?: number;
     portraitShift?: number;
     clusterH?: number;
-    /** The statement's alignment (default left). */
-    statementAlign?: "center";
   };
 };
 
@@ -177,7 +177,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     // Figma bounding box (337, 39.7, 155.1 × 486.6).
     rules: [{ x: 164.55, y: 272.97, w: 500, h: 20, color: "#fff", rotate: -74.23, z: 5 }],
     meta: { color: META_GREY, z: 1 },
-    cluster: { x: 127, y: 30, w: 502, h: 506 },
+    cluster: { x: 114.4, y: 30, w: 502, h: 506 },
     mobileStatementColor: "#f84d2d",
   },
   // ---------- hero 3 · 254:273366 — flat coral, white ----------
@@ -223,9 +223,8 @@ export const HERO_EDITIONS: HeroEdition[] = [
     },
     rules: [{ x: 370.8, y: 45.2, w: 14, h: 482, color: CORAL, z: 5 }],
     meta: { color: META_GREY, z: 1 },
-    cluster: { x: 69, y: 35, w: 594, h: 502 },
+    cluster: { x: 39.1, y: 35, w: 594, h: 502 },
     mobileStatementColor: INK,
-    stack: { statementAlign: "center" },
   },
   // ---------- Hero 5 · 254:273459 — ink, color-burn halftone ----------
   {
@@ -245,7 +244,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     },
     rules: [{ x: 359.8, y: 76.8, w: 11, h: 405, color: CORAL, z: 4 }],
     meta: { color: "#b19790", z: 5 },
-    cluster: { x: 120, y: 57, w: 496, h: 445 },
+    cluster: { x: 98.6, y: 57, w: 496, h: 445 },
     mobileStatementColor: CORAL,
   },
   // ---------- Hero 6 · 254:273498 — coral, multiply halftone ----------
@@ -266,8 +265,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     },
     rules: [{ x: 360.1, y: 57.5, w: 11, h: 450, color: "#fff", z: 4 }],
     meta: { color: META_PINK, z: 5 },
-    // x starts at "Favro" so the stacked name lines up with the copy below.
-    cluster: { x: 139, y: 38, w: 496, h: 489 },
+    cluster: { x: 98.8, y: 38, w: 496, h: 489 },
     mobileStatementColor: "#fff",
   },
 ];

@@ -266,7 +266,7 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
         <div aria-hidden className="hero-texture-fill" style={{ mixBlendMode: edition.texture.blend }} />
       ) : null}
       {/* Cluster, statement and subline as one lockup, centered as a whole
-          (see .hero-lockup) — inside it they keep their shared left edge. */}
+          (see .hero-lockup), each part centered inside it. */}
       <div className="hero-lockup">
         <div className="hero-cluster" style={{ aspectRatio: `${c.w} / ${c.h}` }}>
           <div
@@ -281,7 +281,7 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
         </div>
         <p
           className="hero-stack-statement"
-          style={{ color: edition.mobileStatementColor, textAlign: edition.stack?.statementAlign }}
+          style={{ color: edition.mobileStatementColor }}
         >
           {/* Desktop's own four lines, never re-wrapped (see the CSS). */}
           {HERO_STATEMENT.map((line, i) => (
