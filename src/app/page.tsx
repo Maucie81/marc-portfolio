@@ -240,13 +240,13 @@ export default function Home() {
             <div className="relative px-3 pb-[33px] pt-[9px] md:px-6 lg:pb-[35px] lg:pl-16 lg:pr-0 lg:pt-[8px]">
               <div className="min-w-0">
                 <p
-                  className="rv-fade mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-white"
+                  className="rv-fade mb-5 pt-0.5 text-[16px] font-semibold leading-6 text-white"
                   style={rv(380)}
                 >
                   We should probably chat, right?
                 </p>
                 <h2
-                  className="rv-line text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-white"
+                  className="rv-line text-[20px] font-bold leading-[1.26] tracking-[-0.01em] text-white"
                   style={rv(450, { dur: MOTION.major })}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
@@ -254,7 +254,7 @@ export default function Home() {
                   </Link>
                 </h2>
                 <p
-                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-white"
+                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-normal leading-6 text-white"
                   style={rv(850)}
                 >
                     <a
