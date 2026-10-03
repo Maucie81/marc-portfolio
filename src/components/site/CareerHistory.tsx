@@ -46,12 +46,12 @@ export default function CareerHistory({
             className="rv-rise flex gap-2"
             style={rv(0, { dur: 500 })}
           >
-            {/* Ellipse 623 — 12px accent dot with the row number in white
+            {/* Ellipse 623 — accent dot (16px, up from the Figma's 12 so the number reads) with the row number in white
                 9px; the list's own numbering carries it for assistive
                 tech. */}
             <span
               aria-hidden
-              className="mt-[6px] flex size-3 shrink-0 items-center justify-center rounded-full bg-accent text-[9px] leading-none text-white"
+              className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold leading-none text-white"
             >
               {i + 1}
             </span>
@@ -64,12 +64,12 @@ export default function CareerHistory({
         ))}
       </ol>
 
-      {/* Indented 20px (the 12px dot + 8px gap) so the skills share the
+      {/* Indented 24px (the 16px dot + 8px gap) so the skills share the
           company lockups' text edge, per direct request. */}
       <div
         data-reveal="view"
         data-reveal-quiet
-        className="rv-fade mt-[70px] pl-5"
+        className="rv-fade mt-[70px] pl-6"
         style={rv(0, { dur: 350, ease: "quiet" })}
       >
         <h3 className="text-[16px] font-semibold leading-6 text-ink-2">
