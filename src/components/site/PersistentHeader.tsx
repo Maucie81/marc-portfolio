@@ -9,6 +9,7 @@ import {
   BottomBand,
   LeftRail,
   RightRail,
+  SHEET,
   TopBandChrome,
 } from "@/components/site/PerimeterFrame";
 import { contact } from "@/lib/home";
@@ -92,10 +93,12 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 stays glued to "Marc Favro" via the existing gap-3 rather
                 than tearing away from it. The name is Google Sans Flex
                 SemiBold 16, sentence case, per direct request (it was
-                Roboto Mono uppercase, like the nav links still are). */}
+                Roboto Mono uppercase, like the nav links still are).
+                Desktop (lg+): the name alone is set a touch smaller (15)
+                and 2px nearer the dot (gap 10) — the dot stays put. */}
             <Link
               href="/"
-              className="ml-[0px] flex items-center gap-3 text-[16px] font-semibold leading-[20px] tracking-[-0.01em] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
+              className="ml-[0px] flex items-center gap-3 text-[16px] lg:gap-2.5 lg:text-[15px] font-semibold leading-[20px] tracking-[-0.01em] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
             >
               <span
                 aria-hidden
@@ -197,14 +200,14 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               </a>
             </nav>
           </div>
-          <div className="pointer-events-none absolute inset-0 hidden lg:block">
+          <div className={`pointer-events-none absolute inset-0 hidden lg:block ${SHEET}`}>
             <TopBandChrome />
           </div>
         </div>
       </header>
-      <BottomBand />
-      <LeftRail />
-      <RightRail />
+      <BottomBand capped />
+      <LeftRail capped />
+      <RightRail capped />
     </>
   );
 }
@@ -310,14 +313,16 @@ function CaseStudyTopBar({
               </a>
             </nav>
           </div>
-          <div className="pointer-events-none absolute inset-0 hidden min-[901px]:block">
+          <div
+            className={`pointer-events-none absolute inset-0 hidden min-[901px]:block ${capped ? SHEET : ""}`}
+          >
             <TopBandChrome />
           </div>
         </div>
       </header>
-      <BottomBand breakpoint="cs" />
-      <LeftRail breakpoint="cs" />
-      <RightRail breakpoint="cs" />
+      <BottomBand breakpoint="cs" capped={capped} />
+      <LeftRail breakpoint="cs" capped={capped} />
+      <RightRail breakpoint="cs" capped={capped} />
     </>
   );
 }

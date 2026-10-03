@@ -69,6 +69,8 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false, date: false, address: false, email: false },
 };
 
+const CHROME_MOBILE_SCRIPT = `if(/CriOS\\/|Android.+Chrome\\/.+Mobile/.test(navigator.userAgent))document.documentElement.dataset.browser="chrome-mobile"`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -86,6 +88,10 @@ export default function RootLayout({
         {/* Turns the homepage motion on (or leaves the page static) before
             first paint — see src/lib/motion.ts. */}
         <script dangerouslySetInnerHTML={{ __html: MOTION_SCRIPT }} />
+        {/* Flags Chrome on phones (iOS CriOS or Android), which docks its
+            address bar along the bottom edge — see .footer-credit in
+            globals.css. */}
+        <script dangerouslySetInnerHTML={{ __html: CHROME_MOBILE_SCRIPT }} />
       </head>
       <body
         className={`${googleSansFlex.variable} ${robotoMono.variable} antialiased`}

@@ -76,6 +76,15 @@ html:has(#home) {
   }
 }
 
+/* Chrome on phones docks its address bar right under the page's last line,
+   the footer credit (page.tsx) — 8px of air there. Safari's toolbar already
+   clears it, so it stays as is. data-browser is set before first paint
+   (layout.tsx), so nothing moves once the page is up. From sm up the credit
+   already has this padding. */
+html[data-browser="chrome-mobile"] .footer-credit {
+  padding-bottom: 0.5rem;
+}
+
 body {
   /* Positioned so .noise-overlay's inset:0 stretches to the full document
      height (the page grain sheet), not just the viewport. */
@@ -483,10 +492,23 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   filter: blur(0.5px);
 }
 
+/* The cluster, statement and subline as one block: as wide as its widest
+   part and centered in the column, so it doesn't sit pinned to the left
+   once the column outgrows it. */
+.hero-lockup {
+  position: relative;
+  z-index: 1;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
+/* 100cqw is the column (the .hero-stack container), same as before the
+   lockup wrapped it — the cut keeps the size --hu is scaled for. */
 .hero-cluster {
   position: relative;
   z-index: 1;
-  width: min(100%, 460px);
+  width: min(100cqw, 460px);
   overflow: hidden;
 }
 

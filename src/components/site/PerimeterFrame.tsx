@@ -32,6 +32,13 @@ const SHOW: Record<FrameBreakpoint, { flex: string; block: string }> = {
   cs: { flex: "hidden min-[901px]:flex", block: "hidden min-[901px]:block" },
 };
 
+/** The 1440px sheet the marks register to on capped pages (homepage,
+ * contact, coming-soon), whose content stops at the 1376px column: centered,
+ * so past 1440 only the white outside it grows and the marks stay put on the
+ * sheet's edge. Case studies leave it off — their horizontal track runs the
+ * full viewport, so their marks stay on the viewport edge. */
+export const SHEET = "mx-auto max-w-[1440px]";
+
 // The C/M/Y/K strip itself now lives in ProofTrigger (it became the
 // button that opens proof notes) — same hex + 5-step opacity ramp.
 
@@ -106,13 +113,10 @@ export function DoubleLineIcon({ className = "" }: { className?: string }) {
  * centered in 32px sits at (32-12)/2=10px from the edge, true center at
  * x=16 — the rail's own midpoint), not just flush with an arbitrary
  * edge offset.
- * left-[10px]/right-[10px]: briefly frozen at the 1440px design width to
- * match the hero section, then reverted per direct correction — the
- * white rails stay a fixed 32px wide forever (never capped, never
- * growing), and the grey content area keeps growing with the viewport
- * indefinitely instead of freezing. With content never frozen, these
- * icons are correctly plain viewport-edge-relative again: the rail (and
- * everything in it) never moves regardless of viewport width. */
+ * left-[10px]/right-[10px] are measured from the band's ornament box: the
+ * centered 1440px SHEET on capped pages (so past 1440 they stay on the
+ * sheet's rails instead of drifting to the viewport edge), the viewport on
+ * case studies. */
 function BandOrnaments() {
   return (
     <>
@@ -127,12 +131,8 @@ function BandOrnaments() {
 }
 
 /** Divider-tick pair flanking each crosshair — marks where the CONTENT
- * COLUMN begins (rail width, 32px). Briefly frozen against the content
- * column's own width so it wouldn't drift on wide screens — reverted per
- * direct correction: the content column no longer freezes at all (it
- * grows with the viewport indefinitely; only the 32px rails are fixed),
- * so the content edge is always exactly 32px from the viewport edge and
- * a plain fixed value is correct again, with zero drift risk.
+ * COLUMN begins (rail width, 32px in from the ornament box — the 1440px
+ * SHEET on capped pages, whose content column starts exactly there).
  * The 32px itself is a true, single, mirrored value — not two guessed
  * numbers: measured each tick's distance from its own crosshair's edge
  * (not from any frame-width figure, which was inconsistent across pulls),
@@ -144,8 +144,7 @@ function BandOrnaments() {
  * clean 10; corrected to x=1408 so both distances equal 10 exactly.
  * That confirmed 10px gap, applied to this component's own crosshair
  * (edge at 22), lands the tick at 22+10=32 on both sides — which is also
- * exactly the rail width, so the mark sits flush with the content edge
- * at any viewport width. */
+ * exactly the rail width, so the mark sits flush with the content edge. */
 function BandTicks() {
   return (
     <>
@@ -184,10 +183,8 @@ function BandTicks() {
  * rendered height is exactly 42px) — per direct user correction, the
  * mark should sit right at that boundary, not floated further down with
  * a gap.
- * left-2/right-2 (8px): briefly frozen at the 1440px design width, then
- * reverted per direct correction — content no longer freezes at all, so
- * plain viewport-edge-relative is correct again (the rail these marks
- * sit in front of never moves). */
+ * left-2/right-2 (8px) are from the ornament box's edge — the 1440px
+ * SHEET on capped pages, so they stay over the rail they mark. */
 export function TopBandChrome() {
   return (
     <>
@@ -212,10 +209,16 @@ export function TopBandChrome() {
  * overlay with the crosshair hidden, then shown, and comparing.
  * Campaign badge anchored here (Figma: 627:51854, sits just left of the
  * bottom-right divider/crosshair) instead of floating mid-page. */
-export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
+export function BottomBand({
+  breakpoint = "lg",
+  capped = false,
+}: {
+  breakpoint?: FrameBreakpoint;
+  capped?: boolean;
+}) {
   return (
-    <div className={`fixed inset-x-0 bottom-0 z-50 ${SHOW[breakpoint].block}`}>
-      <div className="relative h-8 bg-white">
+    <div className={`fixed inset-x-0 bottom-0 z-50 bg-white ${SHOW[breakpoint].block}`}>
+      <div className={`relative h-8 ${capped ? SHEET : ""}`}>
         <BandOrnaments />
         <BandTicks />
         <DoubleLineIcon className="-top-3 left-2" />
@@ -224,10 +227,8 @@ export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint
             border/bg on 627:51854), anchored left of the right crosshair.
             Single line per Figma node 752:48622 — "2026 get a new job
             campaign • M.Favro / ... " joined with a bullet, not stacked.
-            right-16 (64px): briefly frozen at the 1440px design width,
-            then reverted per direct correction — plain viewport-edge-
-            relative, since content no longer freezes and this badge sits
-            in the never-moving 32px rail's band.
+            right-16 (64px) from the band's ornament box — the 1440px
+            SHEET on capped pages, so it stays on the content edge.
             max-lg:hidden: only reachable on the "cs" breakpoint (case
             studies draw the band from 901px), where between 901–1023px the
             ~390px badge would run into the band's center crosshair.
@@ -253,9 +254,15 @@ export function BottomBand({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint
  * i.e. 44px above the viewport bottom — so the strip's bottom needs
  * 44+32=76px clearance from the viewport bottom), not vertically centered.
  * The strip is ProofTrigger: clicking it opens the visitor's proof notes. */
-export function LeftRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
+export function LeftRail({
+  breakpoint = "lg",
+  capped = false,
+}: {
+  breakpoint?: FrameBreakpoint;
+  capped?: boolean;
+}) {
   return (
-    <div className={`fixed inset-y-0 left-0 z-40 w-8 bg-white ${SHOW[breakpoint].flex}`}>
+    <RailSheet breakpoint={breakpoint} capped={capped} side="left-0">
       <img
         src="/icons/center-mark.svg"
         alt=""
@@ -265,15 +272,21 @@ export function LeftRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }
         className="pointer-events-none absolute left-1/2 top-1/2 block size-3 -translate-x-1/2 -translate-y-1/2"
       />
       <ProofTrigger variant="rail" />
-    </div>
+    </RailSheet>
   );
 }
 
 /** Right rail — 32px wide, full viewport height, white. Mirrors the left
  * rail's frame treatment; no CMYK content (that's left-margin only). */
-export function RightRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint }) {
+export function RightRail({
+  breakpoint = "lg",
+  capped = false,
+}: {
+  breakpoint?: FrameBreakpoint;
+  capped?: boolean;
+}) {
   return (
-    <div className={`fixed inset-y-0 right-0 z-40 w-8 bg-white ${SHOW[breakpoint].flex}`}>
+    <RailSheet breakpoint={breakpoint} capped={capped} side="right-0">
       <img
         src="/icons/center-mark.svg"
         alt=""
@@ -282,6 +295,27 @@ export function RightRail({ breakpoint = "lg" }: { breakpoint?: FrameBreakpoint 
         height={12}
         className="pointer-events-none absolute left-1/2 top-1/2 block size-3 -translate-x-1/2 -translate-y-1/2"
       />
+    </RailSheet>
+  );
+}
+
+/** A rail on one edge of the full-height sheet (or of the viewport, when
+ * not capped). The sheet itself lets clicks through; only the 32px rail
+ * takes them, as the rail always has. */
+function RailSheet({
+  breakpoint,
+  capped,
+  side,
+  children,
+}: {
+  breakpoint: FrameBreakpoint;
+  capped: boolean;
+  side: "left-0" | "right-0";
+  children: React.ReactNode;
+}) {
+  return (
+    <div className={`pointer-events-none fixed inset-0 z-40 ${capped ? SHEET : ""} ${SHOW[breakpoint].block}`}>
+      <div className={`pointer-events-auto absolute inset-y-0 ${side} w-8 bg-white`}>{children}</div>
     </div>
   );
 }

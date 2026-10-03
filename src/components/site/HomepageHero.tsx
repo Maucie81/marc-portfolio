@@ -265,37 +265,41 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
       {edition.texture ? (
         <div aria-hidden className="hero-texture-fill" style={{ mixBlendMode: edition.texture.blend }} />
       ) : null}
-      <div className="hero-cluster" style={{ aspectRatio: `${c.w} / ${c.h}` }}>
-        <div
-          className="absolute"
-          style={{ left: u(-c.x), top: u(-c.y), width: u(BOARD_W), height: u(566) }}
-        >
-          <BoardText spec={edition.eyebrow} reveal={{ kind: "line", start: SEQ.eyebrow }} />
-          <BoardText spec={edition.name} as="h1" reveal={{ kind: "line", start: SEQ.name }} />
-          <Portrait edition={edition} sizes="(max-width: 767px) 70vw, 1px" />
-          <Rules edition={edition} />
+      {/* Cluster, statement and subline as one lockup, centered as a whole
+          (see .hero-lockup) — inside it they keep their shared left edge. */}
+      <div className="hero-lockup">
+        <div className="hero-cluster" style={{ aspectRatio: `${c.w} / ${c.h}` }}>
+          <div
+            className="absolute"
+            style={{ left: u(-c.x), top: u(-c.y), width: u(BOARD_W), height: u(566) }}
+          >
+            <BoardText spec={edition.eyebrow} reveal={{ kind: "line", start: SEQ.eyebrow }} />
+            <BoardText spec={edition.name} as="h1" reveal={{ kind: "line", start: SEQ.name }} />
+            <Portrait edition={edition} sizes="(max-width: 767px) 70vw, 1px" />
+            <Rules edition={edition} />
+          </div>
         </div>
+        <p
+          className="hero-stack-statement"
+          style={{ color: edition.mobileStatementColor, textAlign: edition.stack?.statementAlign }}
+        >
+          {/* Desktop's own four lines, never re-wrapped (see the CSS). */}
+          {HERO_STATEMENT.map((line, i) => (
+            <Fragment key={line}>
+              {i > 0 ? " " : null}
+              <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.heroStagger)}>
+                {line}
+              </span>
+            </Fragment>
+          ))}
+        </p>
+        <p
+          className="hero-stack-subline rv-rise"
+          style={{ ...rv(SEQ.subline, { dur: SEQ.sublineDur }), color: edition.subline.color }}
+        >
+          {edition.subline.lines.map((l) => l.text).join(" ")}
+        </p>
       </div>
-      <p
-        className="hero-stack-statement"
-        style={{ color: edition.mobileStatementColor, textAlign: edition.stack?.statementAlign }}
-      >
-        {/* Desktop's own four lines, never re-wrapped (see the CSS). */}
-        {HERO_STATEMENT.map((line, i) => (
-          <Fragment key={line}>
-            {i > 0 ? " " : null}
-            <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.heroStagger)}>
-              {line}
-            </span>
-          </Fragment>
-        ))}
-      </p>
-      <p
-        className="hero-stack-subline rv-rise"
-        style={{ ...rv(SEQ.subline, { dur: SEQ.sublineDur }), color: edition.subline.color }}
-      >
-        {edition.subline.lines.map((l) => l.text).join(" ")}
-      </p>
     </div>
   );
 }
