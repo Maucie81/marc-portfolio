@@ -226,10 +226,10 @@ export default function Home() {
               treatment, bookending the page — and the contact line fades
               in last. */}
           <div data-reveal="view" className="relative">
-            {/* The halftone panel behind the lockup — on the ink it's
-                colour-burned (Hero 5's dark-board treatment), since a
-                multiply sheet vanishes on a dark fill. The layer is turned
-                180°, so its top-to-bottom wipe reads bottom to top. */}
+            {/* The halftone panel behind the lockup, as before — on the ink
+                it's colour-burned (Hero 5's dark-board treatment), since a
+                multiply sheet vanishes on a dark fill. It's turned 180°, so
+                its top-to-bottom wipe reads bottom to top. */}
             <div
               aria-hidden
               className="rv-wipe rv-wipe-ttb pointer-events-none absolute inset-0 rotate-180 mix-blend-color-burn blur-[0.5px]"
