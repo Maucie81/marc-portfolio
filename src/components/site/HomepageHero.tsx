@@ -23,10 +23,11 @@ import { HERO_SEQUENCE as SEQ, MOTION, rv } from "@/lib/motion";
  * metadata as flowing text below it.
  *
  * Motion (src/lib/motion.ts): the hero section is a data-reveal="load"
- * trigger and the slowest, most deliberate reveal on the page. Eyebrow and
- * name set as masked lines, the portrait is uncovered top to bottom through
- * its own crop, then the statement line by line, the subline rises in and
- * the edition metadata fades up last — HERO_SEQUENCE.
+ * trigger and the slowest, most deliberate reveal on the page. The board
+ * itself settles in first, like every card on the page; then the eyebrow
+ * and name set as masked lines, the portrait is uncovered top to bottom
+ * through its own crop, the statement follows line by line, the subline
+ * rises in and the edition metadata fades up last — HERO_SEQUENCE.
  */
 
 const BOARD_W = 1376;
@@ -189,7 +190,7 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
   const statement = <BoardText spec={edition.statement} reveal={{ kind: "line", start: SEQ.statement }} />;
 
   return (
-    <div className="hero-board" style={{ background: edition.background }}>
+    <div className="hero-board rv-settle" style={{ ...rv(SEQ.board), background: edition.background }}>
       {edition.texture ? (
         <div
           aria-hidden
@@ -258,8 +259,8 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
   const c = edition.cluster;
   return (
     <div
-      className="hero-stack"
-      style={{ background: edition.background, ["--cluster-w" as string]: c.w } as CSSProperties}
+      className="hero-stack rv-settle"
+      style={{ ...rv(SEQ.board), background: edition.background, ["--cluster-w" as string]: c.w } as CSSProperties}
     >
       {edition.texture ? (
         <div aria-hidden className="hero-texture-fill" style={{ mixBlendMode: edition.texture.blend }} />

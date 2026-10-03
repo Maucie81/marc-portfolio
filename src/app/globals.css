@@ -1483,22 +1483,26 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   --motion-standard: 420ms;
   --motion-major: 700ms;
   --motion-hero: 800ms;
+  --motion-settle: 750ms;
   --motion-stagger: 60ms;
   --motion-hero-stagger: 100ms;
   /* The expressive moments: a long exponential settle, no overshoot. */
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Recent work's image wipes: a gentle in-out (sine), so the edge crosses
-     the panel at a nearly even pace — drawn open, not flashed open. */
-  --motion-ease-wipe: cubic-bezier(0.37, 0, 0.63, 1);
+  /* Cards settling into place: a soft ease-out with a long tail — about
+     60% of the lift is gone by 200ms, the last few px take the rest. */
+  --motion-ease-settle: cubic-bezier(0.3, 0.5, 0.2, 1);
+  /* ...and their fade, which starts gentler and finishes first, so the
+     last of the settle happens fully opaque. */
+  --motion-ease-settle-fade: cubic-bezier(0.25, 0.1, 0.25, 1);
   /* The quiet sections: a soft start, so a fade reads as text becoming
      visible, not popping in. */
   --motion-ease-quiet: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Per-element, never inherited: a parent's delay or duration must not leak
-   into the reveals nested inside it. (--rv-i, --rv-stagger, --rv-y, --rv-dx
-   and --rv-ease DO inherit — a trigger or group sets them for its
-   children.) */
+   into the reveals nested inside it. (--rv-i, --rv-open, --rv-stagger,
+   --rv-y, --rv-lift and --rv-ease DO inherit — a trigger or group sets them
+   for its children.) */
 @property --rv-d {
   syntax: "<time>";
   inherits: false;
@@ -1515,20 +1519,18 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   --rv-dur: var(--motion-hero);
 }
 
-.rv-wipe,
 .rv-clip {
   --rv-dur: var(--motion-major);
 }
 
-.rv-rise,
-.rv-fade,
-.rv-drift,
-.rv-glide {
-  --rv-dur: var(--motion-standard);
+.rv-settle {
+  --rv-dur: var(--motion-settle);
 }
 
-.rv-wipe-ltr { --rv-wipe-from: inset(0 100% 0 0); }
-.rv-wipe-rtl { --rv-wipe-from: inset(0 0 0 100%); }
+.rv-rise,
+.rv-fade {
+  --rv-dur: var(--motion-standard);
+}
 
 /* Masked line. The mask is fixed on the page just under the last line's
    descenders (0.6em below its middle); the text starts 1.15em lower — its
@@ -1561,15 +1563,6 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   }
 }
 
-@keyframes rv-wipe {
-  from {
-    clip-path: var(--rv-wipe-from);
-  }
-  to {
-    clip-path: inset(0);
-  }
-}
-
 /* Ends on the element's own clip-path (the hero portrait's crop). */
 @keyframes rv-clip {
   from {
@@ -1577,46 +1570,46 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   }
 }
 
-@keyframes rv-drift {
+/* A card settling into place: the lift (--rv-lift, 28px) and the fade
+   run as two animations, each on its own curve (see .rv-settle below). */
+@keyframes rv-settle {
   from {
-    transform: translateX(var(--rv-dx, 0px));
-  }
-}
-
-@keyframes rv-glide {
-  from {
-    opacity: 0;
-    transform: translateX(var(--rv-dx, 0px));
+    transform: translateY(var(--rv-lift, 28px));
   }
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
+  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
     animation-duration: var(--rv-dur);
     animation-timing-function: var(--rv-ease, var(--motion-ease));
-    animation-delay: calc(var(--rv-d) + var(--rv-i, 0) * var(--rv-stagger, 0ms));
+    /* --rv-open: a trigger's step in the opening screen (RevealObserver). */
+    animation-delay: calc(var(--rv-d) + var(--rv-open, 0ms) + var(--rv-i, 0) * var(--rv-stagger, 0ms));
     animation-fill-mode: backwards;
   }
 
   html[data-motion] .rv-line { animation-name: rv-line; }
   html[data-motion] .rv-rise { animation-name: rv-rise; }
   html[data-motion] .rv-fade { animation-name: rv-fade; }
-  html[data-motion] .rv-wipe { animation-name: rv-wipe; }
   html[data-motion] .rv-clip { animation-name: rv-clip; }
-  html[data-motion] .rv-drift { animation-name: rv-drift; }
-  html[data-motion] .rv-glide { animation-name: rv-glide; }
+  html[data-motion] .rv-settle {
+    animation-name: rv-settle, rv-fade;
+    animation-duration: var(--rv-dur), calc(var(--rv-dur) * 0.8);
+    animation-timing-function: var(--motion-ease-settle), var(--motion-ease-settle-fade);
+  }
 
-  /* Waiting — paused on the first frame, i.e. hidden: the hero until its
-     font and portrait are in, a view trigger until it scrolls into view. */
-  html[data-motion="hold"] [data-reveal="load"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
-  html[data-motion] [data-reveal="view"]:not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
-  html[data-motion] [data-reveal="view"]:not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
+  /* Waiting — paused on the first frame, i.e. hidden: everything (the hero
+     and the opening screen with it) until the hero's font and portrait are
+     in, a view trigger until it scrolls into view, section furniture until
+     it's known whether it's on the opening screen. */
+  html[data-motion="hold"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
+  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
+  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
     animation-play-state: paused;
   }
 
   /* Played (or already scrolled past): retired for good. */
-  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide),
-  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift, .rv-glide) {
+  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
+  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
     animation: none;
   }
 }

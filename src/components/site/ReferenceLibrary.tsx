@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { type UIEvent, useCallback, useEffect, useRef, useState } from "react";
-import { rv } from "@/lib/motion";
 import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/reference-library";
 
 /**
@@ -22,13 +21,11 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * sheet in reading order; Esc, the × or a click on the dimmed area closes
  * it.
  *
- * Motion: once, as it scrolls in, the whole sheet fades in and glides the
- * last 36px into place inside its frame, as one piece — no mask, so it
- * reads differently from Recent work's wipes. The frame itself never
- * moves, no tile animates by itself, and scrolling works throughout (the
- * sheet is only translated, never scrolled).
+ * Motion: once, as it scrolls in, the whole panel — shell, window and
+ * sheet together — settles into place like every card on the page
+ * (.rv-settle), following the title. No tile animates by itself, and
+ * scrolling works throughout.
  */
-const SHEET_GLIDE = { dur: 760, dx: -36 };
 
 export default function ReferenceLibrary() {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -66,7 +63,7 @@ export default function ReferenceLibrary() {
   const tile = open === null ? null : LIBRARY_TILES[open];
 
   return (
-    <div data-reveal="view" className="lib-panel">
+    <div data-reveal="view" className="lib-panel rv-settle">
       <div
         className="lib-window"
         data-at-top={edges.top || undefined}
@@ -80,9 +77,8 @@ export default function ReferenceLibrary() {
           tabIndex={0}
         >
           <ul
-            className="lib-sheet rv-glide"
+            className="lib-sheet"
             style={{
-              ...rv(0, SHEET_GLIDE),
               width: `calc(${SHEET_WIDTH} * var(--u))`,
               height: `calc(${SHEET_HEIGHT} * var(--u))`,
             }}

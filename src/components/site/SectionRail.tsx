@@ -1,3 +1,5 @@
+import { FURNITURE, rv } from "@/lib/motion";
+
 /**
  * The left rail from the Figma frame — outlined circles evenly distributed
  * across a section's own height (nodes 177:111954, 177:111975, 177:112109,
@@ -12,22 +14,28 @@
  * contact and coming-soon pages keep their original pair.
  * `flush`: the homepage's circles sit 4px into their 24px column (Figma
  * x = 4), not on the hero-mark line the original rail was nudged onto.
+ * `reveal`: fades in with the homepage's opening screen when it's on it
+ * (data-reveal="open", see src/lib/motion.ts); otherwise static.
  */
 export default function SectionRail({
   dots = 2,
   flush = false,
   className = "",
+  reveal = false,
 }: {
   dots?: number;
   flush?: boolean;
   className?: string;
+  reveal?: boolean;
 }) {
   return (
     <div
       aria-hidden
+      data-reveal={reveal ? "open" : undefined}
       className={`hidden self-stretch py-2 lg:flex lg:flex-col lg:justify-between ${
         flush ? "lg:items-start lg:pl-1" : "lg:items-center"
-      } ${className}`}
+      } ${reveal ? "rv-fade" : ""} ${className}`}
+      style={reveal ? rv(0, { dur: FURNITURE.dur, ease: FURNITURE.ease }) : undefined}
     >
       {Array.from({ length: dots }, (_, i) => (
         <span key={i} className={`rail-dot${flush ? " rail-dot--flush" : ""}`} />

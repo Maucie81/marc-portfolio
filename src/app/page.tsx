@@ -1,4 +1,4 @@
-import { Fragment, type CSSProperties } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { preload } from "react-dom";
 import SectionNumber from "@/components/site/SectionNumber";
@@ -9,7 +9,7 @@ import AdditionalWork from "@/components/site/AdditionalWork";
 import ReferenceLibrary from "@/components/site/ReferenceLibrary";
 import CareerHistory from "@/components/site/CareerHistory";
 import RevealObserver from "@/components/site/motion/RevealObserver";
-import { rv, rvGroup } from "@/lib/motion";
+import { FURNITURE, rv, rvGroup } from "@/lib/motion";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -56,9 +56,35 @@ function bandFill(color: string, ...layers: string[]) {
   };
 }
 
+/* A band: its paper fill, with its section on top. The fill is a layer of
+   its own so that on the opening screen it can settle in together with the
+   hero board, ahead of its own content (data-reveal="open" +
+   data-reveal-fill, see src/lib/motion.ts); anywhere below that screen it's
+   simply there. The white beneath is what it settles onto — below lg the
+   page's base is the footer's ink. The section must be positioned to sit
+   over the fill. */
+function Band({ fill, children }: { fill: CSSProperties; children: ReactNode }) {
+  return (
+    <div className="relative bg-white">
+      <div
+        aria-hidden
+        data-reveal="open"
+        data-reveal-fill
+        className="rv-settle absolute inset-0"
+        style={{ ...fill, ...rv(0) }}
+      />
+      {children}
+    </div>
+  );
+}
+
 /* Same limit for the absolutely-positioned texture sheets inside a band:
    clipped rather than resized, so their dot scale is untouched. */
 const BAND_CLIP = { clipPath: "inset(0 max(0px, calc((100% - 1376px) / 2)))" };
+
+/* A section title as section furniture: static, unless it's on the opening
+   screen, where it fades up with the rest (see src/lib/motion.ts). */
+const TITLE_REVEAL = rv(0, FURNITURE);
 
 /* Reference library graph paper · Figma "Grid" 267:296755 — 20px cells of
    #fcf9f1 with 1px rules of #bfb37f at 30% over the paper (= #e7e1cb). */
@@ -80,12 +106,14 @@ export default function Home() {
       {/* Flush to the rails at lg (no side padding), 42px under the fixed
           top band. Below lg it runs full bleed — no side inset.
           scroll-mt = the header's height, so the nav's "/#hero" lands where
-          a plain "/" load does. */}
+          a plain "/" load does. Painted white: below lg the page's base is
+          the footer's ink, and the board fades in over this, not over
+          that. */}
       <section
         id="hero"
         aria-label="Introduction"
         data-reveal="load"
-        className="mx-auto scroll-mt-[52px] lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
+        className="mx-auto scroll-mt-[52px] bg-white lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
       >
         <HomepageHero />
       </section>
@@ -93,50 +121,55 @@ export default function Home() {
       <BandGap />
 
       {/* ---------- 01 Recent work ---------- */}
-      <div style={bandFill("var(--bg)")}>
+      <Band fill={bandFill("var(--bg)")}>
         <section
           id="work"
           aria-labelledby="work-title"
-          className={`${SHELL} sec pb-[60px] pt-10 lg:pb-[100px]`}
+          className={`${SHELL} sec relative pb-[60px] pt-10 lg:pb-[100px]`}
         >
-          <SectionRail dots={3} flush />
-          <SectionNumber number="01" label="Recent work" />
+          <SectionRail dots={3} flush reveal />
+          <SectionNumber number="01" label="Recent work" reveal />
           <div className="min-w-0">
-            <h2 id="work-title" className="t-section-title" style={{ marginBottom: 32 }}>
+            <h2
+              id="work-title"
+              data-reveal="open"
+              className="t-section-title rv-rise"
+              style={{ ...TITLE_REVEAL, marginBottom: 32 }}
+            >
               Recent work
             </h2>
             <RecentWork projects={projects} />
           </div>
         </section>
-      </div>
+      </Band>
 
       <BandGap />
 
       {/* ---------- 02 Additional work ---------- */}
-      <div style={bandFill("var(--bg)")}>
+      <Band fill={bandFill("var(--bg)")}>
         <section
           id="additional-work"
           aria-labelledby="additional-work-title"
           // 80px under the last line: Figma's 20px frame padding plus the
           // ~60px the list stops short of its 538px frame (263:276081).
-          className={`${SHELL} sec pb-[50px] pt-[50px] lg:pb-20 lg:pt-10`}
+          className={`${SHELL} sec relative pb-[50px] pt-[50px] lg:pb-20 lg:pt-10`}
         >
-          <SectionRail dots={3} flush />
-          <SectionNumber number="02" label="A little bit more" />
+          <SectionRail dots={3} flush reveal />
+          <SectionNumber number="02" label="A little bit more" reveal />
           <div className="min-w-0">
-            <p className="t-section-title" style={{ marginBottom: 60 }}>
+            <p data-reveal="open" className="t-section-title rv-rise" style={{ ...TITLE_REVEAL, marginBottom: 60 }}>
               A little bit more
             </p>
             <AdditionalWork intro={additionalWorkIntro} items={additionalWork} />
           </div>
         </section>
-      </div>
+      </Band>
 
       <BandGap />
 
       {/* ---------- 03 My personal reference library ---------- */}
-      <div
-        style={bandFill(
+      <Band
+        fill={bandFill(
           LIBRARY_PAPER,
           `repeating-linear-gradient(to right, ${LIBRARY_RULE} 0 1px, transparent 1px 21px)`,
           `repeating-linear-gradient(to bottom, ${LIBRARY_RULE} 0 1px, transparent 1px 21px)`,
@@ -146,16 +179,17 @@ export default function Home() {
           id="interests"
           aria-labelledby="library-title"
           style={{ "--lib-f": "clamp(2.75rem, 5.56vw, 5rem)" } as CSSProperties}
-          className={`${SHELL} sec pb-[60px] pt-[50px] lg:pb-[77px] lg:pt-11`}
+          className={`${SHELL} sec relative pb-[60px] pt-[50px] lg:pb-[77px] lg:pt-11`}
         >
           {/* The first circle and "03" sit level with the middle of the
               title's first line, not the section's top. The title scales
               (--lib-f, its font size), and that line's middle sits 0.918
               of it below the row's top, so both offsets follow it. */}
-          <SectionRail dots={3} flush className="lg:pt-[calc(0.918*var(--lib-f)-10px)]" />
+          <SectionRail dots={3} flush reveal className="lg:pt-[calc(0.918*var(--lib-f)-10px)]" />
           <SectionNumber
             number="03"
             label="Reference library"
+            reveal
             className="lg:mt-[calc(0.918*var(--lib-f)-18px)]"
           />
           {/* The title block and the gallery are separate triggers; when
@@ -166,7 +200,7 @@ export default function Home() {
             {/* Motion: one of the page's two expressive moments, after the
                 hero — the title's three lines rise out of their masks
                 (720ms, 90ms apart), the copy simply fades in after them,
-                then the gallery's sheet glides into its frame (see
+                and the library panel settles in like every card (see
                 ReferenceLibrary). */}
             <div
               data-reveal="view"
@@ -197,27 +231,27 @@ export default function Home() {
             </div>
           </div>
         </section>
-      </div>
+      </Band>
 
       <BandGap />
 
       {/* ---------- 04 Career history + Skills ---------- */}
-      <div style={bandFill("var(--bg)")}>
+      <Band fill={bandFill("var(--bg)")}>
         <section
           id="experience"
           aria-labelledby="experience-title"
-          className={`${SHELL} sec py-[50px] lg:py-[100px]`}
+          className={`${SHELL} sec relative py-[50px] lg:py-[100px]`}
         >
-          <SectionRail dots={3} flush />
-          <SectionNumber number="04" label="Where I’ve been" />
+          <SectionRail dots={3} flush reveal />
+          <SectionNumber number="04" label="Where I’ve been" reveal />
           <div className="min-w-0">
-            <p className="t-section-title" style={{ marginBottom: 60 }}>
+            <p data-reveal="open" className="t-section-title rv-rise" style={{ ...TITLE_REVEAL, marginBottom: 60 }}>
               Where I’ve been
             </p>
             <CareerHistory roles={roles} skills={skills} />
           </div>
         </section>
-      </div>
+      </Band>
 
       {/* No white gap here: the ink footer sits flush under 04. */}
 

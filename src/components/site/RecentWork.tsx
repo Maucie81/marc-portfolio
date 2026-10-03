@@ -17,23 +17,20 @@ const PANEL_H = 412;
 // (page.tsx LIBRARY_RULE / LIBRARY_PAPER).
 const GRID_LINE = "#e7e1cb";
 
-/* Motion: each card plays once as it scrolls in, and the image carries it —
-   a slow, hard wipe running away from the copy (left → right when the panel
-   sits on the right, right → left when it sits on the left), its edge
-   easing in and out, while the device inside settles 12px the same way.
-   The copy barely moves: company and title, then the description and CTA,
-   fade up 4px; the skill tags fade in once the wipe has passed over them.
-   A right-hand panel follows its title, a left-hand one leads it — the
-   order the eye meets them. */
-const WIPE_MS = 900;
-const WIPE_DRIFT = 12;
+/* Motion: each card plays once as it scrolls in (or, for the first one,
+   with the opening screen), and the panel carries it — it settles into
+   place as one piece, lifting the last 28px as it fades in (.rv-settle),
+   no mask. The copy barely moves: company and title, then the description
+   and CTA, fade up 4px; the skill tags fade in once the panel has mostly
+   landed. A right-hand panel follows its title, a left-hand one leads it —
+   the order the eye meets them. */
 const MEDIA_LAG = 120;
 const TITLE_LAG = 200;
 const COPY = { dur: 320, y: 4, ease: "quiet" } as const;
 /** Description and CTA follow the title by this much. */
 const COPY_LAG = 90;
-/** The tags, under the panel, wait for most of the wipe. */
-const TAGS_LAG = 520;
+/** The tags, under the panel, wait for most of its settle. */
+const TAGS_LAG = 360;
 
 function MockupPanel({
   project,
@@ -46,12 +43,11 @@ function MockupPanel({
 }) {
   const { mockup } = project;
   const { box } = mockup;
-  const ltr = project.media === "right";
   return (
     <div
-      className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]`}
+      className="product-media rv-settle relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]"
       style={{
-        ...rv(delay, { dur: WIPE_MS, ease: "wipe" }),
+        ...rv(delay),
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
           `linear-gradient(to right, ${GRID_LINE} 1px, transparent 1px)`,
@@ -75,9 +71,8 @@ function MockupPanel({
         unoptimized
         // The first card's panel is in the opening viewport at 1440 × 1024.
         priority={eager}
-        className="rv-drift absolute block max-w-none"
+        className="absolute block max-w-none"
         style={{
-          ...rv(delay, { dur: WIPE_MS, dx: ltr ? -WIPE_DRIFT : WIPE_DRIFT }),
           left: `${(box.x / PANEL_W) * 100}%`,
           top: `${(box.y / PANEL_H) * 100}%`,
           width: `${(box.w / PANEL_W) * 100}%`,
