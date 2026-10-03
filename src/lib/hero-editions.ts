@@ -280,17 +280,23 @@ export const HERO_META_LINES = (e: Pick<HeroEdition, "label" | "plate" | "reg">)
 
 /**
  * Edition rotation. While false, every visit gets HERO_DEFAULT unless the
- * URL asks for one (?hero=1 … ?hero=6, for QA). When true, a browsing session
- * draws one edition at random and keeps it (sessionStorage) for every later
- * homepage view in that tab — navigating into a case study and back never
- * changes it; a new session may draw another.
+ * URL asks for one (?hero=1 … ?hero=6, for QA). When true, a visitor's
+ * first visit always gets HERO_DEFAULT; every later visit (a new browsing
+ * session, once this browser has been here before) draws one of all six at
+ * random. Either way the edition is kept (sessionStorage) for every later
+ * homepage view in that session — navigating into a case study and back
+ * never changes it.
  */
 export const HERO_ROTATION = true;
 
-/** The edition shown when rotation is off (and the no-script fallback). */
+/** The first-visit edition, the edition when rotation is off, and the
+ * no-script fallback. */
 export const HERO_DEFAULT = 2;
 
+/** This session's edition. */
 const STORAGE_KEY = "mf:hero-edition";
+/** Set on the first visit, so later sessions know to rotate. */
+const SEEN_KEY = "mf:hero-seen";
 
 /**
  * Runs in <head> before first paint (see layout.tsx), so the chosen edition
@@ -298,4 +304,4 @@ const STORAGE_KEY = "mf:hero-edition";
  * different edition, and nothing for React to reconcile on hydration. All
  * six editions are in the HTML; CSS shows the one this attribute names.
  */
-export const HERO_EDITION_SCRIPT = `(function(){var d=document.documentElement,n=${HERO_EDITIONS.length},e;try{var q=parseInt(new URLSearchParams(location.search).get("hero"),10);if(q>=1&&q<=n){e=q}else{${HERO_ROTATION ? `e=parseInt(sessionStorage.getItem("${STORAGE_KEY}"),10);if(!(e>=1&&e<=n)){e=1+Math.floor(Math.random()*n);sessionStorage.setItem("${STORAGE_KEY}",String(e))}` : `e=${HERO_DEFAULT}`}}}catch(x){e=e||${HERO_DEFAULT}}d.setAttribute("data-hero",String(e));(window.__htmlAttrs=window.__htmlAttrs||{})["data-hero"]=String(e)})();`;
+export const HERO_EDITION_SCRIPT = `(function(){var d=document.documentElement,n=${HERO_EDITIONS.length},e;try{var q=parseInt(new URLSearchParams(location.search).get("hero"),10);if(q>=1&&q<=n){e=q}else{${HERO_ROTATION ? `e=parseInt(sessionStorage.getItem("${STORAGE_KEY}"),10);if(!(e>=1&&e<=n)){if(localStorage.getItem("${SEEN_KEY}")){e=1+Math.floor(Math.random()*n)}else{e=${HERO_DEFAULT};localStorage.setItem("${SEEN_KEY}","1")}sessionStorage.setItem("${STORAGE_KEY}",String(e))}` : `e=${HERO_DEFAULT}`}}}catch(x){e=e||${HERO_DEFAULT}}d.setAttribute("data-hero",String(e));(window.__htmlAttrs=window.__htmlAttrs||{})["data-hero"]=String(e)})();`;

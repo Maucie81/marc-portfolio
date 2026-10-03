@@ -300,11 +300,11 @@ export default function Home() {
                   style={rv(60, { dur: 400, ease: "quiet" })}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
-                    Get in touch →
+                    Get in touch to learn more about my work →
                   </Link>
                 </h2>
                 <p
-                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-normal leading-6 text-white"
+                  className="rv-fade mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-normal leading-6 text-white"
                   style={rv(180, { dur: 400, ease: "quiet" })}
                 >
                     <a
