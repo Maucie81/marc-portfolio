@@ -261,7 +261,7 @@ export const HERO_META_LINES = (label: string) => [label, "PLATE: CORAL / BLACK"
  * homepage view in that tab — navigating into a case study and back never
  * changes it; a new session may draw another.
  */
-export const HERO_ROTATION = false;
+export const HERO_ROTATION = true;
 
 /** The edition shown when rotation is off (and the no-script fallback). */
 export const HERO_DEFAULT = 2;
