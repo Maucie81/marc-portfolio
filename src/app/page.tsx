@@ -38,7 +38,7 @@ const SHELL = "mx-auto px-6 md:px-12 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8"
    construction: it sits outside SHELL, so the white it exposes is the
    <body> itself. */
 function BandGap() {
-  return <div aria-hidden className="h-4 lg:h-8" />;
+  return <div aria-hidden className="h-4 bg-white lg:h-8" />;
 }
 
 /* Band fills are painted, not set as background-color, so they stop at the
@@ -246,15 +246,18 @@ export default function Home() {
               className="rv-fade pointer-events-none absolute -inset-x-3 -top-4 bottom-0 rotate-180 mix-blend-color-burn blur-[0.5px] md:-inset-x-6 lg:-inset-x-8"
               style={{ ...rv(0, { dur: 550, ease: "quiet" }), background: `url(${TEXTURE_SRC}) center / 900px auto repeat` }}
             />
-            {/* No section number here: the lockup starts where the other
-                sections' "0" sits, 64px in (24px rail column + 40px gap).
-                Its padding centers it in the halftone, which also takes in
-                the wrapper's top padding above it. */}
-            <div className="relative px-3 pb-6 pt-2 md:px-6 lg:pl-16 lg:pr-0">
+            {/* The same grid as every numbered section (hidden rail column,
+                "05" 64px in, the lockup after it), in white on the ink
+                (.on-dark). Its padding centers it in the halftone, which
+                also takes in the wrapper's top padding above it. Below lg
+                the title folds into the "05" label, as elsewhere. */}
+            <div className="on-dark sec relative px-3 pb-6 pt-2 md:px-6 lg:px-0">
+              <SectionRail dots={2} flush className="invisible" />
+              <SectionNumber number="05" label="We should probably chat, right?" />
               <div className="min-w-0">
                 <p
-                  className="rv-fade mb-5 pt-0.5 text-[16px] font-semibold leading-6 text-white"
-                  style={rv(60, { dur: 400, ease: "quiet" })}
+                  className="t-section-title rv-fade"
+                  style={{ ...rv(60, { dur: 400, ease: "quiet" }), marginBottom: 20 }}
                 >
                   We should probably chat, right?
                 </p>

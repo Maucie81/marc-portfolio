@@ -61,11 +61,17 @@ html:has(#home) {
 }
 
 /* Phones/tablets: Safari fills the strip behind its bottom toolbar with the
-   page's base colour. White read as a gap under the footer, so the base
-   is the footer's ink; <body> keeps its own white. (Desktop's fixed white
-   bottom band covers that edge.) */
+   page's base colour — and iOS Safari takes it from <body>, not <html>.
+   White read as a gap under the footer, so on the homepage both are the
+   footer's ink; the white gaps between bands paint their own white
+   (BandGap in page.tsx). (Desktop's fixed white bottom band covers that
+   edge.) */
 @media (max-width: 1023.98px) {
   html {
+    background: var(--ink-deep);
+  }
+
+  html:has(#home) body {
     background: var(--ink-deep);
   }
 }
