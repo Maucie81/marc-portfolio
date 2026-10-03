@@ -16,11 +16,13 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  *
  * Plain native scrolling (wheel, trackpad, touch, and the arrow keys once
  * the window has focus). Nothing moves or resizes on hover. Clicking a
- * photo opens it enlarged in a modal <dialog> (Esc / backdrop / × close it;
- * ← → step through the sheet in reading order).
+ * photo opens it enlarged inside the window itself — only the window dims,
+ * the page around it doesn't. ← → (buttons or keys) step through the
+ * sheet in reading order; Esc, the × or a click on the dimmed area closes
+ * it.
  */
 export default function ReferenceLibrary() {
-  const dialogRef = useRef<HTMLDialogElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState<number | null>(null);
   const [edges, setEdges] = useState({ top: true, bottom: false });
 
@@ -32,13 +34,7 @@ export default function ReferenceLibrary() {
     setEdges((p) => (p.top === top && p.bottom === bottom ? p : { top, bottom }));
   }, []);
 
-  const show = useCallback((i: number) => {
-    setOpen(i);
-    const d = dialogRef.current;
-    if (d && !d.open) d.showModal();
-  }, []);
-
-  const close = useCallback(() => dialogRef.current?.close(), []);
+  const close = useCallback(() => setOpen(null), []);
 
   const step = useCallback(
     (dir: 1 | -1) =>
@@ -48,13 +44,15 @@ export default function ReferenceLibrary() {
 
   useEffect(() => {
     if (open === null) return;
+    closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") step(1);
+      if (e.key === "Escape") close();
+      else if (e.key === "ArrowRight") step(1);
       else if (e.key === "ArrowLeft") step(-1);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open, step]);
+  }, [open, close, step]);
 
   const tile = open === null ? null : LIBRARY_TILES[open];
 
@@ -99,7 +97,7 @@ export default function ReferenceLibrary() {
                   type="button"
                   className="lib-open"
                   aria-label={`Enlarge: ${t.alt}`}
-                  onClick={() => show(i)}
+                  onClick={() => setOpen(i)}
                 >
                   <Image
                     src={`/reference-library/${t.slug}.webp`}
@@ -116,53 +114,48 @@ export default function ReferenceLibrary() {
             ))}
           </ul>
         </div>
-      </div>
 
-      <dialog
-        ref={dialogRef}
-        className="lib-lightbox"
-        aria-label={tile?.alt ?? "Enlarged photo"}
-        onClose={() => setOpen(null)}
-        // A click on the dialog itself (not its contents) is the backdrop.
-        onClick={(e) => {
-          if (e.target === e.currentTarget) close();
-        }}
-      >
         {tile && (
-          <figure className="lib-lightbox-figure">
+          <div
+            className="lib-viewer"
+            role="dialog"
+            aria-label={tile.alt}
+            // A click on the dimmed area itself (not the photo) closes it.
+            onClick={(e) => {
+              if (e.target === e.currentTarget) close();
+            }}
+          >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               key={tile.slug}
-              src={`/reference-library/${tile.slug}.webp`}
+              src={`/reference-library/full/${tile.slug}.webp`}
               alt={tile.alt}
-              width={Math.round(tile.w * 2)}
-              height={Math.round(tile.h * 2)}
-              className="lib-lightbox-img"
-              // As large as the viewport allows, but no more than 1.5x the
-              // file (the crops are 2x the tile), so small photos stay sharp.
+              width={tile.full[0]}
+              height={tile.full[1]}
+              className="lib-viewer-img"
+              // As large as the window allows, but never past the file's
+              // own width, so it's never upscaled into blur.
               style={{
-                aspectRatio: `${tile.w} / ${tile.h}`,
-                width: `min(88vw, ${(78 * tile.w) / tile.h}dvh, ${Math.round(tile.w * 3)}px)`,
+                aspectRatio: `${tile.full[0]} / ${tile.full[1]}`,
+                width: `min(100cqw - 136px, (100cqh - 72px) * ${tile.full[0] / tile.full[1]}, ${tile.full[0]}px)`,
               }}
             />
-            <figcaption className="lib-lightbox-caption">
-              <span>{tile.alt}</span>
-              <span className="lib-lightbox-count">
-                {open! + 1} / {LIBRARY_TILES.length}
-              </span>
-            </figcaption>
-          </figure>
+            <span className="lib-viewer-count">
+              {open! + 1} / {LIBRARY_TILES.length}
+            </span>
+            <button ref={closeRef} type="button" className="lib-viewer-close" aria-label="Close" onClick={close}>
+              ×
+            </button>
+            <button type="button" className="lib-viewer-btn lib-viewer-prev" aria-label="Previous photo" onClick={() => step(-1)}>
+              ←
+            </button>
+            <button type="button" className="lib-viewer-btn lib-viewer-next" aria-label="Next photo" onClick={() => step(1)}>
+              →
+            </button>
+          </div>
         )}
-        <button type="button" className="lib-lightbox-btn lib-lightbox-close" aria-label="Close" onClick={close}>
-          ×
-        </button>
-        <button type="button" className="lib-lightbox-btn lib-lightbox-prev" aria-label="Previous photo" onClick={() => step(-1)}>
-          ←
-        </button>
-        <button type="button" className="lib-lightbox-btn lib-lightbox-next" aria-label="Next photo" onClick={() => step(1)}>
-          →
-        </button>
-      </dialog>
+      </div>
+
     </div>
   );
 }

@@ -660,74 +660,53 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   outline-offset: -2px;
 }
 
-/* Click-to-enlarge viewer: a modal <dialog>, photo centered on a dark
-   wash of the shell's ink, caption and count beneath it. */
-.lib-lightbox {
-  position: fixed;
+/* Click-to-enlarge viewer: fills the library window only (not the page),
+   dimming it in the shell's ink, with the photo centered in its white
+   frame and the count in the lower right. It's a size container so the
+   photo can fit itself to the window. */
+.lib-viewer {
+  position: absolute;
   inset: 0;
-  width: 100vw;
-  max-width: none;
-  height: 100dvh;
-  max-height: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #fff;
-  overflow: hidden;
-  cursor: zoom-out;
-}
-
-.lib-lightbox[open] {
+  z-index: 2;
   display: grid;
   place-items: center;
-  animation: lib-fade 160ms ease-out;
-}
-
-.lib-lightbox::backdrop {
+  container-type: size;
   background: rgb(67 56 53 / 0.92);
+  cursor: zoom-out;
+  animation: lib-fade 160ms ease-out;
 }
 
 @keyframes lib-fade {
   from { opacity: 0; }
 }
 
-.lib-lightbox-figure {
-  margin: 0;
-  display: grid;
-  gap: 12px;
-  cursor: default;
-}
-
-.lib-lightbox-img {
+.lib-viewer-img {
   display: block;
   height: auto;
   background: #fff;
-  border: 10px solid #fff;
+  border: 8px solid #fff;
   box-shadow: 3px 4px 24px rgba(0, 0, 0, 0.35);
+  cursor: default;
 }
 
-.lib-lightbox-caption {
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
+.lib-viewer-count {
+  position: absolute;
+  right: 16px;
+  bottom: 12px;
+  color: #fff;
   font-size: 14px;
   line-height: 1.4;
-  max-width: 88vw;
-}
-
-.lib-lightbox-count {
-  flex: none;
   font-variant-numeric: tabular-nums;
   opacity: 0.7;
 }
 
-.lib-lightbox-btn {
+.lib-viewer-close,
+.lib-viewer-btn {
   position: absolute;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border: 0;
   border-radius: 999px;
   background: rgb(255 255 255 / 0.12);
@@ -737,41 +716,33 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   cursor: pointer;
 }
 
-.lib-lightbox-btn:hover {
-  background: rgb(255 255 255 / 0.22);
+.lib-viewer-close {
+  top: 12px;
+  right: 12px;
 }
 
-.lib-lightbox-btn:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.lib-lightbox-close {
-  top: 16px;
-  right: 16px;
-}
-
-.lib-lightbox-prev,
-.lib-lightbox-next {
+.lib-viewer-btn {
   top: 50%;
   translate: 0 -50%;
 }
 
-.lib-lightbox-prev {
-  left: 16px;
+.lib-viewer-prev {
+  left: 12px;
 }
 
-.lib-lightbox-next {
-  right: 16px;
+.lib-viewer-next {
+  right: 12px;
 }
 
-@media (max-width: 767px) {
-  .lib-lightbox-prev,
-  .lib-lightbox-next {
-    top: auto;
-    bottom: 16px;
-    translate: none;
-  }
+.lib-viewer-close:hover,
+.lib-viewer-btn:hover {
+  background: rgb(255 255 255 / 0.22);
+}
+
+.lib-viewer-close:focus-visible,
+.lib-viewer-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- Homepage numbered sections ---------- */
@@ -1430,7 +1401,8 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
       for the same reason the track does. */
 .noise-overlay,
 .cs-track::after,
-.cs-progress::after {
+.cs-progress::after,
+.lib-panel::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -1462,4 +1434,21 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 .product-media {
   position: relative;
   z-index: 39;
+}
+
+/* The reference library sits above the page grain the same way, so the
+   photos read crisp. Its dark shell gets its own grain sheet (::before, in
+   the shared rule above) beneath the window, so only the photos lose it. */
+.lib-panel {
+  position: relative;
+  z-index: 39;
+}
+
+.lib-panel::before {
+  z-index: 0;
+  border-radius: inherit;
+}
+
+.lib-window {
+  z-index: 1;
 }
