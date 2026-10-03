@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import RevealLines from "@/components/site/motion/RevealLines";
+import SkillRun from "@/components/site/SkillRun";
 import type { Role } from "@/lib/home";
 import { MOTION, rvGroup } from "@/lib/motion";
 
@@ -44,7 +45,7 @@ export default function CareerHistory({
                 tech. */}
             <span
               aria-hidden
-              className="mt-[3px] flex size-3 shrink-0 items-center justify-center rounded-full bg-accent text-[9px] leading-none text-white"
+              className="mt-[6px] flex size-3 shrink-0 items-center justify-center rounded-full bg-accent text-[9px] leading-none text-white"
             >
               {i + 1}
             </span>
@@ -66,10 +67,9 @@ export default function CareerHistory({
         {/* md+: the designed rows. Phones: one continuous run, so a skill
             fills the line above when it fits; skills stay whole and each
             dot is glued to the skill before it (nbsp), so lines break
-            after a dot, never before one. */}
-        <div
-          role="list"
-          data-reveal-group
+            after a dot, never before one — and SkillRun hides any dot
+            left at a line's end. */}
+        <SkillRun
           style={rvGroup(40, { y: 4 })}
           className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal"
         >
@@ -85,6 +85,7 @@ export default function CareerHistory({
                     <>
                       <span
                         aria-hidden
+                        data-skill-dot
                         className={`text-[14px] leading-none text-accent md:w-1.5 md:text-center ${i === 0 ? "md:hidden" : ""}`}
                       >
                         <span className="md:hidden">{"\u00a0"}</span>•
@@ -103,7 +104,7 @@ export default function CareerHistory({
               ))}
             </div>
           ))}
-        </div>
+        </SkillRun>
       </div>
     </>
   );
