@@ -463,6 +463,12 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   filter: blur(0.5px);
 }
 
+/* The edition's lockup nudged onto the board's center (HeroEdition.center,
+   in board px); the texture and the edition stamp stay where they are. */
+.hero-board > :is(.hero-text, .hero-portrait, .hero-rule) {
+  translate: calc(var(--lockup-x, 0) * var(--hu)) calc(var(--lockup-y, 0) * var(--hu));
+}
+
 /* Tablet widths (768–1023px, no perimeter rails): the metadata's 10px
    floor makes it relatively larger, so Hero 2's lockup (eyebrow, name,
    statement, subline, portrait, slash) rides 28 board px higher to keep
@@ -471,7 +477,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   .hero-edition[data-edition="2"] .hero-board > .hero-text,
   .hero-edition[data-edition="2"] .hero-board > .hero-portrait,
   .hero-edition[data-edition="2"] .hero-board > .hero-rule {
-    translate: 0 calc(-28 * var(--hu));
+    translate: calc(var(--lockup-x, 0) * var(--hu)) calc((var(--lockup-y, 0) - 28) * var(--hu));
   }
 }
 
@@ -481,7 +487,10 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   isolation: isolate;
   overflow: hidden;
   container-type: inline-size;
-  padding: 2rem 1.5rem 1.5rem;
+  /* 30px over the lockup's top mark (the cut starts at the divider's top)
+     matches the 24px under it plus the subline's ~6px below its baseline,
+     so the lockup sits centered top to bottom. */
+  padding: 1.875rem 1.5rem 1.5rem;
   /* The cluster is cut from the board at --cluster-w Figma px wide; --hu
      scales the board so that cut fills the column (capped on tablets). */
   --hu: calc(min(100cqw, 460px) / var(--cluster-w));

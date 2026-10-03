@@ -190,7 +190,17 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
   const statement = <BoardText spec={edition.statement} reveal={{ kind: "line", start: SEQ.statement }} />;
 
   return (
-    <div className="hero-board rv-settle" style={{ ...rv(SEQ.board), background: edition.background }}>
+    <div
+      className="hero-board rv-settle"
+      style={
+        {
+          ...rv(SEQ.board),
+          background: edition.background,
+          ["--lockup-x" as string]: edition.center?.x,
+          ["--lockup-y" as string]: edition.center?.y,
+        } as CSSProperties
+      }
+    >
       {edition.texture ? (
         <div
           aria-hidden
