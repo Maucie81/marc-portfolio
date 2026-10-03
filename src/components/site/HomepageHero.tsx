@@ -7,6 +7,7 @@ import {
   type HeroEdition,
   type HeroText,
 } from "@/lib/hero-editions";
+import { HERO_SEQUENCE as SEQ, MOTION, rv } from "@/lib/motion";
 
 /**
  * The homepage hero — one component, six editions (Figma 254:273243). Every
@@ -20,6 +21,11 @@ import {
  * <768px: the same edition stacked — its eyebrow / name / divider /
  * portrait cluster cut from the board, then the statement, subline and
  * metadata as flowing text below it.
+ *
+ * Motion (src/lib/motion.ts): the hero section is a data-reveal="load"
+ * trigger. Eyebrow and name set as masked lines, the portrait is uncovered
+ * top to bottom through its own crop, then the statement line by line, the
+ * subline rises in and the edition metadata fades up last — HERO_SEQUENCE.
  */
 
 const BOARD_W = 1376;
@@ -30,19 +36,27 @@ const PORTRAIT_ALT = "Illustrated portrait of Marc Favro";
 
 const u = (n: number) => `calc(${n} * var(--hu))`;
 
+/** How a text layer arrives: as masked lines `stagger` ms apart, or as one
+ * rising block. */
+type Reveal = { kind: "line"; start: number } | { kind: "rise"; start: number };
+
 function BoardText({
   spec,
   as: Tag = "p",
   className = "",
+  reveal,
 }: {
   spec: HeroText;
   as?: ElementType;
   className?: string;
+  reveal?: Reveal;
 }) {
+  const lineReveal = reveal?.kind === "line" ? reveal.start : null;
   return (
     <Tag
-      className={`hero-text ${className}`}
+      className={`hero-text ${reveal?.kind === "rise" ? "rv-rise" : ""} ${className}`}
       style={{
+        ...(reveal?.kind === "rise" ? rv(reveal.start) : null),
         zIndex: spec.z,
         color: spec.color,
         fontSize: u(spec.size),
@@ -59,12 +73,13 @@ function BoardText({
         <Fragment key={i}>
           {i > 0 ? " " : null}
           <span
-            className="hero-line"
-            style={
-              line.anchor === "right"
+            className={lineReveal === null ? "hero-line" : "hero-line rv-line"}
+            style={{
+              ...(lineReveal === null ? null : rv(lineReveal + i * MOTION.stagger)),
+              ...(line.anchor === "right"
                 ? { right: u(BOARD_W - line.x), top: u(line.y), textAlign: "right" }
-                : { left: u(line.x), top: u(line.y) }
-            }
+                : { left: u(line.x), top: u(line.y) }),
+            }}
           >
             {line.text}
           </span>
@@ -74,14 +89,23 @@ function BoardText({
   );
 }
 
+const polygon = (pts: [number, number][]) =>
+  `polygon(${pts.map(([x, y]) => `${u(x)} ${u(y)}`).join(", ")})`;
+
 function Portrait({ edition, sizes }: { edition: HeroEdition; sizes: string }) {
   const p = edition.portrait;
+  // The crop is listed top-left, top-right, bottom-right, bottom-left; the
+  // reveal starts with its bottom edge folded up onto its top one, so the
+  // bottom corners travel down the crop's own sides (Hero 2's slant too).
+  const [tl, tr] = p.clip;
   return (
     <div
-      className="hero-portrait"
+      className="hero-portrait rv-clip"
       style={{
+        ...rv(SEQ.portrait),
+        ["--rv-clip-from" as string]: polygon([tl, tr, tr, tl]),
         zIndex: p.z,
-        clipPath: `polygon(${p.clip.map(([x, y]) => `${u(x)} ${u(y)}`).join(", ")})`,
+        clipPath: polygon(p.clip),
         mixBlendMode: p.blend,
       }}
     >
@@ -131,7 +155,11 @@ function Rules({ edition }: { edition: HeroEdition }) {
 
 function Meta({ edition, style, className = "" }: { edition: HeroEdition; style?: CSSProperties; className?: string }) {
   return (
-    <p aria-hidden className={`hero-meta ${className}`} style={{ color: edition.meta.color, ...style }}>
+    <p
+      aria-hidden
+      className={`hero-meta rv-fade ${className}`}
+      style={{ ...rv(SEQ.meta, { dur: MOTION.fast }), color: edition.meta.color, ...style }}
+    >
       {HERO_META_LINES(edition).map((line, i) => (
         <Fragment key={line}>
           {i > 0 ? <br /> : null}
@@ -157,7 +185,7 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
       }}
     />
   );
-  const statement = <BoardText spec={edition.statement} />;
+  const statement = <BoardText spec={edition.statement} reveal={{ kind: "line", start: SEQ.statement }} />;
 
   return (
     <div className="hero-board" style={{ background: edition.background }}>
@@ -176,8 +204,8 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
       ) : null}
       {/* DOM order is reading order (eyebrow, name, statement, subline);
           the Figma stacking comes from each layer's z-index. */}
-      <BoardText spec={edition.eyebrow} />
-      <BoardText spec={edition.name} as="h1" />
+      <BoardText spec={edition.eyebrow} reveal={{ kind: "line", start: SEQ.eyebrow }} />
+      <BoardText spec={edition.name} as="h1" reveal={{ kind: "line", start: SEQ.name }} />
       {edition.clip ? (
         // Hero 4's oversized statement is masked to the board's inner rect,
         // exactly like the Figma mask group.
@@ -193,7 +221,7 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
       ) : (
         statement
       )}
-      <BoardText spec={edition.subline} />
+      <BoardText spec={edition.subline} reveal={{ kind: "rise", start: SEQ.subline }} />
       <Portrait edition={edition} sizes="(min-width: 768px) 30vw, 1px" />
       <Rules edition={edition} />
       {meta}
@@ -240,8 +268,8 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
           className="absolute"
           style={{ left: u(-c.x), top: u(-c.y), width: u(BOARD_W), height: u(566) }}
         >
-          <BoardText spec={edition.eyebrow} />
-          <BoardText spec={edition.name} as="h1" />
+          <BoardText spec={edition.eyebrow} reveal={{ kind: "line", start: SEQ.eyebrow }} />
+          <BoardText spec={edition.name} as="h1" reveal={{ kind: "line", start: SEQ.name }} />
           <Portrait edition={edition} sizes="(max-width: 767px) 70vw, 1px" />
           <Rules edition={edition} />
         </div>
@@ -254,11 +282,13 @@ function StackedHero({ edition: base }: { edition: HeroEdition }) {
         {HERO_STATEMENT.map((line, i) => (
           <Fragment key={line}>
             {i > 0 ? " " : null}
-            <span className="block whitespace-nowrap">{line}</span>
+            <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.stagger)}>
+              {line}
+            </span>
           </Fragment>
         ))}
       </p>
-      <p className="hero-stack-subline" style={{ color: edition.subline.color }}>
+      <p className="hero-stack-subline rv-rise" style={{ ...rv(SEQ.subline), color: edition.subline.color }}>
         {edition.subline.lines.map((l) => l.text).join(" ")}
       </p>
     </div>

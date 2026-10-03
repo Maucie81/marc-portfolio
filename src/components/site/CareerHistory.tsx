@@ -1,5 +1,7 @@
 import { Fragment } from "react";
+import RevealLines from "@/components/site/motion/RevealLines";
 import type { Role } from "@/lib/home";
+import { MOTION, rvGroup } from "@/lib/motion";
 
 /**
  * 04 Career history + Skills & Specializations · Figma 247:272775.
@@ -7,6 +9,10 @@ import type { Role } from "@/lib/home";
  * columns (56px apart, rows 36px apart), each marked by a numbered accent
  * dot; then the skills set in the Figma's four lines with accent "•"
  * dividers, 70px below.
+ *
+ * Motion: the heading sets as a masked line; each role fades up 8px as it
+ * scrolls in (70ms apart when they arrive together), and the skills follow
+ * a row at a time, 40ms apart, with only a 4px lift.
  */
 export default function CareerHistory({
   roles,
@@ -17,13 +23,22 @@ export default function CareerHistory({
 }) {
   return (
     <>
-      <h2 id="experience-title" className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
-        Career history
-      </h2>
+      <RevealLines
+        as="h2"
+        id="experience-title"
+        className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
+        lines={["Career history"]}
+        dur={MOTION.standard}
+        trigger
+      />
 
-      <ol className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]">
+      <ol
+        data-reveal-group
+        style={rvGroup(70)}
+        className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]"
+      >
         {roles.map((role, i) => (
-          <li key={role.company} className="flex gap-2">
+          <li key={role.company} data-reveal="view" className="rv-rise flex gap-2">
             {/* Ellipse 623 — 12px accent dot with the row number in white
                 9px; the list's own numbering carries it for assistive
                 tech. */}
@@ -52,9 +67,18 @@ export default function CareerHistory({
             fills the line above when it fits; skills stay whole and each
             dot is glued to the skill before it (nbsp), so lines break
             after a dot, never before one. */}
-        <div role="list" className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal">
+        <div
+          role="list"
+          data-reveal-group
+          style={rvGroup(40, { y: 4 })}
+          className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal"
+        >
           {skills.map((line, row) => (
-            <div key={line.join()} className="inline md:flex md:flex-wrap md:items-center md:gap-x-1.5">
+            <div
+              key={line.join()}
+              data-reveal="view"
+              className="rv-rise inline md:flex md:flex-wrap md:items-center md:gap-x-1.5"
+            >
               {line.map((skill, i) => (
                 <Fragment key={skill}>
                   {i > 0 || row > 0 ? (

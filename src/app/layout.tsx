@@ -7,6 +7,7 @@ import NoiseOverlay from "@/components/site/NoiseOverlay";
 import ProofNotes from "@/components/proof/ProofNotes";
 import { ProofProvider } from "@/components/proof/ProofProvider";
 import { HERO_EDITION_SCRIPT } from "@/lib/hero-editions";
+import { MOTION_SCRIPT } from "@/lib/motion";
 import "./globals.css";
 
 // Google Sans Flex isn't in next/font/google's generated catalog yet, even
@@ -69,14 +70,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    // suppressHydrationWarning: HERO_EDITION_SCRIPT sets data-hero on this
-    // element before React hydrates.
+    // suppressHydrationWarning: HERO_EDITION_SCRIPT and MOTION_SCRIPT set
+    // data-hero / data-motion on this element before React hydrates.
     <html lang="en" suppressHydrationWarning>
       <head>
         {/* Picks the homepage hero edition before first paint — see
             src/lib/hero-editions.ts. Runs on every route so the session's
             edition is fixed no matter which page it starts on. */}
         <script dangerouslySetInnerHTML={{ __html: HERO_EDITION_SCRIPT }} />
+        {/* Turns the homepage motion on (or leaves the page static) before
+            first paint — see src/lib/motion.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: MOTION_SCRIPT }} />
       </head>
       <body
         className={`${googleSansFlex.variable} ${robotoMono.variable} antialiased`}

@@ -1,7 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef } from "react";
+import { setMotionMode } from "@/lib/motion";
 import {
   markInAppNavigation,
   readScrollPosition,
@@ -33,6 +34,10 @@ export default function PageTransition({
   // the pathname it received so a hash-only pop can't leak into a later
   // Link navigation.
   const poppedTo = useRef<string | null>(null);
+  // The route the homepage motion mode was last decided for. The first
+  // document's mode comes from MOTION_SCRIPT; every later route sets it
+  // here, before the new page paints.
+  const motionPath = useRef(pathname);
 
   useEffect(() => {
     history.scrollRestoration = "manual";
@@ -56,6 +61,17 @@ export default function PageTransition({
       window.removeEventListener("pagehide", save);
     };
   }, []);
+
+  // Homepage motion (src/lib/motion.ts): a fresh visit plays it, Back /
+  // Forward shows the page as it was left — the scroll restore below lands
+  // on finished sections, not ones about to animate. A layout effect so the
+  // mode is in place before the new route's first paint, and it reads
+  // poppedTo before the effect below clears it.
+  useLayoutEffect(() => {
+    if (motionPath.current === pathname) return;
+    motionPath.current = pathname;
+    setMotionMode(poppedTo.current === pathname ? "off" : "play");
+  }, [pathname]);
 
   useEffect(() => {
     let isPop = poppedTo.current === pathname;

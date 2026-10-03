@@ -1,6 +1,7 @@
 import Link from "next/link";
 import CtaArrow from "@/components/site/CtaArrow";
 import type { SmallProject } from "@/lib/home";
+import { MOTION, rvGroup } from "@/lib/motion";
 
 /* The Figma's own line breaks, from 1280px up — the width its columns are
    drawn at. Narrower, the lines run on and wrap to the column. */
@@ -17,6 +18,9 @@ function Lines({ lines }: { lines: string[] }) {
  * 02 Additional work · Figma 215:212485 — a compact index, deliberately
  * quieter than Recent work: a 236px intro, then (188px over) a 560px list
  * of company / title → / description lockups, 26px apart.
+ *
+ * Motion: each row (the intro, then every lockup) fades up 8px once as it
+ * scrolls in; rows arriving together step 60ms apart.
  */
 export default function AdditionalWork({
   intro,
@@ -26,8 +30,12 @@ export default function AdditionalWork({
   items: SmallProject[];
 }) {
   return (
-    <div className="grid gap-10 md:grid-cols-[236px_minmax(0,560px)] md:gap-x-[clamp(2.5rem,13vw,188px)]">
-      <div className="flex flex-col gap-2">
+    <div
+      data-reveal-group
+      style={rvGroup(MOTION.stagger)}
+      className="grid gap-10 md:grid-cols-[236px_minmax(0,560px)] md:gap-x-[clamp(2.5rem,13vw,188px)]"
+    >
+      <div data-reveal="view" className="rv-rise flex flex-col gap-2">
         <h2 id="additional-work-title" className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
           Additional work
         </h2>
@@ -48,7 +56,7 @@ export default function AdditionalWork({
             </>
           );
           return (
-            <li key={item.company + item.title} className="flex flex-col gap-1.5">
+            <li key={item.company + item.title} data-reveal="view" className="rv-rise flex flex-col gap-1.5">
               <div className="flex flex-col gap-1">
                 <p className="text-[14px] tracking-[-0.01em] text-muted">{item.company}</p>
                 <h3 className="text-[16px] font-semibold leading-6 text-accent">

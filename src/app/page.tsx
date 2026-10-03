@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import Link from "next/link";
 import { preload } from "react-dom";
 import SectionNumber from "@/components/site/SectionNumber";
@@ -7,6 +8,9 @@ import RecentWork from "@/components/site/RecentWork";
 import AdditionalWork from "@/components/site/AdditionalWork";
 import ReferenceLibrary from "@/components/site/ReferenceLibrary";
 import CareerHistory from "@/components/site/CareerHistory";
+import RevealLines from "@/components/site/motion/RevealLines";
+import RevealObserver from "@/components/site/motion/RevealObserver";
+import { MOTION, rv } from "@/lib/motion";
 import {
   additionalWork,
   additionalWorkIntro,
@@ -81,6 +85,7 @@ export default function Home() {
       <section
         id="hero"
         aria-label="Introduction"
+        data-reveal="load"
         className="mx-auto scroll-mt-[52px] lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
       >
         <HomepageHero />
@@ -141,25 +146,38 @@ export default function Home() {
         <section
           id="interests"
           aria-labelledby="library-title"
+          style={{ "--lib-f": "clamp(2.75rem, 5.56vw, 5rem)" } as CSSProperties}
           className={`${SHELL} sec pb-[60px] pt-[50px] lg:pb-[77px] lg:pt-11`}
         >
-          {/* Figma drops this section's first circle and "03" level with
-              the title's first line (61px down), not the section's top. */}
-          <SectionRail dots={3} flush className="lg:pt-[67px]" />
-          <SectionNumber number="03" label="Reference library" className="lg:mt-[61px]" />
+          {/* The first circle and "03" sit level with the middle of the
+              title's first line, not the section's top. The title scales
+              (--lib-f, its font size), and that line's middle sits 0.918
+              of it below the row's top, so both offsets follow it. */}
+          <SectionRail dots={3} flush className="lg:pt-[calc(0.918*var(--lib-f)-10px)]" />
+          <SectionNumber
+            number="03"
+            label="Reference library"
+            className="lg:mt-[calc(0.918*var(--lib-f)-18px)]"
+          />
           <div className="min-w-0">
             {/* 247:272660 — title right-set against an accent bar, the
                 copy 30px on; the group centers on the 271.8px bar. */}
-            <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]">
+            {/* Motion: the title sets line by line, then the copy fades
+                up; the gallery is its own trigger (ReferenceLibrary). */}
+            <div
+              data-reveal="view"
+              className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]"
+            >
               <div className="flex items-center gap-[0.36em] text-[clamp(2.75rem,5.56vw,5rem)]">
-                <h2 id="library-title" className="lib-title">
-                  <span className="block">My personal</span>{" "}
-                  <span className="block">reference</span>{" "}
-                  <span className="block">library</span>
-                </h2>
+                <RevealLines
+                  as="h2"
+                  id="library-title"
+                  className="lib-title"
+                  lines={["My personal", "reference", "library"]}
+                />
                 <span aria-hidden className="lib-bar shrink-0" />
               </div>
-              <p className="lib-copy max-w-[498px]">
+              <p className="lib-copy rv-fade max-w-[498px]" style={rv(3 * MOTION.stagger)}>
                 <span className="md:block">A collection of images, objects,</span>{" "}
                 <span className="md:block">and environments that continue to</span>{" "}
                 <span className="md:block">shape my taste and influence how</span>{" "}
@@ -205,25 +223,38 @@ export default function Home() {
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}
         <div className="mx-auto px-3 py-6 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[27px]">
-          <div className="relative">
+          {/* Motion: the halftone field is uncovered bottom to top, then
+              the heading sets and the contact line fades up. */}
+          <div data-reveal="view" className="relative">
+            {/* The layer is turned 180°, so its clip-path runs upside down:
+                a top-to-bottom wipe in its own frame reads bottom to top. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 rotate-180 mix-blend-multiply blur-[0.5px]"
+              className="rv-wipe rv-wipe-ttb pointer-events-none absolute inset-0 rotate-180 mix-blend-multiply blur-[0.5px]"
               style={{ background: `url(${TEXTURE_SRC}) center / 1168px auto repeat` }}
             />
             {/* No section number here: the lockup starts where the other
                 sections' "0" sits, 64px in (24px rail column + 40px gap). */}
             <div className="relative px-3 py-[21px] md:px-6 lg:pb-[22px] lg:pl-16 lg:pr-0">
               <div className="min-w-0">
-                <p className="mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-ink-deep">
+                <p
+                  className="rv-line mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-ink-deep"
+                  style={rv(260)}
+                >
                   We should probably chat, right?
                 </p>
-                <h2 className="text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-ink-deep">
+                <h2
+                  className="rv-line text-[clamp(2rem,4vw,2.5rem)] font-bold leading-[1.26] text-ink-deep"
+                  style={rv(260 + MOTION.stagger)}
+                >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
                     Get in touch →
                   </Link>
                 </h2>
-                <p className="mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-ink-deep">
+                <p
+                  className="rv-fade mt-1 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[16px] font-semibold leading-6 text-ink-deep"
+                  style={rv(620)}
+                >
                     <a
                       href={`tel:${contact.phone.replace(/[^0-9+]/g, "")}`}
                       className="transition-opacity hover:opacity-75"
@@ -269,6 +300,8 @@ export default function Home() {
           32px at lg; this keeps the footer clear of it, as in the Figma.
           Below lg there's no bottom band, so no gap. */}
       <div aria-hidden className="hidden h-8 lg:block" />
+
+      <RevealObserver />
     </main>
   );
 }

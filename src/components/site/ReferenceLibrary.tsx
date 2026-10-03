@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { type UIEvent, useCallback, useEffect, useRef, useState } from "react";
+import { rv } from "@/lib/motion";
 import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/reference-library";
 
 /**
@@ -20,6 +21,11 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * the page around it doesn't. ← → (buttons or keys) step through the
  * sheet in reading order; Esc, the × or a click on the dimmed area closes
  * it.
+ *
+ * Motion: once, as it scrolls in, the window is uncovered left to right and
+ * the whole sheet settles 40px into place under it; then nothing moves on
+ * its own again. No tile animates by itself, and scrolling works
+ * throughout (the sheet is only translated, never scrolled).
  */
 export default function ReferenceLibrary() {
   const closeRef = useRef<HTMLButtonElement>(null);
@@ -57,9 +63,9 @@ export default function ReferenceLibrary() {
   const tile = open === null ? null : LIBRARY_TILES[open];
 
   return (
-    <div className="lib-panel">
+    <div data-reveal="view" className="lib-panel">
       <div
-        className="lib-window"
+        className="lib-window rv-wipe rv-wipe-ltr"
         data-at-top={edges.top || undefined}
         data-at-bottom={edges.bottom || undefined}
       >
@@ -71,8 +77,9 @@ export default function ReferenceLibrary() {
           tabIndex={0}
         >
           <ul
-            className="lib-sheet"
+            className="lib-sheet rv-drift"
             style={{
+              ...rv(0, { dur: 600, dx: -40 }),
               width: `calc(${SHEET_WIDTH} * var(--u))`,
               height: `calc(${SHEET_HEIGHT} * var(--u))`,
             }}

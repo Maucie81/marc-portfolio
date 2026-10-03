@@ -90,14 +90,12 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 different, unrelated alignment target) is reduced by that
                 same 17px. Moved as one unit, not just the dot, so the dot
                 stays glued to "Marc Favro" via the existing gap-3 rather
-                than tearing away from it. Desktop typography (Roboto
-                Mono, 10/20, uppercase, black) confirmed via
-                get_design_context on 627:49704/643:52825 — mobile keeps
-                the original Google Sans Flex treatment (no confirmed
-                discrepancy there). */}
+                than tearing away from it. The name is Google Sans Flex
+                SemiBold 16, sentence case, per direct request (it was
+                Roboto Mono uppercase, like the nav links still are). */}
             <Link
               href="/"
-              className="ml-[0px] flex items-center gap-3 text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong transition-colors hover:text-accent [font-family:var(--font-mono),ui-monospace,monospace]"
+              className="ml-[0px] flex items-center gap-3 text-[16px] font-semibold leading-[20px] tracking-[-0.01em] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
             >
               <span
                 aria-hidden

@@ -8,6 +8,10 @@
 // MCP asset URLs). Some fills are stored sideways and rotated by Figma, so
 // every rotation × crop is tried and the one that best matches the tile's
 // existing (correctly oriented) thumbnail wins.
+//
+// Hand edit to redo after any fresh download: the screw-magazine fill's top
+// banner (its first 372px rows) is painted white before building, so its
+// headline doesn't show (thumbnail + full copy).
 import sharp from "sharp";
 import fs from "node:fs";
 

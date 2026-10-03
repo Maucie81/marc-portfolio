@@ -1462,3 +1462,133 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 .lib-window {
   z-index: 1;
 }
+
+/* ---------- Motion system (homepage) ----------
+   See src/lib/motion.ts for the model: reveal classes (.rv-*) say how an
+   element arrives, the nearest data-reveal trigger says when, and
+   <html data-motion> says whether anything moves at all. Every keyframe
+   fills backwards only: it holds the first frame through its delay, and
+   once it ends the element is back to its own styles — the animation never
+   changes the final layout. Only transform, opacity and clip-path move. */
+:root {
+  /* Durations mirror MOTION in src/lib/motion.ts. */
+  --motion-fast: 200ms;
+  --motion-standard: 420ms;
+  --motion-major: 620ms;
+  --motion-stagger: 60ms;
+  --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Per-element, never inherited: a parent's delay or duration must not leak
+   into the reveals nested inside it. (--rv-i, --rv-stagger, --rv-y and
+   --rv-dx DO inherit — a trigger or group sets them for its children.) */
+@property --rv-d {
+  syntax: "<time>";
+  inherits: false;
+  initial-value: 0ms;
+}
+
+@property --rv-dur {
+  syntax: "<time>";
+  inherits: false;
+  initial-value: 420ms;
+}
+
+.rv-line,
+.rv-wipe,
+.rv-clip {
+  --rv-dur: var(--motion-major);
+}
+
+.rv-rise,
+.rv-fade,
+.rv-drift {
+  --rv-dur: var(--motion-standard);
+}
+
+.rv-wipe-ltr { --rv-wipe-from: inset(0 100% 0 0); }
+.rv-wipe-rtl { --rv-wipe-from: inset(0 0 0 100%); }
+.rv-wipe-btt { --rv-wipe-from: inset(100% 0 0 0); }
+.rv-wipe-ttb { --rv-wipe-from: inset(0 0 100% 0); }
+
+/* Masked line. The mask is fixed on the page just under the last line's
+   descenders (0.6em below its middle); the text starts one line-box plus
+   ~1em lower, wholly under it, and rises into place. The clip-path rides
+   along with the transform, so its bottom inset grows by exactly the
+   distance the text has left to travel — the two share one easing, so the
+   mask edge holds still. Works for any number of lines (100% − 1lh is the
+   extra height of a wrapped block). */
+@keyframes rv-line {
+  from {
+    transform: translateY(calc(100% - 1lh + 1.05em));
+    clip-path: inset(-1em -0.5em calc(100% - 0.5lh + 0.45em) -0.5em);
+  }
+  to {
+    clip-path: inset(-1em -0.5em calc(0.5lh - 0.6em) -0.5em);
+  }
+}
+
+@keyframes rv-rise {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rv-y, 8px));
+  }
+}
+
+@keyframes rv-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rv-wipe {
+  from {
+    clip-path: var(--rv-wipe-from);
+  }
+  to {
+    clip-path: inset(0);
+  }
+}
+
+/* Ends on the element's own clip-path (the hero portrait's crop). */
+@keyframes rv-clip {
+  from {
+    clip-path: var(--rv-clip-from);
+  }
+}
+
+@keyframes rv-drift {
+  from {
+    transform: translateX(var(--rv-dx, 0px));
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+    animation-duration: var(--rv-dur);
+    animation-timing-function: var(--motion-ease);
+    animation-delay: calc(var(--rv-d) + var(--rv-i, 0) * var(--rv-stagger, 0ms));
+    animation-fill-mode: backwards;
+  }
+
+  html[data-motion] .rv-line { animation-name: rv-line; }
+  html[data-motion] .rv-rise { animation-name: rv-rise; }
+  html[data-motion] .rv-fade { animation-name: rv-fade; }
+  html[data-motion] .rv-wipe { animation-name: rv-wipe; }
+  html[data-motion] .rv-clip { animation-name: rv-clip; }
+  html[data-motion] .rv-drift { animation-name: rv-drift; }
+
+  /* Waiting — paused on the first frame, i.e. hidden: the hero until its
+     font and portrait are in, a view trigger until it scrolls into view. */
+  html[data-motion="hold"] [data-reveal="load"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
+  html[data-motion] [data-reveal="view"]:not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
+  html[data-motion] [data-reveal="view"]:not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+    animation-play-state: paused;
+  }
+
+  /* Played (or already scrolled past): retired for good. */
+  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift),
+  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-wipe, .rv-clip, .rv-drift) {
+    animation: none;
+  }
+}

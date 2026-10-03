@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import CtaArrow from "@/components/site/CtaArrow";
 import type { Project } from "@/lib/home";
+import { MOTION, rv } from "@/lib/motion";
 
 /* Panel geometry · Figma "Mockup" 215:210133 — 714 × 412, 12px corners.
    The graph paper is 23 × 15 cells (30 × 26.5 + 1px #ccc57c rules), so it's
@@ -12,13 +13,32 @@ const PANEL_W = 714;
 const PANEL_H = 412;
 const GRID_LINE = "#ccc57c";
 
-function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
+/* Motion: each card plays once as it scrolls in. The panel is uncovered by
+   a hard wipe running away from the copy (left → right when it sits on the
+   right, right → left when it sits on the left) while the device inside
+   settles 12px the same way; the company and title set as masked lines.
+   A right-hand panel follows its title, a left-hand one leads it — the
+   order the eye meets them. */
+const WIPE_DRIFT = 12;
+const MEDIA_LAG = 140;
+
+function MockupPanel({
+  project,
+  eager,
+  delay,
+}: {
+  project: Project;
+  eager: boolean;
+  delay: number;
+}) {
   const { mockup } = project;
   const { box } = mockup;
+  const ltr = project.media === "right";
   return (
     <div
-      className="product-media relative isolate overflow-hidden rounded-[6px] bg-bg md:rounded-[12px]"
+      className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[6px] bg-bg md:rounded-[12px]`}
       style={{
+        ...rv(delay),
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
           `linear-gradient(to right, ${GRID_LINE} 1px, transparent 1px)`,
@@ -42,8 +62,9 @@ function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
         unoptimized
         // The first card's panel is in the opening viewport at 1440 × 1024.
         priority={eager}
-        className="absolute block max-w-none"
+        className="rv-drift absolute block max-w-none"
         style={{
+          ...rv(delay, { dur: MOTION.major, dx: ltr ? -WIPE_DRIFT : WIPE_DRIFT }),
           left: `${(box.x / PANEL_W) * 100}%`,
           top: `${(box.y / PANEL_H) * 100}%`,
           width: `${(box.w / PANEL_W) * 100}%`,
@@ -130,11 +151,13 @@ function Lines({ lines }: { lines: string[] }) {
  */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const mediaLeft = project.media === "left";
-  const panel = <MockupPanel project={project} eager={index === 0} />;
+  const titleAt = mediaLeft ? MEDIA_LAG : 0;
+  const panel = <MockupPanel project={project} eager={index === 0} delay={mediaLeft ? 0 : MEDIA_LAG} />;
 
   return (
     <article
       id={`work-${project.company.toLowerCase()}`}
+      data-reveal="view"
       className={`grid scroll-mt-[100px] gap-y-5 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
         mediaLeft
           ? "md:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
@@ -154,10 +177,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       >
         <div className="flex flex-col gap-1">
           <div className="flex flex-col gap-2">
-            <p className="text-[16px] font-medium tracking-[-0.01em] text-muted">
+            <p
+              className="rv-line text-[16px] font-medium tracking-[-0.01em] text-muted"
+              style={rv(titleAt, { dur: MOTION.standard })}
+            >
               {project.company}
             </p>
-            <h3 className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
+            <h3
+              className="rv-line text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
+              style={rv(titleAt + MOTION.stagger, { dur: MOTION.standard })}
+            >
               {project.title}
             </h3>
           </div>

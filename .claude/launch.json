@@ -12,6 +12,17 @@
       "autoPort": true
     },
     {
+      "name": "portfolio-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "next",
+        "start",
+        "-p",
+        "3020"
+      ],
+      "port": 3020
+    },
+    {
       "name": "ypp-prototype",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
