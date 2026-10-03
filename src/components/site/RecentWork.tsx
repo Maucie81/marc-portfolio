@@ -8,10 +8,13 @@ import { MOTION, rv } from "@/lib/motion";
    The graph paper is 23 × 15 cells (30 × 26.5 + 1px #ccc57c rules), so it's
    drawn as a fraction of the panel rather than a fixed pitch: the cell
    count stays the design's at every width. The halftone sheet sits over it
-   at 40% multiply, turned 180° and softened 0.5px, as in the Figma. */
+   at 65% multiply (Figma: 40%, darkened per request), turned 180° and
+   softened 0.5px. */
 const PANEL_W = 714;
 const PANEL_H = 412;
-const GRID_LINE = "#ccc57c";
+// Same rule colour and paper as the reference library's graph paper
+// (page.tsx LIBRARY_RULE / LIBRARY_PAPER).
+const GRID_LINE = "#e7e1cb";
 
 /* Motion: each card plays once as it scrolls in, and the image carries it —
    a slow, hard wipe running away from the copy (left → right when the panel
@@ -38,7 +41,7 @@ function MockupPanel({
   const ltr = project.media === "right";
   return (
     <div
-      className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[6px] bg-bg md:rounded-[12px]`}
+      className={`product-media rv-wipe ${ltr ? "rv-wipe-ltr" : "rv-wipe-rtl"} relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]`}
       style={{
         ...rv(delay, { dur: WIPE_MS }),
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
@@ -52,7 +55,7 @@ function MockupPanel({
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 rotate-180 opacity-40 mix-blend-multiply blur-[0.5px]"
+        className="pointer-events-none absolute inset-0 rotate-180 opacity-[0.65] mix-blend-multiply blur-[0.5px]"
         style={{ background: "url(/additional-work-texture.webp) center / cover no-repeat" }}
       />
       <Image
@@ -199,7 +202,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <Link
             href={project.href}
             aria-label={`Open the ${project.company} ${project.title} case study`}
-            className="block rounded-[6px] md:rounded-[12px]"
+            className="block rounded-[4px] md:rounded-[6px]"
           >
             {panel}
           </Link>
