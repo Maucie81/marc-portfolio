@@ -71,10 +71,10 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
     <>
       <header
         ref={headerRef}
-        className="sticky top-0 z-50 bg-bg lg:fixed lg:inset-x-0 lg:top-0 lg:bg-white"
+        className="sticky top-0 z-50 bg-white lg:fixed lg:inset-x-0 lg:top-0"
       >
         <div className="relative">
-          <div className="mx-auto flex items-center justify-between px-6 pb-6 pt-6 lg:h-[42px] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-0">
+          <div className="mx-auto flex items-center justify-between px-6 py-4 md:px-12 lg:h-[42px] lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-0">
             {/* w-[min(1376px,...)], centered (mx-auto): content must not
                 grow past the confirmed 1440px design width (get_metadata,
                 node 627:49704) minus the 32px rail on each side —
@@ -160,13 +160,13 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               one 48px row per link in the nav's mono uppercase. */}
           <div
             id="home-menu"
-            className={`absolute inset-x-0 top-full border-b border-line bg-bg transition-[opacity,transform,visibility] duration-200 motion-reduce:transition-none sm:hidden ${
+            className={`absolute inset-x-0 top-full border-b border-line bg-white transition-[opacity,transform,visibility] duration-200 motion-reduce:transition-none sm:hidden ${
               menuOpen
                 ? "visible translate-y-0 opacity-100"
                 : "invisible -translate-y-1 opacity-0"
             }`}
           >
-            <nav className="flex flex-col px-6 pb-4 text-[16px] font-normal uppercase leading-[24px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
+            <nav className="flex flex-col px-6 pb-4 md:px-12 text-[16px] font-normal uppercase leading-[24px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
               <Link
                 href="/#hero"
                 onClick={closeMenu}

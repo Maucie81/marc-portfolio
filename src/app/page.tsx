@@ -27,14 +27,15 @@ import {
    exactly at the rails' inner edge. Each band owns its own copy because the
    paper fill belongs to the BAND (full-bleed, uncapped) while the content
    inside it stays capped. */
-const SHELL = "mx-auto px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8";
+const SHELL = "mx-auto px-6 md:px-12 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8";
 
 /* 32px of bare white between bands, matching the perimeter rails' own
-   width — the Figma separates every section this way. Full-bleed by
+   width — the Figma separates every section this way. Halved to 16px below
+   lg, where there are no rails. Full-bleed by
    construction: it sits outside SHELL, so the white it exposes is the
    <body> itself. */
 function BandGap() {
-  return <div aria-hidden className="hidden h-8 lg:block" />;
+  return <div aria-hidden className="h-4 lg:h-8" />;
 }
 
 /* Band fills are painted, not set as background-color, so they stop at the
@@ -80,7 +81,7 @@ export default function Home() {
       <section
         id="hero"
         aria-label="Introduction"
-        className="mx-auto scroll-mt-[68px] lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
+        className="mx-auto scroll-mt-[52px] lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
       >
         <HomepageHero />
       </section>
@@ -149,7 +150,7 @@ export default function Home() {
           <div className="min-w-0">
             {/* 247:272660 — title right-set against an accent bar, the
                 copy 30px on; the group centers on the 271.8px bar. */}
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-[30px]">
+            <div className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]">
               <div className="flex items-center gap-[0.36em] text-[clamp(2.75rem,5.56vw,5rem)]">
                 <h2 id="library-title" className="lib-title">
                   <span className="block">My personal</span>{" "}
@@ -159,10 +160,10 @@ export default function Home() {
                 <span aria-hidden className="lib-bar shrink-0" />
               </div>
               <p className="lib-copy max-w-[498px]">
-                <span className="xl:block">A collection of images, objects,</span>{" "}
-                <span className="xl:block">and environments that continue to</span>{" "}
-                <span className="xl:block">shape my taste and influence how</span>{" "}
-                <span className="xl:block">I approach design.</span>
+                <span className="md:block">A collection of images, objects,</span>{" "}
+                <span className="md:block">and environments that continue to</span>{" "}
+                <span className="md:block">shape my taste and influence how</span>{" "}
+                <span className="md:block">I approach design.</span>
               </p>
             </div>
             <div className="mt-8">
@@ -201,7 +202,10 @@ export default function Home() {
           above and below it. The credit line sits inside it, right-set on
           the links row. */}
       <footer id="contact" style={bandFill("var(--bg)")}>
-        <div className={`${SHELL} py-6 lg:py-[27px]`}>
+        {/* The footer panel sits at half the other sections' side inset
+            (12px on phones, 24px to lg), with its copy padded back in line
+            with them. */}
+        <div className="mx-auto px-3 py-6 md:px-6 lg:w-[min(1376px,calc(100%-4rem))] lg:px-8 lg:py-[27px]">
           <div className="relative">
             <div
               aria-hidden
@@ -210,7 +214,7 @@ export default function Home() {
             />
             {/* No section number here: the lockup starts where the other
                 sections' "0" sits, 64px in (24px rail column + 40px gap). */}
-            <div className="relative px-5 py-[21px] lg:pb-[22px] lg:pl-16 lg:pr-0">
+            <div className="relative px-3 py-[21px] md:px-6 lg:pb-[22px] lg:pl-16 lg:pr-0">
               <div className="min-w-0">
                 <p className="mb-[13px] pt-0.5 text-[16px] font-semibold leading-6 text-ink-deep">
                   We should probably chat, right?
@@ -251,8 +255,9 @@ export default function Home() {
                       LinkedIn
                     </a>
                   </p>
-                  {/* Set right, inside the panel, in the links' own style. */}
-                  <p className="lg:pr-8">Built &amp; designed using way too many AI platforms to remember</p>
+                  {/* Set right, inside the panel, in the links' own style; on phones it
+                    drops below them, smaller and center-aligned. */}
+                  <p className="w-full text-center text-[14px] leading-[22px] md:w-auto md:text-left md:text-[16px] md:leading-6 lg:pr-8">Built &amp; designed using way too many AI platforms to remember</p>
                 </div>
               </div>
             </div>
@@ -261,8 +266,9 @@ export default function Home() {
       </footer>
 
       {/* The fixed bottom band (PerimeterFrame) covers the page's last
-          32px; this keeps the coral clear of it, as in the Figma. */}
-      <BandGap />
+          32px at lg; this keeps the footer clear of it, as in the Figma.
+          Below lg there's no bottom band, so no gap. */}
+      <div aria-hidden className="hidden h-8 lg:block" />
     </main>
   );
 }

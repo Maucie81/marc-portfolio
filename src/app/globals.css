@@ -434,6 +434,18 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   filter: blur(0.5px);
 }
 
+/* Tablet widths (768–1023px, no perimeter rails): the metadata's 10px
+   floor makes it relatively larger, so Hero 2's lockup (eyebrow, name,
+   statement, subline, portrait, slash) rides 28 board px higher to keep
+   clear of it in the lower right. */
+@media (min-width: 768px) and (max-width: 1023.98px) {
+  .hero-edition[data-edition="2"] .hero-board > .hero-text,
+  .hero-edition[data-edition="2"] .hero-board > .hero-portrait,
+  .hero-edition[data-edition="2"] .hero-board > .hero-rule {
+    translate: 0 calc(-28 * var(--hu));
+  }
+}
+
 /* ----- Stacked hero, below 768px ----- */
 .hero-stack {
   position: relative;
@@ -463,15 +475,16 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 }
 
 .hero-stack-statement,
-.hero-stack-subline,
-.hero-stack-meta {
+.hero-stack-subline {
   position: relative;
   z-index: 1;
 }
 
+/* Set in desktop's four lines; the widest ("based in Brooklyn,") is
+   ~8.8em, so the size is capped to keep it inside the column. */
 .hero-stack-statement {
-  margin: 1.75rem 0 0;
-  font-size: clamp(2.25rem, 9vw, 3.75rem);
+  margin: 1rem 0 0;
+  font-size: min(clamp(2.25rem, 9vw, 3.75rem), calc(100cqw / 8.9));
   font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.01em;
@@ -485,11 +498,6 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   font-weight: 600;
   line-height: 1.35;
   letter-spacing: -0.02em;
-}
-
-.hero-stack-meta {
-  margin: 1.5rem 0 0;
-  font-size: 10px;
 }
 
 /* ---------- Reference library (ReferenceLibrary.tsx) ----------
@@ -773,7 +781,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   grid-template-columns: 1fr;
   gap: 1.25rem;
   /* Keeps a #section target clear of the sticky/fixed header. */
-  scroll-margin-top: 66px;
+  scroll-margin-top: 52px;
 }
 
 @media (min-width: 1024px) {

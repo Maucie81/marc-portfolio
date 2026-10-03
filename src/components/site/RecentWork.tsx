@@ -17,7 +17,7 @@ function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
   const { box } = mockup;
   return (
     <div
-      className="product-media relative isolate overflow-hidden rounded-[12px] bg-bg"
+      className="product-media relative isolate overflow-hidden rounded-[6px] bg-bg md:rounded-[12px]"
       style={{
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
@@ -72,8 +72,8 @@ function SkillTags({
   return (
     <ul
       aria-label="Project focus"
-      className={`flex flex-wrap items-center gap-x-2.5 pb-1 pt-2 ${align === "end" ? "lg:justify-end" : ""} ${
-        overhang ? "lg:-mb-2.5" : ""
+      className={`hidden flex-wrap items-center gap-x-2.5 pb-1 pt-2 md:flex ${align === "end" ? "md:justify-end" : ""} ${
+        overhang ? "md:-mb-2.5" : ""
       }`}
     >
       {skills.map((skill, i) => (
@@ -115,7 +115,8 @@ function Lines({ lines }: { lines: string[] }) {
 /**
  * One Recent work card · Figma "Project Card" 215:210119 / 215:210869 /
  * 215:211653. 379px of copy and a 714px panel with a 32px gutter, the
- * panel alternating sides card to card. Copy is ~25–30% of the row.
+ * panel alternating sides card to card — kept side by side, scaling down,
+ * from 768px up; below that the copy stacks over the panel. Copy is ~25–30% of the row.
  */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const mediaLeft = project.media === "left";
@@ -124,10 +125,10 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <article
       id={`work-${project.company.toLowerCase()}`}
-      className={`grid scroll-mt-[116px] gap-y-5 lg:scroll-mt-[90px] lg:gap-x-8 lg:gap-y-0 ${
+      className={`grid scroll-mt-[100px] gap-y-5 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
         mediaLeft
-          ? "lg:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
-          : "lg:grid-cols-[minmax(0,379fr)_minmax(0,714fr)]"
+          ? "md:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
+          : "md:grid-cols-[minmax(0,379fr)_minmax(0,714fr)]"
       }`}
     >
       {/* Project Info · 215:210120 — company 16 Medium, title 20 Bold,
@@ -137,9 +138,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           — the panel's height less 10px, i.e. 32px clear of the bottom of
           their 434px frame (see the tag row's overhang below). */}
       <div
-        className={`flex flex-col gap-5 lg:row-start-1 ${
-          mediaLeft ? "lg:col-start-2" : "lg:col-start-1"
-        } ${project.copyAlign === "center" ? "lg:mb-8 lg:self-center" : "lg:self-start"}`}
+        className={`flex flex-col gap-5 md:row-start-1 ${
+          mediaLeft ? "md:col-start-2" : "md:col-start-1"
+        } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
       >
         <div className="flex flex-col gap-1">
           <div className="flex flex-col gap-2">
@@ -154,16 +155,16 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <Lines lines={project.description} />
           </p>
         </div>
-        <ProjectCta project={project} className="inline-flex mb-3 lg:mb-0" />
+        <ProjectCta project={project} className="inline-flex mb-3 md:mb-0" />
       </div>
 
       {/* Panel + its metadata row. The whole panel opens the case study. */}
-      <div className={`lg:row-start-1 ${mediaLeft ? "lg:col-start-1" : "lg:col-start-2"}`}>
+      <div className={`md:row-start-1 ${mediaLeft ? "md:col-start-1" : "md:col-start-2"}`}>
         {project.href ? (
           <Link
             href={project.href}
             aria-label={`Open the ${project.company} ${project.title} case study`}
-            className="block rounded-[12px] transition-opacity hover:opacity-90"
+            className="block rounded-[6px] md:rounded-[12px]"
           >
             {panel}
           </Link>

@@ -79,6 +79,18 @@ export type HeroEdition = {
   cluster: { x: number; y: number; w: number; h: number };
   /** Stacked layout's statement color (the desktop statement's own). */
   mobileStatementColor: string;
+  /** Stacked-layout (<768px) tweaks, in board px: a shorter divider (its
+   * new height), the eyebrow + name and the portrait moved vertically so
+   * both center on the divider, and a shorter cluster cut so the statement
+   * sits closer. */
+  stack?: {
+    ruleH?: number;
+    nameShift?: number;
+    portraitShift?: number;
+    clusterH?: number;
+    /** The statement's alignment (default left). */
+    statementAlign?: "center";
+  };
 };
 
 const rect = (x: number, y: number, w: number, h: number): [number, number][] => [
@@ -174,6 +186,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     meta: { right: 1355.8, y: 497.7, color: META_PINK, z: 6 },
     cluster: { x: 55, y: 20, w: 453, h: 515 },
     mobileStatementColor: "#fff",
+    stack: { ruleH: 411, nameShift: 20, portraitShift: -32, clusterH: 424 },
   },
   // ---------- Hero 4 · 254:273423 — oversized statement, coral name ----------
   {
@@ -195,6 +208,7 @@ export const HERO_EDITIONS: HeroEdition[] = [
     meta: { right: 1355.8, y: 20.2, color: META_GREY, z: 1 },
     cluster: { x: 69, y: 35, w: 594, h: 502 },
     mobileStatementColor: INK,
+    stack: { statementAlign: "center" },
   },
   // ---------- Hero 5 · 254:273459 — ink, color-burn halftone ----------
   {

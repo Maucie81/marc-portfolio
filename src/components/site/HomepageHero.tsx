@@ -115,7 +115,7 @@ function Rules({ edition }: { edition: HeroEdition }) {
     <span
       key={i}
       aria-hidden
-      className="absolute"
+      className="hero-rule absolute"
       style={{
         zIndex: r.z,
         left: u(r.x),
@@ -200,7 +200,30 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
 }
 
 /** <768px: the edition's name/portrait cluster, then the copy as text. */
-function StackedHero({ edition }: { edition: HeroEdition }) {
+/** The edition with its `stack` tweaks applied, for the stacked layout. */
+function stackEdition(edition: HeroEdition): HeroEdition {
+  const t = edition.stack;
+  if (!t) return edition;
+  const shift = (spec: HeroEdition["name"]) =>
+    t.nameShift ? { ...spec, lines: spec.lines.map((l) => ({ ...l, y: l.y + t.nameShift! })) } : spec;
+  return {
+    ...edition,
+    eyebrow: shift(edition.eyebrow),
+    name: shift(edition.name),
+    portrait: t.portraitShift
+      ? {
+          ...edition.portrait,
+          y: edition.portrait.y + t.portraitShift,
+          clip: edition.portrait.clip.map(([x, y]) => [x, y + t.portraitShift!] as [number, number]),
+        }
+      : edition.portrait,
+    rules: t.ruleH ? edition.rules.map((r, i) => (i === 0 ? { ...r, h: t.ruleH! } : r)) : edition.rules,
+    cluster: t.clusterH ? { ...edition.cluster, h: t.clusterH } : edition.cluster,
+  };
+}
+
+function StackedHero({ edition: base }: { edition: HeroEdition }) {
+  const edition = stackEdition(base);
   const c = edition.cluster;
   return (
     <div
@@ -223,14 +246,19 @@ function StackedHero({ edition }: { edition: HeroEdition }) {
       </div>
       <p
         className="hero-stack-statement"
-        style={{ color: edition.mobileStatementColor }}
+        style={{ color: edition.mobileStatementColor, textAlign: edition.stack?.statementAlign }}
       >
-        {HERO_STATEMENT.join(" ")}
+        {/* Desktop's own four lines, never re-wrapped (see the CSS). */}
+        {HERO_STATEMENT.map((line, i) => (
+          <Fragment key={line}>
+            {i > 0 ? " " : null}
+            <span className="block whitespace-nowrap">{line}</span>
+          </Fragment>
+        ))}
       </p>
       <p className="hero-stack-subline" style={{ color: edition.subline.color }}>
         {edition.subline.lines.map((l) => l.text).join(" ")}
       </p>
-      <Meta edition={edition} className="hero-stack-meta" />
     </div>
   );
 }

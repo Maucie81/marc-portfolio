@@ -43,7 +43,7 @@ export default function AdditionalWork({
             <>
               {item.title}
               {live ? null : (
-                <span className="font-normal text-muted"> — Coming soon</span>
+                <span className="text-[14px] font-normal tracking-[-0.01em] text-muted"> — Coming soon</span>
               )}
             </>
           );
