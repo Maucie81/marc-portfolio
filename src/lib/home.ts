@@ -135,7 +135,7 @@ export const additionalWorkIntro = [
 export const additionalWork: SmallProject[] = [
   {
     company: "Headspace",
-    title: "Headspace Admin portal redesign",
+    title: "Unified main door",
     description: [
       "The cross-functional initiative that gave Headspace and Ginger's",
       "separately-built products one shared front door — eligibility",
