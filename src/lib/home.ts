@@ -142,7 +142,7 @@ export const additionalWork: SmallProject[] = [
       "and enrollment unified into a single flow for the first time.",
     ],
     href: "/work/headspace-umd",
-    careerLabel: "Admin portal redesign",
+    careerLabel: "Unified main door",
   },
   {
     company: "Yahoo",
