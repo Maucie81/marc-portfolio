@@ -47,7 +47,7 @@ export const sidebar = {
         "Scope & roadmap definition",
         "Wireframing & information architecture",
         "Research program (2 phases, 11 partners)",
-        "Data visualization design system",
+        "Analytics & data visualization",
       ],
     },
   ],

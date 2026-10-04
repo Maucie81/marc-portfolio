@@ -77,7 +77,7 @@ export const projects: Project[] = [
     copyAlign: "center",
     skills: [
       "B2B platform",
-      "Design systems",
+      "Information architecture",
       "User research",
       "Roadmap prioritization",
     ],
@@ -102,7 +102,7 @@ export const projects: Project[] = [
     copyAlign: "center",
     skills: [
       "Onboarding design",
-      "Design systems",
+      "Partner workflows",
       "User research",
       "B2B partnerships",
     ],
@@ -146,10 +146,10 @@ export const additionalWork: SmallProject[] = [
   },
   {
     company: "Yahoo",
-    title: "Data Viz Integration",
+    title: "Data visualization at scale",
     description: [
       "The charting and data visualization system built for the Partner Portal,",
-      "along with the design system it runs on — built on a shared CMS",
+      "along with the shared visualization framework it runs on — built on a shared CMS",
       "foundation used across the platform.",
     ],
     href: null,
@@ -189,7 +189,7 @@ export const roles: Role[] = [
  * one run). Rebalanced into three fuller lines so no skill sits alone. */
 export const skills = [
   ["AI Product Development", "Systems Design", "Platform B2B"],
-  ["Visual / UI Design", "Data Visualization", "Product Strategy", "Design Systems"],
+  ["Visual / UI Design", "Data Visualization", "Product Strategy"],
   ["Information Architecture", "Accessibility", "User Research"],
 ];
 
