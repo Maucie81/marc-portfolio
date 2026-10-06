@@ -94,11 +94,17 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 than tearing away from it. The name is Google Sans Flex
                 SemiBold 16, sentence case, per direct request (it was
                 Roboto Mono uppercase, like the nav links still are).
-                Desktop (lg+): the name alone is set a touch smaller (15)
-                and 2px nearer the dot (gap 10) — the dot stays put. */}
+                Desktop (lg+): the name sits 2px nearer the dot (gap 10), and
+                the whole lockup is nudged 3px right (lg:ml-[3px]) so the
+                dot's center lands on the center of the rail circle below
+                it (circle 12px at x=68, dot 14px; measured 3px apart at
+                every width from 1024 up). The name travels with the dot.
+                Type is the same spec as the "Recent work" section title
+                (.t-section-title): 16px / 600 / no tracking, at every
+                width. */}
             <Link
               href="/"
-              className="ml-[0px] flex items-center gap-3 text-[16px] lg:gap-2.5 lg:text-[15px] font-semibold leading-[20px] tracking-[-0.01em] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
+              className="ml-[0px] lg:ml-[3px] flex items-center gap-3 text-[16px] lg:gap-2.5 font-semibold leading-[20px] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
             >
               <span
                 aria-hidden
