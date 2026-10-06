@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Roboto_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
 import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
 import NoiseOverlay from "@/components/site/NoiseOverlay";
+import Analytics from "@/components/site/Analytics";
 import ProofNotes from "@/components/proof/ProofNotes";
 import { ProofProvider } from "@/components/proof/ProofProvider";
 import { HERO_EDITION_SCRIPT } from "@/lib/hero-editions";
@@ -106,6 +106,8 @@ export default function RootLayout({
           <ProofNotes />
         </ProofProvider>
         <NoiseOverlay />
+        {/* Vercel Web Analytics, skipped in browsers that opened /owner —
+            see src/components/site/Analytics.tsx. */}
         <Analytics />
       </body>
     </html>
