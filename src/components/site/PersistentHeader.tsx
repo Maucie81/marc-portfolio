@@ -116,12 +116,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               <Link href="/#work" className="transition-colors hover:text-accent">
                 Work
               </Link>
-              <Link
-                href="/contact"
-                className={`transition-colors hover:text-accent${activeClass("contact")}`}
-              >
-                Contact
-              </Link>
               <a
                 href={contact.resume}
                 target="_blank"
@@ -130,6 +124,12 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               >
                 Resume
               </a>
+              <Link
+                href="/contact"
+                className={`transition-colors hover:text-accent${activeClass("contact")}`}
+              >
+                Contact
+              </Link>
             </nav>
             {/* Two 20px strokes that cross into an × when open. 40px hit
                 area, pulled back by negative margins so the header keeps
@@ -182,13 +182,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               >
                 Work
               </Link>
-              <Link
-                href="/contact"
-                onClick={closeMenu}
-                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("contact")}`}
-              >
-                Contact
-              </Link>
               <a
                 href={contact.resume}
                 target="_blank"
@@ -198,6 +191,13 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
               >
                 Resume
               </a>
+              <Link
+                href="/contact"
+                onClick={closeMenu}
+                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("contact")}`}
+              >
+                Contact
+              </Link>
             </nav>
           </div>
           <div className={`pointer-events-none absolute inset-0 hidden lg:block ${SHEET}`}>
@@ -300,17 +300,17 @@ function CaseStudyTopBar({
               <Link href="/#work" className="transition-colors hover:text-accent">
                 Work
               </Link>
+              <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
+                Resume
+              </a>
               <Link
-                href="/#contact"
+                href="/contact"
                 className={`transition-colors hover:text-accent${
                   active === "contact" ? " font-semibold" : ""
                 }`}
               >
                 Contact
               </Link>
-              <a href={RESUME_URL} target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">
-                Resume
-              </a>
             </nav>
           </div>
           <div
