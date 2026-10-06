@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+/* `sideways:` — the case-study track's horizontal mode: wide enough AND
+   motion allowed, the same condition HorizontalTrack.tsx pins and scrolls
+   the track on (SIDEWAYS there; the "Horizontal mode" rules below). The
+   case-study blocks lay themselves out for it with this, not a plain width
+   breakpoint, so with reduced motion on a desktop screen — where the track
+   stacks like a phone's — they stack like a phone's too. */
+@custom-variant sideways (@media (min-width: 901px) and (prefers-reduced-motion: no-preference));
+
 /* Colour system — one warm neutral ladder, every rung on the same brown-grey
    hue as --ink, so nothing reads cool against the cream sheet. Started from
    Figma's neutrals (Portfolio-2026 / Final Homepage, 499:54149: #e4e4df
@@ -893,7 +901,9 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   pointer-events: none;
 }
 
-@media (min-width: 901px) {
+/* Horizontal mode only: on the stacked layout there's no cover screen for
+   them to frame. */
+@media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
   .cs-rail-dots {
     display: flex;
   }
@@ -1260,10 +1270,9 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 /* Horizontal mode. Threshold matches HorizontalTrack.tsx's own
    gsap.matchMedia() breakpoint (901px) — that JS decides whether to pin
    and scroll-drive the track at all, so this CSS must switch at the exact
-   same width or the two disagree about which mode is active. The page's
-   own `lg:` classes are remapped to `min-[901px]:` for the same reason
-   (see yahoo-partner-portal/page.tsx) rather than moving Tailwind's global
-   `lg` breakpoint, which would also affect the homepage. */
+   same width or the two disagree about which mode is active. The blocks'
+   own classes use the `sideways:` variant (top of this file) for the same
+   reason — the same width, and the same reduced-motion exception. */
 @media (min-width: 901px) and (prefers-reduced-motion: no-preference) {
   .cs-pin {
     height: 100vh;
@@ -1440,6 +1449,12 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
     width: 100%;
   }
 
+  /* Case-study reveals (READING in src/lib/motion.ts) travel 70% as far on
+     the stacked layout: same timing, less distance on a small screen. */
+  .cs-track {
+    --rv-travel: 0.7;
+  }
+
   .cs-progress {
     display: none;
   }
@@ -1525,7 +1540,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   z-index: 1;
 }
 
-/* ---------- Motion system (homepage) ----------
+/* ---------- Motion system (homepage, and case studies quieter) ----------
    See src/lib/motion.ts for the model: reveal classes (.rv-*) say how an
    element arrives, the nearest data-reveal trigger says when, and
    <html data-motion> says whether anything moves at all. Every keyframe
@@ -1557,8 +1572,9 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 
 /* Per-element, never inherited: a parent's delay or duration must not leak
    into the reveals nested inside it. (--rv-i, --rv-open, --rv-stagger,
-   --rv-y, --rv-lift and --rv-ease DO inherit — a trigger or group sets them
-   for its children.) */
+   --rv-y, --rv-lift, --rv-ease and --rv-travel DO inherit — a trigger or
+   group sets them for its children; --rv-travel scales every rise and
+   settle's distance, e.g. on phones.) */
 @property --rv-d {
   syntax: "<time>";
   inherits: false;
@@ -1609,7 +1625,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 @keyframes rv-rise {
   from {
     opacity: 0;
-    transform: translateY(var(--rv-y, 8px));
+    transform: translateY(calc(var(--rv-y, 8px) * var(--rv-travel, 1)));
   }
 }
 
@@ -1630,7 +1646,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
    run as two animations, each on its own curve (see .rv-settle below). */
 @keyframes rv-settle {
   from {
-    transform: translateY(var(--rv-lift, 28px));
+    transform: translateY(calc(var(--rv-lift, 28px) * var(--rv-travel, 1)));
   }
 }
 

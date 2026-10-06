@@ -14,6 +14,7 @@ export default function AirbnbHotelsPage() {
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}
+      motion
     />
   );
 }

@@ -8,7 +8,14 @@ gsap.registerPlugin(ScrollTrigger);
 
 type Props = {
   children: React.ReactNode;
+  /** Fade the whole track in after mount. Off for a case study with its
+   * own entrance (ReadingMotion), which brings its content in itself. */
+  fade?: boolean;
 };
+
+/** When the track pins and scrolls sideways (below it, or with reduced
+ * motion, blocks just stack). globals.css switches at the same width. */
+export const SIDEWAYS = "(min-width: 901px) and (prefers-reduced-motion: no-preference)";
 
 /** Tick count for the progress scrubber — dense enough to read as a comb,
  * spaced evenly via `justify-content: space-between` so it never needs
@@ -27,7 +34,7 @@ const PROGRESS_TICKS = Array.from({ length: PROGRESS_TICK_COUNT });
  * the marker instead would let it run ahead of the content during momentum —
  * this can't drift.
  */
-export default function HorizontalTrack({ children }: Props) {
+export default function HorizontalTrack({ children, fade = true }: Props) {
   const sectionRef = useRef<HTMLElement | null>(null);
   const trackRef = useRef<HTMLDivElement | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);
@@ -43,11 +50,12 @@ export default function HorizontalTrack({ children }: Props) {
   // there's nothing to wait on. Plain useState/setTimeout rather than
   // folding it into the GSAP effect: this only ever touches opacity, never
   // transform, so it can't fight anything GSAP sets on the same node.
-  const [contentVisible, setContentVisible] = useState(false);
+  const [contentVisible, setContentVisible] = useState(!fade);
   useEffect(() => {
+    if (!fade) return;
     const timeoutId = window.setTimeout(() => setContentVisible(true), 400);
     return () => window.clearTimeout(timeoutId);
-  }, []);
+  }, [fade]);
 
   // The story's height — its tallest top-aligned block — as --cs-content-h
   // on the track. globals.css places the shared top line every block hangs
@@ -95,7 +103,7 @@ export default function HorizontalTrack({ children }: Props) {
     const SETUP_DELAY_MS = 600;
     const setupTimeoutId = window.setTimeout(() => {
       mm.add(
-        "(min-width: 901px) and (prefers-reduced-motion: no-preference)",
+        SIDEWAYS,
         () => {
         // Re-measured continuously via the function values below (resize,
         // font swap, image decode all change this). The track's box is
@@ -316,10 +324,7 @@ export default function HorizontalTrack({ children }: Props) {
         <div
           ref={trackRef}
           className="cs-track"
-          style={{
-            opacity: contentVisible ? 1 : 0,
-            transition: "opacity 400ms ease",
-          }}
+          style={fade ? { opacity: contentVisible ? 1 : 0, transition: "opacity 400ms ease" } : undefined}
         >
           {children}
         </div>

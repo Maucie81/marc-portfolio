@@ -2,12 +2,15 @@
 
 import { useRef, useState, useCallback } from "react";
 import ExpandGlyph, { spinExpandGlyph } from "@/components/site/ExpandGlyph";
+import type { Reveal } from "@/components/case-study/ReadingMotion";
 
 interface Props {
   points: Array<{ label: string; text: string }>;
+  /** Case-study motion: arrives with the section's copy. */
+  reveal?: Reveal;
 }
 
-export default function ExpandCollapse({ points }: Props) {
+export default function ExpandCollapse({ points, reveal }: Props) {
   const [expanded, setExpanded] = useState(false);
   const glyphRef = useRef<HTMLSpanElement | null>(null);
 
@@ -18,7 +21,11 @@ export default function ExpandCollapse({ points }: Props) {
   }, [expanded]);
 
   return (
-    <div className="-mt-2">
+    <div
+      data-reveal={reveal?.["data-reveal"]}
+      className={`-mt-2 ${reveal?.className ?? ""}`}
+      style={reveal?.style}
+    >
       <button type="button" onClick={handleClick} aria-expanded={expanded} className="group cursor-pointer">
         <ExpandGlyph
           ref={glyphRef}

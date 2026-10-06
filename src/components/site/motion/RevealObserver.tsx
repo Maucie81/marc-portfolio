@@ -34,10 +34,26 @@ function whenReleased(root: HTMLElement): Promise<void> {
 
 /** Once every animation under `el` has run, retire them (data-revealed=
  * "done" sets `animation: none`), so a later display change — e.g. the
- * hero's desktop and stacked trees swapping at 768px — can't replay them. */
-function retire(el: Element): Promise<void> {
-  const done = () => el.setAttribute("data-revealed", "done");
-  return Promise.all(el.getAnimations({ subtree: true }).map((a) => a.finished)).then(done, done);
+ * hero's desktop and stacked trees swapping at 768px — can't replay them.
+ *
+ * Moving an element in the DOM cancels its CSS animations and starts them
+ * again from the first frame — and GSAP's pin does exactly that to the
+ * case-study track, when it wraps it in its spacer and on every refresh
+ * (load, resize). So a reveal cancelled mid-play isn't retired: whatever
+ * restarted is put back on the original clock and carries on from where
+ * it was, before the next frame paints. */
+function retire(el: Element, start: CSSNumberish | null = null): Promise<void> {
+  const running = el.getAnimations({ subtree: true });
+  let clock = start;
+  if (clock === null) running[0]?.ready.then((a) => (clock = a.startTime), () => {});
+  return Promise.all(running.map((a) => a.finished)).then(
+    () => el.setAttribute("data-revealed", "done"),
+    () => {
+      const restarted = el.getAnimations({ subtree: true });
+      if (clock !== null) for (const a of restarted) a.startTime = clock;
+      return retire(el, clock);
+    },
+  );
 }
 
 /** The lazy images a trigger will uncover, loaded now: while a wipe's
@@ -82,6 +98,14 @@ function imagesReady(els: Element[]): Promise<unknown> {
       const r = img.getBoundingClientRect();
       if (r.width && r.bottom > top && r.top < bottom) pending.push(img.decode().catch(() => {}));
     });
+    // Recordings too (case studies): one that's loading shows its first
+    // frame before its card settles, rather than settling in blank.
+    el.querySelectorAll("video").forEach((video) => {
+      if (!video.getAttribute("src") || video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) return;
+      const r = video.getBoundingClientRect();
+      if (r.width && r.bottom > top && r.top < bottom)
+        pending.push(new Promise((resolve) => video.addEventListener("loadeddata", resolve, { once: true })));
+    });
   }
   if (!pending.length) return Promise.resolve();
   return Promise.race([Promise.all(pending), new Promise((r) => setTimeout(r, IMAGE_WAIT))]);
@@ -107,8 +131,23 @@ function imagesReady(els: Element[]): Promise<unknown> {
  * Triggers playing together inside one data-reveal-group get consecutive
  * --rv-i, which the CSS turns into the group's stagger. Any trigger waits
  * (briefly) for the images it's about to show.
+ *
+ * `margin` moves the line a trigger has to cross (the homepage's 12% up
+ * from the bottom by default). A page that scrolls sideways while
+ * `sideways.query` matches — the case-study track — uses `sideways.margin`
+ * then instead, and the line moves over when the page flips between the
+ * two.
  */
-export default function RevealObserver() {
+export default function RevealObserver({
+  margin = ROOT_MARGIN,
+  sideways,
+}: {
+  margin?: string;
+  sideways?: { query: string; margin: string };
+}) {
+  const sidewaysQuery = sideways?.query;
+  const sidewaysMargin = sideways?.margin;
+
   useEffect(() => {
     const root = document.documentElement;
     restoreHtmlAttrs();
@@ -118,8 +157,9 @@ export default function RevealObserver() {
     // The opening screen plays with the hero, and nothing starts until the
     // hero is released (the CSS holds every reveal until then) — a page
     // that loaded out of sight doesn't play its first sections unseen.
+    const released = whenReleased(root);
     const hero = document.querySelector('[data-reveal="load"]:not([data-revealed])');
-    if (hero) whenReleased(root).then(() => retire(hero));
+    if (hero) released.then(() => retire(hero));
 
     const prime = new IntersectionObserver(
       (entries) => {
@@ -159,42 +199,62 @@ export default function RevealObserver() {
           }
           el.setAttribute("data-revealed", "play");
           if (opening) inStepWithBoard(el, hero);
-          retire(el);
+          released.then(() => retire(el));
         }
       });
     };
 
+    /** Already scrolled past: above the screen, or off its left edge. */
+    const past = (e: IntersectionObserverEntry) =>
+      e.boundingClientRect.bottom <= (e.rootBounds?.top ?? 0) ||
+      e.boundingClientRect.right <= (e.rootBounds?.left ?? 0);
+
+    // Triggers waiting to scroll into view.
+    const waiting = new Set<Element>();
     const onEnter: IntersectionObserverCallback = (entries, io) => {
       const entering: Element[] = [];
       for (const e of entries) {
         if (e.isIntersecting) {
           entering.push(e.target);
-          io.unobserve(e.target);
-        } else if (e.boundingClientRect.bottom <= (e.rootBounds?.top ?? 0)) {
+        } else if (past(e)) {
           e.target.setAttribute("data-revealed", "done");
-          io.unobserve(e.target);
-        }
+        } else continue;
+        io.unobserve(e.target);
+        waiting.delete(e.target);
       }
       if (entering.length) play(entering, Promise.resolve());
     };
-    const io = new IntersectionObserver(onEnter, { rootMargin: ROOT_MARGIN });
-    const quiet = new IntersectionObserver(onEnter, { rootMargin: QUIET_MARGIN });
+
+    let io: IntersectionObserver | null = null;
+    let quiet: IntersectionObserver | null = null;
+    const wait = (el: Element) => {
+      waiting.add(el);
+      (el.hasAttribute("data-reveal-quiet") ? quiet : io)?.observe(el);
+    };
+    // (Re)builds the scroll observers for the way the page scrolls now.
+    const sidewaysMq = sidewaysQuery ? matchMedia(sidewaysQuery) : null;
+    const watch = () => {
+      io?.disconnect();
+      quiet?.disconnect();
+      const across = sidewaysMq?.matches && sidewaysMargin;
+      io = new IntersectionObserver(onEnter, { rootMargin: across || margin });
+      quiet = new IntersectionObserver(onEnter, { rootMargin: across || QUIET_MARGIN });
+      waiting.forEach(wait);
+    };
+    watch();
+    sidewaysMq?.addEventListener("change", watch);
 
     // Sorts every trigger once, on its first report against the whole
-    // screen: on it → the opening screen; above it (or furniture below
-    // it) → done; any other below it → the scroll observers.
+    // screen: on it → the opening screen; past it (or furniture below
+    // it) → done; any other still to come → the scroll observers.
     const first = new IntersectionObserver((entries) => {
       const opening: Element[] = [];
       for (const e of entries) {
         const el = e.target;
         first.unobserve(el);
         if (e.isIntersecting) opening.push(el);
-        else if (
-          e.boundingClientRect.bottom <= (e.rootBounds?.top ?? 0) ||
-          el.getAttribute("data-reveal") === "open"
-        )
-          el.setAttribute("data-revealed", "done");
-        else (el.hasAttribute("data-reveal-quiet") ? quiet : io).observe(el);
+        else if (past(e) || el.getAttribute("data-reveal") === "open") el.setAttribute("data-revealed", "done");
+        else wait(el);
       }
       // Let go at once: while the hero holds, the CSS holds these too, so
       // they and the board start on the same frame.
@@ -209,10 +269,11 @@ export default function RevealObserver() {
     return () => {
       first.disconnect();
       prime.disconnect();
-      io.disconnect();
-      quiet.disconnect();
+      io?.disconnect();
+      quiet?.disconnect();
+      sidewaysMq?.removeEventListener("change", watch);
     };
-  }, []);
+  }, [margin, sidewaysQuery, sidewaysMargin]);
 
   return null;
 }

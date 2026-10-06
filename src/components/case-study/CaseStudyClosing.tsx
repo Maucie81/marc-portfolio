@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useReading } from "@/components/case-study/ReadingMotion";
 import CtaArrow from "@/components/site/CtaArrow";
 import type { CaseStudyLink } from "@/lib/case-studies";
 
@@ -17,27 +20,34 @@ import type { CaseStudyLink } from "@/lib/case-studies";
  * case-studies.ts, which sets each page's own pair explicitly so a page
  * never lists itself. */
 export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) {
+  // Case-study motion: "The end" and "Thank you." settle as one heading
+  // (each carries it — the coral line sits above the grain), the links
+  // follow as copy.
+  const { reveal, trigger, group } = useReading();
+  const heading = reveal("heading");
+  const copy = reveal("body", { trigger: true });
   return (
     <div
+      {...group}
       className="flex flex-col items-start gap-4 cs-block cs-closing-block"
-      style={{ ["--w" as string]: "calc(809px * var(--cs-scale, 1))" }}
+      style={{ ...group.style, ["--w" as string]: "calc(809px * var(--cs-scale, 1))" }}
     >
-      <div className="flex w-full flex-col items-start gap-2">
+      <div {...trigger} className="flex w-full flex-col items-start gap-2">
         <p
-          className="text-[16px] font-bold leading-[20px] text-accent [font-family:var(--font-display)]"
-          style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
+          className={`text-[16px] font-bold leading-[20px] text-accent [font-family:var(--font-display)] ${heading.className}`}
+          style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100', ...heading.style }}
         >
           The end
         </p>
         <h2
-          className="display text-[2.5rem] leading-[1.1] min-[901px]:text-[60px] min-[901px]:leading-[1.1]"
-          style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100' }}
+          className={`display text-[2.5rem] leading-[1.1] sideways:text-[60px] sideways:leading-[1.1] ${heading.className}`}
+          style={{ fontVariationSettings: '"GRAD" 0, "ROND" 0, "wdth" 100', ...heading.style }}
         >
           Thank you.
         </h2>
       </div>
 
-      <div className="flex min-h-px flex-1 flex-col items-start gap-3">
+      <div {...copy} className={`flex min-h-px flex-1 flex-col items-start gap-3 ${copy.className}`}>
         {/* 495:49633 — 16/24 SemiBold, was 20px/normal and (like the pill
             links below) on a second sans instead of Google Sans Flex. */}
         <p
@@ -60,7 +70,8 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
           frame. */}
       <Link
         href="/contact"
-        className="cta cta-secondary hidden min-[901px]:inline-flex"
+        {...copy}
+        className={`cta cta-secondary hidden min-[901px]:inline-flex ${copy.className}`}
       >
         Want the full story? Get in touch
         <CtaArrow />

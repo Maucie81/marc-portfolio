@@ -3,6 +3,7 @@ import { HERO_DEFAULT } from "@/lib/hero-editions";
 
 /**
  * Homepage motion system — the page is typeset into place, not flown in.
+ * (Case studies reuse it, quieter: see READING below.)
  *
  * The shell is there from the first paint and never moves: paper, the
  * printer's marks and CMYK lockup, nav, logo, the white page. Everything
@@ -131,6 +132,79 @@ export function rvGroup(stagger: number, extra: { y?: number; ease?: Ease } = {}
   if (extra.y !== undefined) vars["--rv-y"] = `${extra.y}px`;
   if (extra.ease) vars["--rv-ease"] = `var(--motion-ease-${extra.ease})`;
   return vars as CSSProperties;
+}
+
+/**
+ * Case-study motion — the same reveals, quieter. The homepage is the
+ * showpiece; a case study is for reading, so reading content settles in
+ * and nothing performs. One entrance does most of the work, the cards'
+ * settle (opacity + a 28px lift, 750ms, soft ease-out, no overshoot), and
+ * the hierarchy is carried by how far and how long things travel:
+ *
+ *   cover    strongest   the company line fades, the title rises out of
+ *                        its mask, then the subtitle, the metadata and the
+ *                        scroll hint — about a second end to end
+ *   heading  moderate    a chapter's number, title and eyebrow settle as
+ *                        one block
+ *   visual   moderate    recordings, screenshots, artwork: the settle
+ *   callout  moderate    stats and pull quotes: a slightly shorter settle
+ *   body     quiet       a section's copy as one group: 10px, 550ms
+ *   meta     very quiet  captions: opacity only
+ *
+ * Triggers (data-reveal="view") sit on a section's parts — its heading,
+ * its copy, its media, each quote — never on single paragraphs, and play
+ * once, the first time they cross 20% in from the edge content arrives
+ * from: the right on the sideways track, the bottom on phones. Parts that
+ * cross together step READING.stagger apart in reading order (each
+ * section's columns are a data-reveal-group), so a heading leads its copy
+ * and a recording leads its caption; a part that arrives on its own just
+ * plays. Whatever is on screen at load plays with the cover. Phones keep
+ * the timing and travel 70% as far (--rv-travel on .cs-track).
+ *
+ * A reveal class goes on the element that moves, and that element must not
+ * hold anything lifted above the paper grain (product media, coral type):
+ * while it animates it's its own stacking context, so a lifted child would
+ * sit under the grain until the end, then snap crisp. So a heading's
+ * number, title and eyebrow each carry the reveal, not their wrapper, and
+ * media carries it on its own box.
+ *
+ * Conceptual artwork gets "visual" for now. Custom storytelling for it can
+ * key off its trigger's data-revealed="play" later without touching this.
+ */
+export const READING = {
+  stagger: 120,
+  /** The cover's sequence, in ms from its trigger playing. */
+  cover: { label: 0, title: 80, copy: 250, meta: 400, hint: 550 },
+} as const;
+
+type RevealSpec = {
+  cls: "rv-settle" | "rv-rise" | "rv-fade" | "rv-line";
+  delay?: number;
+  opts?: Parameters<typeof rv>[1];
+};
+
+const READING_ROLES = {
+  heading: { cls: "rv-settle" },
+  visual: { cls: "rv-settle" },
+  callout: { cls: "rv-settle", opts: { lift: 24, dur: 700 } },
+  body: { cls: "rv-rise", opts: { y: 10, dur: 550, ease: "quiet" } },
+  meta: { cls: "rv-fade", opts: { dur: 500, ease: "quiet" } },
+  coverLabel: { cls: "rv-fade", delay: READING.cover.label, opts: { dur: 500, ease: "quiet" } },
+  /** The title on the sideways track: one line, risen out of its mask. */
+  coverTitle: { cls: "rv-line", delay: READING.cover.title },
+  /** The title on phones, where it can wrap: settled as a block. */
+  coverTitleStacked: { cls: "rv-settle", delay: READING.cover.title },
+  coverCopy: { cls: "rv-rise", delay: READING.cover.copy, opts: { y: 10, dur: 600, ease: "quiet" } },
+  coverMeta: { cls: "rv-fade", delay: READING.cover.meta, opts: { dur: 600, ease: "quiet" } },
+  coverHint: { cls: "rv-fade", delay: READING.cover.hint, opts: { dur: 500, ease: "quiet" } },
+} satisfies Record<string, RevealSpec>;
+
+export type ReadingRole = keyof typeof READING_ROLES;
+
+/** Class + inline vars for one case-study element in `role`. */
+export function reading(role: ReadingRole, delay = 0): { className: string; style: CSSProperties } {
+  const spec: RevealSpec = READING_ROLES[role];
+  return { className: spec.cls, style: rv((spec.delay ?? 0) + delay, spec.opts) };
 }
 
 /** Longest the hero waits for its font and portrait before playing anyway. */

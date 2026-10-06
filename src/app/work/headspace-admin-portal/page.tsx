@@ -14,6 +14,7 @@ export default function HeadspaceAdminPortalPage() {
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}
+      motion
     />
   );
 }

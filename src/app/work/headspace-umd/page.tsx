@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import HorizontalTrack from "@/components/case-study/HorizontalTrack";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import LazyVideo from "@/components/case-study/LazyVideo";
+import ReadingMotion from "@/components/case-study/ReadingMotion";
 import {
   BottomRule,
   CoverBlock,
@@ -9,6 +10,7 @@ import {
   RailDots,
 } from "@/components/case-study/CaseStudyPage";
 import { closingLinksFor } from "@/lib/case-studies";
+import { READING, reading, rvGroup } from "@/lib/motion";
 import { context, meta, PROTOTYPE_URL, sidebar } from "@/lib/headspace-umd";
 
 export const metadata: Metadata = {
@@ -45,16 +47,23 @@ const CLOSING_LINKS = closingLinksFor("headspace-umd");
 const WALKTHROUGH_ASPECT = "2982/1862";
 const WALKTHROUGH_WIDTH = `calc(609px * ${WALKTHROUGH_ASPECT} * var(--cs-media-scale, 1))`;
 
+/* Case-study motion (READING): this page always runs inside ReadingMotion,
+   so its reveals are set here directly — the recording settles like every
+   section's media, the link follows it like a caption. */
+const MEDIA_REVEAL = reading("visual");
+const LINK_REVEAL = reading("meta");
+
 function WalkthroughBlock({ href }: { href: string }) {
   return (
     <div
       className="cs-block"
       style={{ ["--w" as string]: WALKTHROUGH_WIDTH }}
     >
-      <div className="flex flex-col gap-6">
+      <div data-reveal-group="" className="flex flex-col gap-6" style={rvGroup(READING.stagger)}>
         <div
-          className="product-media w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:h-[calc(609px*var(--cs-media-scale,1))]"
-          style={{ aspectRatio: WALKTHROUGH_ASPECT }}
+          data-reveal="view"
+          className={`product-media w-full overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] sideways:h-[calc(609px*var(--cs-media-scale,1))] ${MEDIA_REVEAL.className}`}
+          style={{ aspectRatio: WALKTHROUGH_ASPECT, ...MEDIA_REVEAL.style }}
         >
           {/* object-cover, not object-contain: the box already has the
               recording's exact ratio, so cover only ever trims sub-pixel
@@ -70,7 +79,9 @@ function WalkthroughBlock({ href }: { href: string }) {
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="self-start text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent"
+          data-reveal="view"
+          className={`self-start text-sm font-semibold text-accent underline decoration-accent/40 underline-offset-4 transition-colors hover:decoration-accent ${LINK_REVEAL.className}`}
+          style={LINK_REVEAL.style}
         >
           Open in Figma →
         </a>
@@ -81,16 +92,18 @@ function WalkthroughBlock({ href }: { href: string }) {
 
 export default function HeadspaceUmdPage() {
   return (
-    <main className="bg-bg">
-      <BottomRule />
+    <ReadingMotion>
+      <main className="bg-bg">
+        <BottomRule />
 
-      <HorizontalTrack>
-        <RailDots />
-        <CoverBlock meta={meta} sidebar={sidebar} />
-        <IntroStackBlock heading="Context" body={context} />
-        <WalkthroughBlock href={PROTOTYPE_URL} />
-        <CaseStudyClosing links={CLOSING_LINKS} />
-      </HorizontalTrack>
-    </main>
+        <HorizontalTrack fade={false}>
+          <RailDots />
+          <CoverBlock meta={meta} sidebar={sidebar} />
+          <IntroStackBlock heading="Context" body={context} />
+          <WalkthroughBlock href={PROTOTYPE_URL} />
+          <CaseStudyClosing links={CLOSING_LINKS} />
+        </HorizontalTrack>
+      </main>
+    </ReadingMotion>
   );
 }

@@ -6,6 +6,7 @@ import LazyVideo from "@/components/case-study/LazyVideo";
 import ExpandCollapse from "@/components/case-study/ExpandCollapse";
 import CaseStudyClosing from "@/components/case-study/CaseStudyClosing";
 import CaseStudyFooter from "@/components/case-study/CaseStudyFooter";
+import ReadingMotion, { useReading, type Reveal } from "@/components/case-study/ReadingMotion";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import { closingLinksFor } from "@/lib/case-studies";
 import type { Block, ImageSpec, SectionImage, StepIcon } from "@/lib/ypp";
@@ -117,7 +118,7 @@ function IsolatedMedia({
   }
   return (
     <div
-      className={`product-media flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 min-[901px]:px-14 min-[901px]:py-14 ${className}`}
+      className={`product-media flex w-full items-center justify-center rounded-lg bg-ink px-6 py-10 sideways:px-14 sideways:py-14 ${className}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
@@ -140,9 +141,12 @@ function IsolatedMedia({
 export function PlainMedia({
   image,
   className = "",
+  reveal,
 }: {
   image: { src?: string; alt: string; type?: "video"; aspect?: string; frame?: SectionImage["frame"] };
   className?: string;
+  /** Case-study motion, on the media box itself (see READING). */
+  reveal?: Reveal;
 }) {
   // `aspect` swaps the shared 1440:1024 box for the recording's own shape
   // (the caller sizes the width to match at 609px tall), so a clip cropped
@@ -152,8 +156,9 @@ export function PlainMedia({
     image.frame === "bare" ? "" : "overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)]";
   return (
     <div
-      className={`product-media ${image.aspect ? "" : PLACEHOLDER_ASPECT} w-full ${card} ${className}`}
-      style={image.aspect ? { aspectRatio: image.aspect } : undefined}
+      data-reveal={reveal?.["data-reveal"]}
+      className={`product-media ${image.aspect ? "" : PLACEHOLDER_ASPECT} w-full ${card} ${className} ${reveal?.className ?? ""}`}
+      style={image.aspect || reveal?.style ? { aspectRatio: image.aspect, ...reveal?.style } : undefined}
     >
       {/* object-contain, not object-cover: real recordings are captured
           wider (~1440:905, ≈1.59) than this box's fixed 1440:1024 (≈1.41)
@@ -187,7 +192,7 @@ export function PlainMedia({
  * page's horizontal-scroll-jacking in HorizontalTrack is untouched. */
 function StepsPanel({ steps }: { steps: { title: string; body: string }[] }) {
   return (
-    <div className="flex w-full flex-col gap-10 overflow-y-auto rounded-lg bg-ink/80 px-8 py-10 text-bg min-[901px]:w-[calc(500px*var(--cs-scale,1))] min-[901px]:max-h-[calc(687.3px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-16">
+    <div className="flex w-full flex-col gap-10 overflow-y-auto rounded-lg bg-ink/80 px-8 py-10 text-bg sideways:w-[calc(500px*var(--cs-scale,1))] sideways:max-h-[calc(687.3px*var(--cs-media-scale,1))] sideways:shrink-0 sideways:px-[calc(100px*var(--cs-scale,1))] sideways:py-16">
       {steps.map((step) => (
         <div key={step.title} className="flex flex-col gap-3">
           <p className="text-xl font-semibold leading-[26px] [font-family:var(--font-display)]">{step.title}</p>
@@ -230,13 +235,18 @@ function StepIllustration({ icon }: { icon: StepIcon }) {
  * 98px cell (the widest illustration) with the copy 24px after it. */
 function IllustratedSteps({ steps }: { steps: { title: string; body: string; icon?: StepIcon }[] }) {
   const rows = Math.ceil(steps.length / 2);
+  // Case-study motion: one composition — each column's steps settle a
+  // short stagger apart as the column arrives.
+  const { reveal, group } = useReading();
+  const step_ = reveal("callout", { trigger: true });
   return (
     <div
-      className="flex w-full flex-col gap-10 min-[901px]:grid min-[901px]:w-auto min-[901px]:grid-flow-col min-[901px]:grid-cols-[repeat(2,calc(558px*var(--cs-scale,1)))] min-[901px]:gap-x-[calc(80px*var(--cs-scale,1))] min-[901px]:gap-y-11"
-      style={{ gridTemplateRows: `repeat(${rows}, auto)` }}
+      {...group}
+      className="flex w-full flex-col gap-10 sideways:grid sideways:w-auto sideways:grid-flow-col sideways:grid-cols-[repeat(2,calc(558px*var(--cs-scale,1)))] sideways:gap-x-[calc(80px*var(--cs-scale,1))] sideways:gap-y-11"
+      style={{ ...group.style, gridTemplateRows: `repeat(${rows}, auto)` }}
     >
       {steps.map((step) => (
-        <div key={step.title} className="flex items-start gap-6">
+        <div key={step.title} {...step_} className={`flex items-start gap-6 ${step_.className}`}>
           <div className="flex w-[98px] shrink-0 justify-center">
             {step.icon ? <StepIllustration icon={step.icon} /> : null}
           </div>
@@ -271,18 +281,18 @@ function PrinciplesBlock({
       className="cs-block relative bg-ink"
       style={{ ["--w" as string]: "calc(109.4375rem * var(--cs-scale, 1))" }}
     >
-      <div className="relative flex w-full flex-col gap-10 px-6 py-14 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))] min-[901px]:px-[calc(100px*var(--cs-scale,1))] min-[901px]:py-0">
-        <div className="flex w-full flex-col gap-3 min-[901px]:w-[calc(19rem*var(--cs-scale,1))] min-[901px]:shrink-0">
+      <div className="relative flex w-full flex-col gap-10 px-6 py-14 sideways:flex-row sideways:items-start sideways:gap-[calc(3rem*var(--cs-scale,1))] sideways:px-[calc(100px*var(--cs-scale,1))] sideways:py-0">
+        <div className="flex w-full flex-col gap-3 sideways:w-[calc(19rem*var(--cs-scale,1))] sideways:shrink-0">
           <div className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" /> : null}
-            <h2 className="display text-[28px] leading-none text-bg min-[901px]:text-[40px]">{heading}</h2>
+            <h2 className="display text-[28px] leading-none text-bg sideways:text-[40px]">{heading}</h2>
           </div>
           <p className="text-[20px] font-semibold leading-[26px] text-bg [font-family:var(--font-display)]">
             {intro}
           </p>
         </div>
 
-        <div className="flex w-full flex-col min-[901px]:w-[calc(25.5rem*var(--cs-scale,1))]">
+        <div className="flex w-full flex-col sideways:w-[calc(25.5rem*var(--cs-scale,1))]">
           {items.map((item, i) => (
             <div
               key={item.title}
@@ -352,12 +362,20 @@ const COPY_COL_EXTRA = 30;
  * Positioned against the title's first line only via an explicit
  * `titleLineHeight`, not the ancestor's full height, so a two-line title
  * doesn't pull the number down to the block's center. */
-function SectionNum({ number, titleLineHeight }: { number: string; titleLineHeight: string }) {
+function SectionNum({
+  number,
+  titleLineHeight,
+  reveal,
+}: {
+  number: string;
+  titleLineHeight: string;
+  reveal?: Reveal;
+}) {
   return (
     <span
       aria-hidden
-      className="cs-kicker cs-section-num hidden w-10 -translate-y-1/2 min-[901px]:absolute min-[901px]:-left-16 min-[901px]:block"
-      style={{ top: `calc((${titleLineHeight}) / 2 + 1.3px)` }}
+      className={`cs-kicker cs-section-num hidden w-10 -translate-y-1/2 sideways:absolute sideways:-left-16 sideways:block ${reveal?.className ?? ""}`}
+      style={{ top: `calc((${titleLineHeight}) / 2 + 1.3px)`, ...reveal?.style }}
     >
       {number}
     </span>
@@ -584,7 +602,7 @@ function CaseStudyHero({
   }, [lockupWidth, h1InkBearing]);
 
   return (
-    <div className="cs-only-horizontal relative [container-type:inline-size] min-[901px]:w-[calc(591px*var(--cs-scale,1))] min-[901px]:shrink-0">
+    <div className="cs-only-horizontal relative [container-type:inline-size] sideways:w-[calc(591px*var(--cs-scale,1))] sideways:shrink-0">
       {/* --hero-scale takes the smaller of: how much width the column
           actually has (100cqi vs. the native 714px), and how much vertical
           room is actually free inside .cs-pin's fixed 100vh once the fixed
@@ -823,7 +841,7 @@ function CoverBlockMobileText({ meta }: { meta: Meta }) {
  * inner half. A plain text-stroke would also trace the variable font's
  * overlapping contours, putting stray lines inside R, E, A and &. The
  * company leads the <h1> for screen readers; on screen it's the line above. */
-function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string }) {
+function OutlineTitle({ meta, className = "", reveal }: { meta: Meta; className?: string; reveal?: Reveal }) {
   const lines = (meta.heroLines ?? []).map((line, i, all) => (
     <Fragment key={line}>
       {line}
@@ -831,7 +849,7 @@ function OutlineTitle({ meta, className = "" }: { meta: Meta; className?: string
     </Fragment>
   ));
   return (
-    <h1 className={`cs-outline-title relative ${className}`}>
+    <h1 className={`cs-outline-title relative ${className} ${reveal?.className ?? ""}`} style={reveal?.style}>
       <span aria-hidden className="cs-outline-title-stroke absolute inset-0">
         {lines}
       </span>
@@ -862,22 +880,35 @@ const OUTLINE_FIT =
  * transform) shrinks it on short windows so the box it takes up shrinks
  * too, keeping the cover centered on what's actually drawn. */
 function OutlineHero({ meta }: { meta: Meta }) {
+  const { reveal } = useReading();
+  const label = reveal("coverLabel");
+  const copy = reveal("coverCopy");
+  const hint = reveal("coverHint");
   return (
     <div className="cs-only-horizontal relative w-max min-w-[703px] shrink-0">
-      <p className="ml-[6px] text-[16px] font-semibold leading-6 text-[#433835] [font-family:var(--font-display)]">
+      <p
+        className={`ml-[6px] text-[16px] font-semibold leading-6 text-[#433835] [font-family:var(--font-display)] ${label.className}`}
+        style={label.style}
+      >
         {meta.company}
       </p>
-      <OutlineTitle meta={meta} className="mt-2 whitespace-nowrap" />
+      <OutlineTitle meta={meta} className="mt-2 whitespace-nowrap" reveal={reveal("coverTitle")} />
       {/* 555px, not Figma's 695: the same measure as the grid hero's
           paragraph (Yahoo's live cover), per direct request. */}
-      <p className="mt-4 max-w-[555px] text-[18px] font-medium leading-[28px] text-ink-2 [font-family:var(--font-display)]">
+      <p
+        className={`mt-4 max-w-[555px] text-[18px] font-medium leading-[28px] text-ink-2 [font-family:var(--font-display)] ${copy.className}`}
+        style={copy.style}
+      >
         {meta.subtitle}
       </p>
       {/* 241px from the subtitle's top in Figma = 71px after its five
           lines; kept as a gap so a longer subtitle can't run into it. In
           the lockup's flow, so the lockup CoverBlock centers runs from the
           company line down to this hint. */}
-      <p className="mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-[#444440] [font-family:var(--font-display)]">
+      <p
+        className={`mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-[#444440] [font-family:var(--font-display)] ${hint.className}`}
+        style={hint.style}
+      >
         <span aria-hidden className="h-[3px] w-[50px] bg-accent" />
         Scroll to move through the story
       </p>
@@ -888,15 +919,24 @@ function OutlineHero({ meta }: { meta: Meta }) {
 /** Phone/tablet version of the outlined opening — same roles, sized down,
  * in normal flow (see CoverBlockMobileText for the grid hero's). */
 function OutlineHeroMobileText({ meta }: { meta: Meta }) {
+  const { reveal } = useReading();
+  const label = reveal("coverLabel");
+  const copy = reveal("coverCopy");
   return (
     <div className="cs-only-vertical flex w-full flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <p className="text-[14px] font-semibold leading-5 text-[#433835] [font-family:var(--font-display)]">
+        <p
+          className={`text-[14px] font-semibold leading-5 text-[#433835] [font-family:var(--font-display)] ${label.className}`}
+          style={label.style}
+        >
           {meta.company}
         </p>
-        <OutlineTitle meta={meta} />
+        <OutlineTitle meta={meta} reveal={reveal("coverTitleStacked")} />
       </div>
-      <p className="text-[16px] font-medium leading-[26px] text-ink-2 [font-family:var(--font-display)]">
+      <p
+        className={`text-[16px] font-medium leading-[26px] text-ink-2 [font-family:var(--font-display)] ${copy.className}`}
+        style={copy.style}
+      >
         {meta.subtitle}
       </p>
     </div>
@@ -916,6 +956,11 @@ const OUTLINE_COVER_GAP = "clamp(120px, 100vw - 1227.6px, 468px)";
 export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) {
   const outline = Boolean(meta.heroLines?.length);
   const rowRef = useRef<HTMLDivElement>(null);
+  // The cover is one trigger: its parts run READING.cover's sequence. Only
+  // the outlined opening has one (the grid hero is kept but unused).
+  const { reveal, trigger } = useReading();
+  const cover = outline ? trigger : {};
+  const list: Reveal = outline ? reveal("coverMeta") : { className: "" };
 
   // Outlined opening: the lockup and the metadata list are both centered
   // between the fixed chrome. Shrink the row (zoom) just enough that the
@@ -954,6 +999,7 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
 
   return (
     <div
+      {...cover}
       className="cs-block cs-block-centered"
       style={{
         // Outlined opening: sized to its content, since the opening
@@ -970,22 +1016,22 @@ export function CoverBlock({ meta, sidebar }: { meta: Meta; sidebar: Sidebar }) 
           (Figma top-aligns them). */}
       <div
         ref={rowRef}
-        className={`flex flex-col gap-16 min-[901px]:flex-row min-[901px]:gap-0 ${
-          outline ? "min-[901px]:items-center min-[901px]:[zoom:var(--outline-fit)]" : "min-[901px]:items-center"
+        className={`flex flex-col gap-16 sideways:flex-row sideways:gap-0 ${
+          outline ? "sideways:items-center sideways:[zoom:var(--outline-fit)]" : "sideways:items-center"
         }`}
       >
         {outline ? <OutlineHeroMobileText meta={meta} /> : <CoverBlockMobileText meta={meta} />}
         {outline ? <OutlineHero meta={meta} /> : <CaseStudyHero meta={meta} />}
 
         <div
-          className="w-full min-[901px]:ml-[var(--cover-gap)] min-[901px]:w-[calc(295px*var(--cs-scale,1))] min-[901px]:shrink-0"
+          className="w-full sideways:ml-[var(--cover-gap)] sideways:w-[calc(295px*var(--cs-scale,1))] sideways:shrink-0"
         >
           {/* A <dl> may only hold dt/dd (optionally one <div> per pair), so
               the arrow lives inside the <dt> and both are indented by the
               arrow + gap — same layout as an arrow column beside a dt/dd
               stack. The arrow is absolute so its 17px (16 + mt-px) can't
               make the 16px label line taller. */}
-          <dl className="flex flex-col gap-5">
+          <dl className={`flex flex-col gap-5 ${list.className}`} style={list.style}>
             {[
               ...sidebar.groups,
               { label: sidebar.highlightsLabel ?? "Highlights", items: sidebar.highlights },
@@ -1039,7 +1085,7 @@ function CopyBlock({
           ) : null}
           <h2
             className={`display ${
-              sectionNumber ? "text-[2rem] min-[901px]:text-[40px]" : "text-[clamp(1.6rem,2.4vw,2.25rem)]"
+              sectionNumber ? "text-[2rem] sideways:text-[40px]" : "text-[clamp(1.6rem,2.4vw,2.25rem)]"
             } ${accent ? "text-accent" : "text-ink"}`}
           >
             {heading}
@@ -1083,7 +1129,7 @@ function PanelGroupBlocks({
   }[];
 }) {
   const mediaClass =
-    "min-[901px]:w-[calc(857px*var(--cs-media-scale,1))] min-[901px]:shrink-0 min-[901px]:self-start";
+    "sideways:w-[calc(857px*var(--cs-media-scale,1))] sideways:shrink-0 sideways:self-start";
   return (
     <>
       {items.map((item, i) => {
@@ -1098,9 +1144,9 @@ function PanelGroupBlocks({
               ["--cs-copy-col" as string]: COPY_COL,
             }}
           >
-            <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
+            <div className="flex flex-col gap-10 sideways:flex-row sideways:items-start sideways:gap-[calc(3rem*var(--cs-scale,1))]">
               <div
-                className={`flex w-full flex-col min-[901px]:w-[var(--cs-copy-col)] min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
+                className={`flex w-full flex-col sideways:w-[var(--cs-copy-col)] sideways:shrink-0 sideways:pl-[calc(39px*var(--cs-scale,1))] ${
                   eyebrow ? "gap-8" : "gap-6"
                 }`}
               >
@@ -1110,13 +1156,13 @@ function PanelGroupBlocks({
                     and dropped on mobile, where columns stack. */}
                 <div
                   aria-hidden={!first}
-                  className={`flex flex-col gap-2 ${first ? "" : "invisible hidden min-[901px]:flex"}`}
+                  className={`flex flex-col gap-2 ${first ? "" : "invisible hidden sideways:flex"}`}
                 >
                   <div className="relative">
                     {first && sectionNumber ? (
                       <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" />
                     ) : null}
-                    <HeadingTag className="display text-[2rem] min-[901px]:text-[40px]">{heading}</HeadingTag>
+                    <HeadingTag className="display text-[2rem] sideways:text-[40px]">{heading}</HeadingTag>
                   </div>
                   {eyebrow ? <p className="cs-section-title">{eyebrow}</p> : null}
                 </div>
@@ -1140,7 +1186,7 @@ function PanelGroupBlocks({
                 ) : (
                   <MediaPlaceholder className={mediaClass} />
                 )}
-                <div className="flex w-full justify-center min-[901px]:w-[calc(857px*var(--cs-media-scale,1))]">
+                <div className="flex w-full justify-center sideways:w-[calc(857px*var(--cs-media-scale,1))]">
                   <p className="cs-caption text-center">{item.caption}</p>
                 </div>
               </div>
@@ -1196,6 +1242,9 @@ function ClosingBlock({
 }) {
   const hasStats = stats.length > 0;
   const hasCaption = Boolean(caption);
+  const { reveal, trigger, group } = useReading();
+  const headingReveal = reveal("heading");
+  const copy = reveal("body", { trigger: true });
   return (
     <div
       className="cs-block cs-learnings-block"
@@ -1207,15 +1256,20 @@ function ClosingBlock({
       }}
     >
       {/* 400px between columns, Figma's run between sections. */}
-      <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(400px*var(--cs-scale,1))]">
-        <div className="flex w-full flex-col gap-4 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
-          <div className="relative">
-            {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px" /> : null}
-            <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
+      <div className="flex flex-col gap-10 sideways:flex-row sideways:items-start sideways:gap-[calc(400px*var(--cs-scale,1))]">
+        <div {...group} className="flex w-full flex-col gap-4 sideways:w-[calc(560px*var(--cs-scale,1))] sideways:shrink-0">
+          <div {...trigger} className="relative">
+            {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px" reveal={headingReveal} /> : null}
+            <h2
+              className={`display text-[28px] leading-none sideways:text-[40px] ${headingReveal.className}`}
+              style={headingReveal.style}
+            >
+              {heading}
+            </h2>
           </div>
           {/* Figma 594:122506 "Description": the .t-body-sans role (Google Sans
               14/22, like every section body), 16px between paragraphs. */}
-          <div className="t-body-sans flex flex-col text-ink-2">
+          <div {...copy} className={`t-body-sans flex flex-col text-ink-2 ${copy.className}`}>
             {body.map((p, i) => (
               <p key={i} className={i < body.length - 1 ? "mb-4" : ""}>
                 {p}
@@ -1230,7 +1284,8 @@ function ClosingBlock({
               href={cta.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="cta mt-4 self-start min-[901px]:mt-[calc(92px*var(--cs-scale,1)-1rem)]"
+              {...copy}
+              className={`cta mt-4 self-start sideways:mt-[calc(92px*var(--cs-scale,1)-1rem)] ${copy.className}`}
             >
               {cta.text}
             </a>
@@ -1238,21 +1293,21 @@ function ClosingBlock({
         </div>
 
         {hasStats ? (
-          <div className="flex w-full flex-col gap-5 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+          <div className="flex w-full flex-col gap-5 sideways:w-[calc(560px*var(--cs-scale,1))] sideways:shrink-0">
             {stats.map((stat, i) => (
               <div
                 key={stat.label}
                 className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
               >
                 <p className="cs-quote flex-1">{stat.label}</p>
-                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px]">
                   {stat.value}
                 </p>
               </div>
             ))}
           </div>
         ) : hasCaption ? (
-          <div className="flex w-full flex-col gap-6 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+          <div className="flex w-full flex-col gap-6 sideways:w-[calc(560px*var(--cs-scale,1))] sideways:shrink-0">
             <MediaPlaceholder />
             <p className="cs-caption text-center">{caption}</p>
           </div>
@@ -1273,10 +1328,16 @@ function PullQuoteStack({
   quotes: { text: string; attribution: string }[];
   className?: string;
 }) {
+  const { reveal } = useReading();
+  const quoteReveal = reveal("callout", { trigger: true });
   return (
-    <div className={`flex w-full flex-col gap-[58px] min-[901px]:w-[calc(299px*var(--cs-scale,1))] ${className}`}>
+    <div className={`flex w-full flex-col gap-[58px] sideways:w-[calc(299px*var(--cs-scale,1))] ${className}`}>
       {quotes.map((q) => (
-        <figure key={q.text} className="flex flex-col gap-2 border-l-[3px] border-accent pl-6">
+        <figure
+          key={q.text}
+          {...quoteReveal}
+          className={`flex flex-col gap-2 border-l-[3px] border-accent pl-6 ${quoteReveal.className}`}
+        >
           <blockquote>
             <p className="cs-pull-quote-alt">{'"' + q.text + '"'}</p>
           </blockquote>
@@ -1323,10 +1384,16 @@ export function IntroStackBlock({
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
+  const { reveal, trigger, group } = useReading();
+  const headingReveal = reveal("heading");
+  const copy = reveal("body", { trigger: true });
+  const callout = reveal("callout");
+  const quoteReveal = reveal("callout", { trigger: true });
+  const captionReveal = reveal("meta", { trigger: true });
   return (
     <div
-      className={`cs-block cs-problem-inset min-[901px]:pl-[calc(3rem*var(--cs-scale,1))] ${
-        image ? "min-[901px]:flex min-[901px]:items-start min-[901px]:gap-[calc(100px*var(--cs-scale,1))]" : ""
+      className={`cs-block cs-problem-inset sideways:pl-[calc(3rem*var(--cs-scale,1))] ${
+        image ? "sideways:flex sideways:items-start sideways:gap-[calc(100px*var(--cs-scale,1))]" : ""
       }`}
       style={{
         ["--w" as string]: image
@@ -1335,15 +1402,17 @@ export function IntroStackBlock({
         ["--cs-media-w" as string]: mediaWidth,
       }}
     >
-      <div className="flex w-full flex-col gap-8 min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0">
+      <div {...group} className="flex w-full flex-col gap-8 sideways:w-[calc(560px*var(--cs-scale,1))] sideways:shrink-0">
         <div className="flex flex-col gap-4">
-          <div className="relative">
-            {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" /> : null}
-            <h2 className="display text-[28px] leading-none min-[901px]:text-[40px]">{heading}</h2>
+          <div {...trigger} className="relative">
+            {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" reveal={headingReveal} /> : null}
+            <h2 className={`display text-[28px] leading-none sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
+              {heading}
+            </h2>
           </div>
           {/* .t-body-sans (Google Sans 14/22), same role and color as every
               other section's body copy. */}
-          <div className="t-body-sans">
+          <div {...copy} className={`t-body-sans ${copy.className}`}>
             {body.map((p, i) => (
               <p key={i} className={i === 0 ? "mb-4" : ""}>
                 {p}
@@ -1355,10 +1424,17 @@ export function IntroStackBlock({
         {/* Label left, number right — Figma's Problem stat on both the
             Airbnb (917:129463) and Headspace (917:127726) studies, and the
             same order as every other stat row on these pages. */}
+        {/* The rules stay put; the stat settles between them (its coral
+            figure sits above the grain, so the row itself can't move). */}
         {stat ? (
-          <div className="flex items-center gap-6 border-y border-line py-5">
-            <p className="cs-quote flex-1">{stat.label}</p>
-            <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+          <div {...trigger} className="flex items-center gap-6 border-y border-line py-5">
+            <p className={`cs-quote flex-1 ${callout.className}`} style={callout.style}>
+              {stat.label}
+            </p>
+            <p
+              className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px] ${callout.className}`}
+              style={callout.style}
+            >
               {stat.value}
             </p>
           </div>
@@ -1367,7 +1443,7 @@ export function IntroStackBlock({
         ) : null}
 
         {quote ? (
-          <div className="flex flex-col gap-2">
+          <div {...quoteReveal} className={`flex flex-col gap-2 ${quoteReveal.className}`}>
             <blockquote>
               <p className="cs-quote cs-pull-quote">{'"' + quote.text + '"'}</p>
             </blockquote>
@@ -1377,9 +1453,13 @@ export function IntroStackBlock({
       </div>
 
       {image ? (
-        <div className="mt-10 flex w-full flex-col gap-6 min-[901px]:mt-0 min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0">
-          <PlainMedia image={image} />
-          {caption ? <p className="cs-caption text-center">{caption}</p> : null}
+        <div {...group} className="mt-10 flex w-full flex-col gap-6 sideways:mt-0 sideways:w-[var(--cs-media-w)] sideways:shrink-0">
+          <PlainMedia image={image} reveal={reveal("visual", { trigger: true })} />
+          {caption ? (
+            <p {...captionReveal} className={`cs-caption text-center ${captionReveal.className}`}>
+              {caption}
+            </p>
+          ) : null}
         </div>
       ) : null}
     </div>
@@ -1433,6 +1513,14 @@ function SectionBlock({
   const mediaWidth = image?.aspect
     ? `calc(609px * ${image.aspect} * var(--cs-media-scale, 1))`
     : "calc(857px * var(--cs-media-scale, 1))";
+  // Case-study motion: the copy column and the media area are each a group
+  // (heading → copy; recording → caption, then its quotes as they arrive).
+  const { reveal, trigger, group } = useReading();
+  const headingReveal = reveal("heading");
+  const copy = reveal("body", { trigger: true });
+  const captionReveal = reveal("meta", { trigger: true });
+  const statReveal = reveal("callout");
+  const cardReveal = reveal("visual", { trigger: true });
 
   const renderQuotes = () =>
     pullQuotes ? (
@@ -1441,22 +1529,31 @@ function SectionBlock({
       />
     ) : null;
 
-  const statRows = () =>
+  // `moving`: each row is a trigger and its figures settle between its
+  // rules (the coral value sits above the grain, so the row can't move).
+  // Inside the stats card the card itself moves instead.
+  const statRows = (moving = false) =>
     stats?.map((stat, i) => (
       <div
         key={stat.label}
+        {...(moving ? trigger : {})}
         className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
       >
-        <p className="cs-quote flex-1">{stat.label}</p>
-        <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent min-[901px]:text-[60px]">
+        <p className={`cs-quote flex-1 ${moving ? statReveal.className : ""}`} style={moving ? statReveal.style : undefined}>
+          {stat.label}
+        </p>
+        <p
+          className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px] ${moving ? statReveal.className : ""}`}
+          style={moving ? statReveal.style : undefined}
+        >
           {stat.value}
         </p>
       </div>
     ));
 
   const renderStats = () => (
-    <div className="flex flex-col min-[901px]:w-[calc(560px*var(--cs-scale,1))] min-[901px]:shrink-0 min-[901px]:ml-[calc(200px*var(--cs-scale,1))] min-[901px]:self-center">
-      {statRows()}
+    <div className="flex flex-col sideways:w-[calc(560px*var(--cs-scale,1))] sideways:shrink-0 sideways:ml-[calc(200px*var(--cs-scale,1))] sideways:self-center">
+      {statRows(true)}
     </div>
   );
 
@@ -1466,32 +1563,36 @@ function SectionBlock({
     ) : hasSteps ? (
       <StepsPanel steps={steps!} />
     ) : (
-      <div className="flex flex-col gap-6">
+      <div {...group} className="flex flex-col gap-6">
         {/* Phone: `contents` lifts media, quotes and caption into the
             outer column so `order` can put the caption straight under the
             image and the quotes/stats after it. */}
-        <div className="contents min-[901px]:flex min-[901px]:h-[calc(609px*var(--cs-media-scale,1))] min-[901px]:flex-row min-[901px]:items-stretch min-[901px]:gap-6">
+        <div className="contents sideways:flex sideways:h-[calc(609px*var(--cs-media-scale,1))] sideways:flex-row sideways:items-stretch sideways:gap-6">
           {hasStatsCard ? (
             <>
               {/* Same card as the PlainMedia image beside it; the 560px rows
                   sit centered at 1:1 and scale with the box. 76px + the
                   row's 24px gap = Figma's 100px. */}
-              <div className="product-media hidden aspect-[760/609] w-[calc(760px*var(--cs-media-scale,1))] shrink-0 items-center justify-center self-start overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] min-[901px]:mr-[calc(76px*var(--cs-media-scale,1))] min-[901px]:flex">
+              <div
+                {...cardReveal}
+                className={`product-media hidden aspect-[760/609] w-[calc(760px*var(--cs-media-scale,1))] shrink-0 items-center justify-center self-start overflow-hidden rounded-lg bg-white shadow-[0px_4px_4px_0px_rgba(0,0,0,0.25)] sideways:mr-[calc(76px*var(--cs-media-scale,1))] sideways:flex ${cardReveal.className}`}
+              >
                 <div className="flex w-[560px] shrink-0 flex-col scale-[var(--cs-media-scale,1)]">{statRows()}</div>
               </div>
-              <div className="order-2 mt-4 flex flex-col min-[901px]:hidden">{statRows()}</div>
+              <div className="order-2 mt-4 flex flex-col sideways:hidden">{statRows(true)}</div>
             </>
           ) : null}
           {hasImage ? (
             isPlainImage ? (
               <PlainMedia
                 image={image!}
-                className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="sideways:w-[var(--cs-media-w)] sideways:shrink-0 sideways:self-start"
+                reveal={reveal("visual", { trigger: true })}
               />
             ) : (
               <IsolatedMedia
                 image={image!}
-                className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start"
+                className="sideways:w-[var(--cs-media-w)] sideways:shrink-0 sideways:self-start"
               />
             )
           ) : hasMediaStats ? (
@@ -1499,24 +1600,24 @@ function SectionBlock({
               {/* Laid out at the box's 1:1 size (560px rows in the 857px
                   box) and scaled with it, so the rows keep their place in
                   the box when short windows shrink the media. */}
-              <MediaPlaceholder className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start">
-                <div className="hidden w-[560px] shrink-0 flex-col min-[901px]:flex min-[901px]:scale-[var(--cs-media-scale,1)]">
+              <MediaPlaceholder className="sideways:w-[var(--cs-media-w)] sideways:shrink-0 sideways:self-start">
+                <div className="hidden w-[560px] shrink-0 flex-col sideways:flex sideways:scale-[var(--cs-media-scale,1)]">
                   {statRows()}
                 </div>
               </MediaPlaceholder>
-              <div className="order-2 mt-4 flex flex-col min-[901px]:hidden">{statRows()}</div>
+              <div className="order-2 mt-4 flex flex-col sideways:hidden">{statRows()}</div>
             </>
           ) : (
-            <MediaPlaceholder className="min-[901px]:w-[var(--cs-media-w)] min-[901px]:shrink-0 min-[901px]:self-start" />
+            <MediaPlaceholder className="sideways:w-[var(--cs-media-w)] sideways:shrink-0 sideways:self-start" />
           )}
           {hasQuotes ? (
             <div
-              className="order-2 mt-4 flex flex-col gap-10 min-[901px]:order-none min-[901px]:mt-0 min-[901px]:shrink-0"
+              className="order-2 mt-4 flex flex-col gap-10 sideways:order-none sideways:mt-0 sideways:shrink-0"
             >
               {renderQuotes()}
             </div>
           ) : hasStats ? (
-            <div className="contents [&>*]:order-2 [&>*]:mt-4 min-[901px]:[&>*]:order-none min-[901px]:[&>*]:mt-0">{renderStats()}</div>
+            <div className="contents [&>*]:order-2 [&>*]:mt-4 sideways:[&>*]:order-none sideways:[&>*]:mt-0">{renderStats()}</div>
           ) : null}
         </div>
         {/* Matches the image column's own 857px width (not the full row,
@@ -1524,7 +1625,10 @@ function SectionBlock({
             caption centers under the image itself instead of under the
             whole wider row. */}
         {caption ? (
-          <div className="order-1 flex w-full justify-center min-[901px]:order-none min-[901px]:w-[var(--cs-media-w)]">
+          <div
+            {...captionReveal}
+            className={`order-1 flex w-full justify-center sideways:order-none sideways:w-[var(--cs-media-w)] ${captionReveal.className}`}
+          >
             <p className="cs-caption text-center">{caption}</p>
           </div>
         ) : null}
@@ -1545,34 +1649,45 @@ function SectionBlock({
         ["--cs-copy-col" as string]: COPY_COL,
       }}
     >
-      <div className="flex flex-col gap-10 min-[901px]:flex-row min-[901px]:items-start min-[901px]:gap-[calc(3rem*var(--cs-scale,1))]">
+      <div className="flex flex-col gap-10 sideways:flex-row sideways:items-start sideways:gap-[calc(3rem*var(--cs-scale,1))]">
         {/* h-0 on desktop: the copy hangs from the row's top without adding
             to its height, so the block's measured height is the media's —
             and opening the expand-to-read points can't make this the
             tallest block and shift the whole story's top line while you
             read (see HorizontalTrack's --cs-content-h). */}
         <div
-          className={`flex w-full flex-col gap-5 min-[901px]:h-0 min-[901px]:shrink-0 min-[901px]:pl-[calc(39px*var(--cs-scale,1))] ${
-            hasIllustratedSteps ? "min-[901px]:w-[calc(413px*var(--cs-scale,1))]" : "min-[901px]:w-[var(--cs-copy-col)]"
+          {...group}
+          className={`flex w-full flex-col gap-5 sideways:h-0 sideways:shrink-0 sideways:pl-[calc(39px*var(--cs-scale,1))] ${
+            hasIllustratedSteps ? "sideways:w-[calc(413px*var(--cs-scale,1))]" : "sideways:w-[var(--cs-copy-col)]"
           }`}
         >
-          <div className="flex flex-col gap-2">
+          {/* The heading's number, title and eyebrow each carry the reveal
+              (the coral number sits above the grain), moving as one. */}
+          <div {...trigger} className="flex flex-col gap-2">
             <div className="relative">
-              {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" /> : null}
-              <h2 className="display text-[2rem] min-[901px]:text-[40px]">{title}</h2>
+              {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" reveal={headingReveal} /> : null}
+              <h2 className={`display text-[2rem] sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
+                {title}
+              </h2>
             </div>
-            <p className="cs-section-title">{eyebrow}</p>
+            <p className={`cs-section-title ${headingReveal.className}`} style={headingReveal.style}>
+              {eyebrow}
+            </p>
           </div>
-          {subhead ? <p className="cs-section-title">{subhead}</p> : null}
-          <div className="t-body-sans -mt-2 flex flex-col gap-3">
+          {subhead ? (
+            <p {...copy} className={`cs-section-title ${copy.className}`}>
+              {subhead}
+            </p>
+          ) : null}
+          <div {...copy} className={`t-body-sans -mt-2 flex flex-col gap-3 ${copy.className}`}>
             {(Array.isArray(body) ? body : [body]).map((p, i) => (
               <p key={i}>{p}</p>
             ))}
           </div>
           {hasSteps ? null : expandedPoints ? (
-            <ExpandCollapse points={expandedPoints} />
+            <ExpandCollapse points={expandedPoints} reveal={copy} />
           ) : (
-            <div className="flex flex-col gap-4">
+            <div {...copy} className={`flex flex-col gap-4 ${copy.className}`}>
               {bullets.map((bullet) => (
                 <div key={bullet.title}>
                   <p className="cs-sub-label">{bullet.title}</p>
@@ -1584,7 +1699,7 @@ function SectionBlock({
         </div>
 
         <div
-          className={`flex w-full flex-col gap-6 min-[901px]:w-auto ${hasIllustratedSteps ? "min-[901px]:ml-[calc(72px*var(--cs-scale,1))]" : ""}`}
+          className={`flex w-full flex-col gap-6 sideways:w-auto ${hasIllustratedSteps ? "sideways:ml-[calc(72px*var(--cs-scale,1))]" : ""}`}
         >
           {renderPanelArea()}
         </div>
@@ -1693,6 +1808,7 @@ export function CaseStudyPage({
   meta,
   sidebar,
   blocks,
+  motion = false,
 }: {
   /** case-studies.ts slug for this page — picks its "Want to see more?"
    * pair via closingLinksFor, which excludes this page by construction. */
@@ -1700,11 +1816,15 @@ export function CaseStudyPage({
   meta: Meta;
   sidebar: Sidebar;
   blocks: Block[];
+  /** Case-study motion (ReadingMotion): content settles in as it's reached. */
+  motion?: boolean;
 }) {
-  return (
+  const story = (
     <main className="bg-bg">
       <BottomRule />
-      <HorizontalTrack>
+      {/* With motion the content brings itself in, so the track doesn't
+          fade in as a whole; the shell (dots, scrubber, rule) is just there. */}
+      <HorizontalTrack fade={!motion}>
         <RailDots />
         <CoverBlock meta={meta} sidebar={sidebar} />
         {blocks.map((block, i) => renderBlock(block, i))}
@@ -1713,4 +1833,5 @@ export function CaseStudyPage({
       <CaseStudyFooter />
     </main>
   );
+  return motion ? <ReadingMotion>{story}</ReadingMotion> : story;
 }

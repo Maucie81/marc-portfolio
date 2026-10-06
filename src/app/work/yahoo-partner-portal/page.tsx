@@ -14,6 +14,7 @@ export default function YahooPartnerPortalPage() {
       meta={meta}
       sidebar={sidebar}
       blocks={blocks}
+      motion
     />
   );
 }
