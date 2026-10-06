@@ -1181,7 +1181,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   font-size: 0.75rem;
   line-height: 1.25rem;
   letter-spacing: 0;
-  color: var(--ink-strong);
+  color: var(--muted);
 }
 
 /* Sub Label · a title paired with a smaller description directly beneath it
