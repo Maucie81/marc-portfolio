@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Roboto_Mono } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
 import NoiseOverlay from "@/components/site/NoiseOverlay";
@@ -105,6 +106,7 @@ export default function RootLayout({
           <ProofNotes />
         </ProofProvider>
         <NoiseOverlay />
+        <Analytics />
       </body>
     </html>
   );
