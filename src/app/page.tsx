@@ -300,7 +300,8 @@ export default function Home() {
                   style={rv(60, { dur: 400, ease: "quiet" })}
                 >
                   <Link href="/contact" className="transition-opacity hover:opacity-75">
-                    Get in touch to learn more about my work →
+                    <span className="md:hidden">Get in touch →</span>
+                    <span className="hidden md:inline">Get in touch to learn more about my work →</span>
                   </Link>
                 </h2>
                 <p

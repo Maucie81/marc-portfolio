@@ -62,7 +62,7 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
         href="/contact"
         className="cta cta-secondary hidden min-[901px]:inline-flex"
       >
-        Get in touch
+        Want the full story? Get in touch
         <CtaArrow />
       </Link>
     </div>

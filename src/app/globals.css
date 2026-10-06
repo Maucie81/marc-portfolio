@@ -149,7 +149,23 @@ body {
    tracking instead of .display's -2%, per direct request — Figma sets them
    at 5%; 0 was the pick between the two. The homepage keeps -2%. */
 .cs-track h2.display {
-  letter-spacing: 0;
+  letter-spacing: -0.02em;
+}
+
+/* Every orange element in the carousel (cover title, section numbers, accent
+   stats and rules, the scroll hint) sits above the paper grain (z-38 on
+   .cs-track::after), like product imagery — solid coral, not textured. */
+.cs-track :is(.text-accent, .border-accent, .cs-kicker, span.bg-accent) {
+  z-index: 39;
+}
+.cs-track
+  :is(.text-accent, .border-accent, .cs-kicker, span.bg-accent):not(
+    [class*="absolute"],
+    [class*="fixed"],
+    [class*="sticky"],
+    [class*="relative"]
+  ) {
+  position: relative;
 }
 
 /* Case-study pages and placeholder frames only. That surface isn't part of the
@@ -1197,12 +1213,15 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
    979px wide at it. */
 .cs-outline-title {
   font-family: var(--font-display), system-ui, sans-serif;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 56px;
   line-height: 64.4px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
+  letter-spacing: -0.02em;
   color: var(--accent);
+  /* Above the paper grain (z-38) like product imagery, so the title stays
+     solid coral instead of being textured. */
+  position: relative;
+  z-index: 39;
   --outline: 0px;
 }
 
@@ -1218,7 +1237,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
        the 24px-gutter column there. */
     font-size: min(2.75rem, (100vw - 48px) * 0.135);
     line-height: min(3.125rem, (100vw - 48px) * 0.1534);
-    letter-spacing: 1px;
+    letter-spacing: -0.02em;
     --outline: 0px;
   }
 }

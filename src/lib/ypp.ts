@@ -19,7 +19,7 @@ export const meta = {
   years: "2024 — 2026",
   // The outlined opening's title, one line each (uppercased by CSS).
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["partner portal"],
+  heroLines: ["Partner Portal"],
 };
 
 export const sidebar = {

@@ -870,14 +870,14 @@ function OutlineHero({ meta }: { meta: Meta }) {
       <OutlineTitle meta={meta} className="mt-2 whitespace-nowrap" />
       {/* 555px, not Figma's 695: the same measure as the grid hero's
           paragraph (Yahoo's live cover), per direct request. */}
-      <p className="mt-4 max-w-[555px] text-[20px] font-medium leading-[34px] text-ink-2 [font-family:var(--font-display)]">
+      <p className="mt-4 max-w-[555px] text-[18px] font-medium leading-[28px] text-ink-2 [font-family:var(--font-display)]">
         {meta.subtitle}
       </p>
       {/* 241px from the subtitle's top in Figma = 71px after its five
           lines; kept as a gap so a longer subtitle can't run into it. In
           the lockup's flow, so the lockup CoverBlock centers runs from the
           company line down to this hint. */}
-      <p className="mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-accent [font-family:var(--font-display)]">
+      <p className="mt-[71px] flex items-center gap-3 whitespace-nowrap text-[14px] font-semibold leading-[22px] text-[#444440] [font-family:var(--font-display)]">
         <span aria-hidden className="h-[3px] w-[50px] bg-accent" />
         Scroll to move through the story
       </p>

@@ -38,7 +38,7 @@ export const meta = {
   company: "Headspace",
   years: "2021 — 2022",
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["admin portal", "research & proposal"],
+  heroLines: ["Admin Portal", "Research & Proposal"],
 };
 
 export const sidebar = {

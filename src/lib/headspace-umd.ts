@@ -21,7 +21,7 @@ export const meta = {
   company: "Headspace",
   years: "2022 — 2023",
   // The outlined opening's title, one line each (uppercased by CSS).
-  heroLines: ["unified", "main door"],
+  heroLines: ["Unified", "Main Door"],
 };
 
 export const context = [
