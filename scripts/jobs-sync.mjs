@@ -280,7 +280,10 @@ function loadEnv() {
   return env;
 }
 const env = loadEnv();
-const SITE = (env.JOBS_SITE_URL || env.NEXT_PUBLIC_SITE_URL || "https://www.marcfavro.com").replace(/\/$/, "");
+// Always the live production domain. NEXT_PUBLIC_SITE_URL is deliberately NOT used: on
+// this project it is a *.vercel.app alias, which answers 401/redirects on its own and
+// never reaches the upload endpoint with the Authorization header intact.
+const SITE = (env.JOBS_SITE_URL || "https://www.marcfavro.com").replace(/\/$/, "");
 
 /** Vercel hands out redacted placeholders for integration secrets, so only trust real values. */
 const real = (v) => typeof v === "string" && /^https:\/\//.test(v);
@@ -296,7 +299,8 @@ if (rUrl && rTok) {
 
 // Default path: hand the snapshot to the site, which writes it to its own Redis.
 // Vercel may hand back a redacted placeholder like "[SOMETHING]" for secrets; ignore those.
-const usable = (v) => (typeof v === "string" && v.trim() && !/^\[.*\]$/.test(v.trim()) ? v.trim() : null);
+// The password is used exactly as stored/typed (no trimming), same as the /jobs login form.
+const usable = (v) => (typeof v === "string" && v.length && !/^\[[A-Z_ ]+\]$/.test(v) ? v : null);
 
 /** Ask for a secret on the controlling terminal without echoing it. Works under `npm run`. */
 async function askHidden(question) {
@@ -356,13 +360,48 @@ function savePassword(value) {
   fs.writeFileSync(file, [...kept, line, ""].join("\n"), { mode: 0o600 });
 }
 
-const publish = (secret) =>
-  fetch(`${SITE}/api/jobs-sync`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
-    body: JSON.stringify(snapshot),
-  });
+const ENDPOINT = `${SITE}/api/jobs-sync`;
 
+/**
+ * POST the snapshot. Redirects are followed by hand so the Authorization header is
+ * never silently dropped (fetch strips it on cross-origin redirects), and only to
+ * https hosts on the same site. Returns { status, ours } where `ours` is true only
+ * when the reply is the upload endpoint's own JSON, not a proxy/protection page.
+ */
+async function publish(secret) {
+  let url = ENDPOINT;
+  const home = new URL(ENDPOINT).hostname.replace(/^www\./, "");
+  for (let hop = 0; hop < 4; hop++) {
+    const res = await fetch(url, {
+      method: "POST",
+      redirect: "manual",
+      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+      body: JSON.stringify(snapshot),
+    });
+    if (res.status >= 300 && res.status < 400 && res.headers.get("location")) {
+      const next = new URL(res.headers.get("location"), url);
+      const host = next.hostname.replace(/^www\./, "");
+      if (next.protocol !== "https:" || host !== home) {
+        return { status: res.status, ours: false, detail: `redirected to ${next.origin}, not following` };
+      }
+      url = next.href;
+      continue;
+    }
+    let body = null;
+    try {
+      body = await res.json();
+    } catch {}
+    return { status: res.status, ours: !!body && typeof body.ok === "boolean", detail: body?.error ?? "", url };
+  }
+  return { status: 0, ours: false, detail: "too many redirects" };
+}
+
+if (/[^\x20-\x7e]/.test(usable(env.JOBS_PASSWORD) ?? "")) {
+  console.error("The saved JOBS_PASSWORD contains characters that can't be sent in a header. Nothing was published.");
+  process.exit(1);
+}
+
+console.log(`Publishing to ${ENDPOINT}`);
 let secret = usable(env.JOBS_PASSWORD);
 let typed = false;
 let res = null;
@@ -374,24 +413,29 @@ for (let attempt = 0; attempt < 3; attempt++) {
       console.error("No password entered (or no terminal available to ask on). Nothing was published.");
       process.exit(1);
     }
+    if (/[^\x20-\x7e]/.test(secret)) {
+      console.error("That password contains characters that can't be sent in a header. Nothing was published.");
+      process.exit(1);
+    }
   }
   res = await publish(secret);
-  if (res.status !== 401) break;
+  // Only a 401 from the endpoint itself means "wrong password".
+  if (!(res.status === 401 && res.ours)) break;
   secret = null;
 }
 
-if (res.ok) {
+if (res.status === 200 && res.ours) {
   if (typed) {
     savePassword(secret);
     console.log("Saved the password to .env.local (git-ignored) — you won't be asked again.");
   }
   console.log(`Published snapshot to ${SITE}/jobs.`);
 } else {
-  const hint =
-    res.status === 401 ? " (password doesn't match the one set in Vercel)"
-    : res.status === 503 ? " (JOBS_PASSWORD or Redis isn't set on the server)"
-    : res.status === 404 ? " (endpoint not deployed yet)"
-    : "";
-  console.error(`Publish failed: HTTP ${res.status}${hint}.`);
+  const why = !res.ours
+    ? `the reply did not come from the upload endpoint${res.detail ? ` (${res.detail})` : ""} — wrong address, or the endpoint isn't deployed`
+    : res.status === 401 ? "password doesn't match the one set in Vercel"
+    : res.status === 503 ? "JOBS_PASSWORD or Redis isn't set on the server"
+    : res.detail || "unexpected response";
+  console.error(`Publish failed: HTTP ${res.status} — ${why}.`);
   process.exit(1);
 }
