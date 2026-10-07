@@ -1,6 +1,7 @@
 import { pageLabel } from "@/lib/page-titles";
 import {
   RANGES,
+  SMALL_GROUP,
   TIME_ZONE,
   sourceOf,
   type RangeKey,
@@ -225,6 +226,118 @@ ${rows.length ? table(["Page", "Visits", "Pageviews", "Median engaged", "Avg. en
 </section>`;
 }
 
+/** "40% (4)": the share and the count it's out of, so small groups read
+ * as small. */
+const share = (part: number, whole: number) =>
+  whole ? `${pct(part, whole)} <span class="muted">(${fmt(part)})</span>` : "—";
+
+function devices(report: Report) {
+  const d = report.devices;
+  const groups = d.groups;
+  const [mobile, desktop] = groups;
+  const small = groups.filter((g) => g.visits < SMALL_GROUP).map((g) => g.label.toLowerCase());
+
+  // The answer first, in a sentence: how far each device gets.
+  const line = (g: (typeof groups)[number]) =>
+    g.visits
+      ? `<b>${esc(g.label)}</b>: ${pct(g.viewedOne, g.visits)} of visits opened a case study, ${pct(g.viewedTwo, g.visits)} opened two or more, and ${pct(g.hiring, g.visits)} reached resume, LinkedIn or contact.`
+      : `<b>${esc(g.label)}</b>: no visits in this period.`;
+  const headline = `<p>${line(mobile)}<br>${line(desktop)}</p>`;
+
+  const head = ["", ...groups.map((g) => g.label)];
+  const num = [false, ...groups.map(() => true)];
+  const caseStudyCell = (g: (typeof groups)[number]) =>
+    !g.topCaseStudy
+      ? "—"
+      : g.topCaseStudyTies > 1 && g.topCaseStudy.visits === 1
+        ? `<span class="muted">No clear leader</span>`
+        : `${esc(g.topCaseStudy.label)} <span class="muted">(${fmt(g.topCaseStudy.visits)})</span>`;
+  const journeyCell = (g: (typeof groups)[number]) =>
+    !g.topJourney
+      ? "—"
+      : g.topJourney.ties > 1 && g.topJourney.visits === 1
+        ? `<span class="muted">No path has repeated yet</span>`
+        : `${esc(g.topJourney.path)} <span class="muted">(${fmt(g.topJourney.visits)})</span>`;
+  const rows: string[][] = [
+    ["Visits", ...groups.map((g) => share(g.visits, d.total))],
+    ["Pageviews", ...groups.map((g) => fmt(g.pageviews))],
+    ["Pages per visit", ...groups.map((g) => (g.visits ? (g.pageviews / g.visits).toFixed(1) : "—"))],
+    ["Median engaged / visit", ...groups.map((g) => `<b>${median(g.engaged)}</b>`)],
+    ["Average engaged / visit", ...groups.map((g) => mean(g.engaged))],
+    ["Viewed a case study", ...groups.map((g) => share(g.viewedOne, g.visits))],
+    ["Viewed 2+ case studies", ...groups.map((g) => share(g.viewedTwo, g.visits))],
+    ["Resume, LinkedIn or contact", ...groups.map((g) => share(g.hiring, g.visits))],
+    ["A way to get in touch", ...groups.map((g) => share(g.contact, g.visits))],
+    ["Most viewed case study", ...groups.map(caseStudyCell)],
+    ["Most common path", ...groups.map(journeyCell)],
+  ];
+  const compare = `<div class="scroll"><table class="compare"><thead><tr>${head
+    .map((h, i) => `<th${num[i] ? ' class="num"' : ""}>${esc(h)}</th>`)
+    .join("")}</tr></thead><tbody>${rows
+    .map(
+      ([label, ...cells], r) =>
+        `<tr><td>${esc(label)}</td>${cells
+          // The last two rows are names, not numbers.
+          .map((c) => `<td${r < rows.length - 2 ? ' class="num"' : ""}>${c}</td>`)
+          .join("")}</tr>`,
+    )
+    .join("")}</tbody></table></div>`;
+
+  const funnels = `<div class="funnels">${groups
+    .map((g) => {
+      const steps = g.funnel
+        .map((count, i) => {
+          const prev = g.funnel[i - 1];
+          const meta =
+            i === 0
+              ? "all visits"
+              : `${pct(count, g.visits)} of visits · ${pct(count, prev)} of the step before`;
+          return `<li><div class="f-row"><span>${esc(report.funnel[i].label)}</span><b>${fmt(count)}</b></div>${bar(count, g.visits)}<div class="muted small">${meta}</div></li>`;
+        })
+        .join("");
+      return `<div><h3>${esc(g.label)}</h3>${g.visits ? `<ol class="funnel">${steps}</ol>` : empty("No visits in this period.")}</div>`;
+    })
+    .join("")}</div>`;
+
+  const csRows = d.caseStudies
+    .map(
+      (c) =>
+        `<tr class="cs-name"><td colspan="5">${esc(c.label)}</td></tr>${c.byDevice
+          .map(
+            (x) =>
+              `<tr><td class="muted">${esc(x.label)}</td><td class="num">${fmt(x.visits)}</td><td class="num">${x.visits ? median(x.engaged) : "—"}</td><td class="num">${share(x.continued, x.visits)}</td><td class="num">${share(x.acted, x.visits)}</td></tr>`,
+          )
+          .join("")}`,
+    )
+    .join("");
+  const byCaseStudy = csRows
+    ? `<div class="scroll"><table class="by-cs"><thead><tr><th></th><th class="num">Visits</th><th class="num">Median engaged</th><th class="num">Went on to another</th><th class="num">Then acted</th></tr></thead><tbody>${csRows}</tbody></table></div>`
+    : empty("No case-study views in this period.");
+
+  const others = [
+    d.tablet.visits && !d.tablet.shown
+      ? `${plural(d.tablet.visits, "tablet visit")} ${d.tablet.visits === 1 ? "is" : "are"} left out of the comparison until there are 10 to compare`
+      : "",
+    d.unknown ? `${plural(d.unknown, "visit")} with no device recorded ${d.unknown === 1 ? "is" : "are"} left out` : "",
+  ].filter(Boolean);
+  const reconcile = `${groups.map((g) => `${g.label} ${fmt(g.visits)}`).join(" + ")}${
+    d.tablet.visits && !d.tablet.shown ? ` + tablet ${fmt(d.tablet.visits)}` : ""
+  }${d.unknown ? ` + unknown ${fmt(d.unknown)}` : ""} = ${plural(d.total, "visit")}.`;
+
+  return `<section>
+<h2>Device behavior</h2>
+<p class="muted small">Each visit counts under the device it started on. Same funnel steps as above, with each device's own visits as the base.${small.length ? ` <b>Small sample (${small.join(" and ")} under ${SMALL_GROUP} visits) — treat percentages as directional.</b>` : ""}</p>
+${headline}
+${funnels}
+<h3>Side by side</h3>
+${compare}
+<h3>Case studies by device</h3>
+<p class="muted small">Went on to another: opened a different case study afterwards in the same visit. Then acted: reached resume, LinkedIn or contact during the visit.</p>
+${byCaseStudy}
+<p class="muted small">${reconcile}${others.length ? ` ${others.join("; ")}.` : ""}</p>
+</section>`;
+}
+
 function utm(report: Report) {
   const { source, medium, campaign } = report.utm;
   if (!source.length && !medium.length && !campaign.length) {
@@ -346,6 +459,12 @@ td:first-child { min-width: 8em; }
 .facts dt { color: var(--muted); font-size: 13px; }
 .facts dd { margin: 0; overflow-wrap: anywhere; }
 .paths { list-style: none; margin: 0; padding: 0; }
+.funnels { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); column-gap: 40px; margin: 16px 0 24px; }
+.funnels h3 { margin-bottom: 0; }
+.compare td:not(:first-child), .compare th:not(:first-child) { min-width: 7em; }
+.by-cs .cs-name td { padding-top: 14px; font-weight: 600; border-bottom: none; }
+.by-cs td:first-child { min-width: 5em; padding-left: 12px; }
+.by-cs .cs-name td:first-child { padding-left: 0; }
 .paths li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .paths b { font-variant-numeric: tabular-nums; }
 button, input { font: inherit; }
@@ -424,6 +543,8 @@ ${caseStudies(report)}
 </div>
 
 ${sources(report)}
+
+${devices(report)}
 
 <h2 class="divider">Details</h2>
 ${pages(report)}

@@ -484,7 +484,94 @@ export function buildReport(opts: {
       ),
     },
     recent: pageviews.slice(-50).reverse(),
+    devices: deviceComparison(sessions, caseStudies.map((c) => c.path)),
   };
 }
 
 export type Report = ReturnType<typeof buildReport>;
+
+// ---------- device behavior ----------
+
+/** Below this, a device group's percentages are directional at best. */
+export const SMALL_GROUP = 10;
+/** Tablets get their own column only once there are this many. */
+const TABLET_MIN = 10;
+
+/** The most common multi-step path, and how many paths share that count. */
+function topJourney(group: Session[]) {
+  const rows = tally(
+    group.map(journeyOf).filter((steps) => steps.length > 1),
+    (steps) => steps.join(" → "),
+  );
+  if (!rows.length) return null;
+  return { path: rows[0][0], visits: rows[0][1], ties: rows.filter(([, n]) => n === rows[0][1]).length };
+}
+
+/** Opened `path`, then a different case study later in the same visit. */
+function continuedAfter(s: Session, path: string) {
+  const first = s.views.findIndex((v) => v.path === path);
+  return first >= 0 && s.views.slice(first + 1).some((v) => isCaseStudy(v.path) && v.path !== path);
+}
+
+function deviceGroup(label: string, group: Session[]) {
+  const count = (test: (s: Session) => boolean) => group.filter(test).length;
+  const viewedOne = count((s) => s.caseStudies.size >= 1);
+  const viewedTwo = count((s) => s.caseStudies.size >= 2);
+  const caseStudy = [...new Set(group.flatMap((s) => [...s.caseStudies]))]
+    .map((path) => ({ label: pageLabel(path), visits: count((s) => s.caseStudies.has(path)) }))
+    .sort((a, b) => b.visits - a.visits || a.label.localeCompare(b.label));
+  return {
+    label,
+    visits: group.length,
+    // From the visits themselves, so it reconciles with Visits; the overview
+    // card also counts pageviews from before visits were tracked.
+    pageviews: group.reduce((sum, s) => sum + s.views.length, 0),
+    engaged: timeStats(group.filter((s) => s.timed).map((s) => s.engagedMs)),
+    viewedOne,
+    viewedTwo,
+    hiring: count((s) => s.hiring),
+    contact: count((s) => s.contact),
+    // Same steps and definitions as the main hiring funnel.
+    funnel: [group.length, viewedOne, viewedTwo, count((s) => s.caseStudies.size >= 2 && s.hiring)],
+    topCaseStudy: caseStudy[0] ?? null,
+    topCaseStudyTies: caseStudy.filter((c) => c.visits === caseStudy[0]?.visits).length,
+    topJourney: topJourney(group),
+  };
+}
+
+/** Mobile against desktop, by the device each visit started on. Tablets
+ * join as a third column once there are TABLET_MIN of them; until then
+ * they're counted in the note, not the comparison. */
+function deviceComparison(sessions: Session[], caseStudyPaths: string[]) {
+  const on = (device: string | null) => sessions.filter((s) => (s.first.device ?? null) === device);
+  const tablet = on("tablet");
+  const members: [string, Session[]][] = [
+    ["Mobile", on("mobile")],
+    ["Desktop", on("desktop")],
+    ...(tablet.length >= TABLET_MIN ? [["Tablet", tablet] as [string, Session[]]] : []),
+  ];
+
+  const caseStudies = caseStudyPaths
+    .map((path) => ({
+      label: pageLabel(path),
+      byDevice: members.map(([label, group]) => {
+        const viewers = group.filter((s) => s.caseStudies.has(path));
+        return {
+          label,
+          visits: viewers.length,
+          engaged: timeStats(viewers.filter((s) => s.timed).map((s) => s.engaged.get(path) ?? 0)),
+          continued: viewers.filter((s) => continuedAfter(s, path)).length,
+          acted: viewers.filter((s) => s.hiring).length,
+        };
+      }),
+    }))
+    .filter((c) => c.byDevice.some((d) => d.visits > 0));
+
+  return {
+    groups: members.map(([label, group]) => deviceGroup(label, group)),
+    tablet: { visits: tablet.length, shown: tablet.length >= TABLET_MIN },
+    unknown: on(null).length,
+    total: sessions.length,
+    caseStudies,
+  };
+}
