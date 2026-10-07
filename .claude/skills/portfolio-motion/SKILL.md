@@ -208,11 +208,11 @@ The only horizontal motion is the scroll-driven track itself and that 2px arrow.
 
 ## Hover
 
-Hover changes color, opacity or a ring. Things don't move or resize.
+Hover changes color, opacity, a ring, or (CTAs only) a faint drop shadow. Things don't move or resize.
 
 | Element | Behavior |
 |---|---|
-| `.cta` | 150ms color/box-shadow. Primary gains a 2px inset `--accent-deep` ring; secondary darkens to `--accent-deep`; tertiary text darkens to `--ink-strong` |
+| `.cta` | 150ms color/background/box-shadow. Primary fill shifts to `--accent-hover` (#f24f39) and gains a faint drop shadow (`--cta-hover-shadow`); secondary's type and outline go to `--accent-hover` with the same shadow; tertiary text darkens to `--ink-strong`. The old 2px `--accent-deep` hover edge was removed on request |
 | Nav links | color → accent (Tailwind's 150ms default). The current page is shown bold, not recolored |
 | Additional work live links | color → `--accent-deep`, arrow nudges 2px right (`motion-reduce:transition-none`) |
 | Career case-study links | underlined; color → `--ink-2` |

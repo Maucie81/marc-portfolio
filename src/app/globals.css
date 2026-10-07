@@ -42,9 +42,12 @@
   --line: #b4ada4;
   --line-soft: #dcd6cc;
   --accent: #ff5841;
-  /* Pressed/hover edge of the accent — CTA hover outlines only
-     (Portfolio-Playground 100:209186). */
+  /* Darker edge of the accent — Additional work's live-link hover. */
   --accent-deep: #a72e1e;
+  /* CTA hover: a shade under --accent, plus a faint lift under the button
+     (per direct request; replaced the 2px --accent-deep hover edge). */
+  --accent-hover: #f24f39;
+  --cta-hover-shadow: 0 2px 8px rgb(26 21 18 / 0.16);
 }
 
 @theme inline {
@@ -349,13 +352,13 @@ paints over it. */
 
 /* CTA buttons · Portfolio-Playground 100:209186 ("CTA"). Google Sans Flex
    SemiBold 14/24, 12px arrow 4px after the label, 2px radius, 16×4 padding.
-   Default: coral fill, white type; hover adds a 2px --accent-deep edge
-   (1px / #c43b28 in the Figma read as too faint — deepened per direct
-   request).
+   Default: coral fill, white type; hover shifts the fill to
+   --accent-hover and adds a faint drop shadow (--cta-hover-shadow). The
+   earlier hover edge — 2px --accent-deep — was removed per direct request.
    Secondary: 2px coral outline, coral type; hover takes both to
-   --accent-deep. Tertiary: type only, --ink-deep; hover darkens to
-   --ink-strong. Outlines are inset box-shadows, not borders, so a hover
-   never changes the button's size. The Figma text layers set `capitalize`;
+   --accent-hover with the same drop shadow. Tertiary: type only,
+   --ink-deep; hover darkens to --ink-strong. Outlines are inset
+   box-shadows, not borders, so a hover never changes the button's size. The Figma text layers set `capitalize`;
    not carried over — copy stays sentence case, per the site's casing rules.
    In the components layer so Tailwind's display utilities (hidden,
    lg:inline-flex) can still switch a button off per breakpoint — unlayered,
@@ -376,11 +379,13 @@ paints over it. */
   line-height: 1.5rem;
   letter-spacing: 0;
   font-variation-settings: "GRAD" 0, "ROND" 0, "wdth" 100;
-  transition: color 150ms ease, box-shadow 150ms ease;
+  transition: color 150ms ease, background-color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .cta:not(:disabled):hover {
-  box-shadow: inset 0 0 0 2px var(--accent-deep);
+  background: var(--accent-hover);
+  box-shadow: var(--cta-hover-shadow);
 }
 
 .cta-secondary {
@@ -390,8 +395,9 @@ paints over it. */
 }
 
 .cta-secondary:not(:disabled):hover {
-  color: var(--accent-deep);
-  box-shadow: inset 0 0 0 2px var(--accent-deep);
+  background: transparent;
+  color: var(--accent-hover);
+  box-shadow: inset 0 0 0 2px var(--accent-hover), var(--cta-hover-shadow);
 }
 
 .cta-tertiary {
@@ -401,6 +407,7 @@ paints over it. */
 }
 
 .cta-tertiary:not(:disabled):hover {
+  background: transparent;
   color: var(--ink-strong);
   box-shadow: none;
 }
@@ -1502,8 +1509,15 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   opacity: 0.5;
 }
 
+/* The track's transform (GSAP's translateX, will-change) makes it its own
+   compositing group, so its ::after grain can only soft-light against what
+   the track itself paints. Without a fill that was nothing: the grain fell
+   back to plain grey speckle and the case-study paper rendered #f3f0eb
+   against the homepage's #f8f5ee. Painting --bg here gives it the same
+   paper to blend with as .noise-overlay has on the homepage. */
 .cs-track {
   position: relative;
+  background-color: var(--bg);
 }
 
 .cs-pin {
