@@ -5,6 +5,7 @@ import PageTransition from "@/components/site/PageTransition";
 import PersistentHeader from "@/components/site/PersistentHeader";
 import NoiseOverlay from "@/components/site/NoiseOverlay";
 import Analytics from "@/components/site/Analytics";
+import VisitTracker from "@/components/site/VisitTracker";
 import ProofNotes from "@/components/proof/ProofNotes";
 import { ProofProvider } from "@/components/proof/ProofProvider";
 import { HERO_EDITION_SCRIPT } from "@/lib/hero-editions";
@@ -109,6 +110,9 @@ export default function RootLayout({
         {/* Vercel Web Analytics, skipped in browsers that opened /owner —
             see src/components/site/Analytics.tsx. */}
         <Analytics />
+        {/* Private visit log (city, page, source) behind /analytics — see
+            src/components/site/VisitTracker.tsx. */}
+        <VisitTracker />
       </body>
     </html>
   );
