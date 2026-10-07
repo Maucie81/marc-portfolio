@@ -24,7 +24,7 @@ import { HERO_SEQUENCE as SEQ, MOTION, rv } from "@/lib/motion";
  *
  * Motion (src/lib/motion.ts): the hero section is a data-reveal="load"
  * trigger and the slowest, most deliberate reveal on the page. The board
- * itself settles in first, like every card on the page; then the eyebrow
+ * itself settles in first (28px, 750ms); then the eyebrow
  * and name set as masked lines, the portrait is uncovered top to bottom
  * through its own crop, the statement follows line by line, the subline
  * rises in and the edition metadata fades up last — HERO_SEQUENCE.

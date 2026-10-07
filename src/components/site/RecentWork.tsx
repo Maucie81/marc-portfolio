@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import CtaArrow from "@/components/site/CtaArrow";
@@ -18,36 +17,21 @@ const PANEL_H = 412;
 const GRID_LINE = "#e7e1cb";
 
 /* Motion: each card plays once as it scrolls in (or, for the first one,
-   with the opening screen), and the panel carries it — it settles into
-   place as one piece, lifting the last 28px as it fades in (.rv-settle),
-   no mask. The copy barely moves: company and title, then the description
-   and CTA, fade up 4px; the skill tags fade in once the panel has mostly
-   landed. A right-hand panel follows its title, a left-hand one leads it —
-   the order the eye meets them. */
-const MEDIA_LAG = 120;
-const TITLE_LAG = 200;
-const COPY = { dur: 320, y: 4, ease: "quiet" } as const;
-/** Description and CTA follow the title by this much. */
-const COPY_LAG = 90;
-/** The tags, under the panel, wait for most of its settle. */
-const TAGS_LAG = 360;
+   with the opening screen), as one unit — its copy, panel and tags all
+   softly become visible together (.rv-soft: an 8px rise as it fades in,
+   850ms), no mask, nothing inside it on its own clock. The reveal sits on
+   each of the three parts rather than the card, so the panel (lifted
+   above the page grain) is never inside an animating wrapper. */
+const CARD = rv(0);
 
-function MockupPanel({
-  project,
-  eager,
-  delay,
-}: {
-  project: Project;
-  eager: boolean;
-  delay: number;
-}) {
+function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
   const { mockup } = project;
   const { box } = mockup;
   return (
     <div
-      className="product-media rv-settle relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]"
+      className="product-media rv-soft relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]"
       style={{
-        ...rv(delay),
+        ...CARD,
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
         backgroundImage: [
           `linear-gradient(to right, ${GRID_LINE} 1px, transparent 1px)`,
@@ -99,12 +83,10 @@ function SkillTags({
   skills,
   align,
   overhang,
-  delay,
 }: {
   skills: string[];
   align: "start" | "end";
   overhang: boolean;
-  delay: number;
 }) {
   // The row's width at a 1px font: mono glyphs are 0.6em, and each skill
   // after the first adds its dot (~0.7em) and two 1em gaps. 4% spare.
@@ -112,11 +94,11 @@ function SkillTags({
   return (
     <ul
       aria-label="Project focus"
-      className={`rv-fade hidden flex-wrap items-center gap-x-[1em] pb-1 pt-2 sm:flex sm:justify-end ${align === "start" ? "md:justify-start" : ""} ${
+      className={`rv-soft hidden flex-wrap items-center gap-x-[1em] pb-1 pt-2 sm:flex sm:justify-end ${align === "start" ? "md:justify-start" : ""} ${
         overhang ? "md:-mb-2.5" : ""
       }`}
       style={{
-        ...rv(delay, { dur: COPY.dur, ease: COPY.ease }),
+        ...CARD,
         fontSize: `max(8px, min(10px, ${(100 / em).toFixed(3)}cqw))`,
       }}
     >
@@ -136,17 +118,9 @@ function SkillTags({
   );
 }
 
-function ProjectCta({
-  project,
-  className,
-  style,
-}: {
-  project: Project;
-  className: string;
-  style?: CSSProperties;
-}) {
+function ProjectCta({ project, className }: { project: Project; className: string }) {
   return project.href ? (
-    <Link href={project.href} className={`cta self-start justify-self-start ${className}`} style={style}>
+    <Link href={project.href} className={`cta self-start justify-self-start ${className}`}>
       Project Preview
       <CtaArrow />
     </Link>
@@ -172,9 +146,7 @@ function Lines({ lines }: { lines: string[] }) {
  */
 function ProjectCard({ project, index }: { project: Project; index: number }) {
   const mediaLeft = project.media === "left";
-  const titleAt = mediaLeft ? TITLE_LAG : 0;
-  const mediaAt = mediaLeft ? 0 : MEDIA_LAG;
-  const panel = <MockupPanel project={project} eager={index === 0} delay={mediaAt} />;
+  const panel = <MockupPanel project={project} eager={index === 0} />;
 
   return (
     <article
@@ -193,12 +165,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           — the panel's height less 10px, i.e. 32px clear of the bottom of
           their 434px frame (see the tag row's overhang below). */}
       <div
-        className={`flex flex-col gap-5 md:row-start-1 ${
+        className={`rv-soft flex flex-col gap-5 md:row-start-1 ${
           mediaLeft ? "md:col-start-2" : "md:col-start-1"
         } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
+        style={CARD}
       >
         <div className="flex flex-col gap-1">
-          <div className="rv-rise flex flex-col gap-2" style={rv(titleAt, COPY)}>
+          <div className="flex flex-col gap-2">
             <p className="text-[16px] font-medium tracking-[-0.01em] text-muted">
               {project.company}
             </p>
@@ -206,15 +179,11 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
               {project.title}
             </h3>
           </div>
-          <p className="rv-rise max-w-[375px] text-[14px] leading-[22px] text-ink-2" style={rv(titleAt + COPY_LAG, COPY)}>
+          <p className="max-w-[375px] text-[14px] leading-[22px] text-ink-2">
             <Lines lines={project.description} />
           </p>
         </div>
-        <ProjectCta
-          project={project}
-          className="rv-rise inline-flex mb-3 md:mb-0"
-          style={rv(titleAt + COPY_LAG, COPY)}
-        />
+        <ProjectCta project={project} className="inline-flex mb-3 md:mb-0" />
       </div>
 
       {/* Panel + its metadata row. The whole panel opens the case study. */}
@@ -237,7 +206,6 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           skills={project.skills}
           align={mediaLeft ? "start" : "end"}
           overhang={index > 0}
-          delay={mediaAt + TAGS_LAG}
         />
       </div>
     </article>

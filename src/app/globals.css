@@ -1569,15 +1569,16 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   --motion-major: 700ms;
   --motion-hero: 800ms;
   --motion-settle: 750ms;
+  --motion-soft: 850ms;
   --motion-stagger: 60ms;
   --motion-hero-stagger: 100ms;
   /* The expressive moments: a long exponential settle, no overshoot. */
   --motion-ease: cubic-bezier(0.22, 1, 0.36, 1);
-  /* Cards settling into place: a soft ease-out with a long tail — about
-     60% of the lift is gone by 200ms, the last few px take the rest. */
+  /* The lift of a settle or a soft reveal: a soft ease-out with a long
+     tail — about 60% of it is gone by 200ms, the last px take the rest. */
   --motion-ease-settle: cubic-bezier(0.3, 0.5, 0.2, 1);
-  /* ...and their fade, which starts gentler and finishes first, so the
-     last of the settle happens fully opaque. */
+  /* ...and their fade, which starts gentler (a settle's also finishes
+     first, so the last of its lift happens fully opaque). */
   --motion-ease-settle-fade: cubic-bezier(0.25, 0.1, 0.25, 1);
   /* The quiet sections: a soft start, so a fade reads as text becoming
      visible, not popping in. */
@@ -1611,6 +1612,13 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 
 .rv-settle {
   --rv-dur: var(--motion-settle);
+  --rv-lift: 28px;
+}
+
+/* Cards and content blocks: softly becoming visible, not sliding in. */
+.rv-soft {
+  --rv-dur: var(--motion-soft);
+  --rv-lift: 8px;
 }
 
 .rv-rise,
@@ -1656,8 +1664,9 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   }
 }
 
-/* A card settling into place: the lift (--rv-lift, 28px) and the fade
-   run as two animations, each on its own curve (see .rv-settle below). */
+/* The lift of a settle (the hero board and band fills, 28px) or a soft
+   reveal (cards and content blocks, 8px); the fade runs alongside it as a
+   second animation, on its own curve (see .rv-settle / .rv-soft below). */
 @keyframes rv-settle {
   from {
     transform: translateY(calc(var(--rv-lift, 28px) * var(--rv-travel, 1)));
@@ -1665,7 +1674,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
+  html[data-motion] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft) {
     animation-duration: var(--rv-dur);
     animation-timing-function: var(--rv-ease, var(--motion-ease));
     /* --rv-open: a trigger's step in the opening screen (RevealObserver). */
@@ -1682,20 +1691,26 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
     animation-duration: var(--rv-dur), calc(var(--rv-dur) * 0.8);
     animation-timing-function: var(--motion-ease-settle), var(--motion-ease-settle-fade);
   }
+  /* Lift and fade over the whole duration, so the block is still easing
+     into full opacity as its last px settle. */
+  html[data-motion] .rv-soft {
+    animation-name: rv-settle, rv-fade;
+    animation-timing-function: var(--motion-ease-settle), var(--motion-ease-settle-fade);
+  }
 
   /* Waiting — paused on the first frame, i.e. hidden: everything (the hero
      and the opening screen with it) until the hero's font and portrait are
      in, a view trigger until it scrolls into view, section furniture until
      it's known whether it's on the opening screen. */
-  html[data-motion="hold"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
-  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
-  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
+  html[data-motion="hold"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft),
+  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]) :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft),
+  html[data-motion] :is([data-reveal="view"], [data-reveal="open"]):not([data-revealed]):is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft) {
     animation-play-state: paused;
   }
 
   /* Played (or already scrolled past): retired for good. */
-  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle),
-  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle) {
+  html[data-motion] [data-revealed="done"] :is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft),
+  html[data-motion] [data-revealed="done"]:is(.rv-line, .rv-rise, .rv-fade, .rv-clip, .rv-settle, .rv-soft) {
     animation: none;
   }
 }

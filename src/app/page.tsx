@@ -200,7 +200,7 @@ export default function Home() {
             {/* Motion: one of the page's two expressive moments, after the
                 hero — the title's three lines rise out of their masks
                 (720ms, 90ms apart), the copy simply fades in after them,
-                and the library panel settles in like every card (see
+                and the library panel softly appears like every card (see
                 ReferenceLibrary). */}
             <div
               data-reveal="view"

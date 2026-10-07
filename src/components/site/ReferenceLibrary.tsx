@@ -22,8 +22,8 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * it.
  *
  * Motion: once, as it scrolls in, the whole panel — shell, window and
- * sheet together — settles into place like every card on the page
- * (.rv-settle), following the title. No tile animates by itself, and
+ * sheet together — softly becomes visible like every card on the page
+ * (.rv-soft), following the title. No tile animates by itself, and
  * scrolling works throughout.
  */
 
@@ -63,7 +63,7 @@ export default function ReferenceLibrary() {
   const tile = open === null ? null : LIBRARY_TILES[open];
 
   return (
-    <div data-reveal="view" className="lib-panel rv-settle">
+    <div data-reveal="view" className="lib-panel rv-soft">
       <div
         className="lib-window"
         data-at-top={edges.top || undefined}

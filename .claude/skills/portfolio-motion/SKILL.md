@@ -20,15 +20,16 @@ This documents what's already built. It is not a proposal. When this file and th
 
 - **The page is typeset into place, not flown in.** Motion carries hierarchy. It's strongest in the hero, controlled on cards, and nearly absent in quiet sections.
 - **The shell never moves.** Paper, printer's marks, CMYK lockup, perimeter frame, header/nav, logo and the white page are all there at first paint. Only content inside the shell animates.
-- **One entrance does most of the work: the settle.** A substantial card lifts the last 28px as it fades in, over 750ms, on a soft ease-out with a long tail. No mask, no wipe, no overshoot.
+- **One entrance does most of the work: the soft reveal (`.rv-soft`).** A substantial card or content block softly becomes visible as one unit: an 8px rise as it fades in, over 850ms, on a soft ease-out with a long tail. No mask, no wipe, no overshoot. It should read as becoming visible, not sliding into position. Reference: the work-sample cards on gabrielehernandez.com. Only the homepage hero board and the band fills that arrive with it keep the bigger settle (28px, 750ms) — they're part of the hero's opening.
 - **Text stays quieter than the cards around it.** It moves a few px, or only fades.
 - **Every reveal plays once and leaves nothing behind.** Keyframes fill backwards only, so the finished page is exactly the static page and animation never changes the final layout.
-- **The homepage is the showpiece. A case study is for reading.** The same reveals run there, but quieter. Content settles in and nothing performs.
+- **The homepage hero is expressive; everything else is calm, soft and editorial.** Motion should be noticed only subconsciously: err toward less travel and longer easing. A case study is for reading: the same reveals run there, and content softly appears.
 
 ## Existing mechanism
 
 - **How an element arrives:** a reveal class.
-  - `.rv-settle` is the card settle: lift `--rv-lift` (28px) and a fade, as two animations on two curves.
+  - `.rv-soft` is the default for cards and content blocks: lift `--rv-lift` (8px) and a fade, both over the full 850ms, as two animations on two curves.
+  - `.rv-settle` is the hero board's settle (also the band fills on the opening screen): lift 28px and a fade over 80% of 750ms. Nothing else uses it.
   - `.rv-line` is a masked line: type rises out of a fixed mask under its own baseline.
   - `.rv-clip` opens through the element's own clip-path. Only the hero portrait uses it.
   - `.rv-rise` is opacity plus a small rise (`--rv-y`, 8px by default).
@@ -100,9 +101,9 @@ This documents what's already built. It is not a proposal. When this file and th
 |---|---|---|
 | Hero | expressive | board settle, then masked type, the portrait clip, subline, metadata (above) |
 | Section furniture (rail, number, title), opening screen only | quiet | 4px rise / fade, 500ms, quiet ease (`FURNITURE`) |
-| Recent work | controlled | panel: settle (750ms/28px)<br>copy: 4px rise, 320ms, quiet<br>description and CTA: +90ms after the title<br>tags: +360ms after their panel<br>a right-hand panel follows its title by 120ms, a left-hand panel leads and the title follows 200ms later (the order the eye meets them) |
+| Recent work | soft | each card is one unit: its copy column, panel and tag row all carry the same soft reveal (8px/850ms) at the same moment. Nothing inside a card is on its own clock. The reveal sits on those three parts, not the article, so the z-39 panel is never inside an animating wrapper |
 | Additional work | quiet | rows: 4px rise, 500ms, quiet, 110ms apart |
-| Reference library | expressive (the second moment) | title: 3 masked lines, 720ms, 90ms apart<br>copy: fade at 320ms (500ms, quiet)<br>whole panel: settles as one, 250ms behind the title block<br>no tile animates on its own |
+| Reference library | expressive (the second moment) | title: 3 masked lines, 720ms, 90ms apart<br>copy: fade at 320ms (500ms, quiet)<br>whole panel: soft reveal as one, 250ms behind the title block<br>no tile animates on its own |
 | Career | very quiet | heading: fade 500ms<br>roles: 3px rise, 500ms, 100ms apart, quiet |
 | Skills | static-ish | one block fades, 350ms, quiet trigger |
 | Footer | restrained | halftone fade 550ms<br>title and lockup fade 400ms at +60ms<br>contact line at +180ms<br>quiet trigger, no movement |
@@ -111,11 +112,11 @@ This documents what's already built. It is not a proposal. When this file and th
 
 | Role | Reveal |
 |---|---|
-| cover | label fade (0ms)<br>title masked line at 80ms on the sideways track (settles as a block on phones, where it wraps)<br>copy 10px rise, 600ms, at 250ms<br>meta fade 600ms at 400ms<br>scroll hint fade 500ms at 550ms<br>about 1s total. Whatever else is on screen at load plays with the cover |
-| heading | settle (750ms/28px). Number, title and eyebrow each carry their own reveal |
-| visual | settle, on the media box itself |
-| callout (stats, quotes, illustrated steps) | settle, 24px / 700ms |
-| body | the section's copy as one group: 10px rise, 550ms, quiet |
+| cover | label fade (0ms)<br>title masked line at 80ms on the sideways track (on phones, where it wraps, a 6px rise, 650ms, quiet)<br>copy 5px rise, 600ms, at 250ms<br>meta fade 600ms at 400ms<br>scroll hint fade 500ms at 550ms<br>about 1s total. Whatever else is on screen at load plays with the cover |
+| heading | 6px rise, 650ms, quiet. Number, title and eyebrow each carry it and play together |
+| visual | soft reveal (8px/850ms), on the media box itself — each card, mockup, panel or composition as one unit |
+| callout (stats, quotes, illustrated steps) | soft reveal (8px/850ms) |
+| body | the section's copy as one group (with its CTA): 5px rise, 600ms, quiet |
 | meta (captions) | fade only, 500ms, quiet |
 
 Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airbnb, Headspace Admin), or a direct `ReadingMotion` wrap (Headspace UMD). Harrison's app has none. Without motion, the track just fades in over 400ms after mount.
@@ -148,7 +149,7 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
 ## Mobile and responsive
 
 - **Case studies at ≤900px or with reduced motion:** no pin, no sideways scrolling. Blocks stack in one column (7rem gap). There's no scrubber and no cover rail dots.
-  - Reveals keep their timing but travel 70% as far (`--rv-travel: 0.7` on `.cs-track`): settle ≈ 20px, callout ≈ 17px, body 7px.
+  - Reveals keep their timing but travel 70% as far (`--rv-travel: 0.7` on `.cs-track`): soft reveal ≈ 5.6px, heading ≈ 4px, body 3.5px.
 - **Homepage hero:** a board tree at ≥768px and a stacked tree below it. Both carry reveals, and retiring stops a replay when they swap at the breakpoint.
 - **Homepage reveals** use the same values at every width (no travel scaling).
 - **Phone header menu (<640px):**
@@ -161,15 +162,16 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
 | Token | Value | Used for |
 |---|---|---|
 | `--motion-ease` | `cubic-bezier(0.22, 1, 0.36, 1)` | the default for `.rv-line`, `.rv-rise`, `.rv-fade` and `.rv-clip`: hero type, library title, cover title, hero subline and metadata. A long exponential settle, no overshoot |
-| `--motion-ease-settle` | `cubic-bezier(0.3, 0.5, 0.2, 1)` | the settle's lift. About 60% gone by 200ms; the last few px take the rest |
-| `--motion-ease-settle-fade` | `cubic-bezier(0.25, 0.1, 0.25, 1)` | the settle's fade, run over 80% of the duration. It finishes first, so the last of the lift happens fully opaque |
+| `--motion-ease-settle` | `cubic-bezier(0.3, 0.5, 0.2, 1)` | the lift of both the soft reveal and the settle. A long tail: about 60% gone by 200ms; the last px take the rest |
+| `--motion-ease-settle-fade` | `cubic-bezier(0.25, 0.1, 0.25, 1)` (CSS `ease`) | the fade of both. The soft reveal runs it over its full 850ms; the settle over 80% of 750ms, so its last lift happens fully opaque |
 | `--motion-ease-quiet` | `cubic-bezier(0.4, 0, 0.2, 1)` | quiet copy (`ease: "quiet"`). A soft start, so text becomes visible rather than popping in |
 
 **Durations:**
 
 | Token | Value | Used for |
 |---|---|---|
-| `--motion-settle` | 750ms | every card |
+| `--motion-soft` | 850ms | every card and content block (`.rv-soft`) |
+| `--motion-settle` | 750ms | the hero board and opening-screen band fills (`.rv-settle`) |
 | `--motion-hero` | 800ms | `.rv-line` default (hero type) |
 | `--motion-major` | 700ms | `.rv-clip` default (the hero portrait overrides it to 900) |
 | `--motion-standard` | 420ms | `.rv-rise`/`.rv-fade` default. Most uses override it |
@@ -177,7 +179,7 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
 `--motion-fast` (200), `--motion-stagger` (60) and the CSS `--motion-hero-stagger` (100) are defined but currently unused. `MOTION.heroStagger` (100) is used. Don't treat the tokens as a scale to fill in, and don't delete them without asking.
 
 **Values differ on purpose.** Keep each where it is:
-- **Hero type is the slowest thing on the page** (800ms). Cards share one settle (750ms). Case-study callouts settle slightly shorter (700ms/24px). Body copy is quieter still (320–550ms, 3–10px). Captions only fade.
+- **Hero type is the most deliberate thing on the page** (800ms masked lines). Cards and content blocks share one soft reveal (850ms/8px), longer but with far less travel. Text is quieter still (500–650ms, 3–6px). Captions only fade.
 - **Staggers by context:**
   - hero lines: 100ms
   - library title lines: 90ms
@@ -187,15 +189,16 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
   - library title → panel: 250ms
   - Recent work copy: 90ms
 - **Trigger lines by context:** homepage 12%, quiet 2%, case studies 20% from the arrival edge.
-- **Distances by context:** homepage text moves ≤4px (the hero subline's 8px is part of the expressive hero). Case-study body moves 10px, because it's one block per section, never per paragraph.
+- **Distances by context:** homepage text moves ≤4px (the hero subline's 8px is part of the expressive hero). Case-study headings move 6px and body 5px, one block per section, never per paragraph.
 
 ## Maximum movement
 
 | What | Distance |
 |---|---|
-| Cards, media, hero board, band fills | 28px (case studies stacked: ×0.7) |
-| Case-study callouts | 24px |
-| Case-study body and cover copy | 10px |
+| Hero board, opening-screen band fills | 28px |
+| Cards, media, panels, callouts (soft reveal) | 8px (case studies stacked: ×0.7) |
+| Case-study headings, phone cover title | 6px |
+| Case-study body and cover copy | 5px |
 | Hero subline | 8px |
 | Homepage copy and section furniture | 4px |
 | Career rows | 3px |
@@ -262,7 +265,8 @@ From the code comments and from directions tried and rejected:
 - **Animating the shell or chrome**, or route/page transitions.
 - **Scroll snapping on the track.** No snap points: whatever is at the current progress is what's in view.
 - **Hover lift or scale** on cards, panels or library tiles.
-- **Tiles or list items animating individually** inside a panel that settles as one.
+- **Tiles or list items animating individually** inside a panel that reveals as one, or a card's image, background, title, CTA or metadata on separate clocks.
+- **The 28px card settle on content.** It read as sliding into position; cards and blocks use the soft reveal. Only the hero board and its band fills keep 28px.
 - **Per-paragraph triggers** in case studies.
 - **Replaying on re-entry.** Everything plays once.
 - **Animating layout properties in reveals.** The existing exceptions are `ExpandCollapse` (grid rows) and the scrubber marker (`left`).

@@ -15,33 +15,37 @@ import { HERO_DEFAULT } from "@/lib/hero-editions";
  * measured, never assumed.
  * Everything below it waits until it's scrolled to.
  *
- * Motion carries hierarchy, so it's strongest in the hero and nearly absent
- * in the quiet sections. Substantial cards all arrive the same way — they
- * settle: a short lift (28px) that fades in and eases out over 750ms, no
- * mask, no overshoot. Text around them stays quieter than the cards.
+ * Motion carries hierarchy: the hero is expressive, everything else is
+ * calm — noticed only subconsciously. Substantial cards and content blocks
+ * all arrive the same way, as one unit: they softly become visible
+ * (.rv-soft — opacity with an 8px rise over 850ms, a long soft tail, no
+ * mask, no overshoot) rather than slide into place. Text stays quieter
+ * still. Only the hero board and the band fills on the opening screen
+ * settle further (28px), as part of the hero's opening.
  *
  *   Hero               expressive  the board settles in, then its type
  *                                  sets as masked lines (the slowest thing
  *                                  here) and the portrait opens
- *   Recent work        controlled  each panel settles; its copy barely
- *                                  moves (opacity, 4px)
+ *   Recent work        soft        each card — copy, panel and tags
+ *                                  together — softly appears
  *   Additional work    quiet       rows fade up 4px, 110ms apart
  *   Reference library  expressive  title lines rise out of a mask, then the
- *                                  whole library panel settles
+ *                                  whole library panel softly appears
  *   Career             very quiet  roles fade up 3px, 100ms apart
  *   Skills             static-ish  one block fades in
  *   Footer             restrained  the halftone field, then the copy, fade
  *
  * The hero's type runs on --motion-ease (a long exponential settle), cards
- * on --motion-ease-settle (their fade on its own gentler curve), and
- * everything quiet on --motion-ease-quiet, which starts soft — text
- * becoming visible rather than arriving.
+ * and the board on --motion-ease-settle (their fade on its own gentler
+ * curve), and everything quiet on --motion-ease-quiet, which starts soft —
+ * text becoming visible rather than arriving.
  *
  * The animation itself is plain CSS (globals.css, "Motion system"): a few
  * reveal classes, each a keyframe that runs once and leaves nothing behind
  * (backwards fill), so the finished page is exactly the static page.
  *
- *   .rv-settle  a card settling: opacity + a lift (--rv-lift, 28px)
+ *   .rv-soft    a card or content block: opacity + an 8px lift, 850ms
+ *   .rv-settle  the hero board and band fills: opacity + a 28px lift
  *   .rv-line    masked line — rises out of a fixed mask under its own
  *               baseline, like a slug dropped into the forme
  *   .rv-clip    hard mask through an element's existing clip-path polygon
@@ -82,6 +86,7 @@ export const MOTION = {
   major: 700,
   hero: 800,
   settle: 750,
+  soft: 850,
   stagger: 60,
   heroStagger: 100,
 } as const;
@@ -136,19 +141,21 @@ export function rvGroup(stagger: number, extra: { y?: number; ease?: Ease } = {}
 
 /**
  * Case-study motion — the same reveals, quieter. The homepage is the
- * showpiece; a case study is for reading, so reading content settles in
- * and nothing performs. One entrance does most of the work, the cards'
- * settle (opacity + a 28px lift, 750ms, soft ease-out, no overshoot), and
- * the hierarchy is carried by how far and how long things travel:
+ * showpiece; a case study is for reading, so content softly becomes
+ * visible and nothing performs. One entrance does most of the work, the
+ * cards' soft reveal (.rv-soft: opacity + an 8px lift, 850ms, a long soft
+ * tail, no overshoot), and text stays quieter than the blocks around it:
  *
  *   cover    strongest   the company line fades, the title rises out of
- *                        its mask, then the subtitle, the metadata and the
+ *                        its mask (on phones, where it wraps, it rises
+ *                        6px), then the subtitle, the metadata and the
  *                        scroll hint — about a second end to end
- *   heading  moderate    a chapter's number, title and eyebrow settle as
- *                        one block
- *   visual   moderate    recordings, screenshots, artwork: the settle
- *   callout  moderate    stats and pull quotes: a slightly shorter settle
- *   body     quiet       a section's copy as one group: 10px, 550ms
+ *   heading  quiet       a chapter's number, title and eyebrow rise 6px
+ *                        together, 650ms
+ *   visual   soft        recordings, screenshots, artwork, panels: the
+ *                        soft reveal, each composition as one unit
+ *   callout  soft        stats, pull quotes, illustrated steps: the same
+ *   body     quiet       a section's copy as one group: 5px, 600ms
  *   meta     very quiet  captions: opacity only
  *
  * Triggers (data-reveal="view") sit on a section's parts — its heading,
@@ -178,23 +185,23 @@ export const READING = {
 } as const;
 
 type RevealSpec = {
-  cls: "rv-settle" | "rv-rise" | "rv-fade" | "rv-line";
+  cls: "rv-soft" | "rv-rise" | "rv-fade" | "rv-line";
   delay?: number;
   opts?: Parameters<typeof rv>[1];
 };
 
 const READING_ROLES = {
-  heading: { cls: "rv-settle" },
-  visual: { cls: "rv-settle" },
-  callout: { cls: "rv-settle", opts: { lift: 24, dur: 700 } },
-  body: { cls: "rv-rise", opts: { y: 10, dur: 550, ease: "quiet" } },
+  heading: { cls: "rv-rise", opts: { y: 6, dur: 650, ease: "quiet" } },
+  visual: { cls: "rv-soft" },
+  callout: { cls: "rv-soft" },
+  body: { cls: "rv-rise", opts: { y: 5, dur: 600, ease: "quiet" } },
   meta: { cls: "rv-fade", opts: { dur: 500, ease: "quiet" } },
   coverLabel: { cls: "rv-fade", delay: READING.cover.label, opts: { dur: 500, ease: "quiet" } },
   /** The title on the sideways track: one line, risen out of its mask. */
   coverTitle: { cls: "rv-line", delay: READING.cover.title },
-  /** The title on phones, where it can wrap: settled as a block. */
-  coverTitleStacked: { cls: "rv-settle", delay: READING.cover.title },
-  coverCopy: { cls: "rv-rise", delay: READING.cover.copy, opts: { y: 10, dur: 600, ease: "quiet" } },
+  /** The title on phones, where it can wrap: risen as a block. */
+  coverTitleStacked: { cls: "rv-rise", delay: READING.cover.title, opts: { y: 6, dur: 650, ease: "quiet" } },
+  coverCopy: { cls: "rv-rise", delay: READING.cover.copy, opts: { y: 5, dur: 600, ease: "quiet" } },
   coverMeta: { cls: "rv-fade", delay: READING.cover.meta, opts: { dur: 600, ease: "quiet" } },
   coverHint: { cls: "rv-fade", delay: READING.cover.hint, opts: { dur: 500, ease: "quiet" } },
 } satisfies Record<string, RevealSpec>;
