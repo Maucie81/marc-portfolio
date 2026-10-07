@@ -1,13 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { renderDashboard, renderLogin, renderMessage } from "@/lib/analytics/dashboard";
+import { buildReport, fetchFrom, isRange, rangeStart } from "@/lib/analytics/metrics";
 import { getVisitStore } from "@/lib/analytics/store";
-import {
-  RANGES,
-  isRange,
-  renderDashboard,
-  renderLogin,
-  renderMessage,
-} from "@/lib/analytics/dashboard";
 
 /**
  * The private analytics dashboard. A route handler rather than a page (like
@@ -77,16 +72,21 @@ export async function GET(request: Request) {
   const asked = new URL(request.url).searchParams.get("range");
   const range = isRange(asked) ? asked : "7d";
   const nowMs = Date.now();
-  const rangeMs = RANGES[range].ms;
+  const from = fetchFrom(rangeStart(range, nowMs));
 
   const store = getVisitStore();
-  const [visits, allTime] = await Promise.all([
-    store.since(rangeMs === null ? 0 : nowMs - rangeMs),
+  const [visits, events, allTime] = await Promise.all([
+    store.since(from),
+    store.eventsSince(from),
     store.total(),
   ]);
 
   return html(
-    renderDashboard({ visits, allTime, range, nowMs, signOut: Boolean(secret) }),
+    renderDashboard({
+      report: buildReport({ visits, events, range, nowMs }),
+      allTime,
+      signOut: Boolean(secret),
+    }),
   );
 }
 

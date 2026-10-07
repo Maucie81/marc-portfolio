@@ -1,0 +1,438 @@
+import { additionalWork, projects } from "@/lib/home";
+import { pageLabel } from "@/lib/page-titles";
+import {
+  ACTIONS,
+  CONTACT_ACTIONS,
+  HIRING_ACTIONS,
+  type ActionType,
+} from "./events";
+import type { ActionEvent, Visit } from "./store";
+
+/**
+ * Everything /analytics shows, worked out from the stored pageviews and
+ * actions. Nothing here is stored — it's all recomputed per request, so a
+ * change to a definition (what counts as a source, a journey step, the
+ * funnel) applies to past data too.
+ *
+ * The unit for most numbers is a visit: the pageviews and actions sharing
+ * one session id (see client.ts). Pageviews recorded before visits existed
+ * (no sid) still count as pageviews and in "Pageviews by page", but can't
+ * be placed in a visit, so they're left out of everything visit-based.
+ */
+
+export const TIME_ZONE = "America/New_York"; // Marc's — "Today" and the trend buckets
+const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
+/** Matches the tracker's idle timeout, so a visit that began just before a
+ * range starts is still read whole (and then left out, as it began earlier). */
+const LOOKBACK = 30 * 60 * 1000;
+
+export const RANGES = {
+  today: { label: "Today", days: null },
+  "7d": { label: "7 days", days: 7 },
+  "30d": { label: "30 days", days: 30 },
+  "90d": { label: "90 days", days: 90 },
+  all: { label: "All time", days: null },
+} as const;
+
+export type RangeKey = keyof typeof RANGES;
+
+export const isRange = (value: string | null): value is RangeKey =>
+  value !== null && Object.hasOwn(RANGES, value);
+
+// ---------- time ----------
+
+const partsFormat = new Intl.DateTimeFormat("en-US", {
+  timeZone: TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hourCycle: "h23",
+  weekday: "short",
+});
+const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+function partsOf(ms: number) {
+  const p: Record<string, string> = {};
+  for (const { type, value } of partsFormat.formatToParts(ms)) p[type] = value;
+  return {
+    y: +p.year,
+    m: +p.month,
+    d: +p.day,
+    h: +p.hour,
+    min: +p.minute,
+    s: +p.second,
+    // 0 = Monday
+    dow: WEEKDAYS.indexOf(p.weekday),
+  };
+}
+
+/** TIME_ZONE's offset from UTC at `ms`. */
+function offsetAt(ms: number) {
+  const p = partsOf(ms);
+  return Date.UTC(p.y, p.m - 1, p.d, p.h, p.min, p.s) - (ms - (ms % 1000));
+}
+
+/** Midnight in TIME_ZONE of the day containing `ms`. Offset taken twice so
+ * a daylight-saving change earlier that day can't shift it an hour. */
+function startOfDay(ms: number) {
+  const p = partsOf(ms);
+  const wall = Date.UTC(p.y, p.m - 1, p.d);
+  return wall - offsetAt(wall - offsetAt(ms));
+}
+
+/** Where the range begins; 0 for All time. Ranges are whole local days —
+ * "7 days" is today and the six before it — so the trend has exactly that
+ * many bars. Noon is the anchor for stepping back, well clear of DST. */
+export function rangeStart(range: RangeKey, nowMs: number) {
+  const today = startOfDay(nowMs);
+  if (range === "today") return today;
+  const days = RANGES[range].days;
+  return days === null ? 0 : startOfDay(today + 12 * HOUR - (days - 1) * DAY);
+}
+
+/** What the store should be read from to see whole visits. */
+export const fetchFrom = (startMs: number) => Math.max(0, startMs - LOOKBACK);
+
+type Unit = "hour" | "day" | "week" | "month";
+
+const utcLabel = (ms: number, opts: Intl.DateTimeFormatOptions) =>
+  new Intl.DateTimeFormat("en-US", { timeZone: "UTC", ...opts }).format(ms);
+
+function bucketOf(ms: number, unit: Unit): { key: string; label: string } {
+  const p = partsOf(ms);
+  const date = Date.UTC(p.y, p.m - 1, p.d);
+  switch (unit) {
+    case "hour": {
+      const h12 = p.h % 12 || 12;
+      return { key: `${date}-${p.h}`, label: `${h12} ${p.h < 12 ? "AM" : "PM"}` };
+    }
+    case "day":
+      return {
+        key: `${date}`,
+        label: utcLabel(date, { weekday: "short", month: "short", day: "numeric" }),
+      };
+    case "week": {
+      const monday = date - p.dow * DAY;
+      return {
+        key: `${monday}`,
+        label: `Week of ${utcLabel(monday, { month: "short", day: "numeric" })}`,
+      };
+    }
+    case "month":
+      return {
+        key: `${p.y}-${p.m}`,
+        label: utcLabel(date, { month: "short", year: "numeric" }),
+      };
+  }
+}
+
+// ---------- labels and sources ----------
+
+/** Shorter names for the journey strip, where five full titles in a row
+ * stop being scannable. Everything else uses pageLabel's full titles. */
+const SHORT_LABELS: Record<string, string> = {
+  "/work/yahoo-partner-portal": "Yahoo Partner Portal",
+  "/work/airbnb-hotels": "Airbnb onboarding",
+  "/work/headspace-admin-portal": "Headspace admin portal",
+  "/work/headspace-umd": "Headspace UMD",
+};
+export const shortLabel = (path: string) => SHORT_LABELS[path] ?? pageLabel(path);
+
+const isCaseStudy = (path: string) => path.startsWith("/work/");
+
+/** The case studies the public can open — the homepage's own lists. */
+const PUBLIC_CASE_STUDIES = [
+  ...projects.map((p) => p.href),
+  ...additionalWork.filter((p) => !p.comingSoon).map((p) => p.href),
+].filter((href): href is string => Boolean(href && isCaseStudy(href)));
+
+// Hosts that mean "came from another page on this site".
+const SITE_HOST = /(^|\.)marcfavro\.com$|^localhost$|^127\.0\.0\.1$|\.vercel\.app$/;
+
+// Friendly names for the referrers a portfolio actually gets. Anything else
+// shows as its bare host.
+const SOURCE_NAMES: [RegExp, string][] = [
+  [/(^|\.)linkedin\.com$|^lnkd\.in$|^com\.linkedin\.android$/, "LinkedIn"],
+  [/^mail\.google\.com$|^com\.google\.android\.gm$/, "Gmail"],
+  [/(^|\.)google\.[a-z.]+$|^com\.google\.android/, "Google"],
+  [/(^|\.)bing\.com$/, "Bing"],
+  [/(^|\.)duckduckgo\.com$/, "DuckDuckGo"],
+  [/^t\.co$|(^|\.)(x|twitter)\.com$/, "X"],
+  [/(^|\.)facebook\.com$|^fb\.me$/, "Facebook"],
+  [/(^|\.)instagram\.com$/, "Instagram"],
+  [/(^|\.)github\.com$/, "GitHub"],
+  [/(^|\.)dribbble\.com$/, "Dribbble"],
+  [/(^|\.)behance\.net$/, "Behance"],
+  [/(^|\.)slack\.com$/, "Slack"],
+  [/(^|\.)chatgpt\.com$|(^|\.)openai\.com$/, "ChatGPT"],
+  [/(^|\.)perplexity\.ai$/, "Perplexity"],
+];
+
+export const isInternal = (v: Visit) =>
+  v.referrer !== null && SITE_HOST.test(v.referrer);
+
+/** UTM source wins, then the referrer, else Direct. A UTM source that
+ * spells a known name ("linkedin") joins that referrer's row. */
+export function sourceOf(v: Visit): string {
+  if (v.utmSource) {
+    const tag = v.utmSource.toLowerCase();
+    return SOURCE_NAMES.find(([, name]) => name.toLowerCase() === tag)?.[1] ?? v.utmSource;
+  }
+  if (!v.referrer) return "Direct";
+  if (isInternal(v)) return "Internal";
+  const named = SOURCE_NAMES.find(([pattern]) => pattern.test(v.referrer!));
+  return named ? named[1] : v.referrer.replace(/^www\./, "");
+}
+
+const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
+export function countryName(code: string | null | undefined): string {
+  if (!code) return "Unknown";
+  try {
+    return regionNames.of(code) ?? code;
+  } catch {
+    return code;
+  }
+}
+
+// ---------- visits ----------
+
+export type Session = {
+  start: number;
+  views: Visit[];
+  actions: ActionEvent[];
+  first: Visit;
+  source: string;
+  caseStudies: Set<string>;
+  did: Set<ActionType>;
+  hiring: boolean;
+  contact: boolean;
+};
+
+function sessionize(visits: Visit[], events: ActionEvent[], startMs: number) {
+  const bySid = new Map<string, { views: Visit[]; actions: ActionEvent[] }>();
+  for (const v of visits) {
+    if (!v.sid) continue;
+    const s = bySid.get(v.sid) ?? { views: [], actions: [] };
+    s.views.push(v);
+    bySid.set(v.sid, s);
+  }
+  for (const e of events) bySid.get(e.sid)?.actions.push(e);
+
+  const sessions: Session[] = [];
+  for (const { views, actions } of bySid.values()) {
+    const start = Date.parse(views[0].ts);
+    if (start < startMs) continue;
+    const did = new Set(actions.map((a) => a.type));
+    sessions.push({
+      start,
+      views,
+      actions,
+      first: views[0],
+      source: sourceOf(views[0]),
+      caseStudies: new Set(views.map((v) => v.path).filter(isCaseStudy)),
+      did,
+      hiring: HIRING_ACTIONS.some((t) => did.has(t)),
+      contact: CONTACT_ACTIONS.some((t) => did.has(t)),
+    });
+  }
+  return sessions.sort((a, b) => a.start - b.start);
+}
+
+const JOURNEY_STEPS = 6;
+const JOURNEY_ACTION_LABELS: Partial<Record<ActionType, string>> = {
+  resume: "Resume",
+  linkedin: "LinkedIn",
+  email: "Email",
+  phone: "Phone",
+  contact_form: "Contact form sent",
+};
+
+/** Pages in order, with resume / LinkedIn / contact actions as steps of
+ * their own; repeats in a row collapse, long paths end in "…". */
+function journeyOf(s: Session): string[] {
+  const steps = [
+    ...s.views.map((v) => ({ t: Date.parse(v.ts), label: shortLabel(v.path) })),
+    ...s.actions
+      .filter((a) => JOURNEY_ACTION_LABELS[a.type])
+      .map((a) => ({ t: Date.parse(a.ts), label: JOURNEY_ACTION_LABELS[a.type]! })),
+  ]
+    .sort((a, b) => a.t - b.t)
+    .map((step) => step.label)
+    .filter((label, i, all) => label !== all[i - 1]);
+  return steps.length > JOURNEY_STEPS
+    ? [...steps.slice(0, JOURNEY_STEPS), "…"]
+    : steps;
+}
+
+// ---------- the report ----------
+
+export type Row = [label: string, count: number];
+
+function tally<T>(items: T[], keyOf: (item: T) => string | null): Row[] {
+  const counts = new Map<string, number>();
+  for (const item of items) {
+    const key = keyOf(item);
+    if (key === null) continue;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+}
+
+export function buildReport(opts: {
+  visits: Visit[];
+  events: ActionEvent[];
+  range: RangeKey;
+  nowMs: number;
+}) {
+  const { range, nowMs } = opts;
+  const startMs = rangeStart(range, nowMs);
+  const pageviews = opts.visits.filter((v) => Date.parse(v.ts) >= startMs);
+  const sessions = sessionize(opts.visits, opts.events, startMs);
+  const n = sessions.length;
+  const count = (test: (s: Session) => boolean) => sessions.filter(test).length;
+
+  // Trend: visits by when they began, pageviews by when they happened.
+  const trendStart =
+    range === "all"
+      ? Math.min(nowMs, ...pageviews.slice(0, 1).map((v) => Date.parse(v.ts)))
+      : startMs;
+  const span = nowMs - trendStart;
+  const unit: Unit =
+    range === "today"
+      ? "hour"
+      : range === "90d" || (range === "all" && span > 31 * DAY)
+        ? span > 730 * DAY
+          ? "month"
+          : "week"
+        : "day";
+  const trend = new Map<string, { label: string; visits: number; pageviews: number }>();
+  for (let t = trendStart; t <= nowMs + HOUR; t += HOUR) {
+    const { key, label } = bucketOf(Math.min(t, nowMs), unit);
+    if (!trend.has(key)) trend.set(key, { label, visits: 0, pageviews: 0 });
+  }
+  for (const s of sessions) {
+    const bucket = trend.get(bucketOf(s.start, unit).key);
+    if (bucket) bucket.visits++;
+  }
+  for (const v of pageviews) {
+    const bucket = trend.get(bucketOf(Date.parse(v.ts), unit).key);
+    if (bucket) bucket.pageviews++;
+  }
+
+  // Case studies: every public one (even at zero, so a quiet project
+  // shows), plus any other /work page someone reached.
+  const caseStudyPaths = new Set([
+    ...PUBLIC_CASE_STUDIES,
+    ...pageviews.map((v) => v.path).filter(isCaseStudy),
+  ]);
+  const caseStudies = [...caseStudyPaths]
+    .map((path) => {
+      const viewers = sessions.filter((s) => s.caseStudies.has(path));
+      return {
+        path,
+        label: pageLabel(path),
+        visits: viewers.length,
+        views: pageviews.filter((v) => v.path === path).length,
+        landed: count((s) => s.first.path === path),
+        hiring: viewers.filter((s) => s.hiring).length,
+      };
+    })
+    .sort((a, b) => b.visits - a.visits || b.views - a.views || a.label.localeCompare(b.label));
+
+  const pagePaths = [...new Set(pageviews.map((v) => v.path))];
+  const pages = pagePaths
+    .map((path) => ({
+      label: pageLabel(path),
+      views: pageviews.filter((v) => v.path === path).length,
+      visits: count((s) => s.views.some((v) => v.path === path)),
+    }))
+    .sort((a, b) => b.views - a.views || a.label.localeCompare(b.label));
+
+  const sources = tally(sessions, (s) => s.source).map(([name, visits]) => {
+    const from = sessions.filter((s) => s.source === name);
+    return {
+      name,
+      visits,
+      caseStudy: from.filter((s) => s.caseStudies.size > 0).length,
+      hiring: from.filter((s) => s.hiring).length,
+    };
+  });
+
+  const journeys = tally(
+    sessions.map(journeyOf).filter((steps) => steps.length > 1),
+    (steps) => steps.join(" → "),
+  );
+
+  const viewedOne = count((s) => s.caseStudies.size >= 1);
+  const viewedTwo = count((s) => s.caseStudies.size >= 2);
+
+  return {
+    range,
+    startMs,
+    unit,
+    pageviews: pageviews.length,
+    legacyPageviews: pageviews.filter((v) => !v.sid).length,
+    visits: n,
+    sessionPageviews: sessions.reduce((sum, s) => sum + s.views.length, 0),
+    trend: [...trend.values()],
+    funnel: [
+      { label: "Visits", count: n },
+      { label: "Viewed a case study", count: viewedOne },
+      { label: "Viewed 2+ case studies", count: viewedTwo },
+      {
+        label: "…and opened resume, LinkedIn or contact",
+        count: count((s) => s.caseStudies.size >= 2 && s.hiring),
+      },
+    ],
+    startedOnHome: count((s) => s.first.path === "/"),
+    hiring: count((s) => s.hiring),
+    contact: count((s) => s.contact),
+    viewedTwo,
+    singlePage: count((s) => s.views.length === 1),
+    caseStudies,
+    pages,
+    entries: tally(sessions, (s) => pageLabel(s.first.path)),
+    sources,
+    utm: {
+      source: tally(sessions, (s) => s.first.utmSource),
+      medium: tally(sessions, (s) => s.first.utmMedium),
+      campaign: tally(sessions, (s) => s.first.utmCampaign),
+    },
+    journeys,
+    actions: [
+      ...(Object.keys(ACTIONS) as ActionType[]).map((type) => ({
+        label: ACTIONS[type],
+        visits: count((s) => s.did.has(type)),
+        hiring: HIRING_ACTIONS.includes(type),
+      })),
+      {
+        label: "Contact page viewed",
+        visits: count((s) => s.views.some((v) => v.path === "/contact")),
+        hiring: false,
+      },
+    ],
+    audience: {
+      country: tally(sessions, (s) => countryName(s.first.country)),
+      device: tally(sessions, (s) =>
+        s.first.device ? s.first.device[0].toUpperCase() + s.first.device.slice(1) : "Unknown",
+      ),
+      browser: tally(sessions, (s) => s.first.browser ?? "Unknown"),
+      os: tally(sessions, (s) => s.first.os ?? "Unknown"),
+      region: tally(sessions, (s) =>
+        s.first.region ? `${s.first.region}, ${countryName(s.first.country)}` : "Unknown",
+      ),
+      city: tally(sessions, (s) =>
+        s.first.city
+          ? [s.first.city, s.first.region, s.first.country].filter(Boolean).join(", ")
+          : "Unknown",
+      ),
+    },
+    recent: pageviews.slice(-50).reverse(),
+  };
+}
+
+export type Report = ReturnType<typeof buildReport>;

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackAction } from "@/lib/analytics/client";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -47,6 +48,8 @@ export default function ContactForm() {
       }
 
       setStatus("success");
+      // Counted for /analytics only once the message actually sent.
+      trackAction("contact_form");
       setName("");
       setEmail("");
       setMessage("");

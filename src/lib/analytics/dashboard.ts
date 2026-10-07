@@ -1,4 +1,5 @@
-import type { Visit } from "./store";
+import { pageLabel } from "@/lib/page-titles";
+import { RANGES, TIME_ZONE, sourceOf, type RangeKey, type Report, type Row } from "./metrics";
 
 /**
  * HTML for the private /analytics page (see src/app/analytics/route.ts).
@@ -6,157 +7,230 @@ import type { Visit } from "./store";
  * an internal utility, deliberately outside the portfolio's design system.
  * Every stored value is escaped: paths, referrers and UTM tags arrive from
  * browsers, so they're treated as untrusted text.
+ *
+ * Order follows the questions it answers: how much traffic, is it turning
+ * into resume / LinkedIn / contact, which work, from where — then the
+ * detail. Charts only where shape matters (the trend, the funnel, relative
+ * project reach); everything else is a short ranked table.
  */
-
-// Marc's timezone: buckets and timestamps read as local time.
-const TIME_ZONE = "America/New_York";
-
-const HOUR = 60 * 60 * 1000;
-const DAY = 24 * HOUR;
-
-export const RANGES = {
-  "24h": { label: "Last 24 hours", ms: DAY },
-  "7d": { label: "Last 7 days", ms: 7 * DAY },
-  "30d": { label: "Last 30 days", ms: 30 * DAY },
-  all: { label: "All time", ms: null },
-} as const;
-
-export type RangeKey = keyof typeof RANGES;
-
-export const isRange = (value: string | null): value is RangeKey =>
-  value !== null && Object.hasOwn(RANGES, value);
-
-// Hosts that mean "came from another page on this site".
-const SITE_HOST = /(^|\.)marcfavro\.com$|^localhost$|^127\.0\.0\.1$|\.vercel\.app$/;
-
-// Friendly names for the referrers a portfolio actually gets. Anything else
-// shows as its bare host.
-const SOURCE_NAMES: [RegExp, string][] = [
-  [/(^|\.)linkedin\.com$|^lnkd\.in$|^com\.linkedin\.android$/, "LinkedIn"],
-  [/^mail\.google\.com$|^com\.google\.android\.gm$/, "Gmail"],
-  [/(^|\.)google\.[a-z.]+$|^com\.google\.android/, "Google"],
-  [/(^|\.)bing\.com$/, "Bing"],
-  [/(^|\.)duckduckgo\.com$/, "DuckDuckGo"],
-  [/^t\.co$|(^|\.)(x|twitter)\.com$/, "X"],
-  [/(^|\.)facebook\.com$|^fb\.me$/, "Facebook"],
-  [/(^|\.)instagram\.com$/, "Instagram"],
-  [/(^|\.)github\.com$/, "GitHub"],
-  [/(^|\.)dribbble\.com$/, "Dribbble"],
-  [/(^|\.)behance\.net$/, "Behance"],
-  [/(^|\.)slack\.com$/, "Slack"],
-  [/(^|\.)chatgpt\.com$|(^|\.)openai\.com$/, "ChatGPT"],
-  [/(^|\.)perplexity\.ai$/, "Perplexity"],
-];
-
-const isInternal = (v: Visit) => v.referrer !== null && SITE_HOST.test(v.referrer);
-
-/** UTM source wins, then the referrer, else Direct. A UTM source that
- * spells a known name ("linkedin") joins that referrer's row. */
-function sourceOf(v: Visit): string {
-  if (v.utmSource) {
-    const tag = v.utmSource.toLowerCase();
-    return SOURCE_NAMES.find(([, name]) => name.toLowerCase() === tag)?.[1] ?? v.utmSource;
-  }
-  if (!v.referrer) return "Direct";
-  if (isInternal(v)) return "Internal";
-  const named = SOURCE_NAMES.find(([pattern]) => pattern.test(v.referrer!));
-  return named ? named[1] : v.referrer.replace(/^www\./, "");
-}
-
-const regionNames = new Intl.DisplayNames(["en"], { type: "region" });
-function countryName(code: string | null): string {
-  if (!code) return "Unknown";
-  try {
-    return regionNames.of(code) ?? code;
-  } catch {
-    return code;
-  }
-}
 
 const esc = (value: string) =>
   value.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
 const fmt = (n: number) => n.toLocaleString("en-US");
 
-function tally(visits: Visit[], keyOf: (v: Visit) => string) {
-  const counts = new Map<string, number>();
-  for (const v of visits) {
-    const key = keyOf(v);
-    counts.set(key, (counts.get(key) ?? 0) + 1);
-  }
-  return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+const pct = (part: number, whole: number) =>
+  whole ? `${Math.round((part / whole) * 100)}%` : "—";
+
+const plural = (n: number, word: string) => `${fmt(n)} ${word}${n === 1 ? "" : "s"}`;
+
+function bar(part: number, whole: number) {
+  const width = whole ? Math.max(part ? 1.5 : 0, (part / whole) * 100) : 0;
+  return `<span class="track"><span class="fill" style="width:${width.toFixed(1)}%"></span></span>`;
 }
 
-/** Visit counts per hour (24h), day (≤ ~2 months) or month, oldest first,
- * empty buckets included so gaps show. Labels are formatted in TIME_ZONE,
- * so they double as the bucket keys. */
-function overTime(visits: Visit[], startMs: number, nowMs: number) {
-  const span = nowMs - startMs;
-  const format = new Intl.DateTimeFormat("en-US", {
-    timeZone: TIME_ZONE,
-    ...(span <= DAY + HOUR
-      ? { month: "short", day: "numeric", hour: "numeric" }
-      : span <= 62 * DAY
-        ? { weekday: "short", month: "short", day: "numeric" }
-        : { month: "short", year: "numeric" }),
-  });
-  const labels: string[] = [];
-  // Step an hour at a time so DST changes can't skip or repeat a bucket.
-  for (let t = startMs; t <= nowMs + HOUR; t += HOUR) {
-    const label = format.format(Math.min(t, nowMs));
-    if (labels.at(-1) !== label) labels.push(label);
-  }
-  const counts = new Map(labels.map((label) => [label, 0]));
-  for (const v of visits) {
-    const label = format.format(Date.parse(v.ts));
-    if (counts.has(label)) counts.set(label, counts.get(label)! + 1);
-  }
-  return [...counts];
+const empty = (text = "Nothing in this period yet.") => `<p class="muted">${esc(text)}</p>`;
+
+/** `optional` columns drop out on phone widths, where they'd squeeze the
+ * labels instead. */
+function table(head: string[], rows: string[][], numeric: boolean[], optional: boolean[] = []) {
+  const cls = (i: number) => {
+    const names = [numeric[i] && "num", optional[i] && "opt"].filter(Boolean).join(" ");
+    return names ? ` class="${names}"` : "";
+  };
+  const th = head.map((h, i) => `<th${cls(i)}>${esc(h)}</th>`).join("");
+  const body = rows
+    .map((cells) => `<tr>${cells.map((c, i) => `<td${cls(i)}>${c}</td>`).join("")}</tr>`)
+    .join("");
+  return `<div class="scroll"><table><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
-function timeOf(iso: string, nowMs: number) {
-  const date = new Date(iso);
-  const sameYear =
-    new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, year: "numeric" }).format(date) ===
-    new Intl.DateTimeFormat("en-US", { timeZone: TIME_ZONE, year: "numeric" }).format(nowMs);
+/** "Thing → visits, share" with a bar under each label, top `limit` rows. */
+function ranked(title: string, rows: Row[], total: number, opts: { limit?: number; note?: string } = {}) {
+  const { limit = 10, note } = opts;
+  const max = rows[0]?.[1] ?? 0;
+  const body = rows.length
+    ? table(
+        ["", "Visits", "Share"],
+        rows
+          .slice(0, limit)
+          .map(([label, n]) => [`${esc(label)}${bar(n, max)}`, fmt(n), pct(n, total)]),
+        [false, true, true],
+      ) + (rows.length > limit ? `<p class="muted small">+ ${rows.length - limit} more</p>` : "")
+    : empty();
+  return `<section><h3>${esc(title)}</h3>${note ? `<p class="muted small">${note}</p>` : ""}${body}</section>`;
+}
+
+function trend(report: Report) {
+  const buckets = report.trend;
+  const max = Math.max(1, ...buckets.map((b) => b.visits));
+  const cols = buckets
+    .map((b) => {
+      const tip = `${b.label}: ${plural(b.visits, "visit")} · ${plural(b.pageviews, "pageview")}`;
+      const h = b.visits ? Math.max(3, (b.visits / max) * 100) : 0;
+      return `<div class="col" title="${esc(tip)}" aria-label="${esc(tip)}">${h ? `<span style="height:${h.toFixed(1)}%"></span>` : ""}</div>`;
+    })
+    .join("");
+  const first = buckets[0]?.label ?? "";
+  const last = buckets.at(-1)?.label ?? "";
+  const per = { hour: "hour", day: "day", week: "week", month: "month" }[report.unit];
+  return `<section>
+<h2>Traffic trend</h2>
+<p class="muted small">Visits per ${per}. Hover or tap a bar for pageviews.</p>
+<div class="trend">
+<div class="trend-max muted small">${fmt(max)}</div>
+<div class="cols" role="img" aria-label="Visits per ${per}">${cols}</div>
+<div class="trend-axis muted small"><span>${esc(first)}</span><span>${esc(last)}</span></div>
+</div>
+</section>`;
+}
+
+function funnel(report: Report) {
+  const total = report.visits;
+  const steps = report.funnel
+    .map((step, i) => {
+      const prev = report.funnel[i - 1]?.count;
+      const meta =
+        i === 0
+          ? `${pct(report.startedOnHome, total)} started on the homepage`
+          : `${pct(step.count, total)} of visits${prev !== undefined ? ` · ${pct(step.count, prev)} of the step before` : ""}`;
+      return `<li><div class="f-row"><span>${esc(step.label)}</span><b>${fmt(step.count)}</b></div>${bar(step.count, total)}<div class="muted small">${meta}</div></li>`;
+    })
+    .join("");
+
+  const top = report.caseStudies[0];
+  const source = report.sources.find((s) => s.name !== "Internal");
+  const journey = report.journeys[0];
+  const facts: [string, string][] = [
+    ["Most viewed case study", top?.visits ? `${esc(top.label)} <span class="muted">(${plural(top.visits, "visit")})</span>` : "—"],
+    ["Top traffic source", source ? `${esc(source.name)} <span class="muted">(${plural(source.visits, "visit")})</span>` : "—"],
+    [
+      "Most common path",
+      !journey
+        ? "—"
+        : journey[1] === 1 && report.journeys.length > 1
+          ? `<span class="muted">No path has repeated yet</span>`
+          : `${esc(journey[0])} <span class="muted">(${plural(journey[1], "visit")})</span>`,
+    ],
+    ["Viewed 2+ case studies", `${fmt(report.viewedTwo)} <span class="muted">(${pct(report.viewedTwo, total)} of visits)</span>`],
+    ["Reached resume, LinkedIn or contact", `${fmt(report.hiring)} <span class="muted">(${pct(report.hiring, total)})</span>`],
+    ["Reached a way to get in touch", `${fmt(report.contact)} <span class="muted">(email, phone or the form)</span>`],
+  ];
+
+  return `<section>
+<h2>Hiring funnel</h2>
+${total ? `<ol class="funnel">${steps}</ol>` : empty("No visits in this period yet.")}
+${total && total < 30 ? `<p class="muted small">Small sample: each visit moves these percentages a lot.</p>` : ""}
+<dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}</dl>
+</section>`;
+}
+
+function caseStudies(report: Report) {
+  const max = report.caseStudies[0]?.visits ?? 0;
+  const rows = report.caseStudies.map((c) => [
+    `${esc(c.label)}${bar(c.visits, max)}`,
+    fmt(c.visits),
+    pct(c.visits, report.visits),
+    fmt(c.views),
+    fmt(c.landed),
+    c.visits ? `${fmt(c.hiring)} <span class="muted">(${pct(c.hiring, c.visits)})</span>` : "—",
+  ]);
+  return `<section>
+<h2>Top case studies</h2>
+<p class="muted small">Reach: share of all visits that opened it. Landed: visits that started there. Then acted: its viewers who went on to resume, LinkedIn or contact.</p>
+${table(["Case study", "Visits", "Reach", "Pageviews", "Landed", "Then acted"], rows, [false, true, true, true, true, true], [false, false, false, true, true, false])}
+</section>`;
+}
+
+function sources(report: Report) {
+  if (!report.sources.length) return `<section><h2>Traffic sources</h2>${empty()}</section>`;
+  const max = report.sources[0].visits;
+  const rows = report.sources.map((s) => [
+    `${esc(s.name)}${bar(s.visits, max)}`,
+    fmt(s.visits),
+    pct(s.visits, report.visits),
+    pct(s.caseStudy, s.visits),
+    pct(s.hiring, s.visits),
+  ]);
+  return `<section>
+<h2>Traffic sources</h2>
+<p class="muted small">Where each visit came from: its UTM source if the link had one, otherwise the referring site. Direct means no referrer — typed in, bookmarked, or opened from an app or email that doesn't pass one on. Viewed work: share that opened a case study. Acted: share that went on to resume, LinkedIn or contact.</p>
+${table(["Source", "Visits", "Share", "Viewed work", "Acted"], rows, [false, true, true, true, true], [false, false, true, false, false])}
+</section>`;
+}
+
+function journeys(report: Report) {
+  const multi = report.journeys.reduce((sum, [, n]) => sum + n, 0);
+  const rows = report.journeys.slice(0, 10);
+  const list = rows.length
+    ? `<ol class="paths">${rows.map(([path, n]) => `<li><span>${esc(path)}</span><b>${fmt(n)}</b></li>`).join("")}</ol>`
+    : empty("No visit has gone past one page yet.");
+  return `<section>
+<h3>Common paths</h3>
+<p class="muted small">The ${plural(multi, "visit")} with more than one step, counting resume, LinkedIn and contact actions as steps. ${plural(report.singlePage, "visit")} (${pct(report.singlePage, report.visits)}) saw one page only.</p>
+${list}
+</section>`;
+}
+
+function actions(report: Report) {
+  const row = (a: Report["actions"][number]) => [esc(a.label), fmt(a.visits), pct(a.visits, report.visits)];
+  const hiring = report.actions.filter((a) => a.hiring).map(row);
+  const other = report.actions.filter((a) => !a.hiring).map(row);
+  return `<section>
+<h3>Actions</h3>
+<p class="muted small">Visits that did each at least once.</p>
+${table(["Resume, LinkedIn, contact", "Visits", "Share"], hiring, [false, true, true])}
+${table(["Exploring", "Visits", "Share"], other, [false, true, true])}
+</section>`;
+}
+
+function pages(report: Report) {
+  const max = report.pages[0]?.views ?? 0;
+  const rows = report.pages
+    .slice(0, 15)
+    .map((p) => [`${esc(p.label)}${bar(p.views, max)}`, fmt(p.views), fmt(p.visits)]);
+  return `<section>
+<h3>Pageviews by page</h3>
+${rows.length ? table(["Page", "Pageviews", "Visits"], rows, [false, true, true]) : empty()}
+</section>`;
+}
+
+function utm(report: Report) {
+  const { source, medium, campaign } = report.utm;
+  if (!source.length && !medium.length && !campaign.length) {
+    return `<section><h2>UTM campaigns</h2><p class="muted">No tagged links in this period. To see a specific post or message here, share links like <code>marcfavro.com/?utm_source=linkedin&amp;utm_medium=post&amp;utm_campaign=job-search</code>.</p></section>`;
+  }
+  return `<section><h2>UTM campaigns</h2><div class="grid3">
+${ranked("Campaign", campaign, report.visits)}
+${ranked("Source", source, report.visits)}
+${ranked("Medium", medium, report.visits)}
+</div></section>`;
+}
+
+function timeOf(iso: string) {
   return new Intl.DateTimeFormat("en-US", {
     timeZone: TIME_ZONE,
     month: "short",
     day: "numeric",
-    ...(sameYear ? {} : { year: "numeric" }),
     hour: "numeric",
     minute: "2-digit",
-  }).format(date);
+  }).format(new Date(iso));
 }
 
-const SHOW = 20;
-
-/** A two-column "thing → visits" table, top SHOW rows. */
-function ranked(title: string, rows: [string, number][], total: number, note = "") {
-  if (rows.length === 0) {
-    return `<section><h2>${esc(title)}</h2><p class="muted">No visits in this period.</p></section>`;
-  }
-  const body = rows
-    .slice(0, SHOW)
-    .map(
-      ([label, n]) =>
-        `<tr><td>${esc(label)}</td><td class="num">${fmt(n)}</td><td class="num muted">${Math.round((n / total) * 100)}%</td></tr>`,
-    )
-    .join("");
-  const more =
-    rows.length > SHOW ? `<p class="muted">+ ${rows.length - SHOW} more</p>` : "";
-  return `<section><h2>${esc(title)}</h2>${note ? `<p class="muted">${note}</p>` : ""}<div class="scroll"><table><thead><tr><th></th><th class="num">Visits</th><th class="num">Share</th></tr></thead><tbody>${body}</tbody></table></div>${more}</section>`;
-}
-
-function chart(buckets: [string, number][]) {
-  const max = Math.max(1, ...buckets.map(([, n]) => n));
-  const rows = buckets
-    .map(([label, n]) => {
-      const width = n ? Math.max(0.5, (n / max) * 100) : 0;
-      return `<li title="${esc(label)}: ${fmt(n)} visit${n === 1 ? "" : "s"}"><span class="when">${esc(label)}</span><span class="track">${width ? `<span class="bar" style="width:${width.toFixed(2)}%"></span>` : ""}</span><span class="num">${fmt(n)}</span></li>`;
-    })
-    .join("");
-  return `<ol class="chart">${rows}</ol>`;
+function recent(report: Report) {
+  const rows = report.recent.map((v) => [
+    esc(timeOf(v.ts)),
+    esc(v.city ?? "Unknown"),
+    esc(v.region ?? "—"),
+    esc(pageLabel(v.path)),
+    esc(sourceOf(v)),
+    esc(v.country ?? "—"),
+    esc(v.device ?? "—"),
+  ]);
+  return `<section>
+<h2>Recent pageviews</h2>
+${rows.length ? `<div class="recent">${table(["Time", "City", "Region", "Page", "Source", "Country", "Device"], rows, [])}</div>${report.pageviews > 50 ? `<p class="muted small">Latest 50 of ${fmt(report.pageviews)}.</p>` : ""}` : empty()}
+</section>`;
 }
 
 const STYLE = `
@@ -168,6 +242,7 @@ const STYLE = `
   --text: #0b0b0b;
   --muted: #52514e;
   --series: #2a78d6;
+  --track: #e8e7e2;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
@@ -178,6 +253,7 @@ const STYLE = `
     --text: #ffffff;
     --muted: #c3c2b7;
     --series: #3987e5;
+    --track: #2e2e2b;
   }
 }
 :root[data-theme="dark"] {
@@ -188,41 +264,67 @@ const STYLE = `
   --text: #ffffff;
   --muted: #c3c2b7;
   --series: #3987e5;
+  --track: #2e2e2b;
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--surface); color: var(--text); font: 15px/1.45 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
-main { max-width: 960px; margin: 0 auto; padding: 24px 16px 48px; }
+main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 48px; }
 h1 { font-size: 22px; margin: 0; }
-h2 { font-size: 15px; margin: 0 0 8px; }
-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-section { margin-top: 32px; }
+h2 { font-size: 17px; margin: 0 0 6px; }
+h3 { font-size: 15px; margin: 0 0 6px; }
+header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
+section { margin-top: 36px; min-width: 0; }
 .muted { color: var(--muted); }
+.small { font-size: 13px; }
 p { margin: 0 0 8px; }
+code { font-size: 13px; overflow-wrap: anywhere; }
 nav { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
 nav a { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); text-decoration: none; }
 nav a[aria-current] { background: var(--text); color: var(--surface); border-color: var(--text); }
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 24px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 24px; }
 .stat { background: var(--raised); border-radius: 8px; padding: 12px 16px; }
-.stat b { display: block; font-size: 28px; font-variant-numeric: tabular-nums; }
-.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); column-gap: 32px; }
+.stat b { display: block; font-size: 28px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr)); column-gap: 40px; }
+.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); column-gap: 32px; }
+.grid3 section, .grid2 .sub section { margin-top: 12px; }
+.divider { margin-top: 56px; padding-top: 16px; border-top: 1px solid var(--line); }
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-weight: 600; color: var(--muted); }
-td { overflow-wrap: anywhere; }
+table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; }
+td { overflow-wrap: break-word; }
+td:first-child { min-width: 8em; }
+@media (max-width: 560px) { .opt { display: none; } }
 .recent td { white-space: nowrap; overflow-wrap: normal; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.chart { list-style: none; margin: 0; padding: 0; }
-.chart li { display: grid; grid-template-columns: minmax(96px, 9em) 1fr 3.5em; align-items: center; gap: 8px; min-height: 22px; }
-.when { color: var(--muted); font-size: 13px; white-space: nowrap; }
-.track { height: 10px; }
-.bar { display: block; height: 10px; min-width: 2px; background: var(--series); border-radius: 0 4px 4px 0; }
+.track { display: block; height: 6px; margin-top: 5px; background: var(--track); border-radius: 0 3px 3px 0; overflow: hidden; }
+.fill { display: block; height: 100%; background: var(--series); border-radius: 0 3px 3px 0; }
+.trend { display: grid; grid-template-columns: auto 1fr; grid-template-rows: 160px auto; column-gap: 8px; margin-top: 8px; }
+.trend-max { grid-row: 1; align-self: start; line-height: 1; }
+.cols { grid-row: 1; grid-column: 2; display: flex; align-items: flex-end; gap: 2px; border-bottom: 1px solid var(--muted); border-top: 1px dashed var(--line); }
+.col { flex: 1 1 0; min-width: 0; height: 100%; display: flex; align-items: flex-end; }
+.col:hover { background: var(--raised); }
+.col span { display: block; width: 100%; background: var(--series); border-radius: 3px 3px 0 0; }
+.trend-axis { grid-column: 2; display: flex; justify-content: space-between; padding-top: 4px; }
+.funnel { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 14px; }
+.funnel .track { height: 10px; border-radius: 0 4px 4px 0; }
+.funnel .fill { border-radius: 0 4px 4px 0; }
+.f-row { display: flex; justify-content: space-between; gap: 12px; }
+.f-row b { font-variant-numeric: tabular-nums; }
+.facts { margin: 20px 0 0; display: grid; gap: 8px; }
+.facts div { display: grid; grid-template-columns: minmax(130px, 40%) 1fr; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.facts dt { color: var(--muted); font-size: 13px; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+.paths { list-style: none; margin: 0; padding: 0; }
+.paths li { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.paths b { font-variant-numeric: tabular-nums; }
 button, input { font: inherit; }
 button { padding: 6px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--raised); color: var(--text); cursor: pointer; }
 input[type=password] { width: 100%; max-width: 320px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); }
 form.login { display: grid; gap: 12px; margin-top: 24px; }
 .error { color: #c42b2b; }
-footer { margin-top: 40px; font-size: 13px; }
+footer { margin-top: 48px; font-size: 13px; }
+footer p { max-width: 720px; }
 `;
 
 function page(title: string, body: string) {
@@ -256,79 +358,75 @@ ${error ? `<p class="error">${esc(error)}</p>` : ""}
   );
 }
 
-export function renderDashboard(opts: {
-  visits: Visit[];
-  allTime: number;
-  range: RangeKey;
-  nowMs: number;
-  signOut: boolean;
-}) {
-  const { visits, allTime, range, nowMs, signOut } = opts;
-  const n = visits.length;
-  const rangeMs = RANGES[range].ms;
-  const startMs =
-    rangeMs !== null ? nowMs - rangeMs : n ? Date.parse(visits[0].ts) : nowMs;
-
-  const arrivals = visits.filter((v) => !isInternal(v));
-  const campaigns = tally(
-    visits.filter((v) => v.utmCampaign),
-    (v) =>
-      `${v.utmCampaign} (${v.utmSource ?? "no source"} / ${v.utmMedium ?? "no medium"})`,
-  );
+export function renderDashboard(opts: { report: Report; allTime: number; signOut: boolean }) {
+  const { report, allTime, signOut } = opts;
+  const n = report.visits;
 
   const nav = (Object.keys(RANGES) as RangeKey[])
     .map(
       (key) =>
-        `<a href="/analytics?range=${key}"${key === range ? ' aria-current="page"' : ""}>${RANGES[key].label}</a>`,
+        `<a href="/analytics?range=${key}"${key === report.range ? ' aria-current="page"' : ""}>${RANGES[key].label}</a>`,
     )
     .join("");
 
-  const recent = visits
-    .slice(-50)
-    .reverse()
-    .map(
-      (v) =>
-        `<tr><td>${esc(timeOf(v.ts, nowMs))}</td><td>${esc(v.city ?? "Unknown")}</td><td>${esc(v.region ?? "—")}</td><td>${esc(v.path)}</td><td>${esc(sourceOf(v))}</td><td>${esc(v.country ?? "—")}</td><td>${esc(v.device ?? "—")}</td></tr>`,
-    )
-    .join("");
+  const perVisit = n ? (report.sessionPageviews / n).toFixed(1) : "—";
 
   const body = `
 <header>
-<h1>Analytics</h1>
+<div><h1>Analytics</h1><p class="muted small">${fmt(allTime)} pageviews recorded all time · times are Eastern</p></div>
 ${signOut ? `<form method="post" action="/analytics"><input type="hidden" name="logout" value="1"><button type="submit">Sign out</button></form>` : ""}
 </header>
 <nav aria-label="Date range">${nav}</nav>
+
 <div class="stats">
-<div class="stat"><span class="muted">${esc(RANGES[range].label)}</span><b>${fmt(n)}</b></div>
-<div class="stat"><span class="muted">Arrivals from outside</span><b>${fmt(arrivals.length)}</b></div>
-<div class="stat"><span class="muted">All-time visits</span><b>${fmt(allTime)}</b></div>
+<div class="stat"><span class="muted">Visits</span><b>${fmt(n)}</b></div>
+<div class="stat"><span class="muted">Pageviews</span><b>${fmt(report.pageviews)}</b></div>
+<div class="stat"><span class="muted">Pages per visit</span><b>${perVisit}</b></div>
+<div class="stat"><span class="muted">Resume, LinkedIn or contact</span><b>${fmt(report.hiring)}</b><span class="muted small">${pct(report.hiring, n)} of visits</span></div>
 </div>
 
-<section>
-<h2>Visits over time</h2>
-${n ? chart(overTime(visits, startMs, nowMs)) : `<p class="muted">No visits in this period.</p>`}
-</section>
+${trend(report)}
 
-<div class="grid">
-${ranked("Most-viewed pages", tally(visits, (v) => v.path), n)}
-${ranked("Traffic sources", tally(arrivals, sourceOf), arrivals.length, "Arrivals only — clicks between pages on the site aren't counted here.")}
-${campaigns.length ? ranked("UTM campaigns", campaigns, n) : ""}
-${ranked("Cities", tally(visits, (v) => (v.city ? [v.city, v.region, v.country].filter(Boolean).join(", ") : "Unknown")), n)}
-${ranked("Regions", tally(visits, (v) => (v.region ? `${v.region}, ${countryName(v.country)}` : "Unknown")), n)}
-${ranked("Countries", tally(visits, (v) => countryName(v.country)), n)}
-${ranked("Devices", tally(visits, (v) => v.device ?? "Unknown"), n)}
+<div class="grid2">
+${funnel(report)}
+${caseStudies(report)}
 </div>
 
-<section>
-<h2>Recent visits</h2>
-${
-  recent
-    ? `<div class="scroll"><table class="recent"><thead><tr><th>Time</th><th>City</th><th>Region</th><th>Page</th><th>Source</th><th>Country</th><th>Device</th></tr></thead><tbody>${recent}</tbody></table></div>${n > 50 ? `<p class="muted">Latest 50 of ${fmt(n)}.</p>` : ""}`
-    : `<p class="muted">No visits in this period.</p>`
-}
-</section>
+${sources(report)}
 
-<footer class="muted">Times are Eastern. Location is approximate — looked up from the visitor's IP by Vercel, never stored with it. Your own browsers are excluded via /owner.</footer>`;
+<h2 class="divider">Details</h2>
+<div class="grid2">
+${journeys(report)}
+${ranked("Entry pages", report.entries, n, { note: "The first page of each visit." })}
+</div>
+<div class="grid2">
+${actions(report)}
+${pages(report)}
+</div>
+
+${utm(report)}
+
+<section><h2>Audience</h2><p class="muted small">Per visit. Browser and OS were first recorded on Oct 7.</p>
+<div class="grid3">
+${ranked("Country", report.audience.country, n, { limit: 8 })}
+${ranked("Device", report.audience.device, n)}
+${ranked("Browser", report.audience.browser, n, { limit: 8 })}
+${ranked("Operating system", report.audience.os, n, { limit: 8 })}
+</div></section>
+
+<section><h2>Location (approximate)</h2><p class="muted small">From IP address lookups by Vercel. Country is dependable; region is usually right; city is often the nearest metro or the internet provider's hub, and VPNs, iCloud Private Relay and company networks can put it somewhere else entirely.</p>
+<div class="grid2">
+${ranked("Region", report.audience.region, n, { limit: 10 })}
+${ranked("City", report.audience.city, n, { limit: 10 })}
+</div></section>
+
+${recent(report)}
+
+<footer class="muted">
+<p>A visit is one browser tab's pageviews until it closes or sits idle for 30 minutes, grouped by a random id kept only in that tab — no cookie, nothing that carries over to the next visit. So unique visitors aren't counted; Vercel Web Analytics has its own visitor count.</p>
+${report.legacyPageviews ? `<p>${plural(report.legacyPageviews, "pageview")} in this period came before visits were tracked (Oct 7). ${report.legacyPageviews === 1 ? "It counts" : "They count"} as pageviews but not toward visits, the funnel, paths or audience.</p>` : ""}
+<p>Your own browsers are excluded via /owner. Bots that announce themselves are skipped.</p>
+</footer>`;
 
   return page("Analytics", body);
 }
