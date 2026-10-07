@@ -271,12 +271,45 @@ function loadEnv() {
   return env;
 }
 const env = loadEnv();
-const url = env.KV_REST_API_URL || env.UPSTASH_REDIS_REST_URL;
-const token = env.KV_REST_API_TOKEN || env.UPSTASH_REDIS_REST_TOKEN;
-if (!url || !token) {
-  console.log("No Redis credentials found — local snapshot only. For production run:\n  npx vercel env pull .env.production.local --environment=production");
+const SITE = (env.JOBS_SITE_URL || env.NEXT_PUBLIC_SITE_URL || "https://www.marcfavro.com").replace(/\/$/, "");
+
+/** Vercel hands out redacted placeholders for integration secrets, so only trust real values. */
+const real = (v) => typeof v === "string" && /^https:\/\//.test(v);
+const rUrl = [env.KV_REST_API_URL, env.UPSTASH_REDIS_REST_URL].find(real);
+const rTok = env.KV_REST_API_TOKEN || env.UPSTASH_REDIS_REST_TOKEN;
+
+if (rUrl && rTok) {
+  const { Redis } = await import("@upstash/redis");
+  await new Redis({ url: rUrl, token: rTok }).set(KEY, JSON.stringify(snapshot));
+  console.log(`Pushed snapshot to Redis key ${KEY}.`);
   process.exit(0);
 }
-const { Redis } = await import("@upstash/redis");
-await new Redis({ url, token }).set(KEY, JSON.stringify(snapshot));
-console.log(`Pushed snapshot to Redis key ${KEY}.`);
+
+// Default path: hand the snapshot to the site, which writes it to its own Redis.
+let secret = env.JOBS_PASSWORD;
+if (!secret || !process.stdin.isTTY) {
+  if (!secret) {
+    console.error("JOBS_PASSWORD not found in the environment, .env.production.local or .env.local, and no terminal to ask on.");
+    process.exit(1);
+  }
+}
+if (!secret) {
+  const rl = (await import("node:readline")).createInterface({ input: process.stdin, output: process.stdout });
+  const mute = rl; mute._writeToOutput = () => {};
+  process.stdout.write("Enter your /jobs password (saved to .env.local, git-ignored): ");
+  secret = await new Promise((r) => rl.question("", (a) => { rl.close(); process.stdout.write("\n"); r(a.trim()); }));
+  if (!secret) { console.error("No password entered."); process.exit(1); }
+  fs.appendFileSync(path.join(root, ".env.local"), `\nJOBS_PASSWORD=${secret}\n`);
+}
+const res = await fetch(`${SITE}/api/jobs-sync`, {
+  method: "POST",
+  headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+  body: JSON.stringify(snapshot),
+});
+if (res.ok) {
+  console.log(`Published snapshot to ${SITE}/jobs.`);
+} else {
+  const hint = res.status === 401 ? " (password doesn't match the one in Vercel)" : res.status === 503 ? " (JOBS_PASSWORD or Redis isn't set on the server)" : res.status === 404 ? " (endpoint not deployed yet)" : "";
+  console.error(`Publish failed: HTTP ${res.status}${hint}.`);
+  process.exit(1);
+}

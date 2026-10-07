@@ -30,3 +30,12 @@ export async function getSnapshot(): Promise<Snapshot | null> {
     return null;
   }
 }
+
+/** Writes the snapshot to the site's existing Redis (used by /api/jobs-sync). */
+export async function saveSnapshot(snapshot: Snapshot): Promise<boolean> {
+  const url = process.env.KV_REST_API_URL ?? process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.KV_REST_API_TOKEN ?? process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return false;
+  await new Redis({ url, token }).set(SNAPSHOT_KEY, JSON.stringify(snapshot));
+  return true;
+}
