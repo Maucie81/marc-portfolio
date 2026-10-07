@@ -80,14 +80,20 @@ export async function GET(request: Request) {
     store.eventsSince(from),
     store.total(),
   ]);
-  // Engaged time is kept per day, so read only the days that have visits.
-  const engaged = visits.length
-    ? await store.engagedBetween(Math.max(from, Date.parse(visits[0].ts)), nowMs)
-    : [];
+  // Engaged time and scroll depth are kept per day, so read only the days
+  // that have visits.
+  const firstDay = visits.length ? Math.max(from, Date.parse(visits[0].ts)) : null;
+  const [engaged, depth] =
+    firstDay === null
+      ? [[], []]
+      : await Promise.all([
+          store.engagedBetween(firstDay, nowMs),
+          store.depthBetween(firstDay, nowMs),
+        ]);
 
   return html(
     renderDashboard({
-      report: buildReport({ visits, events, engaged, range, nowMs }),
+      report: buildReport({ visits, events, engaged, depth, range, nowMs }),
       allTime,
       signOut: Boolean(secret),
     }),

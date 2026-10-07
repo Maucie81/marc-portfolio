@@ -6,7 +6,7 @@ import {
   HIRING_ACTIONS,
   type ActionType,
 } from "./events";
-import type { ActionEvent, Engaged, Visit } from "./store";
+import type { ActionEvent, Depth, Engaged, Visit } from "./store";
 
 /**
  * Everything /analytics shows, worked out from the stored pageviews and
@@ -219,12 +219,17 @@ export type Session = {
   /** Engaged ms per page. */
   engaged: Map<string, number>;
   engagedMs: number;
+  /** Scroll depth was recorded for this visit (from Oct 7, 2026). */
+  scrollTracked: boolean;
+  /** Deepest milestone per page: 25/50/75/90, 100 = fit on screen. */
+  depth: Map<string, number>;
 };
 
 function sessionize(
   visits: Visit[],
   events: ActionEvent[],
   engaged: Engaged[],
+  depth: Depth[],
   startMs: number,
 ) {
   const bySid = new Map<string, { views: Visit[]; actions: ActionEvent[] }>();
@@ -240,6 +245,12 @@ function sessionize(
     const pages = engagedBySid.get(sid) ?? new Map<string, number>();
     pages.set(path, (pages.get(path) ?? 0) + ms);
     engagedBySid.set(sid, pages);
+  }
+  const depthBySid = new Map<string, Map<string, number>>();
+  for (const { sid, path, milestone } of depth) {
+    const pages = depthBySid.get(sid) ?? new Map<string, number>();
+    pages.set(path, Math.max(pages.get(path) ?? 0, milestone));
+    depthBySid.set(sid, pages);
   }
 
   const sessions: Session[] = [];
@@ -264,6 +275,8 @@ function sessionize(
       timed,
       engaged: pages,
       engagedMs: [...pages.values()].reduce((sum, ms) => sum + ms, 0),
+      scrollTracked: views.some((v) => v.scroll),
+      depth: depthBySid.get(sid) ?? new Map<string, number>(),
     });
   }
   return sessions.sort((a, b) => a.start - b.start);
@@ -293,6 +306,35 @@ function journeyOf(s: Session): string[] {
   return steps.length > JOURNEY_STEPS
     ? [...steps.slice(0, JOURNEY_STEPS), "…"]
     : steps;
+}
+
+// ---------- scroll depth ----------
+
+/** Reaching the bottom of a case study in less engaged time than this
+ * reads as a skim or a jump rather than a pass through it. */
+export const QUICK_BOTTOM_MS = 30 * 1000;
+
+/** How far the visits that opened `path` got, among visits whose tracker
+ * recorded depth. A page that fit on screen (100) counts as every
+ * milestone reached. */
+function scrollDepth(sessions: Session[], path: string) {
+  const viewers = sessions.filter((s) => s.scrollTracked && s.views.some((v) => v.path === path));
+  const deepest = viewers.map((s) => s.depth.get(path) ?? 0).sort((a, b) => a - b);
+  const at = (m: number) => deepest.filter((d) => d >= m).length;
+  const bottom = viewers.filter((s) => (s.depth.get(path) ?? 0) >= 90);
+  return {
+    n: viewers.length,
+    r25: at(25),
+    r50: at(50),
+    r75: at(75),
+    r90: at(90),
+    fits: deepest.filter((d) => d === 100).length,
+    // Middle visit's deepest milestone (the lower middle for an even count,
+    // so it's always a milestone someone actually reached).
+    typical: deepest.length ? deepest[(deepest.length - 1) >> 1] : null,
+    bottomTimed: bottom.filter((s) => s.timed).length,
+    bottomQuick: bottom.filter((s) => s.timed && (s.engaged.get(path) ?? 0) < QUICK_BOTTOM_MS).length,
+  };
 }
 
 // ---------- the report ----------
@@ -325,13 +367,14 @@ export function buildReport(opts: {
   visits: Visit[];
   events: ActionEvent[];
   engaged: Engaged[];
+  depth: Depth[];
   range: RangeKey;
   nowMs: number;
 }) {
   const { range, nowMs } = opts;
   const startMs = rangeStart(range, nowMs);
   const pageviews = opts.visits.filter((v) => Date.parse(v.ts) >= startMs);
-  const sessions = sessionize(opts.visits, opts.events, opts.engaged, startMs);
+  const sessions = sessionize(opts.visits, opts.events, opts.engaged, opts.depth, startMs);
   const n = sessions.length;
   const count = (test: (s: Session) => boolean) => sessions.filter(test).length;
   const timed = sessions.filter((s) => s.timed);
@@ -342,6 +385,7 @@ export function buildReport(opts: {
         .filter((s) => s.views.some((v) => v.path === path))
         .map((s) => s.engaged.get(path) ?? 0),
     );
+  const depthOn = (path: string) => scrollDepth(sessions, path);
 
   // Trend: visits by when they began, pageviews by when they happened.
   const trendStart =
@@ -388,6 +432,7 @@ export function buildReport(opts: {
         landed: count((s) => s.first.path === path),
         hiring: viewers.filter((s) => s.hiring).length,
         engaged: engagedOn(path),
+        depth: depthOn(path),
       };
     })
     .sort((a, b) => b.visits - a.visits || b.views - a.views || a.label.localeCompare(b.label));
@@ -399,6 +444,7 @@ export function buildReport(opts: {
       views: pageviews.filter((v) => v.path === path).length,
       visits: count((s) => s.views.some((v) => v.path === path)),
       engaged: engagedOn(path),
+      depth: depthOn(path),
     }))
     .sort((a, b) => b.views - a.views || a.label.localeCompare(b.label));
 
@@ -445,6 +491,7 @@ export function buildReport(opts: {
     singlePage: count((s) => s.views.length === 1),
     engagedPerVisit: timeStats(timed.map((s) => s.engagedMs)),
     untimedVisits: n - timed.length,
+    unscrolledVisits: count((s) => !s.scrollTracked),
     caseStudies,
     pages,
     entries: tally(sessions, (s) => pageLabel(s.first.path)),
@@ -520,9 +567,16 @@ function deviceGroup(label: string, group: Session[]) {
   const caseStudy = [...new Set(group.flatMap((s) => [...s.caseStudies]))]
     .map((path) => ({ label: pageLabel(path), visits: count((s) => s.caseStudies.has(path)) }))
     .sort((a, b) => b.visits - a.visits || a.label.localeCompare(b.label));
+  // Every case study a depth-tracked visit opened, and how far it got.
+  const opens = group
+    .filter((s) => s.scrollTracked)
+    .flatMap((s) => [...s.caseStudies].map((path) => s.depth.get(path) ?? 0));
   return {
     label,
     visits: group.length,
+    caseStudyOpens: opens.length,
+    caseStudy50: opens.filter((d) => d >= 50).length,
+    caseStudy90: opens.filter((d) => d >= 90).length,
     // From the visits themselves, so it reconciles with Visits; the overview
     // card also counts pageviews from before visits were tracked.
     pageviews: group.reduce((sum, s) => sum + s.views.length, 0),

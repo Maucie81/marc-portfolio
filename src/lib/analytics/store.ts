@@ -24,15 +24,18 @@ import type { ActionType } from "./events";
  *   analytics:events → sorted set, score = epoch ms, member = ActionEvent
  *   analytics:engaged:YYYY-MM-DD (UTC day) → hash, "sid|path" → engaged ms
  *     added up from the tracker's checkpoints; nothing finer is kept
+ *   analytics:depth:YYYY-MM-DD (UTC day) → hash, "sid|path|milestone" →
+ *     epoch ms it was first reached (25, 50, 75, 90, or 100 = the whole
+ *     page fit on screen); set-if-absent, so a repeat changes nothing
  *
  * Pageviews recorded before 2026-10-07 have no sid, browser or os; only
  * pageviews marked `timed` come from a tracker that measures engaged time.
  *
  * To remove the whole feature: delete src/lib/analytics, src/app/analytics,
- * src/app/api/visit, src/app/api/event, src/components/site/VisitTracker.tsx
+ * src/app/api/{visit,event,engage,depth}, src/components/site/VisitTracker.tsx
  * and its line in layout.tsx, the trackAction call in ContactForm.tsx, then
- * DEL analytics:visits, analytics:events and analytics:engaged:* in the
- * Upstash console.
+ * DEL analytics:visits, analytics:events, analytics:engaged:* and
+ * analytics:depth:* in the Upstash console.
  */
 
 export type Device = "mobile" | "tablet" | "desktop";
@@ -60,6 +63,8 @@ export type Visit = {
   /** Sent by a tracker that measures engaged time (from Oct 7, 2026), so a
    * visit without any is a real zero rather than "not measured". */
   timed?: boolean;
+  /** Sent by a tracker that records scroll depth (from Oct 7, 2026). */
+  scroll?: boolean;
 };
 
 export type ActionEvent = {
@@ -76,6 +81,9 @@ export type ActionEvent = {
 /** Engaged time one visit spent on one page. */
 export type Engaged = { sid: string; path: string; ms: number };
 
+/** A scroll milestone one visit reached on one page. */
+export type Depth = { sid: string; path: string; milestone: number };
+
 export interface VisitStore {
   add(visit: Visit): Promise<void>;
   /** Every visit at or after `sinceMs`, oldest first. */
@@ -87,20 +95,38 @@ export interface VisitStore {
   addEngaged(engaged: Engaged, atMs: number): Promise<void>;
   /** Engaged totals from the UTC days spanning fromMs → toMs. */
   engagedBetween(fromMs: number, toMs: number): Promise<Engaged[]>;
+  addDepth(sid: string, path: string, milestones: number[], atMs: number): Promise<void>;
+  /** Milestones from the UTC days spanning fromMs → toMs. */
+  depthBetween(fromMs: number, toMs: number): Promise<Depth[]>;
 }
 
 const VISITS = "analytics:visits";
 const EVENTS = "analytics:events";
 const DAY = 24 * 60 * 60 * 1000;
-const engagedKey = (ms: number) =>
-  `analytics:engaged:${new Date(ms).toISOString().slice(0, 10)}`;
+const dayKey = (prefix: string, ms: number) =>
+  `${prefix}:${new Date(ms).toISOString().slice(0, 10)}`;
+const engagedKey = (ms: number) => dayKey("analytics:engaged", ms);
+const depthKey = (ms: number) => dayKey("analytics:depth", ms);
 const engagedField = (e: Engaged) => `${e.sid}|${e.path}`;
 
 /** One key per UTC day the range touches. */
-function engagedKeys(fromMs: number, toMs: number) {
+function dayKeys(toKey: (ms: number) => string, fromMs: number, toMs: number) {
   const keys: string[] = [];
-  for (let d = fromMs - (fromMs % DAY); d <= toMs; d += DAY) keys.push(engagedKey(d));
+  for (let d = fromMs - (fromMs % DAY); d <= toMs; d += DAY) keys.push(toKey(d));
   return keys;
+}
+const engagedKeys = (fromMs: number, toMs: number) => dayKeys(engagedKey, fromMs, toMs);
+const depthKeys = (fromMs: number, toMs: number) => dayKeys(depthKey, fromMs, toMs);
+
+function parseDepth(hashes: (Record<string, unknown> | null)[]): Depth[] {
+  const out: Depth[] = [];
+  for (const hash of hashes) {
+    for (const field of Object.keys(hash ?? {})) {
+      const [sid, path, milestone] = field.split("|");
+      if (sid && path && milestone) out.push({ sid, path, milestone: Number(milestone) });
+    }
+  }
+  return out;
 }
 
 function parseEngaged(hashes: (Record<string, unknown> | null)[]): Engaged[] {
@@ -152,6 +178,18 @@ function redisStore(redis: Redis): VisitStore {
       for (const key of keys) pipe.hgetall(key);
       return parseEngaged((await pipe.exec()) as (Record<string, unknown> | null)[]);
     },
+    async addDepth(sid, path, milestones, atMs) {
+      const pipe = redis.pipeline();
+      for (const m of milestones) pipe.hsetnx(depthKey(atMs), `${sid}|${path}|${m}`, atMs);
+      await pipe.exec();
+    },
+    async depthBetween(fromMs, toMs) {
+      const keys = depthKeys(fromMs, toMs);
+      if (keys.length === 0) return [];
+      const pipe = redis.pipeline();
+      for (const key of keys) pipe.hgetall(key);
+      return parseDepth((await pipe.exec()) as (Record<string, unknown> | null)[]);
+    },
   };
 }
 
@@ -161,10 +199,12 @@ function memoryStore(): VisitStore {
     __analyticsMemory?: Visit[];
     __analyticsEvents?: ActionEvent[];
     __analyticsEngaged?: Map<string, Record<string, number>>;
+    __analyticsDepth?: Map<string, Record<string, number>>;
   };
   const visits = (g.__analyticsMemory ??= []);
   const events = (g.__analyticsEvents ??= []);
   const engagedDays = (g.__analyticsEngaged ??= new Map());
+  const depthDays = (g.__analyticsDepth ??= new Map());
   return {
     async add(visit) {
       visits.push(visit);
@@ -190,6 +230,15 @@ function memoryStore(): VisitStore {
     },
     async engagedBetween(fromMs, toMs) {
       return parseEngaged(engagedKeys(fromMs, toMs).map((key) => engagedDays.get(key) ?? null));
+    },
+    async addDepth(sid, path, milestones, atMs) {
+      const key = depthKey(atMs);
+      const day = depthDays.get(key) ?? {};
+      for (const m of milestones) day[`${sid}|${path}|${m}`] ??= atMs;
+      depthDays.set(key, day);
+    },
+    async depthBetween(fromMs, toMs) {
+      return parseDepth(depthKeys(fromMs, toMs).map((key) => depthDays.get(key) ?? null));
     },
   };
 }

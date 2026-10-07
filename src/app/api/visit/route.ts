@@ -83,6 +83,8 @@ export async function POST(request: Request) {
       os: osOf(ua, touch),
       // From a tracker that also measures engaged time (see /api/engage).
       ...(body.timed === true ? { timed: true } : {}),
+      // From a tracker that also records scroll depth (see /api/depth).
+      ...(body.scroll === true ? { scroll: true } : {}),
     });
   } catch (err) {
     // A storage hiccup costs one data point, never the visitor's page.

@@ -1,5 +1,6 @@
 import { pageLabel } from "@/lib/page-titles";
 import {
+  QUICK_BOTTOM_MS,
   RANGES,
   SMALL_GROUP,
   TIME_ZONE,
@@ -165,6 +166,34 @@ ${table(["Case study", "Visits", "Reach", "Pageviews", "Landed", "Then acted", "
 </section>`;
 }
 
+/** A deepest milestone in words. */
+const depthLabel = (m: number | null) =>
+  m === null ? "—" : m === 100 ? "Fits on screen" : m >= 90 ? "Bottom" : m === 0 ? "Under 25%" : `${m}%`;
+
+function caseStudyDepth(report: Report) {
+  const rows = report.caseStudies
+    .filter((c) => c.depth.n > 0)
+    .map((c) => {
+      const d = c.depth;
+      return [
+        `${esc(c.label)}${bar(d.r90, d.n)}`,
+        fmt(d.n),
+        median(c.engaged),
+        share(d.r25, d.n),
+        share(d.r50, d.n),
+        share(d.r75, d.n),
+        `<b>${pct(d.r90, d.n)}</b> <span class="muted">(${fmt(d.r90)})</span>`,
+        d.bottomTimed ? `${fmt(d.bottomQuick)} <span class="muted">of ${fmt(d.bottomTimed)}</span>` : "—",
+      ];
+    });
+  const quick = Math.round(QUICK_BOTTOM_MS / 1000);
+  return `<section>
+<h2>How far into each case study</h2>
+<p class="muted small">Share of visits that opened the case study and scrolled at least that far; the bar is the bottom (90%). Scrolling far isn't the same as reading it, so read it with engaged time: a visit that reached the bottom with under ${quick}s of engaged time on the page most likely skimmed or jumped. Recorded from Oct 7, 2026; earlier visits are left out.</p>
+${rows.length ? table(["Case study", "Visits", "Median engaged", "25%", "50%", "75%", "Bottom", `Bottom in <${quick}s`], rows, [false, true, true, true, true, true, true, true], [false, false, false, true, false, true, false, true]) : empty("No case-study scroll data in this period yet.")}
+</section>`;
+}
+
 function sources(report: Report) {
   if (!report.sources.length) return `<section><h2>Traffic sources</h2>${empty()}</section>`;
   const max = report.sources[0].visits;
@@ -218,11 +247,14 @@ function pages(report: Report) {
       median(p.engaged),
       mean(p.engaged),
       p.engaged ? duration(p.engaged.total) : "—",
+      depthLabel(p.depth.typical),
+      p.depth.n ? pct(p.depth.r50, p.depth.n) : "—",
+      p.depth.n ? pct(p.depth.r90, p.depth.n) : "—",
     ]);
   return `<section>
 <h2>Pages</h2>
-<p class="muted small">Engaged time per visit that opened the page, from visits where it was measured.</p>
-${rows.length ? table(["Page", "Visits", "Pageviews", "Median engaged", "Avg. engaged", "Total engaged"], rows, [false, true, true, true, true, true], [false, false, true, false, true, false]) : empty()}
+<p class="muted small">Engaged time per visit that opened the page, from visits where it was measured. Typical deepest: how far the middle visit scrolled ("Fits on screen" when the page needs no scrolling); 50%+ and Bottom: share that scrolled at least that far.</p>
+${rows.length ? table(["Page", "Visits", "Pageviews", "Median engaged", "Avg. engaged", "Total engaged", "Typical deepest", "50%+", "Bottom"], rows, [false, true, true, true, true, true, true, true, true], [false, false, true, false, true, true, false, false, false]) : empty()}
 </section>`;
 }
 
@@ -268,6 +300,8 @@ function devices(report: Report) {
     ["Viewed 2+ case studies", ...groups.map((g) => share(g.viewedTwo, g.visits))],
     ["Resume, LinkedIn or contact", ...groups.map((g) => share(g.hiring, g.visits))],
     ["A way to get in touch", ...groups.map((g) => share(g.contact, g.visits))],
+    ["Case-study opens scrolled to 50%", ...groups.map((g) => share(g.caseStudy50, g.caseStudyOpens))],
+    ["Case-study opens scrolled to the bottom", ...groups.map((g) => share(g.caseStudy90, g.caseStudyOpens))],
     ["Most viewed case study", ...groups.map(caseStudyCell)],
     ["Most common path", ...groups.map(journeyCell)],
   ];
@@ -542,6 +576,8 @@ ${funnel(report)}
 ${caseStudies(report)}
 </div>
 
+${caseStudyDepth(report)}
+
 ${sources(report)}
 
 ${devices(report)}
@@ -578,6 +614,7 @@ ${recent(report)}
 <p>A visit is one browser tab's pageviews until it closes or sits idle for 30 minutes, grouped by a random id kept only in that tab — no cookie, nothing that carries over to the next visit. So unique visitors aren't counted; Vercel Web Analytics has its own visitor count.</p>
 ${report.legacyPageviews ? `<p>${plural(report.legacyPageviews, "pageview")} in this period came before visits were tracked (Oct 7). ${report.legacyPageviews === 1 ? "It counts" : "They count"} as pageviews but not toward visits, the funnel, paths or audience.</p>` : ""}
 <p>Engaged time counts only while the page is on screen in the active tab and someone has scrolled, clicked, typed or touched within the last minute — a background tab, a minimised window or a page left unattended doesn't add to it. It's measured from Oct 7, 2026 onward; earlier visits have no time recorded and are left out of every time figure rather than counted as zero.${report.untimedVisits ? ` ${plural(report.untimedVisits, "visit")} in this period ${report.untimedVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
+<p>Scroll depth is how much of a page has been on screen, recorded at 25, 50, 75 and 90% (the bottom) once per visit and page — never mouse movement or anything finer. It's recorded from Oct 7, 2026 onward; earlier visits have none and are left out of depth figures.${report.unscrolledVisits ? ` ${plural(report.unscrolledVisits, "visit")} in this period ${report.unscrolledVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
 <p>Your own browsers are excluded via /owner. Bots that announce themselves are skipped.</p>
 </footer>`;
 

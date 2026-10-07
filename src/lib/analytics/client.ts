@@ -2,8 +2,8 @@ import { isAction, type ActionType } from "./events";
 
 /**
  * Browser side of /analytics: pageviews, the handful of actions in
- * events.ts, and engaged time per page, each tagged with the visit it
- * belongs to.
+ * events.ts, engaged time per page and scroll milestones per page, each
+ * tagged with the visit it belongs to.
  *
  * A visit is a random id in sessionStorage — this tab only, gone when the
  * tab closes, replaced after 30 minutes without a new page. No cookie, and
@@ -27,6 +27,9 @@ type VisitState = {
   path: string | null;
   /** Actions already sent this visit ("type:target"); each counts once. */
   sent: string[];
+  /** Deepest scroll milestone already sent, per page, so a reload or a
+   * return to the page in this visit never sends one twice. */
+  depth?: Record<string, number>;
 };
 
 let memory: VisitState | null = null;
@@ -99,6 +102,7 @@ function sendPageview(path: string, sid: string, referrer: string) {
     utmCampaign: query.get("utm_campaign"),
     touch: navigator.maxTouchPoints > 1,
     timed: true,
+    scroll: true,
   });
 }
 
@@ -150,6 +154,8 @@ let pending = 0;
 let runningSince: number | null = null;
 let lastInput = 0;
 let listening = false;
+/** Engaged ms on the current page so far (scroll depth waits on it). */
+let pageEngaged = 0;
 
 const onScreen = () => document.visibilityState === "visible";
 
@@ -158,7 +164,9 @@ const onScreen = () => document.visibilityState === "visible";
 function settle(now: number) {
   if (runningSince === null) return;
   const end = Math.min(now, lastInput + INPUT_IDLE);
-  pending += Math.max(0, end - runningSince);
+  const added = Math.max(0, end - runningSince);
+  pending += added;
+  pageEngaged += added;
   runningSince = end < now ? null : now;
 }
 
@@ -168,13 +176,17 @@ function pause(now: number) {
 }
 
 function flush() {
+  flushDepth();
   const ms = Math.round(pending);
   if (!engagedPath || ms < MIN_SEND) return;
   const state = read();
   if (!state) return;
   pending = 0;
-  // Engaged time is activity: it keeps a long read inside one visit.
-  state.last = Date.now();
+  // Engaged time is activity: it keeps a long read inside one visit — as of
+  // the last interaction, not whenever this happens to run (after a laptop
+  // wakes, that could be hours later).
+  const now = Date.now();
+  state.last = runningSince !== null ? now : Math.min(now, lastInput + INPUT_IDLE);
   write(state);
   beacon("/api/engage", { sid: state.id, path: engagedPath, ms });
 }
@@ -194,6 +206,7 @@ function begin(now: number) {
   }
   lastInput = now;
   runningSince = now;
+  scheduleDepth();
 }
 
 function interacted() {
@@ -213,6 +226,8 @@ function leavePage() {
 
 function enterPage(path: string, now: number) {
   engagedPath = path;
+  pageEngaged = 0;
+  fitsSince = null;
   listen();
   begin(now);
 }
@@ -240,6 +255,7 @@ function listen() {
   document.addEventListener("visibilitychange", () => {
     if (onScreen()) {
       begin(Date.now());
+      scheduleDepth();
     } else {
       pause(Date.now());
       flush();
@@ -258,6 +274,102 @@ function listen() {
     settle(Date.now());
     flush();
   }, CHECKPOINT);
+  // Depth follows the page's own scroll only — not the reference library's
+  // or any other inner scroller — and re-checks when the viewport changes.
+  window.addEventListener("scroll", scheduleDepth, { passive: true });
+  window.addEventListener("resize", scheduleDepth, { passive: true });
+  window.addEventListener("orientationchange", scheduleDepth, { passive: true });
+}
+
+// ---------- scroll depth ----------
+//
+// How much of the page has been on screen: (scroll position + window
+// height) ÷ page height, reported as milestones 25, 50, 75 and 90 — 90 is
+// "reached the bottom", since footers, sticky bars and mobile browser chrome
+// make an exact 100 unreliable. A page that fits on screen without
+// scrolling reports 100 instead, so it reads as "fits" rather than a
+// scroll. Each milestone goes out once per visit and page, in order, never
+// downward; nothing else about scrolling is sent.
+//
+// Measuring starts once the page has been on screen, with someone there,
+// for 2.5s (engaged time on it): images and fonts settle, and a desktop
+// case study grows from one screen to its full length when its sideways
+// track pins (about a second in), so an earlier reading — or one taken
+// while the tab sat in the background — would call it short. For the same
+// reason "fits on screen" has to hold for another 5s of on-screen time
+// before it's recorded, and is only ever a page's first and only reading:
+// once any milestone has gone out for it, it can't be reclassified.
+
+const MILESTONES = [25, 50, 75, 90];
+const FITS = 100;
+const DEPTH_SETTLE = 2500;
+const FITS_CONFIRM = 5000;
+
+let depthQueue: number[] = [];
+/** On-page engaged ms when the page was first seen fitting on screen. */
+let fitsSince: number | null = null;
+let depthQueuePath: string | null = null;
+let depthTimer: ReturnType<typeof setTimeout> | undefined;
+let depthScheduled = false;
+
+function scheduleDepth() {
+  if (depthScheduled) return;
+  depthScheduled = true;
+  window.setTimeout(() => {
+    depthScheduled = false;
+    measureDepth();
+  }, 200);
+}
+
+function measureDepth() {
+  if (!engagedPath || !onScreen()) return;
+  const now = Date.now();
+  const onPage = pageEngaged + (runningSince === null ? 0 : now - runningSince);
+  if (onPage < DEPTH_SETTLE) {
+    // Not settled yet: look again once it could be (begin() restarts this
+    // if time stops accruing in between).
+    if (runningSince !== null) window.setTimeout(measureDepth, DEPTH_SETTLE - onPage + 50);
+    return;
+  }
+  const height = document.documentElement.scrollHeight;
+  const view = window.innerHeight;
+  if (!height || !view) return;
+  const state = read();
+  if (!state) return;
+
+  const sent = state.depth?.[engagedPath] ?? 0;
+  const fits = height <= view + 2;
+  if (fits) {
+    if (sent > 0) return;
+    fitsSince ??= onPage;
+    const wait = FITS_CONFIRM - (onPage - fitsSince);
+    if (wait > 0) {
+      if (runningSince !== null) window.setTimeout(measureDepth, wait + 50);
+      return;
+    }
+  } else {
+    fitsSince = null;
+  }
+  const seen = ((window.scrollY + view) / height) * 100;
+  const reached = fits ? FITS : (MILESTONES.filter((m) => seen >= m).pop() ?? 0);
+  if (reached <= sent) return;
+
+  state.depth = { ...state.depth, [engagedPath]: reached };
+  write(state);
+  if (depthQueuePath !== engagedPath) flushDepth();
+  depthQueuePath = engagedPath;
+  depthQueue.push(...(reached === FITS ? [FITS] : MILESTONES.filter((m) => m > sent && m <= reached)));
+  // A fast scroll crosses several milestones; they go out together.
+  clearTimeout(depthTimer);
+  depthTimer = setTimeout(flushDepth, 1000);
+}
+
+function flushDepth() {
+  clearTimeout(depthTimer);
+  if (!depthQueue.length || !depthQueuePath) return;
+  const state = read();
+  if (state) beacon("/api/depth", { sid: state.id, path: depthQueuePath, reached: depthQueue });
+  depthQueue = [];
 }
 
 /** Counts once per visit per type and target. Never starts a new visit for
