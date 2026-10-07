@@ -43,3 +43,6 @@ next-env.d.ts
 # raw screen recordings (source footage for public/ypp/videos/*.webm) —
 # not referenced by the app; kept locally, never committed
 /public/ypp/*.mov
+
+# private job-search snapshot (derived from ~/Documents/JobSearch; never commit — public repo)
+/.jobs-data/
