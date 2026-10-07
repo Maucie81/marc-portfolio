@@ -264,7 +264,16 @@ function loadEnv() {
     try {
       for (const line of fs.readFileSync(path.join(root, f), "utf8").split("\n")) {
         const m = /^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/.exec(line);
-        if (m && env[m[1]] === undefined) env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+        if (!m || env[m[1]] !== undefined) continue;
+        let v = m[2];
+        if (v.startsWith('"')) {
+          try {
+            v = JSON.parse(v);
+          } catch {
+            v = v.replace(/^"|"$/g, "");
+          }
+        } else v = v.replace(/^'|'$/g, "");
+        env[m[1]] = v;
       }
     } catch {}
   }
@@ -286,30 +295,103 @@ if (rUrl && rTok) {
 }
 
 // Default path: hand the snapshot to the site, which writes it to its own Redis.
-let secret = env.JOBS_PASSWORD;
-if (!secret || !process.stdin.isTTY) {
-  if (!secret) {
-    console.error("JOBS_PASSWORD not found in the environment, .env.production.local or .env.local, and no terminal to ask on.");
-    process.exit(1);
+// Vercel may hand back a redacted placeholder like "[SOMETHING]" for secrets; ignore those.
+const usable = (v) => (typeof v === "string" && v.trim() && !/^\[.*\]$/.test(v.trim()) ? v.trim() : null);
+
+/** Ask for a secret on the controlling terminal without echoing it. Works under `npm run`. */
+async function askHidden(question) {
+  const tty = await import("node:tty");
+  let input, output;
+  if (process.stdin.isTTY && typeof process.stdin.setRawMode === "function") {
+    input = process.stdin;
+    output = process.stderr;
+  } else {
+    let fd;
+    try {
+      fd = fs.openSync("/dev/tty", "r+");
+    } catch {
+      return null;
+    }
+    input = new tty.ReadStream(fd);
+    output = new tty.WriteStream(fd);
   }
+  output.write(question);
+  input.setRawMode(true);
+  input.resume();
+  return new Promise((resolve) => {
+    let buf = "";
+    const finish = (value) => {
+      input.setRawMode(false);
+      input.removeListener("data", onData);
+      input.pause();
+      output.write("\n");
+      if (input !== process.stdin) input.destroy();
+      resolve(value);
+    };
+    const onData = (chunk) => {
+      for (const ch of chunk.toString("utf8")) {
+        if (ch === "\r" || ch === "\n" || ch === "\u0004") return finish(buf);
+        if (ch === "\u0003") {
+          finish(null);
+          process.exit(130);
+        }
+        if (ch === "\u007f" || ch === "\b") buf = buf.slice(0, -1);
+        else if (ch >= " ") buf += ch;
+      }
+    };
+    input.on("data", onData);
+  });
 }
-if (!secret) {
-  const rl = (await import("node:readline")).createInterface({ input: process.stdin, output: process.stdout });
-  const mute = rl; mute._writeToOutput = () => {};
-  process.stdout.write("Enter your /jobs password (saved to .env.local, git-ignored): ");
-  secret = await new Promise((r) => rl.question("", (a) => { rl.close(); process.stdout.write("\n"); r(a.trim()); }));
-  if (!secret) { console.error("No password entered."); process.exit(1); }
-  fs.appendFileSync(path.join(root, ".env.local"), `\nJOBS_PASSWORD=${secret}\n`);
+
+/** Store the password in .env.local (git-ignored via `.env*`), replacing any earlier line. */
+function savePassword(value) {
+  const file = path.join(root, ".env.local");
+  let text = "";
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch {}
+  const line = `JOBS_PASSWORD=${JSON.stringify(value)}`;
+  const kept = text.split("\n").filter((l) => !/^\s*JOBS_PASSWORD\s*=/.test(l));
+  while (kept.length && kept[kept.length - 1] === "") kept.pop();
+  fs.writeFileSync(file, [...kept, line, ""].join("\n"), { mode: 0o600 });
 }
-const res = await fetch(`${SITE}/api/jobs-sync`, {
-  method: "POST",
-  headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
-  body: JSON.stringify(snapshot),
-});
+
+const publish = (secret) =>
+  fetch(`${SITE}/api/jobs-sync`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+    body: JSON.stringify(snapshot),
+  });
+
+let secret = usable(env.JOBS_PASSWORD);
+let typed = false;
+let res = null;
+for (let attempt = 0; attempt < 3; attempt++) {
+  if (!secret) {
+    secret = usable(await askHidden(attempt ? "That password was not accepted. Try again: " : "Enter your /jobs password (input hidden): "));
+    typed = true;
+    if (!secret) {
+      console.error("No password entered (or no terminal available to ask on). Nothing was published.");
+      process.exit(1);
+    }
+  }
+  res = await publish(secret);
+  if (res.status !== 401) break;
+  secret = null;
+}
+
 if (res.ok) {
+  if (typed) {
+    savePassword(secret);
+    console.log("Saved the password to .env.local (git-ignored) — you won't be asked again.");
+  }
   console.log(`Published snapshot to ${SITE}/jobs.`);
 } else {
-  const hint = res.status === 401 ? " (password doesn't match the one in Vercel)" : res.status === 503 ? " (JOBS_PASSWORD or Redis isn't set on the server)" : res.status === 404 ? " (endpoint not deployed yet)" : "";
+  const hint =
+    res.status === 401 ? " (password doesn't match the one set in Vercel)"
+    : res.status === 503 ? " (JOBS_PASSWORD or Redis isn't set on the server)"
+    : res.status === 404 ? " (endpoint not deployed yet)"
+    : "";
   console.error(`Publish failed: HTTP ${res.status}${hint}.`);
   process.exit(1);
 }
