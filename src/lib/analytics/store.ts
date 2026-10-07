@@ -22,13 +22,17 @@ import type { ActionType } from "./events";
  * Keys:
  *   analytics:visits → sorted set, score = epoch ms, member = Visit (JSON)
  *   analytics:events → sorted set, score = epoch ms, member = ActionEvent
+ *   analytics:engaged:YYYY-MM-DD (UTC day) → hash, "sid|path" → engaged ms
+ *     added up from the tracker's checkpoints; nothing finer is kept
  *
- * Pageviews recorded before 2026-10-07 have no sid, browser or os.
+ * Pageviews recorded before 2026-10-07 have no sid, browser or os; only
+ * pageviews marked `timed` come from a tracker that measures engaged time.
  *
  * To remove the whole feature: delete src/lib/analytics, src/app/analytics,
  * src/app/api/visit, src/app/api/event, src/components/site/VisitTracker.tsx
  * and its line in layout.tsx, the trackAction call in ContactForm.tsx, then
- * DEL analytics:visits analytics:events in the Upstash console.
+ * DEL analytics:visits, analytics:events and analytics:engaged:* in the
+ * Upstash console.
  */
 
 export type Device = "mobile" | "tablet" | "desktop";
@@ -53,6 +57,9 @@ export type Visit = {
   device: Device | null;
   browser?: string | null;
   os?: string | null;
+  /** Sent by a tracker that measures engaged time (from Oct 7, 2026), so a
+   * visit without any is a real zero rather than "not measured". */
+  timed?: boolean;
 };
 
 export type ActionEvent = {
@@ -66,6 +73,9 @@ export type ActionEvent = {
   target: string | null;
 };
 
+/** Engaged time one visit spent on one page. */
+export type Engaged = { sid: string; path: string; ms: number };
+
 export interface VisitStore {
   add(visit: Visit): Promise<void>;
   /** Every visit at or after `sinceMs`, oldest first. */
@@ -74,10 +84,35 @@ export interface VisitStore {
   addEvent(event: ActionEvent): Promise<void>;
   /** Every action at or after `sinceMs`, oldest first. */
   eventsSince(sinceMs: number): Promise<ActionEvent[]>;
+  addEngaged(engaged: Engaged, atMs: number): Promise<void>;
+  /** Engaged totals from the UTC days spanning fromMs → toMs. */
+  engagedBetween(fromMs: number, toMs: number): Promise<Engaged[]>;
 }
 
 const VISITS = "analytics:visits";
 const EVENTS = "analytics:events";
+const DAY = 24 * 60 * 60 * 1000;
+const engagedKey = (ms: number) =>
+  `analytics:engaged:${new Date(ms).toISOString().slice(0, 10)}`;
+const engagedField = (e: Engaged) => `${e.sid}|${e.path}`;
+
+/** One key per UTC day the range touches. */
+function engagedKeys(fromMs: number, toMs: number) {
+  const keys: string[] = [];
+  for (let d = fromMs - (fromMs % DAY); d <= toMs; d += DAY) keys.push(engagedKey(d));
+  return keys;
+}
+
+function parseEngaged(hashes: (Record<string, unknown> | null)[]): Engaged[] {
+  const out: Engaged[] = [];
+  for (const hash of hashes) {
+    for (const [field, ms] of Object.entries(hash ?? {})) {
+      const bar = field.indexOf("|");
+      if (bar > 0) out.push({ sid: field.slice(0, bar), path: field.slice(bar + 1), ms: Number(ms) || 0 });
+    }
+  }
+  return out;
+}
 // Reads page through the set so a long "All time" never becomes one huge
 // Upstash response.
 const PAGE = 5000;
@@ -107,6 +142,16 @@ function redisStore(redis: Redis): VisitStore {
       await redis.zadd(EVENTS, { score: Date.parse(event.ts), member: event });
     },
     eventsSince: (sinceMs) => range<ActionEvent>(EVENTS, sinceMs),
+    async addEngaged(engaged, atMs) {
+      await redis.hincrby(engagedKey(atMs), engagedField(engaged), engaged.ms);
+    },
+    async engagedBetween(fromMs, toMs) {
+      const keys = engagedKeys(fromMs, toMs);
+      if (keys.length === 0) return [];
+      const pipe = redis.pipeline();
+      for (const key of keys) pipe.hgetall(key);
+      return parseEngaged((await pipe.exec()) as (Record<string, unknown> | null)[]);
+    },
   };
 }
 
@@ -115,9 +160,11 @@ function memoryStore(): VisitStore {
   const g = globalThis as unknown as {
     __analyticsMemory?: Visit[];
     __analyticsEvents?: ActionEvent[];
+    __analyticsEngaged?: Map<string, Record<string, number>>;
   };
   const visits = (g.__analyticsMemory ??= []);
   const events = (g.__analyticsEvents ??= []);
+  const engagedDays = (g.__analyticsEngaged ??= new Map());
   return {
     async add(visit) {
       visits.push(visit);
@@ -133,6 +180,16 @@ function memoryStore(): VisitStore {
     },
     async eventsSince(sinceMs) {
       return events.filter((e) => Date.parse(e.ts) >= sinceMs);
+    },
+    async addEngaged(engaged, atMs) {
+      const key = engagedKey(atMs);
+      const day = engagedDays.get(key) ?? {};
+      const field = engagedField(engaged);
+      day[field] = (day[field] ?? 0) + engaged.ms;
+      engagedDays.set(key, day);
+    },
+    async engagedBetween(fromMs, toMs) {
+      return parseEngaged(engagedKeys(fromMs, toMs).map((key) => engagedDays.get(key) ?? null));
     },
   };
 }

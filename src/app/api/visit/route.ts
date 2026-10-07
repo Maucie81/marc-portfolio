@@ -81,6 +81,8 @@ export async function POST(request: Request) {
       device: deviceOf(ua, request.headers.get("sec-ch-ua-mobile"), touch),
       browser: browserOf(ua),
       os: osOf(ua, touch),
+      // From a tracker that also measures engaged time (see /api/engage).
+      ...(body.timed === true ? { timed: true } : {}),
     });
   } catch (err) {
     // A storage hiccup costs one data point, never the visitor's page.

@@ -80,10 +80,14 @@ export async function GET(request: Request) {
     store.eventsSince(from),
     store.total(),
   ]);
+  // Engaged time is kept per day, so read only the days that have visits.
+  const engaged = visits.length
+    ? await store.engagedBetween(Math.max(from, Date.parse(visits[0].ts)), nowMs)
+    : [];
 
   return html(
     renderDashboard({
-      report: buildReport({ visits, events, range, nowMs }),
+      report: buildReport({ visits, events, engaged, range, nowMs }),
       allTime,
       signOut: Boolean(secret),
     }),

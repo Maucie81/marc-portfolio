@@ -1,5 +1,13 @@
 import { pageLabel } from "@/lib/page-titles";
-import { RANGES, TIME_ZONE, sourceOf, type RangeKey, type Report, type Row } from "./metrics";
+import {
+  RANGES,
+  TIME_ZONE,
+  sourceOf,
+  type RangeKey,
+  type Report,
+  type Row,
+  type TimeStats,
+} from "./metrics";
 
 /**
  * HTML for the private /analytics page (see src/app/analytics/route.ts).
@@ -23,6 +31,18 @@ const pct = (part: number, whole: number) =>
   whole ? `${Math.round((part / whole) * 100)}%` : "—";
 
 const plural = (n: number, word: string) => `${fmt(n)} ${word}${n === 1 ? "" : "s"}`;
+
+/** 42s · 1m 18s · 4m 03s · 1h 05m */
+function duration(ms: number) {
+  const secs = Math.round(ms / 1000);
+  if (secs < 60) return `${secs}s`;
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ${String(secs % 60).padStart(2, "0")}s`;
+  return `${Math.floor(mins / 60)}h ${String(mins % 60).padStart(2, "0")}m`;
+}
+
+const median = (t: TimeStats) => (t ? duration(t.median) : "—");
+const mean = (t: TimeStats) => (t ? duration(t.mean) : "—");
 
 function bar(part: number, whole: number) {
   const width = whole ? Math.max(part ? 1.5 : 0, (part / whole) * 100) : 0;
@@ -99,7 +119,7 @@ function funnel(report: Report) {
     .join("");
 
   const top = report.caseStudies[0];
-  const source = report.sources.find((s) => s.name !== "Internal");
+  const source = report.sources.find((s) => s.name !== "Returning or new tab");
   const journey = report.journeys[0];
   const facts: [string, string][] = [
     ["Most viewed case study", top?.visits ? `${esc(top.label)} <span class="muted">(${plural(top.visits, "visit")})</span>` : "—"],
@@ -134,11 +154,13 @@ function caseStudies(report: Report) {
     fmt(c.views),
     fmt(c.landed),
     c.visits ? `${fmt(c.hiring)} <span class="muted">(${pct(c.hiring, c.visits)})</span>` : "—",
+    median(c.engaged),
+    mean(c.engaged),
   ]);
   return `<section>
 <h2>Top case studies</h2>
-<p class="muted small">Reach: share of all visits that opened it. Landed: visits that started there. Then acted: its viewers who went on to resume, LinkedIn or contact.</p>
-${table(["Case study", "Visits", "Reach", "Pageviews", "Landed", "Then acted"], rows, [false, true, true, true, true, true], [false, false, false, true, true, false])}
+<p class="muted small">Reach: share of all visits that opened it. Landed: visits that started there. Then acted: its viewers who went on to resume, LinkedIn or contact. Engaged: active time on the case study per visit that opened it — the median is the typical visit, the average is pulled up by a few long reads.</p>
+${table(["Case study", "Visits", "Reach", "Pageviews", "Landed", "Then acted", "Median engaged", "Avg. engaged"], rows, [false, true, true, true, true, true, true, true], [false, false, false, true, true, true, false, true])}
 </section>`;
 }
 
@@ -188,10 +210,18 @@ function pages(report: Report) {
   const max = report.pages[0]?.views ?? 0;
   const rows = report.pages
     .slice(0, 15)
-    .map((p) => [`${esc(p.label)}${bar(p.views, max)}`, fmt(p.views), fmt(p.visits)]);
+    .map((p) => [
+      `${esc(p.label)}${bar(p.views, max)}`,
+      fmt(p.visits),
+      fmt(p.views),
+      median(p.engaged),
+      mean(p.engaged),
+      p.engaged ? duration(p.engaged.total) : "—",
+    ]);
   return `<section>
-<h3>Pageviews by page</h3>
-${rows.length ? table(["Page", "Pageviews", "Visits"], rows, [false, true, true]) : empty()}
+<h2>Pages</h2>
+<p class="muted small">Engaged time per visit that opened the page, from visits where it was measured.</p>
+${rows.length ? table(["Page", "Visits", "Pageviews", "Median engaged", "Avg. engaged", "Total engaged"], rows, [false, true, true, true, true, true], [false, false, true, false, true, false]) : empty()}
 </section>`;
 }
 
@@ -382,6 +412,7 @@ ${signOut ? `<form method="post" action="/analytics"><input type="hidden" name="
 <div class="stat"><span class="muted">Visits</span><b>${fmt(n)}</b></div>
 <div class="stat"><span class="muted">Pageviews</span><b>${fmt(report.pageviews)}</b></div>
 <div class="stat"><span class="muted">Pages per visit</span><b>${perVisit}</b></div>
+<div class="stat"><span class="muted">Engaged time per visit</span><b>${median(report.engagedPerVisit)}</b><span class="muted small">${report.engagedPerVisit ? `median · ${mean(report.engagedPerVisit)} average` : "measured from Oct 7, 2026"}</span></div>
 <div class="stat"><span class="muted">Resume, LinkedIn or contact</span><b>${fmt(report.hiring)}</b><span class="muted small">${pct(report.hiring, n)} of visits</span></div>
 </div>
 
@@ -395,13 +426,13 @@ ${caseStudies(report)}
 ${sources(report)}
 
 <h2 class="divider">Details</h2>
+${pages(report)}
 <div class="grid2">
 ${journeys(report)}
 ${ranked("Entry pages", report.entries, n, { note: "The first page of each visit." })}
 </div>
 <div class="grid2">
 ${actions(report)}
-${pages(report)}
 </div>
 
 ${utm(report)}
@@ -425,6 +456,7 @@ ${recent(report)}
 <footer class="muted">
 <p>A visit is one browser tab's pageviews until it closes or sits idle for 30 minutes, grouped by a random id kept only in that tab — no cookie, nothing that carries over to the next visit. So unique visitors aren't counted; Vercel Web Analytics has its own visitor count.</p>
 ${report.legacyPageviews ? `<p>${plural(report.legacyPageviews, "pageview")} in this period came before visits were tracked (Oct 7). ${report.legacyPageviews === 1 ? "It counts" : "They count"} as pageviews but not toward visits, the funnel, paths or audience.</p>` : ""}
+<p>Engaged time counts only while the page is on screen in the active tab and someone has scrolled, clicked, typed or touched within the last minute — a background tab, a minimised window or a page left unattended doesn't add to it. It's measured from Oct 7, 2026 onward; earlier visits have no time recorded and are left out of every time figure rather than counted as zero.${report.untimedVisits ? ` ${plural(report.untimedVisits, "visit")} in this period ${report.untimedVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
 <p>Your own browsers are excluded via /owner. Bots that announce themselves are skipped.</p>
 </footer>`;
 

@@ -102,6 +102,7 @@ export default function ReferenceLibrary() {
                 <button
                   type="button"
                   className="lib-open"
+                  data-track="library"
                   aria-label={`Enlarge: ${t.alt}`}
                   onClick={() => setOpen(i)}
                 >

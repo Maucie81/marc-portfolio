@@ -11,9 +11,11 @@ import { actionFor, trackAction, trackPageview } from "@/lib/analytics/client";
  * src/lib/analytics/events.ts. Session handling, exclusions and what gets
  * sent live in src/lib/analytics/client.ts.
  *
- * Actions are picked up from one capturing click listener rather than code
- * in each component; middle-clicks (auxclick) count too, since opening a
- * case study or the resume in a new tab is the same intent.
+ * Actions are picked up from one capturing click listener rather than a
+ * handler in each component — by link address, or a data-track attribute
+ * where the address doesn't say (see actionFor). Middle-clicks (auxclick)
+ * count too, since opening a case study or the resume in a new tab is the
+ * same intent.
  */
 export default function VisitTracker() {
   const pathname = usePathname();

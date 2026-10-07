@@ -6,7 +6,7 @@ import {
   HIRING_ACTIONS,
   type ActionType,
 } from "./events";
-import type { ActionEvent, Visit } from "./store";
+import type { ActionEvent, Engaged, Visit } from "./store";
 
 /**
  * Everything /analytics shows, worked out from the stored pageviews and
@@ -18,6 +18,10 @@ import type { ActionEvent, Visit } from "./store";
  * one session id (see client.ts). Pageviews recorded before visits existed
  * (no sid) still count as pageviews and in "Pageviews by page", but can't
  * be placed in a visit, so they're left out of everything visit-based.
+ *
+ * Engaged time is only known for visits whose tracker measured it (pageviews
+ * marked `timed`, from Oct 7, 2026); earlier visits are left out of every
+ * time figure rather than counted as zero.
  */
 
 export const TIME_ZONE = "America/New_York"; // Marc's — "Today" and the trend buckets
@@ -210,9 +214,19 @@ export type Session = {
   did: Set<ActionType>;
   hiring: boolean;
   contact: boolean;
+  /** Engaged time was measured for this visit (a zero is a real zero). */
+  timed: boolean;
+  /** Engaged ms per page. */
+  engaged: Map<string, number>;
+  engagedMs: number;
 };
 
-function sessionize(visits: Visit[], events: ActionEvent[], startMs: number) {
+function sessionize(
+  visits: Visit[],
+  events: ActionEvent[],
+  engaged: Engaged[],
+  startMs: number,
+) {
   const bySid = new Map<string, { views: Visit[]; actions: ActionEvent[] }>();
   for (const v of visits) {
     if (!v.sid) continue;
@@ -221,22 +235,35 @@ function sessionize(visits: Visit[], events: ActionEvent[], startMs: number) {
     bySid.set(v.sid, s);
   }
   for (const e of events) bySid.get(e.sid)?.actions.push(e);
+  const engagedBySid = new Map<string, Map<string, number>>();
+  for (const { sid, path, ms } of engaged) {
+    const pages = engagedBySid.get(sid) ?? new Map<string, number>();
+    pages.set(path, (pages.get(path) ?? 0) + ms);
+    engagedBySid.set(sid, pages);
+  }
 
   const sessions: Session[] = [];
-  for (const { views, actions } of bySid.values()) {
+  for (const [sid, { views, actions }] of bySid) {
     const start = Date.parse(views[0].ts);
     if (start < startMs) continue;
     const did = new Set(actions.map((a) => a.type));
+    const timed = views.some((v) => v.timed);
+    const pages = timed ? (engagedBySid.get(sid) ?? new Map<string, number>()) : new Map<string, number>();
     sessions.push({
       start,
       views,
       actions,
       first: views[0],
-      source: sourceOf(views[0]),
+      // A visit that starts with a move inside the site is a tab coming back
+      // after 30+ minutes away, or a page opened in a new tab.
+      source: isInternal(views[0]) ? "Returning or new tab" : sourceOf(views[0]),
       caseStudies: new Set(views.map((v) => v.path).filter(isCaseStudy)),
       did,
       hiring: HIRING_ACTIONS.some((t) => did.has(t)),
       contact: CONTACT_ACTIONS.some((t) => did.has(t)),
+      timed,
+      engaged: pages,
+      engagedMs: [...pages.values()].reduce((sum, ms) => sum + ms, 0),
     });
   }
   return sessions.sort((a, b) => a.start - b.start);
@@ -272,6 +299,18 @@ function journeyOf(s: Session): string[] {
 
 export type Row = [label: string, count: number];
 
+/** Median, mean and total of a set of durations; null when there are none. */
+export type TimeStats = { n: number; median: number; mean: number; total: number } | null;
+
+function timeStats(values: number[]): TimeStats {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = sorted.length >> 1;
+  const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  const total = sorted.reduce((sum, ms) => sum + ms, 0);
+  return { n: sorted.length, median, mean: total / sorted.length, total };
+}
+
 function tally<T>(items: T[], keyOf: (item: T) => string | null): Row[] {
   const counts = new Map<string, number>();
   for (const item of items) {
@@ -285,15 +324,24 @@ function tally<T>(items: T[], keyOf: (item: T) => string | null): Row[] {
 export function buildReport(opts: {
   visits: Visit[];
   events: ActionEvent[];
+  engaged: Engaged[];
   range: RangeKey;
   nowMs: number;
 }) {
   const { range, nowMs } = opts;
   const startMs = rangeStart(range, nowMs);
   const pageviews = opts.visits.filter((v) => Date.parse(v.ts) >= startMs);
-  const sessions = sessionize(opts.visits, opts.events, startMs);
+  const sessions = sessionize(opts.visits, opts.events, opts.engaged, startMs);
   const n = sessions.length;
   const count = (test: (s: Session) => boolean) => sessions.filter(test).length;
+  const timed = sessions.filter((s) => s.timed);
+  /** Engaged time on `path` across the measured visits that opened it. */
+  const engagedOn = (path: string) =>
+    timeStats(
+      timed
+        .filter((s) => s.views.some((v) => v.path === path))
+        .map((s) => s.engaged.get(path) ?? 0),
+    );
 
   // Trend: visits by when they began, pageviews by when they happened.
   const trendStart =
@@ -339,6 +387,7 @@ export function buildReport(opts: {
         views: pageviews.filter((v) => v.path === path).length,
         landed: count((s) => s.first.path === path),
         hiring: viewers.filter((s) => s.hiring).length,
+        engaged: engagedOn(path),
       };
     })
     .sort((a, b) => b.visits - a.visits || b.views - a.views || a.label.localeCompare(b.label));
@@ -349,6 +398,7 @@ export function buildReport(opts: {
       label: pageLabel(path),
       views: pageviews.filter((v) => v.path === path).length,
       visits: count((s) => s.views.some((v) => v.path === path)),
+      engaged: engagedOn(path),
     }))
     .sort((a, b) => b.views - a.views || a.label.localeCompare(b.label));
 
@@ -393,6 +443,8 @@ export function buildReport(opts: {
     contact: count((s) => s.contact),
     viewedTwo,
     singlePage: count((s) => s.views.length === 1),
+    engagedPerVisit: timeStats(timed.map((s) => s.engagedMs)),
+    untimedVisits: n - timed.length,
     caseStudies,
     pages,
     entries: tally(sessions, (s) => pageLabel(s.first.path)),

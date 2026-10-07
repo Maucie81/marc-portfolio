@@ -59,7 +59,7 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
         {/* CTA default buttons, Portfolio-Playground 100:209186 — the
             closing example in that frame uses them for this pair. */}
         {links.map((cs) => (
-          <Link key={cs.slug} href={cs.href} className="cta">
+          <Link key={cs.slug} href={cs.href} className="cta" data-track="project_nav">
             {cs.title}
           </Link>
         ))}

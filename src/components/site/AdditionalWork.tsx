@@ -70,6 +70,7 @@ export default function AdditionalWork({
                   {live ? (
                     <Link
                       href={item.href!}
+                      data-track="additional_work"
                       className="group inline-flex items-center gap-2 transition-colors hover:text-[var(--accent-deep)]"
                     >
                       {title}

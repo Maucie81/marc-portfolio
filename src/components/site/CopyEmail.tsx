@@ -72,6 +72,7 @@ export default function CopyEmail({ email }: { email: string }) {
       onMouseLeave={reset}
       onBlur={reset}
       aria-label={`Copy email address ${email}`}
+      data-track="email"
       className="group pointer-events-auto relative inline cursor-pointer appearance-none border-0 bg-transparent p-0 font-[inherit] text-[length:inherit] leading-[inherit] tracking-[inherit] text-inherit [text-transform:inherit] underline decoration-line underline-offset-2 transition-colors hover:text-accent hover:decoration-current focus-visible:text-accent focus-visible:decoration-current focus-visible:outline-none"
     >
       {email}
