@@ -107,31 +107,65 @@ function filterRoles(roles: Role[], q: Query) {
 
 const tierClass = (t: Tier | null) => (t ? t.toLowerCase().replace(" ", "-") : "none");
 
+/** Role Fit number and its tier label as one unit. */
 function scoreCell(r: Role) {
   const tier = tierOf(r.roleFit);
   return r.roleFit === null
-    ? "—"
-    : `<b>${r.roleFit}</b> <span class="tier ${tierClass(tier)}">${esc(tier)}</span>`;
+    ? `<span class="fit none"><b>—</b></span>`
+    : `<span class="fit ${tierClass(tier)}"><b>${r.roleFit}</b><i>${esc(tier)}</i></span>`;
 }
 
+/** "VERIFIED OPEN (2026-10-07)" -> a state chip plus the quiet remainder. */
+function verificationChip(value: string | null) {
+  if (!value) return "";
+  const m = /^(VERIFIED OPEN|PROBABLY OPEN|UNVERIFIED|PROBABLY CLOSED|CLOSED|WITHDRAWN|REJECTED)\b\s*(.*)$/i.exec(value);
+  if (!m) return `<span class="chip">${esc(value)}</span>`;
+  const state = m[1].toUpperCase();
+  const cls = state === "VERIFIED OPEN" ? "ok" : state === "PROBABLY OPEN" || state === "UNVERIFIED" ? "mid" : "low";
+  const rest = m[2].replace(/^\((.*)\)$/, "$1");
+  return `<span class="chip ${cls}">${esc(state)}</span>${rest ? `<span class="quiet">${esc(rest)}</span>` : ""}`;
+}
+
+const matClass = (status: string) => esc(status.replace(/\s+/g, "-").toLowerCase());
+
+/** Used in the role detail view. */
 function materialCell(label: string, status: string) {
   const ready = status === "Draft ready";
-  return `<span class="mat ${esc(status.replace(/\s+/g, "-").toLowerCase())}">${esc(status)}</span>${
+  return `<span class="mat ${matClass(status)}">${esc(status)}</span>${
     ready ? `<span class="review">AWAITING MARC REVIEW</span>` : ""
   }`;
+}
+
+/** Compact materials line for a role card: one pill per material, or one quiet line when nothing exists. */
+function materialsLine(r: Role) {
+  const m = r.materials;
+  const parts: [string, string][] = [
+    ["Résumé", m.resume],
+    ["Cover letter", m.cover],
+    ["Outreach", m.outreach],
+  ];
+  if (parts.every(([, s]) => s === "Not started")) {
+    return `<span class="quiet">Materials: not started</span>`;
+  }
+  const pills = parts
+    .map(([label, s]) => `<span class="pill ${matClass(s)}"><span>${esc(label)}</span> ${esc(s)}</span>`)
+    .join("");
+  const review = parts.some(([, s]) => s === "Draft ready") ? `<span class="review">AWAITING MARC REVIEW</span>` : "";
+  return `${pills}${review}`;
 }
 
 function list(items: string[], empty: string) {
   return items.length
     ? `<ul class="items">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`
-    : `<p class="muted small">${esc(empty)}</p>`;
+    : `<p class="empty">${esc(empty)}</p>`;
 }
 
 function summary(snapshot: Snapshot) {
-  return `<div class="grid3">
-<section><h2>Do now</h2>${list(snapshot.doNow, "Nothing needs you right now.")}</section>
-<section><h2>Waiting</h2>${list(snapshot.waiting, "Nothing waiting.")}</section>
-<section><h2>New / changed</h2>${list(snapshot.newChanged, "No recent changes.")}</section>
+  const count = (n: number) => (n ? `<span class="count">${n}</span>` : "");
+  return `<div class="top">
+<section class="card now"><h2>Do now ${count(snapshot.doNow.length)}</h2>${list(snapshot.doNow, "Nothing needs you right now.")}</section>
+<section class="card"><h2>Waiting ${count(snapshot.waiting.length)}</h2>${list(snapshot.waiting, "Nothing waiting.")}</section>
+<section class="card"><h2>New / changed ${count(snapshot.newChanged.length)}</h2>${list(snapshot.newChanged, "No recent changes.")}</section>
 </div>`;
 }
 
@@ -140,7 +174,7 @@ function filters(snapshot: Snapshot, q: Query) {
   const opt = (value: string, label: string, current: string) =>
     `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
   return `<form class="filters" method="get" action="/jobs">
-<label>Search<input type="search" name="q" value="${esc(q.q)}" placeholder="company, role, notes"></label>
+<label class="grow">Search<input type="search" name="q" value="${esc(q.q)}" placeholder="company, role, notes"></label>
 <label>Status<select name="status">${opt("", "Any", q.status)}${STATUSES.map((s) => opt(s, s, q.status)).join("")}</select></label>
 <label>Tier<select name="tier">${opt("", "Any", q.tier)}${(["APPLY NOW", "STRONG PROSPECT", "WATCH"] as const)
     .map((t) => opt(t, t, q.tier))
@@ -150,41 +184,58 @@ function filters(snapshot: Snapshot, q: Query) {
 <label>Min Role Fit<input type="number" name="minFit" min="0" max="100" value="${q.minFit || ""}"></label>
 <label>Min Interest<input type="number" name="minInterest" min="0" max="10" value="${q.minInterest || ""}"></label>
 <label>Sort<select name="sort">${(Object.keys(SORTS) as SortKey[]).map((k) => opt(k, SORTS[k], q.sort)).join("")}</select></label>
-<div class="actions"><button type="submit">Apply</button> <a href="/jobs">Reset</a></div>
+<div class="actions"><button type="submit">Apply</button><a href="/jobs">Reset</a></div>
 </form>`;
 }
 
-function rolesTable(roles: Role[], q: Query) {
-  if (!roles.length) return `<p class="muted">No roles match these filters.</p>`;
-  const link = (r: Role) => {
-    const params = new URLSearchParams();
-    if (q.sort !== "fit") params.set("sort", q.sort);
-    params.set("role", r.id);
-    return `/jobs?${params.toString()}`;
+const roleLink = (r: Role, q: Query) => {
+  const params = new URLSearchParams();
+  if (q.sort !== "fit") params.set("sort", q.sort);
+  params.set("role", r.id);
+  return `/jobs?${params.toString()}`;
+};
+
+/** Active roles: one card per role, the primary content of the page. */
+function roleCards(roles: Role[], q: Query) {
+  if (!roles.length) return `<p class="empty">No roles match these filters.</p>`;
+  const date = (label: string, value: string | null) => {
+    const d = firstDate(value);
+    return d ? `<span>${label} ${esc(d)}</span>` : "";
   };
-  const rows = roles
+  return `<div class="roles">${roles
     .map(
-      (r) => `<tr>
-<td><a href="${esc(link(r))}"><b>${esc(r.company)}</b></a><br><span>${esc(r.role)}</span>${r.exception ? ` <span class="tag">exception</span>` : ""}
-<div class="meta">${esc(r.status)} · fit ${dash(r.roleFit)} · interest ${dash(r.interest)}</div></td>
-<td class="opt">${esc(r.status)}</td>
-<td class="num">${scoreCell(r)}</td>
-<td class="num opt">${dash(r.interest)}</td>
-<td class="opt">${dash(r.verification)}</td>
-<td class="opt nowrap">${dash(firstDate(r.discovered))}</td>
-<td class="opt nowrap">${dash(firstDate(r.applied))}</td>
-<td class="opt nowrap">${dash(firstDate(r.lastActivity))}</td>
-<td>${dash(r.nextAction)}${r.nextActionDate ? `<br><span class="muted small">${esc(r.nextActionDate)}</span>` : ""}</td>
-<td class="opt">${materialCell("Resume", r.materials.resume)}</td>
-<td class="opt">${materialCell("Cover letter", r.materials.cover)}</td>
-<td class="opt">${materialCell("Outreach", r.materials.outreach)}</td>
-<td class="opt">${r.url ? `<a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">Posting</a>` : "—"}</td>
-</tr>`,
+      (r) => `<article class="role">
+<div class="who">
+<a class="company" href="${esc(roleLink(r, q))}">${esc(r.company)}</a>
+<div class="title">${esc(r.role)}</div>
+<div class="chips"><span class="chip status">${esc(r.status)}</span>${verificationChip(r.verification)}${
+        r.exception ? `<span class="tag">exception</span>` : ""
+      }</div>
+</div>
+<div class="score">${scoreCell(r)}<div class="interest">Interest <b>${dash(r.interest)}</b>${r.interest === null ? "" : "/10"}</div></div>
+<div class="next"><div class="label">Next</div><div class="action">${dash(r.nextAction)}</div>${
+        r.nextActionDate ? `<div class="due">${esc(r.nextActionDate)}</div>` : ""
+      }</div>
+<div class="foot"><div class="mats">${materialsLine(r)}</div><div class="dates">${date("Discovered", r.discovered)}${date(
+        "Applied",
+        r.applied,
+      )}${date("Last activity", r.lastActivity)}${
+        r.url ? `<a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">Posting ↗</a>` : ""
+      }</div></div>
+</article>`,
     )
-    .join("");
-  return `<div class="scroll"><table>
-<thead><tr><th>Role</th><th class="opt">Status</th><th class="num">Role Fit</th><th class="num opt">Interest</th><th class="opt">Verification</th><th class="opt">Discovered</th><th class="opt">Applied</th><th class="opt">Last activity</th><th>Next action</th><th class="opt">Resume</th><th class="opt">Cover letter</th><th class="opt">Outreach</th><th class="opt">Link</th></tr></thead>
-<tbody>${rows}</tbody></table></div>`;
+    .join("")}</div>`;
+}
+
+/** Closed roles: archived, collapsed by default. */
+function closedList(roles: Role[], q: Query) {
+  if (!roles.length) return "";
+  return `<details class="archive"><summary>Closed <span class="count">${roles.length}</span></summary><ul class="compact">${roles
+    .map(
+      (r) =>
+        `<li><a href="${esc(roleLink(r, q))}">${esc(r.company)}</a>${r.role ? ` — ${esc(r.role)}` : ""} <span class="quiet">${dash(r.verification)}</span></li>`,
+    )
+    .join("")}</ul></details>`;
 }
 
 function watchTable(snapshot: Snapshot, q: Query) {
@@ -198,18 +249,20 @@ function watchTable(snapshot: Snapshot, q: Query) {
     return !needle || `${w.company} ${w.role} ${w.notes}`.toLowerCase().includes(needle);
   });
   if (!rows.length) return "";
-  return `<section><h2>Watchlist</h2><p class="muted small">Strong-fit companies without a current Marc-relevant role, from aligned-companies.md. Not application targets.</p>
+  return `<section class="secondary"><h2>Watchlist <span class="count">${rows.length}</span></h2><p class="quiet">Strong-fit companies without a current Marc-relevant role, from aligned-companies.md. Not application targets.</p>
 <div class="scroll"><table><thead><tr><th>Company</th><th>Role / status</th><th class="num">Fit</th><th class="opt">Verification</th><th class="opt">Notes</th></tr></thead><tbody>${rows
     .map(
       (w) =>
-        `<tr><td><b>${esc(w.company)}</b></td><td>${esc(w.role)}</td><td class="num">${w.score ?? "—"}</td><td class="opt">${esc(w.verification)}</td><td class="opt">${esc(w.notes)}</td></tr>`,
+        `<tr><td class="co">${esc(w.company)}</td><td>${esc(w.role)}</td><td class="num">${w.score ?? "—"}</td><td class="opt">${esc(w.verification)}</td><td class="opt">${esc(w.notes)}</td></tr>`,
     )
     .join("")}</tbody></table></div></section>`;
 }
 
 function passiveList(snapshot: Snapshot, q: Query) {
   if ((q.list !== "all" && q.list !== "passive") || !snapshot.passive.length) return "";
-  return `<section><h2>Passive / historical</h2>${list(snapshot.passive, "")}</section>`;
+  return `<details class="archive"${q.list === "passive" ? " open" : ""}><summary>Passive / historical <span class="count">${snapshot.passive.length}</span></summary><ul class="compact">${snapshot.passive
+    .map((i) => `<li>${esc(i)}</li>`)
+    .join("")}</ul></details>`;
 }
 
 function detail(snapshot: Snapshot, id: string, q: Query) {
@@ -259,68 +312,133 @@ ${files}
 const STYLE = `
 :root {
   color-scheme: light dark;
-  --surface: #ffffff; --raised: #f2f1ee; --line: #e2e1dc; --text: #0b0b0b; --muted: #52514e; --link: #2a78d6;
-  --ok: #1f7a3d; --mid: #8a5a00; --low: #6b6a66;
+  --surface: #ffffff; --raised: #f5f4f1; --line: #e2e1dc; --text: #111110; --muted: #5c5b57; --link: #1f63b8;
+  --ok: #17663a; --ok-bg: #e6f3ea; --mid: #7a4f00; --mid-bg: #fbefd3; --low: #5c5b57; --low-bg: #ecebe7; --accent: #111110;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --surface: #1a1a19; --raised: #252523; --line: #353532; --text: #ffffff; --muted: #c3c2b7; --link: #6aa6f0; --ok: #5ccf84; --mid: #e3b552; --low: #9c9b94; }
+  :root { --surface: #171716; --raised: #212120; --line: #343431; --text: #f4f3ef; --muted: #a9a8a0; --link: #7fb2f2;
+    --ok: #74d99a; --ok-bg: #173323; --mid: #ecc56a; --mid-bg: #3a2e12; --low: #a9a8a0; --low-bg: #2b2b29; --accent: #f4f3ef; }
 }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--surface); color: var(--text); font: 15px/1.45 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
-main { max-width: 1240px; margin: 0 auto; padding: 24px 16px 48px; }
+body { margin: 0; background: var(--surface); color: var(--text); font: 16px/1.5 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
+main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 64px; }
 a { color: var(--link); }
-h1 { font-size: 22px; margin: 0; }
-h2 { font-size: 17px; margin: 0 0 8px; }
+h1 { font-size: 22px; margin: 0 0 2px; }
+h2 { font-size: 18px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; }
 h3 { font-size: 15px; margin: 20px 0 6px; }
 header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
-section { margin-top: 28px; min-width: 0; }
+section { margin-top: 36px; min-width: 0; }
 .muted { color: var(--muted); }
 .small { font-size: 13px; }
+.quiet { color: var(--muted); font-size: 13px; }
+.empty { color: var(--muted); margin: 0; }
 p { margin: 0 0 8px; }
 code { font-size: 13px; overflow-wrap: anywhere; }
 pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--raised); padding: 12px; border-radius: 6px; font-size: 13px; }
-.grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); gap: 16px; margin-top: 20px; }
-.grid3 section { margin-top: 0; background: var(--raised); border-radius: 8px; padding: 12px 16px; }
-.items { margin: 0; padding-left: 18px; }
-.items li { margin-bottom: 6px; }
-.filters { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 28px; }
-.filters label { display: grid; gap: 3px; font-size: 13px; color: var(--muted); }
-.filters .actions { display: flex; gap: 10px; align-items: center; padding-bottom: 6px; }
-input, select, button { font: inherit; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; }
-input[type=number] { width: 90px; }
-input[type=search] { width: 200px; }
-button { background: var(--raised); cursor: pointer; padding: 6px 12px; }
-.scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
-th, td { text-align: left; padding: 6px 10px 6px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
-th { font-weight: 600; color: var(--muted); font-size: 13px; }
-td { overflow-wrap: break-word; }
-.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.nowrap { white-space: nowrap; }
-.meta { display: none; color: var(--muted); font-size: 13px; }
-.tier { display: inline-block; font-size: 11px; font-weight: 600; padding: 1px 6px; border-radius: 999px; border: 1px solid var(--line); }
-.tier.apply-now, .tier.strong-prospect { color: var(--ok); border-color: var(--ok); }
-.tier.watch { color: var(--mid); border-color: var(--mid); }
-.tier.skip, .tier.none { color: var(--low); }
-.tag { font-size: 11px; padding: 1px 6px; border-radius: 999px; background: var(--raised); color: var(--muted); font-weight: 400; }
-.mat { font-size: 13px; }
+.count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--low-bg); border-radius: 999px; padding: 1px 8px; }
+
+/* top: do now / waiting / new */
+.top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 24px; }
+.card { margin-top: 0; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 10px; }
+.card.now { border-color: var(--accent); border-left-width: 5px; background: var(--raised); }
+.card.now h2 { color: var(--text); }
+.items { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+.items li { padding: 9px 0; border-top: 1px solid var(--line); overflow-wrap: break-word; }
+.items li:first-child { border-top: 0; padding-top: 0; }
+.items li:last-child { padding-bottom: 0; }
+.card.now .items { font-size: 16px; line-height: 1.5; font-weight: 500; }
+
+/* filter bar */
+.filters { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: end; margin-top: 14px; padding: 10px 12px; background: var(--raised); border-radius: 8px; }
+.filters label { display: grid; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.filters .grow { flex: 1 1 180px; }
+.filters .actions { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+input, select, button { font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; text-transform: none; letter-spacing: 0; }
+input[type=number] { width: 76px; }
+input[type=search] { width: 100%; }
+select { max-width: 170px; }
+button { background: var(--surface); cursor: pointer; padding: 5px 14px; font-weight: 600; }
+
+/* active roles */
+.roles { display: grid; gap: 14px; margin-top: 16px; }
+.role { display: grid; grid-template-columns: minmax(0, 5fr) 150px minmax(0, 6fr); gap: 16px 28px; align-items: start; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+.company { font-size: 19px; font-weight: 700; color: var(--text); text-decoration: none; }
+.company:hover { text-decoration: underline; }
+.title { font-size: 15px; margin-top: 2px; overflow-wrap: break-word; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 10px; }
+.chip { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 3px 9px; border-radius: 999px; background: var(--low-bg); color: var(--low); white-space: nowrap; }
+.chip.status { background: transparent; border: 1px solid var(--muted); color: var(--text); padding: 2px 9px; }
+.chip.ok { background: var(--ok-bg); color: var(--ok); }
+.chip.mid { background: var(--mid-bg); color: var(--mid); }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--low-bg); color: var(--muted); font-weight: 400; }
+.fit { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.fit b { font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
+.fit i { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .05em; padding: 3px 8px; border-radius: 4px; background: var(--low-bg); color: var(--low); white-space: nowrap; }
+.fit.apply-now i, .fit.strong-prospect i { background: var(--ok-bg); color: var(--ok); }
+.fit.apply-now i { outline: 2px solid var(--ok); }
+.fit.watch i { background: var(--mid-bg); color: var(--mid); }
+.interest { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.interest b { color: var(--text); }
+.next .label, .facts dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.next .action { font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 2px; overflow-wrap: break-word; }
+.next .due { font-size: 13px; color: var(--muted); margin-top: 4px; }
+.foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: center; padding-top: 12px; border-top: 1px solid var(--line); }
+.mats { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 6px; background: var(--low-bg); color: var(--low); }
+.pill span { font-weight: 400; }
+.pill.draft-ready { background: var(--mid-bg); color: var(--mid); }
+.pill.reviewed, .pill.sent { background: var(--ok-bg); color: var(--ok); }
+.dates { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
+.mat { font-size: 14px; }
 .mat.not-started, .mat.not-needed { color: var(--muted); }
-.review { display: block; font-size: 11px; font-weight: 700; color: var(--mid); }
+.review { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--mid); margin-left: 4px; }
+
+/* watchlist: secondary */
+.secondary h2 { font-size: 15px; color: var(--muted); margin-bottom: 4px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; color: var(--muted); }
+th, td { text-align: left; padding: 7px 16px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+td { overflow-wrap: break-word; }
+td.co { color: var(--text); font-weight: 600; }
+.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+/* archive: closed + passive */
+.archive { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 13px; }
+.archive summary { cursor: pointer; font-size: 14px; font-weight: 600; }
+.archive a { color: inherit; }
+.compact { margin: 8px 0 0; padding-left: 18px; line-height: 1.45; }
+.compact li { margin-bottom: 4px; overflow-wrap: break-word; }
+
+/* role detail */
+.detail { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
 .facts { margin: 12px 0 0; display: grid; gap: 8px; }
-.facts div { display: grid; grid-template-columns: minmax(130px, 28%) 1fr; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
-.facts dt { color: var(--muted); font-size: 13px; }
+.facts div { display: grid; grid-template-columns: minmax(150px, 24%) 1fr; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
+.facts dt { padding-top: 3px; }
 .facts dd { margin: 0; overflow-wrap: anywhere; }
 details { margin: 8px 0; }
 summary { cursor: pointer; }
 .error { color: #c42b2b; }
 form.login { display: grid; gap: 12px; margin-top: 24px; }
-input[type=password] { width: 100%; max-width: 320px; padding: 10px 12px; }
-footer { margin-top: 40px; font-size: 13px; }
+input[type=password] { width: 100%; max-width: 320px; padding: 10px 12px; font-size: 16px; }
+footer { margin-top: 48px; font-size: 13px; }
+
+@media (max-width: 900px) {
+  .top { grid-template-columns: 1fr; }
+  .role { grid-template-columns: minmax(0, 1fr) auto; gap: 14px 16px; }
+  .next { grid-column: 1 / -1; }
+}
 @media (max-width: 700px) {
+  main { padding: 20px 16px 48px; }
   .opt { display: none; }
-  .meta { display: block; }
+  .role { padding: 16px; }
+  .fit { align-items: flex-end; }
+  .score { text-align: right; }
+  .fit b { font-size: 26px; }
+  .filters label { flex: 1 1 130px; }
+  .filters select, input[type=number] { width: 100%; max-width: none; }
   .facts div { grid-template-columns: 1fr; gap: 2px; }
-  input[type=search] { width: 100%; }
 }
 `;
 
@@ -380,10 +498,9 @@ ${signOut ? `<form method="post" action="/jobs"><input type="hidden" name="logou
 </header>
 ${summary(snapshot)}
 ${query.role ? detail(snapshot, query.role, query) : ""}
-${filters(snapshot, query)}
-${showRoles ? `<section><h2>Roles <span class="muted small">${active.length} active</span></h2>${rolesTable(active, query)}</section>` : ""}
+${showRoles ? `<section><h2>Active roles <span class="count">${active.length}</span></h2>${filters(snapshot, query)}${roleCards(active, query)}</section>` : filters(snapshot, query)}
 ${watchTable(snapshot, query)}
-${showRoles && closed.length ? `<section><h2>Closed</h2>${rolesTable(closed, query)}</section>` : ""}
+${showRoles ? closedList(closed, query) : ""}
 ${passiveList(snapshot, query)}
 <footer class="muted"><p>Prepared materials stay marked AWAITING MARC REVIEW until you review them. Outreach shows "Sent" only if pipeline.md says so.</p></footer>`;
   return page("Job search", body);
