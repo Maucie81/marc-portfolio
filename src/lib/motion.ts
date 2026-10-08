@@ -227,7 +227,7 @@ const FAILSAFE = 8000;
  * Runs in <head> before first paint (layout.tsx), after HERO_EDITION_SCRIPT.
  * Turns motion on unless the visitor prefers reduced motion or arrived via
  * Back/Forward, and holds the hero until the font and the edition's portrait
- * are ready (so no line is revealed in the fallback face and then re-set) —
+ * (or, on phones, the phone hero's) are ready (so no line is revealed in the fallback face and then re-set) —
  * at most HOLD_MAX. If the page is loading out of sight (a background tab,
  * or Safari preloading the address bar's top hit before Return is pressed)
  * it also holds until the page comes into view, so the opening isn't spent
@@ -237,7 +237,7 @@ const FAILSAFE = 8000;
  * HERO_EDITION_SCRIPT does for data-hero), so restoreHtmlAttrs can put them
  * back if React has to re-create <html>.
  */
-export const MOTION_SCRIPT = `(function(){var d=document.documentElement,M="data-motion",A=window.__htmlAttrs=window.__htmlAttrs||{},S=function(v){A[M]=v;if(v)d.setAttribute(M,v);else d.removeAttribute(M)};try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="back_forward")return;S("hold");var h=0,go=function(){if(A[M]!=="hold")return;if(document.visibilityState==="hidden"){if(!h){h=1;document.addEventListener("visibilitychange",function v(){if(document.visibilityState==="hidden")return;document.removeEventListener("visibilitychange",v);h=0;setTimeout(go,${SHOWN_DELAY})})}return}S("play")};setTimeout(go,${HOLD_MAX});setTimeout(function(){if(!d.hasAttribute("data-motion-live"))S(null)},${FAILSAFE});document.addEventListener("DOMContentLoaded",function(){var w=[],f=document.fonts,e=d.getAttribute("data-hero")||"${HERO_DEFAULT}";try{if(f&&f.load)w.push(f.load("700 1em "+getComputedStyle(document.body).fontFamily))}catch(x){}var im=document.querySelectorAll('.hero-edition[data-edition="'+e+'"] .hero-portrait img');for(var i=0;i<im.length;i++)if(im[i].getClientRects().length&&im[i].decode)w.push(im[i].decode());Promise.all(w).then(go,go)})}catch(x){S(null)}})();`;
+export const MOTION_SCRIPT = `(function(){var d=document.documentElement,M="data-motion",A=window.__htmlAttrs=window.__htmlAttrs||{},S=function(v){A[M]=v;if(v)d.setAttribute(M,v);else d.removeAttribute(M)};try{if(matchMedia("(prefers-reduced-motion: reduce)").matches)return;var n=performance.getEntriesByType("navigation")[0];if(n&&n.type==="back_forward")return;S("hold");var h=0,go=function(){if(A[M]!=="hold")return;if(document.visibilityState==="hidden"){if(!h){h=1;document.addEventListener("visibilitychange",function v(){if(document.visibilityState==="hidden")return;document.removeEventListener("visibilitychange",v);h=0;setTimeout(go,${SHOWN_DELAY})})}return}S("play")};setTimeout(go,${HOLD_MAX});setTimeout(function(){if(!d.hasAttribute("data-motion-live"))S(null)},${FAILSAFE});document.addEventListener("DOMContentLoaded",function(){var w=[],f=document.fonts,e=d.getAttribute("data-hero")||"${HERO_DEFAULT}";try{if(f&&f.load)w.push(f.load("700 1em "+getComputedStyle(document.body).fontFamily))}catch(x){}var im=document.querySelectorAll('.hero-edition[data-edition="'+e+'"] .hero-portrait img,.hero-m-portrait img');for(var i=0;i<im.length;i++)if(im[i].getClientRects().length&&im[i].decode)w.push(im[i].decode());Promise.all(w).then(go,go)})}catch(x){S(null)}})();`;
 
 declare global {
   interface Window {

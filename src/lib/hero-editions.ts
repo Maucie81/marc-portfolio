@@ -14,12 +14,9 @@
  *   layer as a polygon. The layer also carries a 25% drop shadow in Figma,
  *   but nothing of it survives the mask in Figma's own render, so it isn't
  *   drawn here — a CSS shadow showed as a halo (alpha) or hard edges (box).
- * - `cluster` is the part of the board the stacked (< 1024px) layout keeps:
- *   eyebrow, name, divider and portrait. The statement, subline and edition
- *   metadata reflow as text below it there. Its x centers the cut on what's
- *   actually visible in it (measured pixels, portrait included), since the
- *   stacked layout centers the cut on the column; its y is the divider's
- *   top, the highest mark, so no empty band sits above the lockup.
+ *
+ * Phones (< 768px) don't use the editions: they get the one mobile hero
+ * (Figma 337:2020, see MobileHero in HomepageHero.tsx).
  */
 
 export const HERO_EYEBROW = "Hello & welcome";
@@ -33,6 +30,11 @@ export const HERO_STATEMENT = [
 const SUBLINE_A = [
   "I turn complex problems into products that",
   "businesses run on and users love.",
+];
+/** The subline on the phone hero, in its own two lines. */
+export const HERO_SUBLINE_PHONE = [
+  "I turn complex problems into products that businesses",
+  "run on and users love.",
 ];
 const SUBLINE_B = [
   "I turn complex problems into products",
@@ -88,19 +90,6 @@ export type HeroEdition = {
     z: number;
   };
   rules: { x: number; y: number; w: number; h: number; color: string; rotate?: number; z: number }[];
-  cluster: { x: number; y: number; w: number; h: number };
-  /** Stacked layout's statement color (the desktop statement's own). */
-  mobileStatementColor: string;
-  /** Stacked-layout (<768px) tweaks, in board px: a shorter divider (its
-   * new height), the eyebrow + name and the portrait moved vertically so
-   * both center on the divider, and a shorter cluster cut so the statement
-   * sits closer. */
-  stack?: {
-    ruleH?: number;
-    nameShift?: number;
-    portraitShift?: number;
-    clusterH?: number;
-  };
 };
 
 const rect = (x: number, y: number, w: number, h: number): [number, number][] => [
@@ -143,8 +132,6 @@ export const HERO_EDITIONS: HeroEdition[] = [
     rules: [{ x: 473, y: 55, w: 10, h: 456, color: "#fff", z: 4 }],
     meta: { color: META_GREY, z: 6 },
     center: { x: 1.5, y: 0 },
-    cluster: { x: 66, y: 55, w: 441, h: 471 },
-    mobileStatementColor: INK,
   },
   // ---------- Hero 2 · 254:273303 — paper, slashed overprint ----------
   {
@@ -184,8 +171,6 @@ export const HERO_EDITIONS: HeroEdition[] = [
     rules: [{ x: 164.55, y: 272.97, w: 500, h: 20, color: "#fff", rotate: -74.23, z: 5 }],
     meta: { color: META_GREY, z: 1 },
     center: { x: 4.25, y: 0 },
-    cluster: { x: 114.4, y: 39.7, w: 502, h: 496.3 },
-    mobileStatementColor: "#f84d2d",
   },
   // ---------- hero 3 · 254:273366 — flat coral, white ----------
   {
@@ -205,9 +190,6 @@ export const HERO_EDITIONS: HeroEdition[] = [
     rules: [{ x: 477.8, y: 30.7, w: 10, h: 494, color: "#fff", z: 4 }],
     meta: { color: META_PINK, z: 6 },
     center: { x: 5.25, y: 5 },
-    cluster: { x: 55, y: 30.7, w: 453, h: 504.3 },
-    mobileStatementColor: "#fff",
-    stack: { ruleH: 411, nameShift: 20, portraitShift: -32, clusterH: 413.3 },
   },
   // ---------- Hero 4 · 254:273423 — oversized statement, coral name ----------
   {
@@ -231,8 +213,6 @@ export const HERO_EDITIONS: HeroEdition[] = [
     },
     rules: [{ x: 370.8, y: 45.2, w: 14, h: 482, color: CORAL, z: 5 }],
     meta: { color: META_GREY, z: 1 },
-    cluster: { x: 39.1, y: 45.2, w: 594, h: 491.8 },
-    mobileStatementColor: INK,
   },
   // ---------- Hero 5 · 254:273459 — ink, color-burn halftone ----------
   {
@@ -251,14 +231,10 @@ export const HERO_EDITIONS: HeroEdition[] = [
       clip: rect(370.78, 85.29, 225, 359.16), z: 4,
     },
     // Runs down to the subline's last baseline (445.8 + 28.04 + 0.716 ×
-    // 22.253 = 489.8), so it closes on the copy beside it; phones keep the
-    // Figma length, since there the subline sits below the cluster.
+    // 22.253 = 489.8), so it closes on the copy beside it.
     rules: [{ x: 359.8, y: 76.8, w: 11, h: 413, color: CORAL, z: 4 }],
     meta: { color: "#b19790", z: 5 },
     center: { x: 7, y: -0.5 },
-    cluster: { x: 98.6, y: 76.8, w: 496, h: 425.2 },
-    mobileStatementColor: CORAL,
-    stack: { ruleH: 405 },
   },
   // ---------- Hero 6 · 254:273498 — coral, multiply halftone ----------
   {
@@ -279,8 +255,6 @@ export const HERO_EDITIONS: HeroEdition[] = [
     rules: [{ x: 360.1, y: 57.5, w: 11, h: 450, color: "#fff", z: 4 }],
     meta: { color: META_PINK, z: 5 },
     center: { x: 7, y: 0 },
-    cluster: { x: 98.8, y: 57.5, w: 496, h: 469.5 },
-    mobileStatementColor: "#fff",
   },
 ];
 

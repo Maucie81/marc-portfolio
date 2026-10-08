@@ -2,8 +2,10 @@ import { Fragment, type CSSProperties, type ElementType } from "react";
 import Image from "next/image";
 import {
   HERO_EDITIONS,
+  HERO_EYEBROW,
   HERO_META_LINES,
   HERO_STATEMENT,
+  HERO_SUBLINE_PHONE,
   type HeroEdition,
   type HeroText,
 } from "@/lib/hero-editions";
@@ -18,9 +20,8 @@ import { HERO_SEQUENCE as SEQ, MOTION, rv } from "@/lib/motion";
  * ≥768px: the Figma board itself, 1376 × 566, with every layer at its
  * Figma position in board units (--hu = one Figma px at the board's current
  * width), so the whole composition scales as one piece.
- * <768px: the same edition stacked — its eyebrow / name / divider /
- * portrait cluster cut from the board, then the statement, subline and
- * metadata as flowing text below it.
+ * <768px: one phone hero for every visitor (MobileHero, Figma 337:2020) —
+ * the editions are desktop and tablet only.
  *
  * Motion (src/lib/motion.ts): the hero section is a data-reveal="load"
  * trigger and the slowest, most deliberate reveal on the page. The board
@@ -241,88 +242,77 @@ function DesktopBoard({ edition }: { edition: HeroEdition }) {
   );
 }
 
-/** <768px: the edition's name/portrait cluster, then the copy as text. */
-/** The edition with its `stack` tweaks applied, for the stacked layout. */
-function stackEdition(edition: HeroEdition): HeroEdition {
-  const t = edition.stack;
-  if (!t) return edition;
-  const shift = (spec: HeroEdition["name"]) =>
-    t.nameShift ? { ...spec, lines: spec.lines.map((l) => ({ ...l, y: l.y + t.nameShift! })) } : spec;
-  return {
-    ...edition,
-    eyebrow: shift(edition.eyebrow),
-    name: shift(edition.name),
-    portrait: t.portraitShift
-      ? {
-          ...edition.portrait,
-          y: edition.portrait.y + t.portraitShift,
-          clip: edition.portrait.clip.map(([x, y]) => [x, y + t.portraitShift!] as [number, number]),
-        }
-      : edition.portrait,
-    rules: t.ruleH ? edition.rules.map((r, i) => (i === 0 ? { ...r, h: t.ruleH! } : r)) : edition.rules,
-    cluster: t.clusterH ? { ...edition.cluster, h: t.clusterH } : edition.cluster,
-  };
-}
-
-function StackedHero({ edition: base }: { edition: HeroEdition }) {
-  const edition = stackEdition(base);
-  const c = edition.cluster;
+/** <768px: the one phone hero · Figma 337:2020 — no editions, no rotation.
+ * The portrait and "Hello & welcome", then the statement in desktop's own
+ * four lines and the subline, left-set on the halftone paper. It plays the
+ * board's HERO_SEQUENCE: the sheet settles, the eyebrow and the statement
+ * rise out of their masks, the portrait opens top to bottom, the subline
+ * rises in. */
+function MobileHero() {
   return (
-    <div
-      className="hero-stack rv-settle"
-      style={{ ...rv(SEQ.board), background: edition.background, ["--cluster-w" as string]: c.w } as CSSProperties}
-    >
-      {edition.texture ? (
-        <div aria-hidden className="hero-texture-fill" style={{ mixBlendMode: edition.texture.blend }} />
-      ) : null}
-      {/* Cluster, statement and subline as one lockup, centered as a whole
-          (see .hero-lockup), each part centered inside it. */}
-      <div className="hero-lockup">
-        <div className="hero-cluster" style={{ aspectRatio: `${c.w} / ${c.h}` }}>
-          <div
-            className="absolute"
-            style={{ left: u(-c.x), top: u(-c.y), width: u(BOARD_W), height: u(566) }}
-          >
-            <BoardText spec={edition.eyebrow} reveal={{ kind: "line", start: SEQ.eyebrow }} />
-            <BoardText spec={edition.name} as="h1" reveal={{ kind: "line", start: SEQ.name }} />
-            <Portrait edition={edition} sizes="(max-width: 767px) 70vw, 1px" />
-            <Rules edition={edition} />
-          </div>
+    <div className="hero-m rv-settle" style={rv(SEQ.board)}>
+      <div aria-hidden className="hero-m-texture" />
+      <div className="hero-m-intro">
+        <div
+          className="hero-m-portrait rv-clip"
+          style={
+            {
+              ...rv(SEQ.portrait, { dur: SEQ.portraitDur }),
+              ["--rv-clip-from" as string]: "inset(0 0 100% 0)",
+            } as CSSProperties
+          }
+        >
+          <Image
+            src={PORTRAIT_SRC}
+            alt={PORTRAIT_ALT}
+            width={1268}
+            height={1241}
+            unoptimized
+            loading="eager"
+            className="absolute inset-y-0 left-[-4.3%] h-full w-[104.3%] max-w-none"
+          />
         </div>
-        <p
-          className="hero-stack-statement"
-          style={{ color: edition.mobileStatementColor }}
-        >
-          {/* Desktop's own four lines, never re-wrapped (see the CSS). */}
-          {HERO_STATEMENT.map((line, i) => (
-            <Fragment key={line}>
-              {i > 0 ? " " : null}
-              <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.heroStagger)}>
-                {line}
-              </span>
-            </Fragment>
-          ))}
-        </p>
-        <p
-          className="hero-stack-subline rv-rise"
-          style={{ ...rv(SEQ.subline, { dur: SEQ.sublineDur }), color: edition.subline.color }}
-        >
-          {edition.subline.lines.map((l) => l.text).join(" ")}
+        <p className="hero-m-eyebrow">
+          <span className="rv-line block" style={rv(SEQ.eyebrow)}>
+            {HERO_EYEBROW}
+          </span>
         </p>
       </div>
+      <h1 className="hero-m-statement">
+        {HERO_STATEMENT.map((line, i) => (
+          <Fragment key={line}>
+            {i > 0 ? " " : null}
+            <span className="rv-line block whitespace-nowrap" style={rv(SEQ.statement + i * MOTION.heroStagger)}>
+              {line}
+            </span>
+          </Fragment>
+        ))}
+      </h1>
+      <p className="hero-m-subline rv-rise" style={rv(SEQ.subline, { dur: SEQ.sublineDur })}>
+        {HERO_SUBLINE_PHONE.map((line, i) => (
+          <Fragment key={line}>
+            {i > 0 ? " " : null}
+            <span className="block whitespace-nowrap">{line}</span>
+          </Fragment>
+        ))}
+      </p>
     </div>
   );
 }
 
 export default function HomepageHero() {
-  return HERO_EDITIONS.map((edition) => (
-    <div key={edition.id} className="hero-edition" data-edition={edition.id}>
-      <div className="hero-desktop hidden md:block">
-        <DesktopBoard edition={edition} />
-      </div>
+  return (
+    <>
+      {HERO_EDITIONS.map((edition) => (
+        <div key={edition.id} className="hero-edition" data-edition={edition.id}>
+          <div className="hero-desktop hidden md:block">
+            <DesktopBoard edition={edition} />
+          </div>
+        </div>
+      ))}
       <div className="md:hidden">
-        <StackedHero edition={edition} />
+        <MobileHero />
       </div>
-    </div>
-  ));
+    </>
+  );
 }

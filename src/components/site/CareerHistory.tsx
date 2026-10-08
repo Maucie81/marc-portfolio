@@ -18,25 +18,6 @@ import { rv, rvGroup } from "@/lib/motion";
  * screen. The skills fade in as one block, without moving, as soon as they
  * cross the bottom of the screen.
  */
-/** One edge-roughening filter per seed: fine fractal noise displaces the
- * disc's edge by ~1.3px, like ink spreading into uncoated paper. */
-const SPLOTCH_SEEDS = [3, 11, 7, 19, 2];
-
-function InkSplotchDefs() {
-  return (
-    <svg aria-hidden width="0" height="0" className="absolute">
-      <defs>
-        {SPLOTCH_SEEDS.map((seed, i) => (
-          <filter key={seed} id={`ink-splotch-${i}`} x="-25%" y="-25%" width="150%" height="150%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.55" numOctaves="2" seed={seed} result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="2.6" xChannelSelector="R" yChannelSelector="G" />
-          </filter>
-        ))}
-      </defs>
-    </svg>
-  );
-}
-
 /** Any homepage project — Recent work or Additional work. */
 type Work = {
   company: string;
@@ -60,17 +41,16 @@ export default function CareerHistory({
       <h2
         id="experience-title"
         data-reveal="view"
-        className="rv-fade text-[20px] font-bold tracking-[-0.01em] text-ink-deep"
+        className="phone-cap-trim rv-fade text-[18px] font-bold leading-6 tracking-[-0.01em] text-ink-deep md:text-[20px] md:leading-[1.5]"
         style={rv(0, { dur: 500, ease: "quiet" })}
       >
         Career history
       </h2>
 
-      <InkSplotchDefs />
       <ol
         data-reveal-group
         style={rvGroup(100, { y: 3, ease: "quiet" })}
-        className="mt-[60px] grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-9 lg:grid-cols-[repeat(3,220px)]"
+        className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-6 md:mt-[60px] md:gap-y-9 lg:grid-cols-[repeat(3,220px)]"
       >
         {roles.map((role, i) => {
           const links = work.filter((w) => w.company === role.company && w.href && !w.comingSoon);
@@ -78,32 +58,27 @@ export default function CareerHistory({
             <li
               key={role.company}
               data-reveal="view"
-              className="rv-rise flex gap-2"
+              className="rv-rise flex gap-2.5 md:gap-2"
               style={rv(0, { dur: 500 })}
             >
               {/* Ellipse 623 — the accent dot (16px, up from the Figma's 12 so
-                  the number reads), set as a printer's-ink splotch: the disc
-                  alone runs through an edge-roughening filter (its own seed
-                  per row, so no two match) and the number sits crisp on top.
-                  The list's own numbering carries it for assistive tech. */}
+                  the number reads): a plain disc with the number on it. The
+                  list's own numbering carries it for assistive tech. */}
               <span
                 aria-hidden
-                className="relative mt-1 flex size-4 shrink-0 items-center justify-center text-[11px] font-semibold leading-none text-white"
+                className="mt-1 flex size-4 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] font-semibold leading-none text-white"
               >
-                <span
-                  className="absolute inset-0 rounded-full bg-accent"
-                  style={{ filter: `url(#ink-splotch-${i % SPLOTCH_SEEDS.length})` }}
-                />
-                <span className="relative">{i + 1}</span>
+                {i + 1}
               </span>
               <div className="flex flex-col gap-0.5">
                 <p className="text-[16px] font-semibold leading-6 text-ink-2">{role.company}</p>
                 <p className="text-[16px] leading-6 text-ink-2">{role.title}</p>
                 <p className="text-[14px] tracking-[-0.01em] text-muted">{role.period}</p>
                 {/* The company's case studies: plain underlined links a size
-                    under the dates, in their grey. */}
+                    under the dates, in their grey. Not on phones (Figma
+                    330:2645), where Recent work sits just above. */}
                 {links.length ? (
-                  <ul className="mt-2 flex flex-col gap-1 text-[13px] leading-5 tracking-[-0.01em] text-muted">
+                  <ul className="mt-2 hidden flex-col gap-1 text-[13px] leading-5 tracking-[-0.01em] text-muted md:flex">
                     {links.map((w) => (
                       <li key={w.href}>
                         <Link
@@ -122,12 +97,13 @@ export default function CareerHistory({
         })}
       </ol>
 
-      {/* Indented 24px (the 16px dot + 8px gap) so the skills share the
-          company lockups' text edge, per direct request. */}
+      {/* Indented by the dot and its gap (16 + 8px, 16 + 10px on phones)
+          so the skills share the company lockups' text edge, per direct
+          request. */}
       <div
         data-reveal="view"
         data-reveal-quiet
-        className="rv-fade mt-[70px] pl-6"
+        className="rv-fade mt-8 pl-[26px] md:mt-[70px] md:pl-6"
         style={rv(0, { dur: 350, ease: "quiet" })}
       >
         <h3 className="text-[16px] font-semibold leading-6 text-ink-2">

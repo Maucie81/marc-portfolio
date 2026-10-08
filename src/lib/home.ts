@@ -178,7 +178,7 @@ export type Role = {
 };
 
 export const roles: Role[] = [
-  { company: "Yahoo", title: "Principal Product Designer", period: "2023 — Present" },
+  { company: "Yahoo", title: "Principal Product Designer", period: "2023 — 2026" },
   { company: "Headspace", title: "Senior Product Designer", period: "2020 — 2023" },
   { company: "Airbnb", title: "Experience Designer", period: "2019 — 2020" },
   { company: "HotelTonight", title: "Senior Product Designer", period: "2017 — 2019" },

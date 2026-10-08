@@ -512,76 +512,77 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   }
 }
 
-/* ----- Stacked hero, below 768px ----- */
-.hero-stack {
+/* ----- Phone hero, below 768px (MobileHero) · Figma 337:2020 -----
+   The paper is Figma's #faf8f2 sheet at 40% over the page's --bg, with the
+   halftone multiplied in at the same 40% and softened 0.5px. 32px above
+   and below the lockup; 12px between its three parts. */
+.hero-m {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   container-type: inline-size;
-  /* 30px over the lockup's top mark (the cut starts at the divider's top)
-     matches the 24px under it plus the subline's ~6px below its baseline,
-     so the lockup sits centered top to bottom. */
-  padding: 1.875rem 1.5rem 1.5rem;
-  /* The cluster is cut from the board at --cluster-w Figma px wide; --hu
-     scales the board so that cut fills the column (capped on tablets). */
-  --hu: calc(min(100cqw, 460px) / var(--cluster-w));
+  padding: 2rem 1.5rem;
+  background: #f9f5ee;
+  color: var(--ink-deep);
 }
 
-.hero-texture-fill {
+.hero-m-texture {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background: url("/additional-work-texture.webp") center top / calc(1328 * var(--hu)) auto repeat;
-  transform: rotate(180deg);
+  z-index: -1;
+  background: url("/additional-work-texture.webp") center / 1000px auto no-repeat;
+  opacity: 0.4;
+  mix-blend-mode: multiply;
   filter: blur(0.5px);
 }
 
-/* The cluster, statement and subline as one block: as wide as its widest
-   part and centered in the column, each part centered inside it. */
-.hero-lockup {
-  position: relative;
-  z-index: 1;
-  width: fit-content;
-  max-width: 100%;
-  margin-inline: auto;
+/* The portrait beside "Hello & welcome", the label sitting 8px under the
+   portrait's middle, as in the Figma. */
+.hero-m-intro {
+  display: flex;
+  align-items: center;
+  gap: 2px;
 }
 
-/* 100cqw is the column (the .hero-stack container), same as before the
-   lockup wrapped it — the cut keeps the size --hu is scaled for. */
-.hero-cluster {
+.hero-m-portrait {
   position: relative;
-  z-index: 1;
-  width: min(100cqw, 460px);
-  margin-inline: auto;
+  flex-shrink: 0;
+  width: 50.745px;
+  height: 51.8px;
   overflow: hidden;
+  clip-path: inset(0);
 }
 
-.hero-stack-statement,
-.hero-stack-subline {
-  position: relative;
-  z-index: 1;
+/* 13px, a step up from the Figma's 12 per direct request (as is the
+   subline's). */
+.hero-m-eyebrow {
+  margin: 0;
+  padding-top: 1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.26;
 }
 
-/* Set in desktop's four lines; the widest ("based in Brooklyn,") is
-   ~8.8em, so the size is capped to keep it inside the column. */
-.hero-stack-statement {
-  margin: 1rem 0 0;
-  text-align: center;
-  font-size: min(clamp(2.25rem, 9vw, 3.75rem), calc(100cqw / 8.9));
+/* 39/40 Bold at 390px, −2% (Figma's). Kept in desktop's four lines: the
+   widest, "based in Brooklyn,", is 8.68em, so narrower phones scale the
+   size down to keep it inside the column. */
+.hero-m-statement {
+  margin: 0.75rem 0 0;
+  font-size: min(2.4375rem, calc(100cqw / 8.77));
   font-weight: 700;
-  line-height: 0.95;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
+  line-height: 1.026;
+  letter-spacing: -0.02em;
 }
 
-.hero-stack-subline {
-  margin: 1rem auto 0;
-  max-width: 28rem;
-  text-align: center;
-  font-size: 1.125rem;
-  font-weight: 600;
-  line-height: 1.35;
-  letter-spacing: -0.02em;
+/* Two set lines, "run on" starting the second (per direct request). The
+   first is 24.7em at −1%, which holds 13px down to a 375px phone; narrower,
+   the size steps down so the lines never re-wrap. */
+.hero-m-subline {
+  margin: 0.75rem 0 0;
+  font-size: min(0.8125rem, calc(100cqw / 24.9));
+  font-weight: 500;
+  line-height: 1.26;
+  letter-spacing: -0.01em;
 }
 
 /* ---------- Reference library (ReferenceLibrary.tsx) ----------
@@ -624,17 +625,71 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   color: var(--ink-deep);
 }
 
+/* Phones: headings set on cap height to baseline, as the phone Figma trims
+   them (337:2020 and the 326–330 section frames), so the gaps around them
+   are measured from the type, not the line box. Same Google Sans Flex
+   metrics as .hero-line. */
+@media (max-width: 767.98px) {
+  .phone-cap-trim {
+    margin-top: calc(0.376em - 0.5lh);
+    margin-bottom: calc(0.34em - 0.5lh);
+  }
+}
+
+/* Phones (Figma 342:2469): the title is an 18px heading on one line,
+   without the bar, and the copy 14/22 body — like every other section's
+   heading and intro. The title keeps its cap-to-baseline trim. */
+@media (max-width: 767.98px) {
+  .lib-copy {
+    margin: 0;
+  }
+
+  .lib-title {
+    width: auto;
+    min-width: 0;
+    white-space: normal;
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    letter-spacing: -0.01em;
+    text-align: left;
+  }
+
+  .lib-bar {
+    display: none;
+  }
+
+  .lib-copy {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.375rem;
+    color: var(--ink-2);
+  }
+}
+
 /* The shell: Figma "Photos" 263:280507 — #433835, 23.56px padding, 12px
    corners, 3/4/7 shadow at 15%. It's the query container the sheet scales
    against. No max-width: it runs to the same right edge as every other
-   section. */
+   section. --lib-gutter is the window's frame and the tiles' outlines. */
 .lib-panel {
   --lib-pad: 12px;
+  --lib-gutter: #fff;
   container-type: inline-size;
   padding: var(--lib-pad);
   border-radius: 12px;
   background: var(--ink-deep);
   box-shadow: 3px 4px 7px rgba(0, 0, 0, 0.15);
+}
+
+/* Phones (Figma 329:2748): a flat, darker shell, and the photos sit on it
+   with dark gutters instead of a white frame — 12px in from its edge
+   (9px of padding plus the window's own frame). */
+@media (max-width: 767.98px) {
+  .lib-panel {
+    --lib-pad: 9px;
+    --lib-gutter: var(--ink-deeper);
+    background: var(--ink-deeper);
+    box-shadow: none;
+  }
 }
 
 @media (min-width: 1024px) {
@@ -655,7 +710,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   position: relative;
   height: max(26rem, 100cqw * 637 / 1124);
   padding: 0 calc(12 * var(--u));
-  background: #fff;
+  background: var(--lib-gutter);
 }
 
 /* Edge shadows, one per edge: each shows only while there's more sheet

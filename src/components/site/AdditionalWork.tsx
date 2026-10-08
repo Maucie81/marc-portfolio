@@ -35,10 +35,10 @@ export default function AdditionalWork({
     <div
       data-reveal-group
       style={rvGroup(110, { y: 4, ease: "quiet" })}
-      className="grid gap-10 md:grid-cols-[236px_minmax(0,560px)] md:gap-x-[clamp(2.5rem,13vw,188px)]"
+      className="grid gap-8 md:grid-cols-[236px_minmax(0,560px)] md:gap-x-[clamp(2.5rem,13vw,188px)]"
     >
       <div data-reveal="view" className="rv-rise flex flex-col gap-2" style={ROW}>
-        <h2 id="additional-work-title" className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
+        <h2 id="additional-work-title" className="phone-cap-trim text-[18px] font-bold leading-6 tracking-[-0.01em] text-ink-deep md:text-[20px] md:leading-[1.5]">
           Additional work
         </h2>
         <p className="text-[14px] leading-[22px] text-ink-2">
@@ -46,14 +46,19 @@ export default function AdditionalWork({
         </p>
       </div>
 
-      <ul className="flex flex-col gap-[26px]">
+      <ul className="flex flex-col gap-8 md:gap-[26px]">
         {items.map((item) => {
           const live = Boolean(item.href) && !item.comingSoon;
           const title = (
             <>
               {item.title}
+              {/* Phones (Figma 329:2662): its own line, in the title's
+                  size and weight. */}
               {live ? null : (
-                <span className="text-[14px] font-normal tracking-[-0.01em] text-muted"> — Coming soon</span>
+                <>
+                  <span className="hidden text-[14px] font-normal tracking-[-0.01em] text-muted md:inline"> — Coming soon</span>
+                  <span className="block text-muted md:hidden">Coming soon</span>
+                </>
               )}
             </>
           );

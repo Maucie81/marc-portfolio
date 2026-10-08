@@ -130,7 +130,7 @@ export default function Home() {
           id="work"
           aria-labelledby="work-title"
           data-track-section="recent-work"
-          className={`${SHELL} sec relative pb-[60px] pt-10 lg:pb-[100px]`}
+          className={`${SHELL} sec relative py-12 md:pb-[60px] md:pt-10 lg:pb-[100px]`}
         >
           <SectionRail dots={3} flush reveal />
           <SectionNumber number="01" label="Recent work" reveal />
@@ -157,7 +157,7 @@ export default function Home() {
           aria-labelledby="additional-work-title"
           // 80px under the last line: Figma's 20px frame padding plus the
           // ~60px the list stops short of its 538px frame (263:276081).
-          className={`${SHELL} sec relative pb-[50px] pt-[50px] lg:pb-20 lg:pt-10`}
+          className={`${SHELL} sec relative py-12 md:py-[50px] lg:pb-20 lg:pt-10`}
         >
           <SectionRail dots={3} flush reveal />
           <SectionNumber number="02" label="A little bit more" reveal />
@@ -185,7 +185,7 @@ export default function Home() {
           aria-labelledby="library-title"
           data-track-section="reference-library"
           style={{ "--lib-f": "clamp(2.75rem, 5.56vw, 5rem)" } as CSSProperties}
-          className={`${SHELL} sec relative pb-[60px] pt-[50px] lg:pb-[77px] lg:pt-11`}
+          className={`${SHELL} sec relative py-12 md:pb-[60px] md:pt-[50px] lg:pb-[77px] lg:pt-11`}
         >
           {/* The first circle and "03" sit level with the middle of the
               title's first line, not the section's top. The title scales
@@ -208,16 +208,18 @@ export default function Home() {
                 (720ms, 90ms apart), the copy simply fades in after them,
                 and the library panel softly appears like every card (see
                 ReferenceLibrary). */}
+            {/* Phones: an 18px one-line heading and 14/22 copy, 8px
+                apart (see .lib-title in globals.css). */}
             <div
               data-reveal="view"
-              className="flex flex-col gap-6 md:flex-row md:items-center md:gap-[30px]"
+              className="flex flex-col gap-2 md:flex-row md:items-center md:gap-[30px]"
             >
               <div className="flex items-center gap-[0.36em] text-[clamp(2.75rem,5.56vw,5rem)]">
                 <h2 id="library-title" className="lib-title">
                   {["My personal", "reference", "library"].map((line, i) => (
                     <Fragment key={line}>
                       {i > 0 ? " " : null}
-                      <span className="rv-line block" style={rv(i * 90, { dur: 720 })}>
+                      <span className="rv-line inline-block md:block" style={rv(i * 90, { dur: 720 })}>
                         {line}
                       </span>
                     </Fragment>
@@ -247,7 +249,7 @@ export default function Home() {
           id="experience"
           aria-labelledby="experience-title"
           data-track-section="experience"
-          className={`${SHELL} sec relative py-[50px] lg:py-[100px]`}
+          className={`${SHELL} sec relative py-12 md:py-[50px] lg:py-[100px]`}
         >
           <SectionRail dots={3} flush reveal />
           <SectionNumber number="04" label="Where I’ve been" reveal />
@@ -352,7 +354,7 @@ export default function Home() {
               panel's. It spans the band edge to edge at z 39 on its own
               ink, so the page grain (z 38) stops at the halftone panel. */}
           <p className="footer-credit relative z-[39] -mx-3 bg-[var(--ink-deeper)] px-6 pb-0 pt-2 text-center sm:pb-2 text-[14px] leading-6 tracking-[-0.01em] text-white/65 sm:pr-3 sm:text-right md:-mx-6 md:pl-12 md:pr-6 lg:-mx-8 lg:pl-24 lg:pr-8">
-            Built using way too many AI platforms to remember
+            Built using Claude Code
           </p>
         </div>
       </footer>

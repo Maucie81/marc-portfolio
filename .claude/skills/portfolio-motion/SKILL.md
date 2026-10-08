@@ -103,7 +103,7 @@ This documents what's already built. It is not a proposal. When this file and th
 | Section furniture (rail, number, title), opening screen only | quiet | 4px rise / fade, 500ms, quiet ease (`FURNITURE`) |
 | Recent work | soft | each card is one unit: its copy column, panel and tag row all carry the same soft reveal (8px/850ms) at the same moment. Nothing inside a card is on its own clock. The reveal sits on those three parts, not the article, so the z-39 panel is never inside an animating wrapper |
 | Additional work | quiet | rows: 4px rise, 500ms, quiet, 110ms apart |
-| Reference library | expressive (the second moment) | title: 3 masked lines, 720ms, 90ms apart<br>copy: fade at 320ms (500ms, quiet)<br>whole panel: soft reveal as one, 250ms behind the title block<br>no tile animates on its own |
+| Reference library | expressive (the second moment) | title: 3 masked lines, 720ms, 90ms apart (on phones, one 18px line whose words rise the same way)<br>copy: fade at 320ms (500ms, quiet)<br>whole panel: soft reveal as one, 250ms behind the title block<br>no tile animates on its own<br>then the sheet **drifts** down inside its window (see below) |
 | Career | very quiet | heading: fade 500ms<br>roles: 3px rise, 500ms, 100ms apart, quiet |
 | Skills | static-ish | one block fades, 350ms, quiet trigger |
 | Footer | restrained | halftone fade 550ms<br>title and lockup fade 400ms at +60ms<br>contact line at +180ms<br>quiet trigger, no movement |
@@ -122,6 +122,17 @@ This documents what's already built. It is not a proposal. When this file and th
 Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airbnb, Headspace Admin), or a direct `ReadingMotion` wrap (Headspace UMD). Harrison's app has none. Without motion, the track just fades in over 400ms after mount.
 
 **Not yet wired with `useReading`:** StepsPanel, PrinciplesBlock, PanelGroupBlocks, IsolatedMedia, CopyBlock, StatBlock, QuoteBlock, Frame. When wiring one, pick an existing role. Don't invent a new one.
+
+### Reference library drift (`useAutoDrift` in `ReferenceLibrary.tsx`)
+
+Added on request (2026-10-08) so the window reads as having more in it. Not a reveal: it scrolls the window's own `scrollTop`.
+- starts `AUTO_DELAY` (1200ms) after the window is 60% on screen, once the panel's reveal has finished
+- speed: one window height every `AUTO_WINDOW_SECONDS` (25s), about 16px/s on a phone, linear
+- pauses while a mouse is over the window or it's off screen; resumes after
+- stops for good at the bottom of the sheet, or on any wheel, touch, pointer-down or key in the window (opening a photo included)
+- never runs with reduced motion
+
+The deleted "sheet glide" was a reveal on the sheet; this is a different thing and is wanted.
 
 ## Case-study pinned track (`HorizontalTrack.tsx`)
 
@@ -150,7 +161,7 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
 
 - **Case studies at ≤900px or with reduced motion:** no pin, no sideways scrolling. Blocks stack in one column (7rem gap). There's no scrubber and no cover rail dots.
   - Reveals keep their timing but travel 70% as far (`--rv-travel: 0.7` on `.cs-track`): soft reveal ≈ 5.6px, heading ≈ 4px, body 3.5px.
-- **Homepage hero:** a board tree at ≥768px and a stacked tree below it. Both carry reveals, and retiring stops a replay when they swap at the breakpoint.
+- **Homepage hero:** the six edition boards at ≥768px; below that, one fixed phone hero (`MobileHero`, Figma 337:2020) with no editions. It plays the same `HERO_SEQUENCE`: the sheet settles, the eyebrow and four statement lines rise from masks, the 51px portrait opens top to bottom (`rv-clip` from `inset(0 0 100% 0)`), and the subline rises. The head script's hold also waits on `.hero-m-portrait img`. Retiring stops a replay when the trees swap at the breakpoint.
 - **Homepage reveals** use the same values at every width (no travel scaling).
 - **Phone header menu (<640px):**
   - drops 4px and fades over 200ms; the burger's strokes rotate into an × over 200ms
@@ -223,7 +234,7 @@ Hover changes color, opacity, a ring, or (CTAs only) a faint drop shadow. Things
 | Copy email | text → accent; a "Copy address" tooltip fades in over 150ms. A click flips it to "Copied" for 1.6s; it resets on leave or blur |
 | More/Less glyph | label fades in over 150ms, on hover only where hover is real (`@media (hover: hover)`) or on focus-visible. A click hides it until leave or blur, so the new word never flashes |
 | Recent work panels | the whole panel is a link with no hover effect: no lift, no scale |
-| Reference library | nothing moves or resizes on hover. Zoom-in cursor on tiles. Viewer buttons go from white 12% to 22% |
+| Reference library | nothing moves or resizes on hover. Zoom-in cursor on tiles. Hovering the window pauses its drift. Viewer buttons go from white 12% to 22% |
 | Scrubber | pointer cursor |
 
 ## Touch
@@ -250,6 +261,8 @@ Hover changes color, opacity, a ring, or (CTAs only) a faint drop shadow. Things
 - **Case studies** drop the pin and the sideways layout entirely and use the stacked layout (CSS and `gsap.matchMedia` share `SIDEWAYS`).
 - **Transform transitions** carry `motion-reduce:transition-none` (header menu and burger, Additional work arrow). Color and opacity hovers stay.
 - **Don't add** a global `* { animation-duration: 0.01ms !important }` kill switch. It would duplicate the opt-in model.
+- **The reference library drift** checks `prefers-reduced-motion` itself and never starts.
+- **The homepage logo** scrolls back to the top smoothly, or instantly with reduced motion (`toTop` in `PersistentHeader.tsx`).
 - **Known gaps** (current behavior, not decisions; flag them to Marc rather than "fixing" silently):
   - `spinExpandGlyph` (a 480ms Web Animations rotation) runs under reduced motion.
   - `ExpandCollapse`'s 450ms height transition has no reduced-motion guard.

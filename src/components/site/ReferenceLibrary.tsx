@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { type UIEvent, useCallback, useEffect, useRef, useState } from "react";
+import { type RefObject, type UIEvent, useCallback, useEffect, useRef, useState } from "react";
 import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/reference-library";
 
 /**
@@ -25,10 +25,97 @@ import { LIBRARY_TILES, SHEET_HEIGHT, SHEET_WIDTH, TILE_OUTLINE } from "@/lib/re
  * sheet together — softly becomes visible like every card on the page
  * (.rv-soft), following the title. No tile animates by itself, and
  * scrolling works throughout.
+ *
+ * Then the sheet drifts down on its own, slowly, so it reads as something
+ * with more in it (per direct request): it starts AUTO_DELAY after the
+ * window is mostly on screen, moves one window height every
+ * AUTO_WINDOW_SECONDS, pauses while a mouse is over it or it's off screen,
+ * and stops for good at the bottom or the moment the visitor scrolls, taps,
+ * clicks or uses a key in it. Never with reduced motion.
  */
+
+/** Wait after the window comes into view — the panel's own reveal (250ms
+ * behind the title, 850ms) has finished by then. */
+const AUTO_DELAY = 1200;
+/** Drift speed: one window height in this many seconds. */
+const AUTO_WINDOW_SECONDS = 25;
+
+function useAutoDrift(ref: RefObject<HTMLDivElement | null>) {
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let raf = 0;
+    let last = 0;
+    let startAt = 0;
+    let pos = el.scrollTop;
+    let inView = false;
+    let hovered = false;
+    let done = false;
+
+    const tick = (t: number) => {
+      raf = 0;
+      if (done || !inView || hovered) {
+        last = 0;
+        return;
+      }
+      if (t >= startAt) {
+        if (last) {
+          // Clamped, so a frame after a long pause (background tab) can't jump.
+          const dt = Math.min(t - last, 100) / 1000;
+          const max = el.scrollHeight - el.clientHeight;
+          pos = Math.min(max, pos + (el.clientHeight / AUTO_WINDOW_SECONDS) * dt);
+          el.scrollTop = pos;
+          if (pos >= max) return stop();
+        }
+        last = t;
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    const run = () => {
+      if (!raf && !done) raf = requestAnimationFrame(tick);
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting;
+        if (!inView) return;
+        if (!startAt) startAt = performance.now() + AUTO_DELAY;
+        run();
+      },
+      { threshold: 0.6 },
+    );
+    io.observe(el);
+
+    const onEnter = (e: PointerEvent) => {
+      if (e.pointerType === "mouse") hovered = true;
+    };
+    const onLeave = () => {
+      hovered = false;
+      run();
+    };
+    const userInput = ["wheel", "touchstart", "pointerdown", "keydown"] as const;
+
+    function stop() {
+      done = true;
+      cancelAnimationFrame(raf);
+      io.disconnect();
+      userInput.forEach((type) => el!.removeEventListener(type, stop));
+      el!.removeEventListener("pointerenter", onEnter);
+      el!.removeEventListener("pointerleave", onLeave);
+    }
+
+    userInput.forEach((type) => el.addEventListener(type, stop, { passive: true }));
+    el.addEventListener("pointerenter", onEnter);
+    el.addEventListener("pointerleave", onLeave);
+    return stop;
+  }, [ref]);
+}
 
 export default function ReferenceLibrary() {
   const closeRef = useRef<HTMLButtonElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useAutoDrift(scrollRef);
   const [open, setOpen] = useState<number | null>(null);
   const [edges, setEdges] = useState({ top: true, bottom: false });
 
@@ -70,6 +157,7 @@ export default function ReferenceLibrary() {
         data-at-bottom={edges.bottom || undefined}
       >
         <div
+          ref={scrollRef}
           className="lib-scroll"
           onScroll={onScroll}
           role="region"
@@ -93,10 +181,11 @@ export default function ReferenceLibrary() {
                   width: `calc(${t.w} * var(--u))`,
                   height: `calc(${t.h} * var(--u))`,
                   // Figma's outside stroke, stacked in Figma's layer order:
-                  // where tiles overlap, the upper one's white edge covers
-                  // the seam, so every gutter reads as one clean white band.
+                  // where tiles overlap, the upper one's edge covers the
+                  // seam, so every gutter reads as one clean band (white;
+                  // the shell's ink on phones).
                   zIndex: t.z,
-                  outline: `calc(${TILE_OUTLINE} * var(--u)) solid #fff`,
+                  outline: `calc(${TILE_OUTLINE} * var(--u)) solid var(--lib-gutter)`,
                 }}
               >
                 <button

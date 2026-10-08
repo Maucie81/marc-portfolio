@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, type MouseEvent, useEffect, useRef, useState } from "react";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import BackLink from "@/components/site/BackLink";
 import {
@@ -61,6 +61,18 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
     };
   }, [menuOpen]);
   const closeMenu = () => setMenuOpen(false);
+  // The logo goes back to the top of the homepage. This header only shows
+  // on the homepage, where a link to "/" alone would stay put (same route),
+  // so the scroll is done here; any "#section" left in the address is
+  // dropped with it. Modified clicks still open the link as usual.
+  const toTop = (e: MouseEvent<HTMLAnchorElement>) => {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    closeMenu();
+    if (location.hash) history.replaceState(history.state, "", "/");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    window.scrollTo({ top: 0, behavior: reduce ? "instant" : "smooth" });
+  };
   // Mobile/tablet: unchanged sticky in-flow header, no frame chrome (Step 5
   // exclusion). At lg+ this becomes the perimeter frame's fixed top band —
   // position switches to fixed and height locks to 42px (nav vertically
@@ -104,6 +116,7 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 width. */}
             <Link
               href="/"
+              onClick={toTop}
               className="ml-[0px] lg:ml-[3px] flex items-center gap-3 text-[16px] lg:gap-2.5 font-semibold leading-[20px] text-ink-strong transition-colors hover:text-accent [font-family:var(--font-display),system-ui,sans-serif]"
             >
               <span

@@ -24,12 +24,17 @@ const GRID_LINE = "#e7e1cb";
    above the page grain) is never inside an animating wrapper. */
 const CARD = rv(0);
 
+/** The bezel's own 14px corners, as a share of the export; its corners
+ * outside them carry the page paper, so they're clipped off. */
+const bezelRadius = ({ box }: Project["mockup"]) =>
+  `${(14.04 / box.w) * 100}% / ${(14.04 / box.h) * 100}%`;
+
 function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
   const { mockup } = project;
   const { box } = mockup;
   return (
     <div
-      className="product-media rv-soft relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] md:rounded-[6px]"
+      className="product-media rv-soft relative isolate overflow-hidden rounded-[4px] bg-[#fcf9f1] max-md:hidden md:rounded-[6px]"
       style={{
         ...CARD,
         aspectRatio: `${PANEL_W} / ${PANEL_H}`,
@@ -61,12 +66,28 @@ function MockupPanel({ project, eager }: { project: Project; eager: boolean }) {
           top: `${(box.y / PANEL_H) * 100}%`,
           width: `${(box.w / PANEL_W) * 100}%`,
           height: `${(box.h / PANEL_H) * 100}%`,
-          // The bezel's own 14px corners; the export's corners outside
-          // them carry the page paper, so they're clipped off.
-          borderRadius: `${(14.04 / box.w) * 100}% / ${(14.04 / box.h) * 100}%`,
+          borderRadius: bezelRadius(mockup),
         }}
       />
     </div>
+  );
+}
+
+/** Phones (< 768px) · Figma 326:4139: the device alone, full column width —
+ * no graph paper behind it. */
+function PhoneMockup({ project, eager }: { project: Project; eager: boolean }) {
+  const { mockup } = project;
+  return (
+    <Image
+      src={mockup.src}
+      alt={mockup.alt}
+      width={mockup.width}
+      height={mockup.height}
+      unoptimized
+      priority={eager}
+      className="product-media rv-soft block h-auto w-full md:hidden"
+      style={{ ...CARD, borderRadius: bezelRadius(mockup) }}
+    />
   );
 }
 
@@ -127,11 +148,28 @@ function ProjectCta({ project, className }: { project: Project; className: strin
   ) : null;
 }
 
+/** Phones · Figma 337:2250: the button becomes a plain accent link under
+ * the device — 12px Medium, 6px to its arrow. */
+function PhoneProjectLink({ project }: { project: Project }) {
+  return project.href ? (
+    <Link
+      href={project.href}
+      className="rv-soft mt-3 flex w-fit items-center gap-1.5 text-[12px] font-medium leading-5 text-accent transition-colors hover:text-[var(--accent-deep)] md:hidden"
+      style={CARD}
+    >
+      Project Preview
+      <CtaArrow size={10} />
+    </Link>
+  ) : null;
+}
+
 /* The Figma's own line breaks, from 1280px up — the width its columns are
-   drawn at. Narrower, the lines run on and wrap to the column. */
+   drawn at — and on phones from 360px, where the phone Figma keeps them
+   (326:4133) and they still fit. Otherwise the lines run on and wrap to
+   the column. */
 function Lines({ lines }: { lines: string[] }) {
   return lines.map((line, i) => (
-    <span key={i} className="xl:block">
+    <span key={i} className="min-[360px]:max-md:block xl:block">
       {i > 0 ? " " : null}
       {line}
     </span>
@@ -155,7 +193,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       // /analytics: the card counts as seen once it's meaningfully on
       // screen (lib/analytics/exposure.ts), by its case study's slug.
       data-track-card={project.href?.startsWith("/work/") ? project.href.slice(6) : undefined}
-      className={`grid scroll-mt-[100px] gap-y-5 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
+      className={`grid scroll-mt-[100px] gap-y-4 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
         mediaLeft
           ? "md:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
           : "md:grid-cols-[minmax(0,379fr)_minmax(0,714fr)]"
@@ -173,12 +211,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
         style={CARD}
       >
-        <div className="flex flex-col gap-1">
+        {/* Phones · Figma 326:4133: company 12, then the title 18, trimmed
+            to its caps like every phone heading, 8px from both. */}
+        <div className="flex flex-col gap-2 md:gap-1">
           <div className="flex flex-col gap-2">
-            <p className="text-[16px] font-medium tracking-[-0.01em] text-muted">
+            <p className="text-[12px] tracking-[-0.01em] text-muted md:text-[16px] md:font-medium">
               {project.company}
             </p>
-            <h3 className="text-[20px] font-bold tracking-[-0.01em] text-ink-deep">
+            <h3 className="phone-cap-trim text-[18px] font-bold leading-6 tracking-[-0.01em] text-ink-deep md:text-[20px] md:leading-[1.5]">
               {project.title}
             </h3>
           </div>
@@ -186,7 +226,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             <Lines lines={project.description} />
           </p>
         </div>
-        <ProjectCta project={project} className="inline-flex mb-3 md:mb-0" />
+        <ProjectCta project={project} className="hidden md:inline-flex" />
       </div>
 
       {/* Panel + its metadata row. The whole panel opens the case study. */}
@@ -198,10 +238,15 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
             className="block rounded-[4px] md:rounded-[6px]"
           >
             {panel}
+            <PhoneMockup project={project} eager={index === 0} />
           </Link>
         ) : (
-          panel
+          <>
+            {panel}
+            <PhoneMockup project={project} eager={index === 0} />
+          </>
         )}
+        <PhoneProjectLink project={project} />
         {/* Figma's second and third card frames are 434px tall, so their
             32px tag row overhangs the frame by 10px — and the next card
             and the section's bottom padding are measured from the frame. */}
@@ -217,7 +262,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 export default function RecentWork({ projects }: { projects: Project[] }) {
   return (
-    <div className="flex flex-col gap-[100px] lg:gap-[200px]">
+    <div className="mt-3 flex flex-col gap-12 md:mt-0 md:gap-[100px] lg:gap-[200px]">
       {projects.map((project, i) => (
         <ProjectCard key={project.company + project.title} project={project} index={i} />
       ))}
