@@ -337,6 +337,44 @@ function scrollDepth(sessions: Session[], path: string) {
   };
 }
 
+// ---------- time to act ----------
+
+/** Wall-clock time from a homepage arrival to the first case study that
+ * visit opened; null for visits that started elsewhere or never opened one,
+ * so landing straight on a case study can't read as an instant decision. */
+function toFirstCaseStudy(s: Session): number | null {
+  if (s.first.path !== "/") return null;
+  const view = s.views.find((v) => isCaseStudy(v.path));
+  return view ? Date.parse(view.ts) - s.start : null;
+}
+
+/** Wall-clock time from arrival to the visit's first resume, LinkedIn or
+ * contact action; null if it took none. */
+function toFirstHiring(s: Session): number | null {
+  const times = s.actions
+    .filter((a) => HIRING_ACTIONS.includes(a.type))
+    .map((a) => Date.parse(a.ts));
+  return times.length ? Math.max(0, Math.min(...times) - s.start) : null;
+}
+
+const known = (values: (number | null)[]) => values.filter((v): v is number => v !== null);
+
+// ---------- live ----------
+
+export const LIVE_MS = 5 * 60 * 1000;
+export const RECENT_MS = 30 * 60 * 1000;
+
+/** Visits with a pageview or action at or after `sinceMs`, from every record
+ * read rather than just the range's visits, so a visit that began before
+ * the range still counts. Someone reading one long page without clicking
+ * sends neither, so this undercounts rather than guesses. */
+function activeSince(visits: Visit[], events: ActionEvent[], sinceMs: number) {
+  const sids = new Set<string>();
+  for (const v of visits) if (v.sid && Date.parse(v.ts) >= sinceMs) sids.add(v.sid);
+  for (const e of events) if (Date.parse(e.ts) >= sinceMs) sids.add(e.sid);
+  return sids.size;
+}
+
 // ---------- the report ----------
 
 export type Row = [label: string, count: number];
@@ -430,6 +468,7 @@ export function buildReport(opts: {
         visits: viewers.length,
         views: pageviews.filter((v) => v.path === path).length,
         landed: count((s) => s.first.path === path),
+        continued: viewers.filter((s) => continuedAfter(s, path)).length,
         hiring: viewers.filter((s) => s.hiring).length,
         engaged: engagedOn(path),
         depth: depthOn(path),
@@ -440,6 +479,7 @@ export function buildReport(opts: {
   const pagePaths = [...new Set(pageviews.map((v) => v.path))];
   const pages = pagePaths
     .map((path) => ({
+      path,
       label: pageLabel(path),
       views: pageviews.filter((v) => v.path === path).length,
       visits: count((s) => s.views.some((v) => v.path === path)),
@@ -455,6 +495,7 @@ export function buildReport(opts: {
       visits,
       caseStudy: from.filter((s) => s.caseStudies.size > 0).length,
       hiring: from.filter((s) => s.hiring).length,
+      engaged: timeStats(from.filter((s) => s.timed).map((s) => s.engagedMs)),
     };
   });
 
@@ -469,6 +510,8 @@ export function buildReport(opts: {
   return {
     range,
     startMs,
+    nowMs,
+    firstPageviewMs: pageviews.length ? Date.parse(pageviews[0].ts) : null,
     unit,
     pageviews: pageviews.length,
     legacyPageviews: pageviews.filter((v) => !v.sid).length,
@@ -485,6 +528,7 @@ export function buildReport(opts: {
       },
     ],
     startedOnHome: count((s) => s.first.path === "/"),
+    homeToCaseStudy: count((s) => s.first.path === "/" && s.caseStudies.size > 0),
     hiring: count((s) => s.hiring),
     contact: count((s) => s.contact),
     viewedTwo,
@@ -531,6 +575,30 @@ export function buildReport(opts: {
       ),
     },
     recent: pageviews.slice(-50).reverse(),
+    recentVisits: sessions
+      .slice(-25)
+      .reverse()
+      .map((s) => ({
+        start: s.start,
+        first: s.first,
+        source: s.source,
+        journey: journeyOf(s),
+        engagedMs: s.timed ? s.engagedMs : null,
+        hiring: s.hiring,
+      })),
+    recentActions: opts.events
+      .filter((e) => Date.parse(e.ts) >= startMs)
+      .slice(-30)
+      .reverse()
+      .map((e) => ({ ts: e.ts, label: ACTIONS[e.type] ?? e.type, path: e.path, target: e.target })),
+    timing: {
+      toCaseStudy: timeStats(known(sessions.map(toFirstCaseStudy))),
+      toHiring: timeStats(known(sessions.map(toFirstHiring))),
+    },
+    live: {
+      now: activeSince(opts.visits, opts.events, nowMs - LIVE_MS),
+      recent: activeSince(opts.visits, opts.events, nowMs - RECENT_MS),
+    },
     devices: deviceComparison(sessions, caseStudies.map((c) => c.path)),
   };
 }
@@ -587,6 +655,8 @@ function deviceGroup(label: string, group: Session[]) {
     contact: count((s) => s.contact),
     // Same steps and definitions as the main hiring funnel.
     funnel: [group.length, viewedOne, viewedTwo, count((s) => s.caseStudies.size >= 2 && s.hiring)],
+    toCaseStudy: timeStats(known(group.map(toFirstCaseStudy))),
+    toHiring: timeStats(known(group.map(toFirstHiring))),
     topCaseStudy: caseStudy[0] ?? null,
     topCaseStudyTies: caseStudy.filter((c) => c.visits === caseStudy[0]?.visits).length,
     topJourney: topJourney(group),
