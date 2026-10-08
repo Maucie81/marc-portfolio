@@ -36,7 +36,10 @@ import { INTERNAL_SOURCE, LIVE_MS, QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type Ra
 
 const timeCell = (t: TimeStats) => (t ? `${duration(t.median)} <span class="muted">(${fmt(t.n)})</span>` : "—");
 
-const tagged = ({ utm }: Report) => utm.campaign.length + utm.source.length + utm.medium.length > 0;
+/** Measured visits a newer figure (section reach, hero editions) needs
+ * before the report prints it — the insights' bar for any rate. Below it,
+ * the older stand-in stays (scroll depth) or the section is left out. */
+const MIN_MEASURED = 20;
 
 function sheet(n: number, title: string, report: Report, body: string) {
   return `<section class="sheet">
@@ -120,11 +123,11 @@ function acquisition(report: Report) {
 ${rows.length ? table(["Source", "Visits", "Share", "Viewed work", "Acted", "Median engaged"], rows, [false, true, true, true, true, true]) : empty()}
 ${report.sources.length > 10 ? `<p class="muted small">+ ${report.sources.length - 10} more</p>` : ""}
 </div>
-<div class="cols3">
-${ranked("Entry pages", report.entries, n, { limit: 5 })}
-${ranked("Top countries", report.audience.country, n, { limit: 5 })}
-${ranked("Top regions", report.audience.region, n, { limit: 5 })}
-</div>${tagged(report) ? `<p class="muted small">Tagged links (UTM campaigns) are listed in the appendix.</p>` : ""}`,
+<div class="cols2">
+${ranked("Entry pages", report.entries, n, { limit: 6 })}
+${report.utm.campaign.length ? ranked("UTM campaigns", report.utm.campaign, n, { limit: 6 }) : ""}
+</div>
+<p class="muted small">Where visitors are is under Devices and audience.${report.utm.source.length || report.utm.medium.length ? " UTM source and medium are in the appendix." : ""}</p>`,
   );
 }
 
@@ -164,59 +167,146 @@ ${table(["Case study", "Visits", "Reach", "Median engaged", "Went on", "Then act
 <h3>Scroll depth</h3>
 <p class="muted small">Of the visits with scroll depth recorded (Measured), the share that scrolled at least halfway and to the bottom. A bottom reached with under ${quick}s of engaged time is most likely a skim or a jump.</p>
 ${depth.length ? table(["Case study", "Measured", "50%", "Bottom", `Bottom in <${quick}s`], depth, [false, true, true, true, true]) : empty("No case-study scroll data in this period.")}
-</div>`,
+</div>
+${heroes(report)}`,
   );
 }
 
-function behavior(report: Report) {
-  const { toCaseStudy, toHiring } = report.timing;
-  const home = report.pages.find((p) => p.path === "/")?.depth;
-  const reach = home?.n
+/** Hero editions, compact — only once enough homepage visits have one
+ * recorded; otherwise a single line instead of a table of near-empties. */
+function heroes(report: Report) {
+  const x = report.exposure;
+  if (x.heroShown < MIN_MEASURED) {
+    return x.heroShown
+      ? `<p class="muted small coverage">Hero performance appears once ${MIN_MEASURED} homepage visits have a hero edition recorded (${fmt(x.heroShown)} so far).</p>`
+      : "";
+  }
+  const small = x.heroes.some((h) => h.stats.visits < SMALL_GROUP);
+  const rows = x.heroes.map((h) => {
+    const g = h.stats;
+    return [
+      `${esc(h.label)}${h.defaultEdition ? ' <span class="muted">(default)</span>' : ""}${g.visits < SMALL_GROUP ? " *" : ""}`,
+      fmt(g.visits),
+      share(g.viewedOne, g.visits),
+      share(g.viewedTwo, g.visits),
+      share(g.hiring, g.visits),
+      median(g.engaged),
+    ];
+  });
+  return `<div class="block">
+<h3>Hero performance</h3>
+<p class="muted small">The homepage hero edition each visit had on screen, of ${plural(x.heroShown, "homepage visit")} with one recorded. Acted: reached resume, LinkedIn or contact. Hero 2 is the rotation's default — shown when the browser hasn't stored the rotation's own flag or can't store anything — so its sample differs from the randomly drawn editions; don't rank it against them. Analytics records only the edition shown.</p>
+${table(["Hero", "Shown", "Opened work", "Opened 2+", "Acted", "Median engaged"], rows, [false, true, true, true, true, true])}
+${small ? `<p class="muted small">* Under ${SMALL_GROUP} visits — treat differences as directional.</p>` : ""}
+</div>`;
+}
+
+/** Section visibility once enough homepage visits have it; until then
+ * the homepage scroll-depth stand-in, with the sample spelled out. Never
+ * both at the same weight. */
+function homepageReach(report: Report) {
+  const x = report.exposure;
+  const homePage = report.pages.find((p) => p.path === "/");
+  const homeAll = homePage?.visits ?? 0;
+  const scroll = homePage?.depth;
+  const sample =
+    x.home < homeAll ? `Section visibility measured for ${fmt(x.home)} of ${plural(homeAll, "homepage visit")}.` : "";
+
+  if (x.home >= MIN_MEASURED) {
+    const rows = x.sections.map((sec) => [esc(sec.label), fmt(sec.seen), pct(sec.seen, x.home)]);
+    const rw = x.recentWork;
+    return `<h3>Homepage section reach</h3>
+${table(["Section seen", "Visits", "Share"], rows, [false, true, true])}
+<dl class="pairs"><div><dt>Recent work seen → case study opened</dt><dd>${pct(rw.opened, rw.seen)} <span class="muted">(${fmt(rw.opened)} of ${fmt(rw.seen)})</span></dd></div></dl>
+<p class="muted small">Of ${plural(x.home, "measured homepage visit")}${x.home < homeAll ? ` (${fmt(homeAll)} in all)` : ""}; seen = half on screen for 0.5s.${
+      scroll?.n ? ` Scroll depth for reference: ${pct(scroll.r50, scroll.n)} halfway, ${pct(scroll.r90, scroll.n)} bottom.` : ""
+    }</p>`;
+  }
+
+  const proxy = scroll?.n
     ? table(
         ["Homepage scrolled", "Visits", "Share"],
         (
           [
-            ["25%", home.r25],
-            ["50%", home.r50],
-            ["75%", home.r75],
-            ["Bottom", home.r90],
+            ["25%", scroll.r25],
+            ["50%", scroll.r50],
+            ["75%", scroll.r75],
+            ["Bottom", scroll.r90],
           ] as const
-        ).map(([label, count]) => [`${label}${bar(count, home.n)}`, fmt(count), pct(count, home.n)]),
+        ).map(([label, count]) => [`${label}${bar(count, scroll.n)}`, fmt(count), pct(count, scroll.n)]),
         [false, true, true],
-      ) + `<p class="muted small">Of ${plural(home.n, "homepage visit")} with scroll depth recorded. Sections aren't tracked one by one.</p>`
+      )
     : empty("No homepage scroll data in this period.");
-  const actionRows = report.actions.map((a) => [esc(a.label), fmt(a.visits), pct(a.visits, a.base)]);
-  const paths = report.journeys.slice(0, 6);
+  return `<h3>Homepage scroll depth</h3>
+${proxy}
+<p class="muted small">${scroll?.n ? `Of ${plural(scroll.n, "homepage visit")} with scroll depth recorded. ` : ""}${
+    x.home
+      ? `${sample || `Section visibility measured for ${plural(x.home, "homepage visit")}.`} It replaces this once ${MIN_MEASURED} homepage visits are measured.`
+      : "Section visibility isn't measured for any homepage visit in this range yet."
+  }</p>`;
+}
+
+function behavior(report: Report) {
+  const { toCaseStudy, toHiring, toMeaningful, meaningfulBase, toNextCaseStudy } = report.timing;
+  const n = report.visits;
+  // Actions nobody took go in one line rather than a column of zeros;
+  // ones this period's tracker couldn't record say so rather than "0".
+  const taken = report.actions.filter((a) => a.visits > 0 || (a.seenOnly && !a.base));
+  const untaken = report.actions.filter((a) => !taken.includes(a));
+  const actionRows = taken.map((a) =>
+    a.seenOnly && !a.base
+      ? [esc(a.label), "—", '<span class="muted">Not measured</span>']
+      : [
+          `${esc(a.label)}${a.seenOnly && a.base < n ? ` <span class="muted small">of ${fmt(a.base)} measured</span>` : ""}`,
+          fmt(a.visits),
+          pct(a.visits, a.base),
+        ],
+  );
+  const pp = report.partnerPortal;
+  const partner = pp.measured
+    ? `<p class="muted small">Partner Portal CTA: ${plural(pp.visits, "visit")} clicked${
+        pp.viewers ? ` — ${pct(pp.viewersClicked, pp.viewers)} of Yahoo case-study viewers (${fmt(pp.viewersClicked)} of ${fmt(pp.viewers)})` : ""
+      }. A high-intent product interaction, counted apart from resume and contact.</p>`
+    : "";
+  const paths = report.journeys.slice(0, 5);
   return sheet(
     4,
     "Behavior",
     report,
     `<div class="cols2">
+<div>
 <div class="block">
 <h3>Hiring funnel</h3>
 ${funnelSteps(report)}
 </div>
 <div class="block">
+${homepageReach(report)}
+</div>
+</div>
+<div>
+<div class="block">
 <h3>Time to first meaningful action</h3>
 <dl class="pairs">
 <div><dt>Homepage arrivals that open a case study</dt><dd>${pct(report.homeToCaseStudy, report.startedOnHome)} <span class="muted">(${fmt(report.homeToCaseStudy)} of ${fmt(report.startedOnHome)})</span></dd></div>
+<div><dt>Homepage → first meaningful action</dt><dd>${meaningfulBase ? timeCell(toMeaningful) : '<span class="muted">Not measured</span>'}</dd></div>
 <div><dt>Homepage → first case study</dt><dd>${timeCell(toCaseStudy)}</dd></div>
+<div><dt>First case study → next</dt><dd>${timeCell(toNextCaseStudy)}</dd></div>
 <div><dt>Arrival → resume, LinkedIn or contact</dt><dd>${timeCell(toHiring)}</dd></div>
 </dl>
-<p class="muted small">Median clock time among visits that took the step; visits behind each in brackets.</p>
-${reach}
+<p class="muted small">Median clock time among visits that took the step, visits behind each in brackets — clock time, not engaged time.</p>
 </div>
-</div>
-<div class="cols2">
 <div class="block">
 <h3>Actions</h3>
 ${table(["Action", "Visits", "Share"], actionRows, [false, true, true])}
+${untaken.length ? `<p class="muted small">None in this period: ${untaken.map((a) => `${esc(a.label)}${a.seenOnly && a.base < n ? ` (of ${fmt(a.base)} measured)` : ""}`).join(", ")}.</p>` : ""}
+${partner}
+</div>
+</div>
 </div>
 <div class="block">
 <h3>Common paths</h3>
 ${paths.length ? `<ol class="paths">${paths.map(([path, count]) => `<li><span>${esc(path)}</span><b>${fmt(count)}</b></li>`).join("")}</ol>` : empty("No visit has gone past one page yet.")}
 <p class="muted small">${plural(report.singlePage, "visit")} (${pct(report.singlePage, report.visits)}) saw one page only.</p>
-</div>
 </div>`,
   );
 }
@@ -253,12 +343,24 @@ function audience(report: Report) {
 ${compare}
 </div>
 <div class="cols3">
-${ranked("Browser", report.audience.browser, n, { limit: 5 })}
-${ranked("Operating system", report.audience.os, n, { limit: 5 })}
-${ranked("Top cities", report.audience.city, n, { limit: 5 })}
+${ranked("Country", report.audience.country, n, { limit: 5 })}
+${ranked("Region", report.audience.region, n, { limit: 5 })}
+${ranked("City", report.audience.city, n, { limit: 5 })}
 </div>
-<p class="muted small">Location is approximate, from Vercel's IP lookup: country is dependable, city often the nearest metro. Browser and OS were first recorded on Oct 7, 2026.</p>`,
+<dl class="pairs software">
+<div><dt>Browser</dt><dd>${oneLine(report.audience.browser, n)}</dd></div>
+<div><dt>Operating system</dt><dd>${oneLine(report.audience.os, n)}</dd></div>
+</dl>
+<p class="muted small">Location is approximate, from Vercel's IP lookup: country is dependable, region usually right, city often the nearest metro. Browser and OS were first recorded on Oct 7, 2026.</p>`,
   );
+}
+
+/** "Chrome 41% · Safari 30% · Firefox 18% · +2 more" — a ranked list as
+ * one line, where a table would cost the page a row. */
+function oneLine(rows: [string, number][], total: number, limit = 4) {
+  if (!rows.length) return "—";
+  const shown = rows.slice(0, limit).map(([label, count]) => `${esc(label)} ${pct(count, total)}`);
+  return shown.join(" · ") + (rows.length > limit ? ` · <span class="muted">+${rows.length - limit} more</span>` : "");
 }
 
 function appendix(report: Report) {
@@ -275,7 +377,7 @@ function appendix(report: Report) {
     ]);
   if (!rows.length) return "";
   const n = report.visits;
-  const { campaign, source, medium } = report.utm;
+  const { source, medium } = report.utm;
   return sheet(
     6,
     "Appendix",
@@ -285,14 +387,14 @@ function appendix(report: Report) {
 ${table(["Page", "Visits", "Pageviews", "Median engaged", "Typical deepest", "Bottom"], rows, [false, true, true, true, true, true])}
 ${report.pages.length > 15 ? `<p class="muted small">Top 15 of ${fmt(report.pages.length)} pages.</p>` : ""}
 </div>
-${tagged(report) ? `<div class="cols3">
-${ranked("UTM campaign", campaign, n, { limit: 5 })}
+${source.length || medium.length ? `<div class="cols2">
 ${ranked("UTM source", source, n, { limit: 5 })}
 ${ranked("UTM medium", medium, n, { limit: 5 })}
 </div>` : ""}
 <div class="notes muted small">
 <p>A visit is one browser tab's pageviews until it closes or sits idle for 30 minutes. Unique visitors aren't counted. The site owner's browsers and self-identified bots are excluded.</p>
 <p>Engaged time counts only while the page is on screen in the active tab with recent scrolling, clicking, typing or touch. Scroll depth is recorded at 25, 50, 75 and 90% (the bottom). Both started on Oct 7, 2026.</p>
+<p>Homepage section reach, hero editions, Proof notes and the Partner Portal CTA are recorded only by the tracker released on Oct 7, 2026; earlier visits are left out of those figures (shown as measured counts or "Not measured"), never counted as zero.</p>
 <p>Insights are chosen by fixed rules: a rate needs 20 visits behind it; a comparison needs 10 or more visits per side, a 10-point gap, and a significance test that supports it.</p>
 </div>`,
   );
@@ -374,6 +476,8 @@ td:first-child { min-width: 7em; }
 .pairs div { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--line); }
 .pairs dt { color: var(--muted); }
 .pairs dd { margin: 0; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.software { margin-top: 18px; }
+.software dd { white-space: normal; }
 .paths { list-style: none; margin: 0; padding: 0; font-size: 12.5px; }
 .paths li { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px solid var(--line); break-inside: avoid; }
 .paths b { font-variant-numeric: tabular-nums; }

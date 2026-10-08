@@ -664,6 +664,8 @@ export function buildReport(opts: {
         label: ACTIONS[type] as string,
         visits: count((s) => s.did.has(type)),
         base: SEEN_ACTIONS.includes(type) ? seenVisits : n,
+        /** Only recorded by the newer tracker: no base means "not measured". */
+        seenOnly: SEEN_ACTIONS.includes(type),
         hiring: HIRING_ACTIONS.includes(type),
         product: PRODUCT_ACTIONS.includes(type),
       })),
@@ -672,6 +674,7 @@ export function buildReport(opts: {
         label: "Contact page viewed",
         visits: count((s) => s.views.some((v) => v.path === "/contact")),
         base: n,
+        seenOnly: false,
         hiring: false,
         product: false,
       },
