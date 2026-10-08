@@ -371,11 +371,11 @@ function partnerPortal(report: Report) {
 <p class="muted small">The Yahoo case study's "Check out the prototype I built with Claude" link, which opens the prototype in a new tab — a high-intent product interaction, counted apart from resume and contact, once per visit however often it's clicked.${measuredNote(pp.measured, report.visits)}</p>
 <div class="stats">
 <div class="stat"><span class="muted">Visits that clicked</span><b>${fmt(pp.visits)}</b><span class="muted small">${pct(pp.visits, pp.measured)} of ${plural(pp.measured, "measured visit")}</span></div>
-<div class="stat"><span class="muted">Yahoo case-study viewers → clicked</span><b>${pct(pp.viewersClicked, pp.viewers)}</b><span class="muted small">${fmt(pp.viewersClicked)} of ${plural(pp.viewers, "viewer")}</span></div>
+<div class="stat"><span class="muted">Yahoo case-study viewers → clicked</span><b>${pct(pp.viewersClicked, pp.viewers)}</b><span class="muted small">${fmt(pp.viewersClicked)} of ${plural(pp.viewers, "measured viewer")}</span></div>
 <div class="stat"><span class="muted">Opening the case study → click</span><b>${median(pp.toClick)}</b><span class="muted small">${pp.toClick ? `clock time, median of ${plural(pp.toClick.n, "click")}` : "no clicks yet"}</span></div>
 </div>
 ${table(["Device", "Viewers", "Clicked", "Rate"], rows, [false, true, true, true])}
-<p class="muted small">Viewers: visits that opened the Yahoo case study; rate is clicks ÷ viewers. Clicked from: ${from}${placements ? ` · placement: ${placements}` : ""}. Engaged time before the click isn't shown: it's stored per page as one total, so time before and after the click can't be told apart.</p>
+<p class="muted small">Viewers: visits that opened the Yahoo case study while CTA clicks were being recorded — earlier Yahoo viewers aren't in the base; rate is clicks ÷ those viewers. Clicked from: ${from}${placements ? ` · placement: ${placements}` : ""}. Engaged time before the click isn't shown: it's stored per page as one total, so time before and after the click can't be told apart.</p>
 </section>`;
 }
 

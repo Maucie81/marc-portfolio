@@ -920,7 +920,9 @@ function exposureReport(sessions: Session[]) {
 const PARTNER_PORTAL = "/work/yahoo-partner-portal";
 
 /** The Yahoo case study's prototype link: who clicked, from where, and how
- * often its viewers did — over visits whose tracker records the click. */
+ * often its viewers did. Every figure — the click-rate base included — is
+ * over visits whose tracker records the click (`seen`), so Yahoo viewers
+ * from before CTA tracking are never counted as non-clickers. */
 function partnerPortal(sessions: Session[]) {
   const measured = sessions.filter((s) => s.seenTracked);
   const clicks = measured.flatMap((s) => {

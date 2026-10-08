@@ -264,9 +264,9 @@ function behavior(report: Report) {
   );
   const pp = report.partnerPortal;
   const partner = pp.measured
-    ? `<p class="muted small">Partner Portal CTA: ${plural(pp.visits, "visit")} clicked${
-        pp.viewers ? ` — ${pct(pp.viewersClicked, pp.viewers)} of Yahoo case-study viewers (${fmt(pp.viewersClicked)} of ${fmt(pp.viewers)})` : ""
-      }. A high-intent product interaction, counted apart from resume and contact.</p>`
+    ? `<p class="muted small">Partner Portal CTA (high-intent product interaction): ${plural(pp.visits, "visit")} clicked${
+        pp.viewers ? ` — ${pct(pp.viewersClicked, pp.viewers)} of measured Yahoo viewers (${fmt(pp.viewersClicked)} of ${fmt(pp.viewers)}; earlier viewers excluded)` : ""
+      }.</p>`
     : "";
   const paths = report.journeys.slice(0, 5);
   return sheet(
