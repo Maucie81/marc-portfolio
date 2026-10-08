@@ -19,7 +19,7 @@ import {
   depthLabel,
 } from "./format";
 import { insightsFor } from "./insights";
-import { QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type RangeKey, type Report, type TimeStats } from "./metrics";
+import { LIVE_MS, QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type RangeKey, type Report, type TimeStats } from "./metrics";
 
 /**
  * /analytics/report: the same report as the dashboard, laid out to be read
@@ -73,7 +73,7 @@ function summary(report: Report) {
 <p class="eyebrow">marcfavro.com</p>
 <h1>Portfolio analytics</h1>
 <p class="range">${esc(rangeText(report))}</p>
-<p class="muted small">Generated ${esc(timeOf(report.nowMs))} Eastern${live ? ` · ${plural(live, "visit")} active at the time` : ""}</p>
+<p class="muted small">Generated ${esc(timeOf(report.nowMs))} Eastern${live ? ` · ${plural(live, "visit")} recently active (last ${LIVE_MS / 60000} minutes)` : ""}</p>
 </header>
 <h2><span class="num-label">1</span>Executive summary</h2>
 <div class="kpis">${tiles

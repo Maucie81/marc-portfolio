@@ -71,7 +71,7 @@ function kpis(report: Report) {
   const perVisit = n ? (report.sessionPageviews / n).toFixed(1) : "—";
   const { now, recent } = report.live;
   return `<div class="stats">
-<div class="stat"><span class="muted">Active now</span><b>${now ? '<i class="live" aria-hidden="true"></i>' : ""}${fmt(now)}</b><span class="muted small">${fmt(recent)} in the last ${RECENT_MS / 60000} min</span></div>
+<div class="stat"><span class="muted">Recently active</span><b>${now ? '<i class="live" aria-hidden="true"></i>' : ""}${fmt(now)}</b><span class="muted small">last ${LIVE_MS / 60000} min · ${fmt(recent)} in the last ${RECENT_MS / 60000} min</span></div>
 <div class="stat"><span class="muted">Visits</span><b>${fmt(n)}</b></div>
 <div class="stat"><span class="muted">Pageviews</span><b>${fmt(report.pageviews)}</b></div>
 <div class="stat"><span class="muted">Pages per visit</span><b>${perVisit}</b></div>
@@ -625,7 +625,7 @@ function footer(report: Report) {
 ${report.legacyPageviews ? `<p>${plural(report.legacyPageviews, "pageview")} in this period came before visits were tracked (Oct 7). ${report.legacyPageviews === 1 ? "It counts" : "They count"} as pageviews but not toward visits, the funnel, paths or audience.</p>` : ""}
 <p>Engaged time counts only while the page is on screen in the active tab and someone has scrolled, clicked, typed or touched within the last minute — a background tab, a minimised window or a page left unattended doesn't add to it. It's measured from Oct 7, 2026 onward; earlier visits have no time recorded and are left out of every time figure rather than counted as zero.${report.untimedVisits ? ` ${plural(report.untimedVisits, "visit")} in this period ${report.untimedVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
 <p>Scroll depth is how much of a page has been on screen, recorded at 25, 50, 75 and 90% (the bottom) once per visit and page — never mouse movement or anything finer. It's recorded from Oct 7, 2026 onward; earlier visits have none and are left out of depth figures.${report.unscrolledVisits ? ` ${plural(report.unscrolledVisits, "visit")} in this period ${report.unscrolledVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
-<p>Active now: visits with a pageview or action in the last ${LIVE_MS / 60000} minutes, whatever the range. Someone reading one long page without clicking sends neither, so it can undercount.</p>
+<p>Recently active: visits with a pageview or action in the last ${LIVE_MS / 60000} minutes, whatever the range. It isn't a live count of people reading: engaged time is stored as a running total with no time attached, so someone reading one long page without clicking doesn't show here.</p>
 <p>Insights are picked by fixed rules, not a model: a rate needs at least 20 visits behind it, and a comparison needs 10 or more visits on each side, a gap of 10 points or more, and a significance test that supports it.</p>
 <p>Your own browsers are excluded via /owner. Bots that announce themselves are skipped.</p>
 </footer>`;

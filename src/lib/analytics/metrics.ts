@@ -367,7 +367,8 @@ export const RECENT_MS = 30 * 60 * 1000;
 /** Visits with a pageview or action at or after `sinceMs`, from every record
  * read rather than just the range's visits, so a visit that began before
  * the range still counts. Someone reading one long page without clicking
- * sends neither, so this undercounts rather than guesses. */
+ * sends neither — engaged-time checkpoints are stored as running totals
+ * with no time attached — so this is "recently active", not "reading now". */
 function activeSince(visits: Visit[], events: ActionEvent[], sinceMs: number) {
   const sids = new Set<string>();
   for (const v of visits) if (v.sid && Date.parse(v.ts) >= sinceMs) sids.add(v.sid);
