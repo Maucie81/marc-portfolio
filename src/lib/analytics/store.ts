@@ -1,5 +1,5 @@
 import { Redis } from "@upstash/redis";
-import type { ActionType } from "./events";
+import type { EventType } from "./events";
 
 /**
  * Private, first-party visit log behind /analytics. Sits beside Vercel Web
@@ -21,7 +21,9 @@ import type { ActionType } from "./events";
  *
  * Keys:
  *   analytics:visits → sorted set, score = epoch ms, member = Visit (JSON)
- *   analytics:events → sorted set, score = epoch ms, member = ActionEvent
+ *   analytics:events → sorted set, score = epoch ms, member = ActionEvent —
+ *     actions, plus (from the tracker marking pageviews `seen`) what came
+ *     into view: the hero edition, homepage sections, Recent work cards
  *   analytics:engaged:YYYY-MM-DD (UTC day) → hash, "sid|path" → engaged ms
  *     added up from the tracker's checkpoints; nothing finer is kept
  *   analytics:depth:YYYY-MM-DD (UTC day) → hash, "sid|path|milestone" →
@@ -65,16 +67,21 @@ export type Visit = {
   timed?: boolean;
   /** Sent by a tracker that records scroll depth (from Oct 7, 2026). */
   scroll?: boolean;
+  /** Sent by a tracker that records what came into view (hero edition,
+   * homepage sections, Recent work cards) and Proof notes opens. */
+  seen?: boolean;
 };
 
 export type ActionEvent = {
   id: string;
   ts: string;
   sid: string;
-  type: ActionType;
+  /** An action, or something that came into view (events.ts EXPOSURES). */
+  type: EventType;
   /** The page the action happened on. */
   path: string;
-  /** What it pointed at, where that matters (e.g. the case study opened). */
+  /** What it pointed at, where that matters (e.g. the case study opened,
+   * the hero edition or section seen). */
   target: string | null;
 };
 

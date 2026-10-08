@@ -17,6 +17,7 @@ import {
 } from "./format";
 import { insightsFor } from "./insights";
 import {
+  INTERNAL_SOURCE,
   LIVE_MS,
   QUICK_BOTTOM_MS,
   RANGES,
@@ -138,7 +139,7 @@ export function funnelSteps(report: Report) {
 }
 
 function funnel(report: Report) {
-  const source = report.sources.find((s) => s.name !== "Returning or new tab");
+  const source = report.sources.find((s) => s.name !== INTERNAL_SOURCE);
   const journey = report.journeys[0];
   const facts: [string, string][] = [
     ["Top traffic source", source ? `${esc(source.name)} <span class="muted">(${plural(source.visits, "visit")})</span>` : "—"],
@@ -155,6 +156,7 @@ function funnel(report: Report) {
   return `<section>
 <h2>Hiring funnel</h2>
 ${funnelSteps(report)}
+<p class="muted small">Each step counts only visits that reached the one above, so the last step is visits that viewed 2+ case studies and then acted. The Resume, LinkedIn or contact figure at the top counts any visit that did.</p>
 <dl class="facts">${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}</dl>
 </section>`;
 }
@@ -190,7 +192,7 @@ ${table(["Source", "Visits", "Viewed work", "Acted"], rows, [false, true, true, 
 function keyActions(report: Report) {
   const rows = report.actions
     .filter((a) => a.hiring || a.label === "Contact page viewed")
-    .map((a) => [esc(a.label), fmt(a.visits), pct(a.visits, report.visits)]);
+    .map((a) => [esc(a.label), fmt(a.visits), pct(a.visits, a.base)]);
   return `<section>
 <h2>Key actions</h2>
 <p class="muted small">Visits that did each at least once. Everything else is in Behavior.</p>
@@ -200,42 +202,55 @@ ${table(["Action", "Visits", "Share"], rows, [false, true, true])}
 
 // ---------- acquisition ----------
 
-/** Direct, LinkedIn, everything else, and tabs coming back — the split
- * that says whether outreach or the link itself is doing the work. */
+/** Direct, LinkedIn and everything else — the split that says whether
+ * outreach or the link itself is doing the work — with the internal /
+ * new-tab bucket set apart, since it isn't a way in. */
 export function sourceSplit(report: Report) {
   const total = report.visits;
   if (!total) return "";
   const named = (name: string) => report.sources.find((s) => s.name === name)?.visits ?? 0;
   const direct = named("Direct");
   const linkedin = named("LinkedIn");
-  const back = named("Returning or new tab");
-  const parts: [string, number][] = [
-    ["Direct", direct],
-    ["LinkedIn", linkedin],
-    ["Other sites", total - direct - linkedin - back],
-    ["Returning or new tab", back],
+  const internal = named(INTERNAL_SOURCE);
+  const parts: [string, number, string][] = [
+    ["Direct", direct, ""],
+    ["LinkedIn", linkedin, ""],
+    ["Other sites", total - direct - linkedin - internal, ""],
+    [INTERNAL_SOURCE, internal, " aside"],
   ];
   return `<div class="stats split">${parts
-    .map(([label, n]) => `<div class="stat"><span class="muted">${esc(label)}</span><b>${pct(n, total)}</b><span class="muted small">${plural(n, "visit")}</span>${bar(n, total)}</div>`)
+    .map(
+      ([label, n, cls]) =>
+        `<div class="stat${cls}"><span class="muted">${esc(label)}</span><b>${pct(n, total)}</b><span class="muted small">${plural(n, "visit")}${cls ? " · not a source" : ""}</span>${bar(n, total)}</div>`,
+    )
     .join("")}</div>`;
 }
 
 function sources(report: Report) {
   if (!report.sources.length) return `<section><h2>Traffic sources</h2>${empty()}</section>`;
   const max = report.sources[0].visits;
-  const rows = report.sources.map((s) => [
-    `${esc(s.name)}${bar(s.visits, max)}`,
-    fmt(s.visits),
-    pct(s.visits, report.visits),
-    pct(s.caseStudy, s.visits),
-    pct(s.hiring, s.visits),
-    median(s.engaged),
-  ]);
+  // Real sources first; the internal / new-tab bucket last and muted.
+  const ordered = [
+    ...report.sources.filter((s) => s.name !== INTERNAL_SOURCE),
+    ...report.sources.filter((s) => s.name === INTERNAL_SOURCE),
+  ];
+  const rows = ordered.map((s) => {
+    const label = s.name === INTERNAL_SOURCE ? `<span class="muted">${esc(s.name)}</span>` : esc(s.name);
+    return [
+      `${label}${bar(s.visits, max)}`,
+      fmt(s.visits),
+      pct(s.visits, report.visits),
+      pct(s.caseStudy, s.visits),
+      pct(s.hiring, s.visits),
+      median(s.engaged),
+    ];
+  });
   return `<section>
 <h2>Traffic sources</h2>
 <p class="muted small">Where each visit came from: its UTM source if the link had one, otherwise the referring site. Direct means no referrer — typed in, bookmarked, or opened from an app or email that doesn't pass one on. Viewed work: share that opened a case study. Acted: share that went on to resume, LinkedIn or contact. Engaged: median active time per visit, where measured.</p>
 ${sourceSplit(report)}
 ${table(["Source", "Visits", "Share", "Viewed work", "Acted", "Median engaged"], rows, [false, true, true, true, true, true], [false, false, true, false, false, true])}
+<p class="muted small">${esc(INTERNAL_SOURCE)} isn't a source: it's a visit whose first page was reached from this site itself — a page opened in a new tab from the site, or a tab left idle for 30+ minutes and picked up again (which starts a new visit). How that person first found the site was counted in their earlier visit.</p>
 </section>`;
 }
 
@@ -251,12 +266,11 @@ ${ranked("Medium", medium, report.visits)}
 </div></section>`;
 }
 
-/** Acquisition leaves country out, having shown it beside entry pages. */
-function location(report: Report, withCountry = true) {
+function location(report: Report) {
   const n = report.visits;
-  return `<section><h2>${withCountry ? "Location" : "Region and city"} (approximate)</h2><p class="muted small">From IP address lookups by Vercel. Country is dependable; region is usually right; city is often the nearest metro or the internet provider's hub, and VPNs, iCloud Private Relay and company networks can put it somewhere else entirely.</p>
-<div class="${withCountry ? "grid3" : "grid2"}">
-${withCountry ? ranked("Country", report.audience.country, n, { limit: 8 }) : ""}
+  return `<section><h2>Location (approximate)</h2><p class="muted small">From IP address lookups by Vercel. Country is dependable; region is usually right; city is often the nearest metro or the internet provider's hub, and VPNs, iCloud Private Relay and company networks can put it somewhere else entirely.</p>
+<div class="grid3">
+${ranked("Country", report.audience.country, n, { limit: 8 })}
 ${ranked("Region", report.audience.region, n, { limit: 8 })}
 ${ranked("City", report.audience.city, n, { limit: 8 })}
 </div></section>`;
@@ -264,18 +278,104 @@ ${ranked("City", report.audience.city, n, { limit: 8 })}
 
 // ---------- behavior ----------
 
+/** "N of M measured" — for figures only the current tracker records. */
+const measuredNote = (measured: number, of: number, unit = "visit") =>
+  measured < of
+    ? ` ${plural(measured, unit)} of ${fmt(of)} measured; the rest predate this tracking and are left out, not counted as zero.`
+    : "";
+
 function timeToAct(report: Report) {
-  const { toCaseStudy, toHiring } = report.timing;
-  const stat = (label: string, t: TimeStats, none: string) =>
-    `<div class="stat"><span class="muted">${esc(label)}</span><b>${median(t)}</b><span class="muted small">${t ? `median of ${plural(t.n, "visit")} · ${duration(t.mean)} average` : none}</span></div>`;
+  const { toCaseStudy, toHiring, toMeaningful, meaningfulBase, toNextCaseStudy } = report.timing;
+  const stat = (label: string, t: TimeStats, none: string, of = "") =>
+    `<div class="stat"><span class="muted">${esc(label)}</span><b>${median(t)}</b><span class="muted small">${t ? `median of ${plural(t.n, "visit")}${of} · ${duration(t.mean)} average` : none}</span></div>`;
   return `<section>
 <h2>Time to first meaningful action</h2>
-<p class="muted small">Clock time from arriving to the first step, among visits that took it — not engaged time. First case study counts only visits that started on the homepage, so landing straight on a project isn't read as an instant decision.</p>
+<p class="muted small">Clock time between recorded steps, among visits that took the step — not engaged time, and it includes any time the tab sat in the background. Engaged time is stored as a total per page, with no times, so it can't be split at a click. "From the homepage" counts only visits that started there, so landing straight on a project isn't read as an instant decision. Meaningful: a case study, the Contact page, resume, LinkedIn, email, phone, the contact form, Proof notes or the Partner Portal prototype.</p>
 <div class="stats">
 <div class="stat"><span class="muted">Homepage arrivals that open a case study</span><b>${pct(report.homeToCaseStudy, report.startedOnHome)}</b><span class="muted small">${fmt(report.homeToCaseStudy)} of ${plural(report.startedOnHome, "visit")}</span></div>
+${stat("Homepage → first meaningful action", toMeaningful, meaningfulBase ? "no measured homepage visit took one" : "measured from the current tracker on", meaningfulBase ? ` of ${fmt(meaningfulBase)} measured` : "")}
 ${stat("Homepage → first case study", toCaseStudy, "no homepage visit opened one")}
+${stat("First case study → next case study", toNextCaseStudy, "no visit opened a second")}
 ${stat("Arrival → resume, LinkedIn or contact", toHiring, "no visit took one")}
 </div>
+</section>`;
+}
+
+function sectionReach(report: Report) {
+  const x = report.exposure;
+  if (!x.home) {
+    return `<section><h2>Homepage section reach</h2>${empty("Not measured yet: section reach starts with the current tracker.")}</section>`;
+  }
+  const rows = x.sections.map((sec) => [
+    `${esc(sec.label)}${bar(sec.seen, x.home)}`,
+    fmt(sec.seen),
+    pct(sec.seen, x.home),
+    ...sec.byDevice.map((d) => share(d.seen, d.home)),
+  ]);
+  const rw = x.recentWork;
+  return `<section>
+<h2>Homepage section reach</h2>
+<p class="muted small">Homepage visits that had each section meaningfully on screen — at least half of it, or half the window for sections taller than that, for half a second in a visible tab — once per visit, of ${plural(x.home, "homepage visit")} measured. This is the direct measure of whether someone reached the work; homepage scroll depth below is supporting.</p>
+<div class="stats">
+<div class="stat"><span class="muted">Saw Recent work</span><b>${pct(rw.seen, rw.home)}</b><span class="muted small">${fmt(rw.seen)} of ${plural(rw.home, "homepage visit")}</span></div>
+<div class="stat"><span class="muted">Recent work seen → case study opened</span><b>${pct(rw.opened, rw.seen)}</b><span class="muted small">${fmt(rw.opened)} of the ${plural(rw.seen, "visit")} that saw it</span></div>
+</div>
+${table(["Section", "Visits", "Of homepage visits", "Mobile", "Desktop"], rows, [false, true, true, true, true], [false, false, false, true, true])}
+<p class="muted small">Mobile and desktop: share of each device's own homepage visits.${x.home < SMALL_GROUP ? ` <b>Small sample — treat differences as directional.</b>` : ""}</p>
+</section>`;
+}
+
+function cardPerformance(report: Report) {
+  const x = report.exposure;
+  if (!x.home) {
+    return `<section><h2>Recent work card performance</h2>${empty("Not measured yet: card impressions start with the current tracker.")}</section>`;
+  }
+  const max = Math.max(0, ...x.cards.map((c) => c.impressions));
+  const rows = x.cards.map((c) => [
+    `${esc(c.label)}${bar(c.impressions, max)}${c.impressions && c.impressions < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
+    fmt(c.impressions),
+    fmt(c.opens),
+    `<b>${pct(c.opens, c.impressions)}</b>`,
+    ...c.byDevice.map((d) => share(d.opens, d.impressions)),
+    median(c.engaged),
+  ]);
+  return `<section>
+<h2>Recent work card performance</h2>
+<p class="muted small">Impressions: homepage visits that had the card meaningfully on screen (same rule as sections), once per visit. Opened: of those, visits that went on to open that case study. Open rate is opens ÷ impressions — not ÷ all visits — so a card seen less often isn't penalised for it. Engaged: median time on the case study for the visits that opened it.</p>
+${table(
+  ["Project", "Impressions", "Opened", "Open rate", "Mobile", "Desktop", "Median engaged"],
+  rows,
+  [false, true, true, true, true, true, true],
+  [false, false, true, false, true, true, true],
+)}
+</section>`;
+}
+
+function partnerPortal(report: Report) {
+  const pp = report.partnerPortal;
+  if (!pp.measured) {
+    return `<section><h2>Partner Portal CTA</h2>${empty("Not measured yet: Partner Portal clicks start with the current tracker.")}</section>`;
+  }
+  const rows = pp.byDevice.map((d) => [
+    `${esc(d.label)}${d.viewers && d.viewers < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
+    fmt(d.viewers),
+    fmt(d.clicked),
+    pct(d.clicked, d.viewers),
+  ]);
+  const from = pp.pages.length
+    ? pp.pages.map(([page, n]) => `${esc(page)} (${fmt(n)})`).join(", ")
+    : "—";
+  const placements = pp.placements.map(([p, n]) => `${esc(p)} (${fmt(n)})`).join(", ");
+  return `<section>
+<h2>Partner Portal CTA</h2>
+<p class="muted small">The Yahoo case study's "Check out the prototype I built with Claude" link, which opens the prototype in a new tab — a high-intent product interaction, counted apart from resume and contact, once per visit however often it's clicked.${measuredNote(pp.measured, report.visits)}</p>
+<div class="stats">
+<div class="stat"><span class="muted">Visits that clicked</span><b>${fmt(pp.visits)}</b><span class="muted small">${pct(pp.visits, pp.measured)} of ${plural(pp.measured, "measured visit")}</span></div>
+<div class="stat"><span class="muted">Yahoo case-study viewers → clicked</span><b>${pct(pp.viewersClicked, pp.viewers)}</b><span class="muted small">${fmt(pp.viewersClicked)} of ${plural(pp.viewers, "viewer")}</span></div>
+<div class="stat"><span class="muted">Opening the case study → click</span><b>${median(pp.toClick)}</b><span class="muted small">${pp.toClick ? `clock time, median of ${plural(pp.toClick.n, "click")}` : "no clicks yet"}</span></div>
+</div>
+${table(["Device", "Viewers", "Clicked", "Rate"], rows, [false, true, true, true])}
+<p class="muted small">Viewers: visits that opened the Yahoo case study; rate is clicks ÷ viewers. Clicked from: ${from}${placements ? ` · placement: ${placements}` : ""}. Engaged time before the click isn't shown: it's stored per page as one total, so time before and after the click can't be told apart.</p>
 </section>`;
 }
 
@@ -294,8 +394,8 @@ function homeReach(report: Report) {
         .join("")}</ol>`
     : empty("No homepage scroll data in this period yet.");
   return `<section>
-<h2>Homepage reach</h2>
-<p class="muted small">How far down the homepage visits scrolled, of the ${d ? plural(d.n, "visit") : "visits"} with scroll depth recorded. Sections aren't tracked one by one, so this is the closest measure of how many get to Recent work and below.</p>
+<h2>Homepage scroll depth</h2>
+<p class="muted small">Supporting measure: how far down the homepage visits scrolled, of the ${d ? plural(d.n, "visit") : "visits"} with scroll depth recorded. Section reach above says which sections were actually on screen.</p>
 ${body}
 </section>`;
 }
@@ -308,19 +408,25 @@ function journeys(report: Report) {
     : empty("No visit has gone past one page yet.");
   return `<section>
 <h2>Common paths</h2>
-<p class="muted small">The ${plural(multi, "visit")} with more than one step, counting resume, LinkedIn and contact actions as steps. ${plural(report.singlePage, "visit")} (${pct(report.singlePage, report.visits)}) saw one page only.</p>
+<p class="muted small">The ${plural(multi, "visit")} with more than one step, counting resume, LinkedIn, contact, Proof notes and Partner Portal actions as steps. ${plural(report.singlePage, "visit")} (${pct(report.singlePage, report.visits)}) saw one page only.</p>
 ${list}
 </section>`;
 }
 
 function actions(report: Report) {
-  const row = (a: Report["actions"][number]) => [esc(a.label), fmt(a.visits), pct(a.visits, report.visits)];
+  const row = (a: Report["actions"][number]) => [
+    `${esc(a.label)}${a.base < report.visits ? ` <span class="muted small">of ${plural(a.base, "measured visit")}</span>` : ""}`,
+    fmt(a.visits),
+    pct(a.visits, a.base),
+  ];
   const hiring = report.actions.filter((a) => a.hiring).map(row);
-  const other = report.actions.filter((a) => !a.hiring).map(row);
+  const product = report.actions.filter((a) => a.product).map(row);
+  const other = report.actions.filter((a) => !a.hiring && !a.product).map(row);
   return `<section>
 <h2>Actions</h2>
-<p class="muted small">Visits that did each at least once.</p>
+<p class="muted small">Visits that did each at least once; repeats in a visit count once. Share is of all visits, except where an action is only recorded by the current tracker — then it's of the visits that tracker recorded.</p>
 ${table(["Resume, LinkedIn, contact", "Visits", "Share"], hiring, [false, true, true])}
+${table(["High-intent product interaction", "Visits", "Share"], product, [false, true, true])}
 ${table(["Exploring", "Visits", "Share"], other, [false, true, true])}
 </section>`;
 }
@@ -372,6 +478,39 @@ function caseStudyDepth(report: Report) {
 <h2>Scroll depth by case study</h2>
 <p class="muted small">Share of visits that opened the case study and scrolled at least that far; the bar is the bottom (90%). Measured: visits with scroll depth recorded, of all that opened it — depth is recorded from Oct 7, 2026, and earlier visits are left out rather than counted as zero. Scrolling far isn't the same as reading, so read it with engaged time: a visit that reached the bottom with under ${quick}s of engaged time on the page most likely skimmed or jumped.</p>
 ${rows.length ? table(["Case study", "Measured", "25%", "50%", "75%", "Bottom", `Bottom in <${quick}s`], rows, [false, true, true, true, true, true, true], [false, false, true, false, true, false, true]) : empty("No case-study scroll data in this period yet.")}
+</section>`;
+}
+
+function heroPerformance(report: Report) {
+  const x = report.exposure;
+  if (!x.heroShown) {
+    return `<section><h2>Hero performance</h2>${empty(x.home ? "No hero edition recorded in this period yet." : "Not measured yet: hero editions are recorded from the current tracker on.")}</section>`;
+  }
+  const small = x.heroes.some((h) => h.stats.visits < SMALL_GROUP);
+  const rows = x.heroes.map((h) => {
+    const g = h.stats;
+    return [
+      `${esc(h.label)}${h.firstVisitEdition ? ' <span class="tag">first visit</span>' : ""}${g.visits < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
+      fmt(g.visits),
+      pct(g.visits, x.heroShown),
+      share(g.viewedOne, g.visits),
+      share(g.viewedTwo, g.visits),
+      median(g.engaged),
+      share(g.hiring, g.visits),
+      share(g.caseStudy90, g.caseStudyOpens),
+      h.firstCaseStudy ? `${esc(h.firstCaseStudy[0])} <span class="muted">(${fmt(h.firstCaseStudy[1])})</span>` : "—",
+    ];
+  });
+  return `<section>
+<h2>Hero performance</h2>
+<p class="muted small">The homepage hero edition each visit had on screen (recorded once per visit, by edition, when at least half of it was in view for half a second) and what those visits went on to do. Shown and Share are out of the ${plural(x.heroShown, "homepage visit")} with a hero recorded${x.heroShown < x.home ? `, of ${fmt(x.home)} measured — the rest jumped or scrolled past it first` : ""}. Opened work: opened a case study. Engaged: median per visit. Acted: reached resume, LinkedIn or contact. Bottom: case-study opens, by those visits, scrolled to the end. Hero 2 is every first-time visitor's edition (later visits draw any of six), so its visitors aren't a like-for-like sample. Nothing here ranks the editions.</p>
+${table(
+  ["Hero", "Shown", "Share", "Opened work", "Opened 2+", "Engaged", "Acted", "Bottom", "Most common first case study"],
+  rows,
+  [false, true, true, true, true, true, true, true, false],
+  [false, false, true, false, true, true, false, true, true],
+)}
+${small ? `<p class="muted small"><b>Small sample — treat differences as directional.</b> Editions under ${SMALL_GROUP} visits are marked.</p>` : ""}
 </section>`;
 }
 
@@ -438,6 +577,8 @@ function devices(report: Report) {
     ["A way to get in touch", ...groups.map((g) => share(g.contact, g.visits))],
     ["Case-study opens scrolled to 50%", ...groups.map((g) => share(g.caseStudy50, g.caseStudyOpens))],
     ["Case-study opens scrolled to the bottom", ...groups.map((g) => share(g.caseStudy90, g.caseStudyOpens))],
+    ["Saw Recent work (of homepage visits)", ...groups.map((g) => share(g.recentWork.seen, g.recentWork.home))],
+    ["Saw Recent work → opened a case study", ...groups.map((g) => share(g.recentWork.opened, g.recentWork.seen))],
     ["Median time to first case study", ...groups.map((g) => timeCell(g.toCaseStudy))],
     ["Median time to resume, LinkedIn or contact", ...groups.map((g) => timeCell(g.toHiring))],
     ["Most viewed case study", ...groups.map(caseStudyCell)],
@@ -502,7 +643,7 @@ function devices(report: Report) {
 ${headline}
 ${funnels}
 <h3>Side by side</h3>
-<p class="muted small">Times are clock time from arrival, with the number of visits behind each in brackets.</p>
+<p class="muted small">Times are clock time from arrival, with the number of visits behind each in brackets. Recent work rows count only homepage visits from the current tracker.</p>
 ${compare}
 <h3>Case studies by device</h3>
 <p class="muted small">Went on: opened a different case study afterwards in the same visit. Then acted: reached resume, LinkedIn or contact during the visit.</p>
@@ -519,16 +660,16 @@ const place = (v: { city: string | null; region: string | null; country: string 
 function recentVisits(report: Report) {
   const rows = report.recentVisits.map((s) => [
     esc(timeOf(s.start)),
-    `${esc(s.journey.join(" → "))}${s.hiring ? ' <span class="tag">acted</span>' : ""}`,
-    esc(s.source),
     esc(place(s.first)),
     esc(s.first.device ?? "—"),
+    esc(s.source),
+    `${esc(s.journey.join(" → "))}${s.hiring ? ' <span class="tag">acted</span>' : ""}`,
     s.engagedMs === null ? "—" : duration(s.engagedMs),
   ]);
   return `<section>
 <h2>Recent visits</h2>
-<p class="muted small">Newest first, with each visit's path (resume, LinkedIn and contact count as steps). Acted: reached one of them.</p>
-${rows.length ? table(["Started", "Path", "Source", "Location", "Device", "Engaged"], rows, [false, false, false, false, false, true], [false, false, false, true, true, true]) : empty()}
+<p class="muted small">Newest first, with each visit's path (resume, LinkedIn, contact, Proof notes and Partner Portal count as steps). Acted: reached resume, LinkedIn or contact.</p>
+${rows.length ? table(["Started", "Location", "Device", "Source", "Path", "Engaged"], rows, [false, false, false, false, false, true], [false, true, true, true, false, false], ["fit", "", "fit", "fit", "grow", "fit"]) : empty()}
 ${report.visits > rows.length ? `<p class="muted small">Latest ${rows.length} of ${fmt(report.visits)}.</p>` : ""}
 </section>`;
 }
@@ -549,16 +690,14 @@ ${rows.length ? table(["Time", "Action", "On page", "Detail"], rows, [], [false,
 function recentPageviews(report: Report) {
   const rows = report.recent.map((v) => [
     esc(timeOf(v.ts)),
-    esc(pageLabel(v.path)),
-    esc(sourceOf(v)),
-    esc(v.city ?? "Unknown"),
-    esc(v.region ?? "—"),
-    esc(v.country ?? "—"),
+    esc(place(v)),
     esc(v.device ?? "—"),
+    esc(sourceOf(v)),
+    esc(pageLabel(v.path)),
   ]);
   return `<section>
 <h2>Recent pageviews</h2>
-${rows.length ? `<div class="recent">${table(["Time", "Page", "Source", "City", "Region", "Country", "Device"], rows, [], [false, false, false, false, true, true, true])}</div>${report.pageviews > 50 ? `<p class="muted small">Latest 50 of ${fmt(report.pageviews)}.</p>` : ""}` : empty()}
+${rows.length ? `${table(["Time", "Location", "Device", "Source", "Page"], rows, [], [false, true, true, false, false], ["fit", "", "fit", "fit", "grow"])}${report.pageviews > 50 ? `<p class="muted small">Latest 50 of ${fmt(report.pageviews)}.</p>` : ""}` : empty()}
 </section>`;
 }
 
@@ -584,22 +723,24 @@ ${keyActions(report)}
 ${sources(report)}
 <div class="grid2">
 ${ranked("Entry pages", report.entries, n, { note: "The first page of each visit.", heading: 2 })}
-${ranked("Top countries", report.audience.country, n, { limit: 8, heading: 2 })}
 </div>
-${utm(report)}
-${location(report, false)}`,
+${utm(report)}`,
 
     behavior: `
 ${timeToAct(report)}
+${sectionReach(report)}
+${cardPerformance(report)}
+${actions(report)}
+${partnerPortal(report)}
 <div class="grid2">
 ${journeys(report)}
 ${homeReach(report)}
-</div>
-${actions(report)}`,
+</div>`,
 
     content: `
 ${caseStudies(report)}
 ${caseStudyDepth(report)}
+${heroPerformance(report)}
 ${pages(report)}`,
 
     audience: `
@@ -625,6 +766,7 @@ function footer(report: Report) {
 ${report.legacyPageviews ? `<p>${plural(report.legacyPageviews, "pageview")} in this period came before visits were tracked (Oct 7). ${report.legacyPageviews === 1 ? "It counts" : "They count"} as pageviews but not toward visits, the funnel, paths or audience.</p>` : ""}
 <p>Engaged time counts only while the page is on screen in the active tab and someone has scrolled, clicked, typed or touched within the last minute — a background tab, a minimised window or a page left unattended doesn't add to it. It's measured from Oct 7, 2026 onward; earlier visits have no time recorded and are left out of every time figure rather than counted as zero.${report.untimedVisits ? ` ${plural(report.untimedVisits, "visit")} in this period ${report.untimedVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
 <p>Scroll depth is how much of a page has been on screen, recorded at 25, 50, 75 and 90% (the bottom) once per visit and page — never mouse movement or anything finer. It's recorded from Oct 7, 2026 onward; earlier visits have none and are left out of depth figures.${report.unscrolledVisits ? ` ${plural(report.unscrolledVisits, "visit")} in this period ${report.unscrolledVisits === 1 ? "predates" : "predate"} it.` : ""}</p>
+<p>Seen: the homepage hero edition, homepage sections and Recent work cards count once per visit, when at least half of the element (or half the window, for anything taller) has been on screen for half a second in a visible tab — nothing about scrolling or position is kept. Proof notes opened is the notes panel opening; Partner Portal CTA is a click on the prototype link in the Yahoo case study. These four are recorded only by the current tracker: earlier visits are left out of them (shown as "measured" counts), never counted as zero.</p>
 <p>Recently active: visits with a pageview or action in the last ${LIVE_MS / 60000} minutes, whatever the range. It isn't a live count of people reading: engaged time is stored as a running total with no time attached, so someone reading one long page without clicking doesn't show here.</p>
 <p>Insights are picked by fixed rules, not a model: a rate needs at least 20 visits behind it, and a comparison needs 10 or more visits on each side, a gap of 10 points or more, and a significance test that supports it.</p>
 <p>Your own browsers are excluded via /owner. Bots that announce themselves are skipped.</p>
@@ -698,6 +840,7 @@ code { font-size: 13px; overflow-wrap: anywhere; }
 .stat .muted.small { display: block; }
 .split { margin: 16px 0 20px; }
 .split .stat b { font-size: 22px; }
+.stat.aside { background: transparent; border: 1px dashed var(--line); }
 .live { display: inline-block; width: 10px; height: 10px; margin: 0 8px 4px 0; border-radius: 50%; background: var(--live); vertical-align: middle; }
 .insights { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
 .insights li { padding: 10px 14px; border-left: 3px solid var(--series); background: var(--raised); border-radius: 0 8px 8px 0; }
@@ -714,7 +857,9 @@ th { font-weight: 600; color: var(--muted); font-size: 13px; }
 td { overflow-wrap: break-word; }
 td:first-child { min-width: 8em; }
 th:last-child, td:last-child { padding-right: 0; }
-.recent td { white-space: nowrap; overflow-wrap: normal; }
+/* Log tables: compact columns hug their content, the path takes the rest. */
+.fit { white-space: nowrap; width: 1%; }
+.grow { min-width: 12em; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .track { display: block; height: 6px; margin-top: 5px; background: var(--track); border-radius: 0 3px 3px 0; overflow: hidden; }
 .fill { display: block; height: 100%; background: var(--series); border-radius: 0 3px 3px 0; }
@@ -755,7 +900,7 @@ footer p { max-width: 720px; }
 @media (max-width: 560px) {
   .opt { display: none; }
   td:first-child { min-width: 6.5em; }
-  .recent td { white-space: normal; }
+  .grow { min-width: 0; }
   .compare td:not(:first-child), .compare th:not(:first-child) { min-width: 4.5em; }
 }
 @media print {

@@ -85,6 +85,9 @@ export async function POST(request: Request) {
       ...(body.timed === true ? { timed: true } : {}),
       // From a tracker that also records scroll depth (see /api/depth).
       ...(body.scroll === true ? { scroll: true } : {}),
+      // From a tracker that also records what came into view and Proof
+      // notes opens (see /api/event).
+      ...(body.seen === true ? { seen: true } : {}),
     });
   } catch (err) {
     // A storage hiccup costs one data point, never the visitor's page.

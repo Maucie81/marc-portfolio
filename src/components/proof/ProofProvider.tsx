@@ -10,6 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { trackAction } from "@/lib/analytics/client";
 import { describeClick } from "@/lib/proof/anchor";
 import type { ProofPin, PublicPin } from "@/lib/proof/types";
 
@@ -161,6 +162,13 @@ export function ProofProvider({ children }: { children: React.ReactNode }) {
     // `pins` is intentionally not a dep: a fresh post shouldn't re-run this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, loaded]);
+
+  // /analytics: the panel opening is "Proof notes opened" — from the
+  // trigger or anywhere else — counted once per visit however often it's
+  // toggled (trackAction dedupes).
+  useEffect(() => {
+    if (panelOpen) trackAction("proof_notes");
+  }, [panelOpen]);
 
   const openPanel = useCallback(() => setPanelOpen(true), []);
   const closePanel = useCallback(() => setPanelOpen(false), []);

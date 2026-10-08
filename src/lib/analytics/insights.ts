@@ -1,6 +1,6 @@
 import { ACTIONS } from "./events";
 import { duration } from "./format";
-import { QUICK_BOTTOM_MS, SMALL_GROUP, shortLabel, type Report } from "./metrics";
+import { INTERNAL_SOURCE, QUICK_BOTTOM_MS, SMALL_GROUP, shortLabel, type Report } from "./metrics";
 
 /**
  * The few observations worth reading first, picked by fixed rules from a
@@ -83,7 +83,7 @@ const RULES: Rule[] = [
 
   // Which source sends visits that act (or, failing that, that open work).
   (r) => {
-    const big = r.sources.filter((s) => s.name !== "Returning or new tab" && s.visits >= SMALL_GROUP);
+    const big = r.sources.filter((s) => s.name !== INTERNAL_SOURCE && s.visits >= SMALL_GROUP);
     for (const [key, what] of [
       ["hiring", "reach resume, LinkedIn or contact"],
       ["caseStudy", "open a case study"],

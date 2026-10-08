@@ -157,8 +157,9 @@ export type Block =
       heading: string;
       body: string[];
       stats: { value: string; label: string }[];
-      /** Small filled-accent link pill under the copy (Figma 837:64875). */
-      cta?: { text: string; href: string };
+      /** Small filled-accent link pill under the copy (Figma 837:64875).
+       * `track` is its /analytics action (events.ts ACTIONS). */
+      cta?: { text: string; href: string; track?: string };
       /** Placeholder caption for the closing image slot (Figma's Outcome
        * frame pairs the copy with its own media placeholder). */
       caption?: string;
@@ -615,6 +616,7 @@ export const blocks: Block[] = [
     cta: {
       text: "Check out the prototype I built with Claude",
       href: "https://ypp-prototype.vercel.app/overview",
+      track: "partner_portal",
     },
   },
 ];

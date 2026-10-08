@@ -46,10 +46,16 @@ export function bar(part: number, whole: number) {
 export const empty = (text = "Nothing in this period yet.") => `<p class="muted">${esc(text)}</p>`;
 
 /** `optional` columns drop out on phone widths, where they'd squeeze the
- * labels instead. */
-export function table(head: string[], rows: string[][], numeric: boolean[], optional: boolean[] = []) {
+ * labels instead; `extra` adds a class per column (e.g. "fit", "grow"). */
+export function table(
+  head: string[],
+  rows: string[][],
+  numeric: boolean[],
+  optional: boolean[] = [],
+  extra: string[] = [],
+) {
   const cls = (i: number) => {
-    const names = [numeric[i] && "num", optional[i] && "opt"].filter(Boolean).join(" ");
+    const names = [numeric[i] && "num", optional[i] && "opt", extra[i]].filter(Boolean).join(" ");
     return names ? ` class="${names}"` : "";
   };
   const th = head.map((h, i) => `<th${cls(i)}>${esc(h)}</th>`).join("");

@@ -21,7 +21,10 @@ import {
 
 /* Homepage · Figma Portfolio-Playground 215:205616 (approved redesign).
    Order: hero → 01 Recent work → 02 Additional work → 03 My personal
-   reference library → 04 Career history + skills → 05 Contact. */
+   reference library → 04 Career history + skills → 05 Contact.
+   data-track-hero / data-track-section are /analytics hooks: the hero
+   edition and section reach are recorded once seen (lib/analytics/
+   exposure.ts). They change nothing on screen. */
 
 /* The content column, applied per band instead of once on <main>.
    w-[min(1376px,...)], centered (mx-auto): 1376 = the 1440 design width
@@ -113,6 +116,7 @@ export default function Home() {
         id="hero"
         aria-label="Introduction"
         data-reveal="load"
+        data-track-hero
         className="mx-auto scroll-mt-[52px] bg-white lg:w-[min(1376px,calc(100%-4rem))] lg:scroll-mt-0 lg:px-0 lg:pt-[42px]"
       >
         <HomepageHero />
@@ -125,6 +129,7 @@ export default function Home() {
         <section
           id="work"
           aria-labelledby="work-title"
+          data-track-section="recent-work"
           className={`${SHELL} sec relative pb-[60px] pt-10 lg:pb-[100px]`}
         >
           <SectionRail dots={3} flush reveal />
@@ -178,6 +183,7 @@ export default function Home() {
         <section
           id="interests"
           aria-labelledby="library-title"
+          data-track-section="reference-library"
           style={{ "--lib-f": "clamp(2.75rem, 5.56vw, 5rem)" } as CSSProperties}
           className={`${SHELL} sec relative pb-[60px] pt-[50px] lg:pb-[77px] lg:pt-11`}
         >
@@ -240,6 +246,7 @@ export default function Home() {
         <section
           id="experience"
           aria-labelledby="experience-title"
+          data-track-section="experience"
           className={`${SHELL} sec relative py-[50px] lg:py-[100px]`}
         >
           <SectionRail dots={3} flush reveal />
@@ -259,7 +266,7 @@ export default function Home() {
       {/* Figma 297:301541 — the ink band, white type, the halftone panel
           behind the lockup; the copy starts at the rail column's 64px edge
           and the credit line sits under the panel. */}
-      <footer id="contact" style={bandFill("var(--ink-deep)")}>
+      <footer id="contact" data-track-section="contact" style={bandFill("var(--ink-deep)")}>
         {/* The footer panel sits at half the other sections' side inset
             (12px on phones, 24px to lg), with its copy padded back in line
             with them. */}

@@ -1,10 +1,16 @@
+import { HERO_DEFAULT } from "@/lib/hero-editions";
 import { additionalWork, projects } from "@/lib/home";
 import { pageLabel } from "@/lib/page-titles";
 import {
   ACTIONS,
   CONTACT_ACTIONS,
   HIRING_ACTIONS,
+  PRODUCT_ACTIONS,
+  SECTIONS,
+  isAction,
   type ActionType,
+  type ExposureType,
+  type SectionId,
 } from "./events";
 import type { ActionEvent, Depth, Engaged, Visit } from "./store";
 
@@ -21,7 +27,11 @@ import type { ActionEvent, Depth, Engaged, Visit } from "./store";
  *
  * Engaged time is only known for visits whose tracker measured it (pageviews
  * marked `timed`, from Oct 7, 2026); earlier visits are left out of every
- * time figure rather than counted as zero.
+ * time figure rather than counted as zero. The same goes for what came into
+ * view (hero edition, homepage sections, Recent work cards) and for Proof
+ * notes and Partner Portal clicks: only visits whose tracker records them
+ * (pageviews marked `seen`) are in those figures, so a visit from before
+ * they existed is "not measured", never "didn't happen".
  */
 
 export const TIME_ZONE = "America/New_York"; // Marc's — "Today" and the trend buckets
@@ -154,6 +164,13 @@ const PUBLIC_CASE_STUDIES = [
   ...additionalWork.filter((p) => !p.comingSoon).map((p) => p.href),
 ].filter((href): href is string => Boolean(href && isCaseStudy(href)));
 
+/** The "source" of a visit whose first page was reached from this site
+ * itself: a page opened in a new tab from the site, or a tab left idle 30+
+ * minutes and picked up again (client.ts starts a new visit, with the site
+ * as its referrer). Not how anyone found the site — a referrer state, kept
+ * apart from real sources in the dashboard. */
+export const INTERNAL_SOURCE = "Internal / new tab";
+
 // Hosts that mean "came from another page on this site".
 const SITE_HOST = /(^|\.)marcfavro\.com$|^localhost$|^127\.0\.0\.1$|\.vercel\.app$/;
 
@@ -204,10 +221,17 @@ export function countryName(code: string | null | undefined): string {
 
 // ---------- visits ----------
 
+type Action = ActionEvent & { type: ActionType };
+
 export type Session = {
   start: number;
   views: Visit[];
-  actions: ActionEvent[];
+  actions: Action[];
+  /** What came into view (hero, sections, cards), in order. */
+  exposures: ActionEvent[];
+  /** Recorded by a tracker that records exposures, Proof notes and Partner
+   * Portal clicks (pageviews marked `seen`). */
+  seenTracked: boolean;
   first: Visit;
   source: string;
   caseStudies: Set<string>;
@@ -232,14 +256,19 @@ function sessionize(
   depth: Depth[],
   startMs: number,
 ) {
-  const bySid = new Map<string, { views: Visit[]; actions: ActionEvent[] }>();
+  const bySid = new Map<string, { views: Visit[]; actions: Action[]; exposures: ActionEvent[] }>();
   for (const v of visits) {
     if (!v.sid) continue;
-    const s = bySid.get(v.sid) ?? { views: [], actions: [] };
+    const s = bySid.get(v.sid) ?? { views: [], actions: [], exposures: [] };
     s.views.push(v);
     bySid.set(v.sid, s);
   }
-  for (const e of events) bySid.get(e.sid)?.actions.push(e);
+  for (const e of events) {
+    const s = bySid.get(e.sid);
+    if (!s) continue;
+    if (isAction(e.type)) s.actions.push(e as Action);
+    else s.exposures.push(e);
+  }
   const engagedBySid = new Map<string, Map<string, number>>();
   for (const { sid, path, ms } of engaged) {
     const pages = engagedBySid.get(sid) ?? new Map<string, number>();
@@ -254,7 +283,7 @@ function sessionize(
   }
 
   const sessions: Session[] = [];
-  for (const [sid, { views, actions }] of bySid) {
+  for (const [sid, { views, actions, exposures }] of bySid) {
     const start = Date.parse(views[0].ts);
     if (start < startMs) continue;
     const did = new Set(actions.map((a) => a.type));
@@ -264,10 +293,10 @@ function sessionize(
       start,
       views,
       actions,
+      exposures,
+      seenTracked: views.some((v) => v.seen),
       first: views[0],
-      // A visit that starts with a move inside the site is a tab coming back
-      // after 30+ minutes away, or a page opened in a new tab.
-      source: isInternal(views[0]) ? "Returning or new tab" : sourceOf(views[0]),
+      source: isInternal(views[0]) ? INTERNAL_SOURCE : sourceOf(views[0]),
       caseStudies: new Set(views.map((v) => v.path).filter(isCaseStudy)),
       did,
       hiring: HIRING_ACTIONS.some((t) => did.has(t)),
@@ -289,10 +318,13 @@ const JOURNEY_ACTION_LABELS: Partial<Record<ActionType, string>> = {
   email: "Email",
   phone: "Phone",
   contact_form: "Contact form sent",
+  proof_notes: "Proof notes",
+  partner_portal: "Partner Portal prototype",
 };
 
-/** Pages in order, with resume / LinkedIn / contact actions as steps of
- * their own; repeats in a row collapse, long paths end in "…". */
+/** Pages in order, with resume / LinkedIn / contact, Proof notes and
+ * Partner Portal actions as steps of their own; repeats in a row collapse,
+ * long paths end in "…". */
 function journeyOf(s: Session): string[] {
   const steps = [
     ...s.views.map((v) => ({ t: Date.parse(v.ts), label: shortLabel(v.path) })),
@@ -357,7 +389,80 @@ function toFirstHiring(s: Session): number | null {
   return times.length ? Math.max(0, Math.min(...times) - s.start) : null;
 }
 
+/** Steps that count as acting on the portfolio: opening a case study,
+ * reaching Contact (the page), and these. */
+const MEANINGFUL_ACTIONS: ActionType[] = [...HIRING_ACTIONS, "proof_notes", "partner_portal"];
+
+/** Wall-clock time from a homepage arrival to the visit's first meaningful
+ * step — a case study, the Contact page, resume, LinkedIn, email, phone,
+ * the contact form, Proof notes or the Partner Portal prototype. Only for
+ * visits whose tracker records Proof notes and Partner Portal clicks, so
+ * an older visit can't look slower for want of them. */
+function toFirstMeaningful(s: Session): number | null {
+  if (s.first.path !== "/" || !s.seenTracked) return null;
+  const times = [
+    ...s.views.filter((v) => isCaseStudy(v.path) || v.path === "/contact").map((v) => Date.parse(v.ts)),
+    ...s.actions.filter((a) => MEANINGFUL_ACTIONS.includes(a.type)).map((a) => Date.parse(a.ts)),
+  ].filter((t) => t >= s.start);
+  return times.length ? Math.min(...times) - s.start : null;
+}
+
+/** Wall-clock time from the first case study a visit opened to the next
+ * different one; null if it opened only one. Engaged time can't be split
+ * this way — it's stored per page as a running total, with no time — so
+ * this includes any time the tab spent in the background. */
+function toNextCaseStudy(s: Session): number | null {
+  const i = s.views.findIndex((v) => isCaseStudy(v.path));
+  if (i < 0) return null;
+  const next = s.views.slice(i + 1).find((v) => isCaseStudy(v.path) && v.path !== s.views[i].path);
+  return next ? Date.parse(next.ts) - Date.parse(s.views[i].ts) : null;
+}
+
 const known = (values: (number | null)[]) => values.filter((v): v is number => v !== null);
+
+/** Actions only the newer tracker (pageviews marked `seen`) records. */
+const SEEN_ACTIONS: ActionType[] = ["proof_notes", "partner_portal"];
+
+// ---------- what came into view ----------
+
+/** An exposure and the pageview it led to can reach the server out of
+ * order (the click that records a card also navigates), so "after" allows
+ * this much slack. */
+const ORDER_SLACK = 5000;
+
+const isHome = (v: Visit) => v.path === "/";
+
+/** When the visit first had this in view, or null. */
+function seenAt(s: Session, type: ExposureType, target: string): number | null {
+  const e = s.exposures.find((x) => x.type === type && x.target === target);
+  return e ? Date.parse(e.ts) : null;
+}
+
+/** Opened `path` (or, without one, any case study) at or after `t`. */
+function openedAfter(s: Session, t: number, path?: string) {
+  return s.views.some(
+    (v) => (path ? v.path === path : isCaseStudy(v.path)) && Date.parse(v.ts) >= t - ORDER_SLACK,
+  );
+}
+
+/** Homepage visits whose tracker records what came into view — the base
+ * for hero, section and card figures. */
+const exposureEligible = (s: Session) => s.seenTracked && s.views.some(isHome);
+
+/** Saw Recent work, and how many of those went on to open a case study. */
+function recentWorkReach(group: Session[]) {
+  const home = group.filter(exposureEligible);
+  const saw = home.flatMap((s) => {
+    const t = seenAt(s, "section", "recent-work");
+    return t === null ? [] : [{ s, t }];
+  });
+  return { home: home.length, seen: saw.length, opened: saw.filter(({ s, t }) => openedAfter(s, t)).length };
+}
+
+const DEVICES = [
+  ["Mobile", "mobile"],
+  ["Desktop", "desktop"],
+] as const;
 
 // ---------- live ----------
 
@@ -372,7 +477,8 @@ export const RECENT_MS = 30 * 60 * 1000;
 function activeSince(visits: Visit[], events: ActionEvent[], sinceMs: number) {
   const sids = new Set<string>();
   for (const v of visits) if (v.sid && Date.parse(v.ts) >= sinceMs) sids.add(v.sid);
-  for (const e of events) if (Date.parse(e.ts) >= sinceMs) sids.add(e.sid);
+  // Actions only: something coming into view isn't an action.
+  for (const e of events) if (isAction(e.type) && Date.parse(e.ts) >= sinceMs) sids.add(e.sid);
   return sids.size;
 }
 
@@ -507,6 +613,7 @@ export function buildReport(opts: {
 
   const viewedOne = count((s) => s.caseStudies.size >= 1);
   const viewedTwo = count((s) => s.caseStudies.size >= 2);
+  const seenVisits = count((s) => s.seenTracked);
 
   return {
     range,
@@ -524,7 +631,9 @@ export function buildReport(opts: {
       { label: "Viewed a case study", count: viewedOne },
       { label: "Viewed 2+ case studies", count: viewedTwo },
       {
-        label: "…and opened resume, LinkedIn or contact",
+        // Only visits that reached the step above — not the same as the
+        // overall "Resume, LinkedIn or contact" count, which is any visit.
+        label: "Viewed 2+, then opened resume, LinkedIn or contact",
         count: count((s) => s.caseStudies.size >= 2 && s.hiring),
       },
     ],
@@ -547,18 +656,27 @@ export function buildReport(opts: {
       campaign: tally(sessions, (s) => s.first.utmCampaign),
     },
     journeys,
+    // `base` is what a share is out of: every visit, or — for actions only
+    // the newer tracker records — the visits it recorded.
     actions: [
       ...(Object.keys(ACTIONS) as ActionType[]).map((type) => ({
-        label: ACTIONS[type],
+        type: type as ActionType | null,
+        label: ACTIONS[type] as string,
         visits: count((s) => s.did.has(type)),
+        base: SEEN_ACTIONS.includes(type) ? seenVisits : n,
         hiring: HIRING_ACTIONS.includes(type),
+        product: PRODUCT_ACTIONS.includes(type),
       })),
       {
+        type: null,
         label: "Contact page viewed",
         visits: count((s) => s.views.some((v) => v.path === "/contact")),
+        base: n,
         hiring: false,
+        product: false,
       },
     ],
+    seenVisits,
     audience: {
       country: tally(sessions, (s) => countryName(s.first.country)),
       device: tally(sessions, (s) =>
@@ -588,14 +706,20 @@ export function buildReport(opts: {
         hiring: s.hiring,
       })),
     recentActions: opts.events
-      .filter((e) => Date.parse(e.ts) >= startMs)
+      .filter((e): e is Action => isAction(e.type) && Date.parse(e.ts) >= startMs)
       .slice(-30)
       .reverse()
       .map((e) => ({ ts: e.ts, label: ACTIONS[e.type] ?? e.type, path: e.path, target: e.target })),
     timing: {
       toCaseStudy: timeStats(known(sessions.map(toFirstCaseStudy))),
       toHiring: timeStats(known(sessions.map(toFirstHiring))),
+      toMeaningful: timeStats(known(sessions.map(toFirstMeaningful))),
+      // Of the measured homepage arrivals, how many took no meaningful step.
+      meaningfulBase: count((s) => s.first.path === "/" && s.seenTracked),
+      toNextCaseStudy: timeStats(known(sessions.map(toNextCaseStudy))),
     },
+    exposure: exposureReport(sessions),
+    partnerPortal: partnerPortal(sessions),
     live: {
       now: activeSince(opts.visits, opts.events, nowMs - LIVE_MS),
       recent: activeSince(opts.visits, opts.events, nowMs - RECENT_MS),
@@ -629,7 +753,9 @@ function continuedAfter(s: Session, path: string) {
   return first >= 0 && s.views.slice(first + 1).some((v) => isCaseStudy(v.path) && v.path !== path);
 }
 
-function deviceGroup(label: string, group: Session[]) {
+/** The behavior numbers compared side by side, for any slice of visits:
+ * a device, a hero edition. */
+function groupStats(label: string, group: Session[]) {
   const count = (test: (s: Session) => boolean) => group.filter(test).length;
   const viewedOne = count((s) => s.caseStudies.size >= 1);
   const viewedTwo = count((s) => s.caseStudies.size >= 2);
@@ -658,6 +784,7 @@ function deviceGroup(label: string, group: Session[]) {
     funnel: [group.length, viewedOne, viewedTwo, count((s) => s.caseStudies.size >= 2 && s.hiring)],
     toCaseStudy: timeStats(known(group.map(toFirstCaseStudy))),
     toHiring: timeStats(known(group.map(toFirstHiring))),
+    recentWork: recentWorkReach(group),
     topCaseStudy: caseStudy[0] ?? null,
     topCaseStudyTies: caseStudy.filter((c) => c.visits === caseStudy[0]?.visits).length,
     topJourney: topJourney(group),
@@ -693,10 +820,129 @@ function deviceComparison(sessions: Session[], caseStudyPaths: string[]) {
     .filter((c) => c.byDevice.some((d) => d.visits > 0));
 
   return {
-    groups: members.map(([label, group]) => deviceGroup(label, group)),
+    groups: members.map(([label, group]) => groupStats(label, group)),
     tablet: { visits: tablet.length, shown: tablet.length >= TABLET_MIN },
     unknown: on(null).length,
     total: sessions.length,
     caseStudies,
+  };
+}
+
+// ---------- hero, sections, cards ----------
+
+const onDevice = (group: Session[], device: string) => group.filter((s) => s.first.device === device);
+
+/** Hero editions, homepage section reach and Recent work cards, each over
+ * the homepage visits whose tracker records them (exposureEligible). */
+function exposureReport(sessions: Session[]) {
+  const home = sessions.filter(exposureEligible);
+
+  // The edition each visit had on screen (the first, if a ?hero= QA link
+  // changed it mid-visit).
+  const withHero = home.flatMap((s) => {
+    const hero = s.exposures.find((e) => e.type === "hero")?.target;
+    return hero ? [{ s, hero }] : [];
+  });
+  const heroes = [...new Set(withHero.map((h) => h.hero))]
+    .sort((a, b) => Number(a.slice(5)) - Number(b.slice(5)))
+    .map((id) => {
+      const group = withHero.filter((h) => h.hero === id).map((h) => h.s);
+      const first = tally(group, (s) => {
+        const view = s.views.find((v) => isCaseStudy(v.path));
+        return view ? shortLabel(view.path) : null;
+      });
+      return {
+        id,
+        label: `Hero ${id.slice(5)}`,
+        firstVisitEdition: Number(id.slice(5)) === HERO_DEFAULT,
+        stats: groupStats(id, group),
+        firstCaseStudy: first[0] && (first.length === 1 || first[0][1] > first[1][1]) ? first[0] : null,
+      };
+    });
+
+  const sections = (Object.keys(SECTIONS) as SectionId[]).map((id) => {
+    const saw = home.filter((s) => seenAt(s, "section", id) !== null);
+    return {
+      id,
+      label: SECTIONS[id] as string,
+      seen: saw.length,
+      byDevice: DEVICES.map(([label, device]) => ({
+        label,
+        home: onDevice(home, device).length,
+        seen: onDevice(saw, device).length,
+      })),
+    };
+  });
+
+  const cards = projects
+    .filter((p) => p.href?.startsWith("/work/"))
+    .map((p) => {
+      const path = p.href!;
+      const slug = path.slice(6);
+      const seen = home.flatMap((s) => {
+        const t = seenAt(s, "card", slug);
+        return t === null ? [] : [{ s, t }];
+      });
+      const opened = seen.filter(({ s, t }) => openedAfter(s, t, path)).map(({ s }) => s);
+      return {
+        slug,
+        label: shortLabel(path),
+        impressions: seen.length,
+        opens: opened.length,
+        byDevice: DEVICES.map(([label, device]) => ({
+          label,
+          impressions: seen.filter(({ s }) => s.first.device === device).length,
+          opens: onDevice(opened, device).length,
+        })),
+        engaged: timeStats(opened.filter((s) => s.timed).map((s) => s.engaged.get(path) ?? 0)),
+      };
+    });
+
+  return {
+    home: home.length,
+    heroShown: withHero.length,
+    heroes,
+    sections,
+    recentWork: recentWorkReach(sessions),
+    cards,
+  };
+}
+
+// ---------- Partner Portal CTA ----------
+
+const PARTNER_PORTAL = "/work/yahoo-partner-portal";
+
+/** The Yahoo case study's prototype link: who clicked, from where, and how
+ * often its viewers did — over visits whose tracker records the click. */
+function partnerPortal(sessions: Session[]) {
+  const measured = sessions.filter((s) => s.seenTracked);
+  const clicks = measured.flatMap((s) => {
+    const click = s.actions.find((a) => a.type === "partner_portal");
+    return click ? [{ s, click }] : [];
+  });
+  const viewers = measured.filter((s) => s.caseStudies.has(PARTNER_PORTAL));
+  const clicked = (s: Session) => s.did.has("partner_portal");
+  return {
+    measured: measured.length,
+    visits: clicks.length,
+    pages: tally(clicks, ({ click }) => pageLabel(click.path)),
+    placements: tally(clicks, ({ click }) => click.target ?? "unknown"),
+    viewers: viewers.length,
+    viewersClicked: viewers.filter(clicked).length,
+    byDevice: DEVICES.map(([label, device]) => {
+      const group = onDevice(viewers, device);
+      return { label, viewers: group.length, clicked: group.filter(clicked).length };
+    }),
+    // Clock time from first opening the case study to the click. Engaged
+    // time before the click can't be told apart from time after it (it's
+    // a per-page total), so it isn't offered.
+    toClick: timeStats(
+      known(
+        clicks.map(({ s, click }) => {
+          const open = s.views.find((v) => v.path === PARTNER_PORTAL);
+          return open ? Math.max(0, Date.parse(click.ts) - Date.parse(open.ts)) : null;
+        }),
+      ),
+    ),
   };
 }

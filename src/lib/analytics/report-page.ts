@@ -19,7 +19,7 @@ import {
   depthLabel,
 } from "./format";
 import { insightsFor } from "./insights";
-import { LIVE_MS, QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type RangeKey, type Report, type TimeStats } from "./metrics";
+import { INTERNAL_SOURCE, LIVE_MS, QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type RangeKey, type Report, type TimeStats } from "./metrics";
 
 /**
  * /analytics/report: the same report as the dashboard, laid out to be read
@@ -95,10 +95,14 @@ ${gaps.length ? `<p class="muted small coverage">${gaps.join("; ")}. Both starte
 function acquisition(report: Report) {
   const n = report.visits;
   const max = report.sources[0]?.visits ?? 0;
-  const rows = report.sources
+  // Real sources first; the internal / new-tab bucket isn't one.
+  const rows = [
+    ...report.sources.filter((s) => s.name !== INTERNAL_SOURCE),
+    ...report.sources.filter((s) => s.name === INTERNAL_SOURCE),
+  ]
     .slice(0, 10)
     .map((s) => [
-      `${esc(s.name)}${bar(s.visits, max)}`,
+      `${s.name === INTERNAL_SOURCE ? `<span class="muted">${esc(s.name)}</span>` : esc(s.name)}${bar(s.visits, max)}`,
       fmt(s.visits),
       pct(s.visits, n),
       pct(s.caseStudy, s.visits),
@@ -181,7 +185,7 @@ function behavior(report: Report) {
         [false, true, true],
       ) + `<p class="muted small">Of ${plural(home.n, "homepage visit")} with scroll depth recorded. Sections aren't tracked one by one.</p>`
     : empty("No homepage scroll data in this period.");
-  const actionRows = report.actions.map((a) => [esc(a.label), fmt(a.visits), pct(a.visits, report.visits)]);
+  const actionRows = report.actions.map((a) => [esc(a.label), fmt(a.visits), pct(a.visits, a.base)]);
   const paths = report.journeys.slice(0, 6);
   return sheet(
     4,
@@ -338,6 +342,7 @@ p { margin: 0 0 6px; }
 .stat { padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; }
 .stat b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
 .stat .small { display: block; }
+.stat.aside { border-style: dashed; color: var(--muted); }
 .insights { margin: 8px 0 0; padding-left: 1.4em; display: grid; gap: 8px; }
 .insights li { padding-left: 4px; }
 .insights .muted { display: block; }

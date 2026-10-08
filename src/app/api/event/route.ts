@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
-import { SESSION_ID, isAction } from "@/lib/analytics/events";
+import { projects } from "@/lib/home";
+import { HERO_ID, SECTIONS, SESSION_ID, isAction, isExposure } from "@/lib/analytics/events";
 import { PATH, clean, done, ignored, readBody } from "@/lib/analytics/request";
 import { getVisitStore } from "@/lib/analytics/store";
 
@@ -11,7 +12,22 @@ import { getVisitStore } from "@/lib/analytics/store";
  * action joins the pageviews of the same visit; location, device and source
  * come from those pageviews and aren't repeated here. Same exclusions as
  * /api/visit.
+ *
+ * Also takes what came into view (EXPOSURES: the hero edition, a homepage
+ * section, a Recent work card), each with a target from a fixed list, so
+ * nothing free-form is stored for them.
  */
+
+/** Recent work cards, by case-study slug. */
+const CARDS = new Set(projects.flatMap((p) => (p.href?.startsWith("/work/") ? [p.href.slice(6)] : [])));
+
+function validExposure(type: string, target: unknown) {
+  if (typeof target !== "string") return false;
+  if (type === "hero") return HERO_ID.test(target);
+  if (type === "section") return Object.hasOwn(SECTIONS, target);
+  return CARDS.has(target);
+}
+
 export async function POST(request: Request) {
   if (ignored(request)) return done();
 
@@ -20,7 +36,7 @@ export async function POST(request: Request) {
 
   const { type, sid, path } = body;
   if (
-    !isAction(type) ||
+    !(isAction(type) || (isExposure(type) && validExposure(type, body.target))) ||
     typeof sid !== "string" ||
     !SESSION_ID.test(sid) ||
     typeof path !== "string" ||

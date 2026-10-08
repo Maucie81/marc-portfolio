@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { actionFor, trackAction, trackPageview } from "@/lib/analytics/client";
+import { exposeOnClick, watchExposures } from "@/lib/analytics/exposure";
 
 /**
  * Feeds the private log behind /analytics, alongside Vercel Web Analytics
@@ -16,6 +17,10 @@ import { actionFor, trackAction, trackPageview } from "@/lib/analytics/client";
  * where the address doesn't say (see actionFor). Middle-clicks (auxclick)
  * count too, since opening a case study or the resume in a new tab is the
  * same intent.
+ *
+ * It also watches for the homepage hero edition, sections and Recent work
+ * cards coming into view (src/lib/analytics/exposure.ts) — one watcher for
+ * the whole session, picking elements up as pages mount.
  */
 export default function VisitTracker() {
   const pathname = usePathname();
@@ -28,6 +33,7 @@ export default function VisitTracker() {
     const onClick = (e: MouseEvent) => {
       if (e.type === "auxclick" && e.button !== 1) return;
       if (!(e.target instanceof Element)) return;
+      exposeOnClick(e.target);
       const action = actionFor(e.target);
       if (action) trackAction(...action);
     };
@@ -38,6 +44,8 @@ export default function VisitTracker() {
       document.removeEventListener("auxclick", onClick, true);
     };
   }, []);
+
+  useEffect(() => watchExposures(), []);
 
   return null;
 }

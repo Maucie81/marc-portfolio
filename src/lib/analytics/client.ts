@@ -1,9 +1,9 @@
-import { isAction, type ActionType } from "./events";
+import { isAction, type ActionType, type EventType, type ExposureType } from "./events";
 
 /**
  * Browser side of /analytics: pageviews, the handful of actions in
- * events.ts, engaged time per page and scroll milestones per page, each
- * tagged with the visit it belongs to.
+ * events.ts, engaged time per page, scroll milestones per page and what
+ * came into view (exposure.ts), each tagged with the visit it belongs to.
  *
  * A visit is a random id in sessionStorage — this tab only, gone when the
  * tab closes, replaced after 30 minutes without a new page. No cookie, and
@@ -25,7 +25,8 @@ type VisitState = {
   last: number;
   /** Last page recorded, so a reload isn't a second pageview. */
   path: string | null;
-  /** Actions already sent this visit ("type:target"); each counts once. */
+  /** Actions and exposures already sent this visit ("type:target"); each
+   * counts once. */
   sent: string[];
   /** Deepest scroll milestone already sent, per page, so a reload or a
    * return to the page in this visit never sends one twice. */
@@ -103,6 +104,9 @@ function sendPageview(path: string, sid: string, referrer: string) {
     touch: navigator.maxTouchPoints > 1,
     timed: true,
     scroll: true,
+    // Also records exposures and Proof notes / Partner Portal clicks, so
+    // visits without this are "not measured" for those, not zero.
+    seen: true,
   });
 }
 
@@ -372,30 +376,48 @@ function flushDepth() {
   depthQueue = [];
 }
 
-/** Counts once per visit per type and target. Never starts a new visit for
- * an idle one: the action happened on a page that visit loaded. */
-export function trackAction(type: ActionType, target: string | null = null) {
-  if (!tracking()) return;
+/** Counts once per visit per type and target, and returns the visit it's
+ * recorded under (null when not tracking). Never starts a new visit for an
+ * idle one: the event happened on a page that visit loaded. */
+function record(type: EventType, target: string | null): string | null {
+  if (!tracking()) return null;
   const state = read() ?? newVisit(Date.now());
   const key = `${type}:${target ?? ""}`;
-  if (state.sent.includes(key)) return;
+  if (state.sent.includes(key)) return state.id;
   state.sent = [...state.sent, key].slice(-50);
   state.last = Date.now();
   write(state);
   send("/api/event", { type, target, sid: state.id, path: window.location.pathname });
+  return state.id;
 }
+
+export function trackAction(type: ActionType, target: string | null = null) {
+  record(type, target);
+}
+
+/** Something meaningfully on screen (see exposure.ts). */
+export const trackExposure = (type: ExposureType, target: string) => record(type, target);
+
+/** The current visit's id, if one has started. */
+export const visitId = () => read()?.id ?? null;
 
 /** Which action, if any, a click on `el` is. Elements whose meaning isn't
  * in their address carry `data-track="<action>"` — the copy-email button
  * (CopyEmail), reference-library photos (ReferenceLibrary), the "Want to see
- * more?" links (CaseStudyClosing) and Additional work links (AdditionalWork);
- * a tagged link's path is its target. Everything else is read from the
- * link's address alone, never from classes, labels or position. */
+ * more?" links (CaseStudyClosing), Additional work links (AdditionalWork)
+ * and the Partner Portal prototype link (a case-study closing CTA); its
+ * target is its `data-track-placement` if it has one, else a tagged link's
+ * path. Everything else is read from the link's address alone, never from
+ * classes, labels or position. */
 export function actionFor(el: Element): [ActionType, string | null] | null {
   const tagged = el.closest<HTMLElement>("[data-track]");
   const type = tagged?.dataset.track;
   if (tagged && isAction(type)) {
-    return [type, tagged instanceof HTMLAnchorElement ? new URL(tagged.href).pathname : null];
+    return [
+      type,
+      tagged.dataset.trackPlacement ??
+        (tagged instanceof HTMLAnchorElement ? new URL(tagged.href).pathname : null),
+    ];
   }
 
   const link = el.closest<HTMLAnchorElement>("a[href]");

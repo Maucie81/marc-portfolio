@@ -152,6 +152,9 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
     <article
       id={`work-${project.company.toLowerCase()}`}
       data-reveal="view"
+      // /analytics: the card counts as seen once it's meaningfully on
+      // screen (lib/analytics/exposure.ts), by its case study's slug.
+      data-track-card={project.href?.startsWith("/work/") ? project.href.slice(6) : undefined}
       className={`grid scroll-mt-[100px] gap-y-5 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
         mediaLeft
           ? "md:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
