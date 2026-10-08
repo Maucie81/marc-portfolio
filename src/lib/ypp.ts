@@ -479,54 +479,10 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 9. Search
+  // 9. Takedowns
   {
     kind: "section",
     sectionNumber: "08",
-    eyebrow: "Find any story, any way you know it",
-    title: "Search",
-    body: "Partners were manually copying headlines into Yahoo.com to find their own content. Search eliminates that entirely.",
-    bullets: [
-      {
-        title: "Five ways in, one result",
-        body: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
-      },
-      {
-        title: "Straight to the data",
-        body: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
-      },
-    ],
-    caption:
-      "Find any story in seconds by title, partner URL, Yahoo URL, partner ID, or Yahoo ID,\nthen jump straight to its performance data.",
-    image: {
-      src: "/ypp/videos/Search.webm",
-      alt: "Searching for a story and opening its Content Item Detail",
-      frame: "plain",
-      type: "video",
-    },
-    expandedPoints: [
-      {
-        label: "Five ways in, one result",
-        text: "Title, partner URL, Yahoo URL, partner ID, or Yahoo ID — because editorial looks things up differently than engineering does. Results appear inline with enough context to confirm you have the right item before opening it.",
-      },
-      {
-        label: "Straight to the data",
-        text: "Every search result opens the full Content Item Detail: metadata, performance KPIs, discovery source, and any active issues. Gannett's team said being able to share a direct link to a story's performance data would replace a whole category of back-and-forth with their Yahoo contact.",
-      },
-    ],
-    pullQuotes: [
-      {
-        quote:
-          "For something like the Oscars, I can pull a link to this story's performance and share it with my team. That makes it a lot easier than just giving them a breakdown.",
-        attribution: "Gannett",
-      },
-    ],
-  },
-
-  // 10. Takedowns
-  {
-    kind: "section",
-    sectionNumber: "09",
     eyebrow: "Mediated content requests",
     title: "Takedowns",
     body: "The original concept was instant self-service: one click, content gone. Partners loved it, but Legal had other opinions. The result: a pre-filled takedown request, straight from the story, with full metadata. No back-and-forth required.",
@@ -562,50 +518,13 @@ export const blocks: Block[] = [
     ],
   },
 
-  // 11. User Management
-  {
-    kind: "section",
-    sectionNumber: "10",
-    eyebrow: "Manage your own team",
-    title: "User management",
-    body: "Adding a user to the legacy system required going through Yahoo. User Management gives that control back to partners — invite, assign, and scope brand access without filing a ticket.",
-    bullets: [
-      {
-        title: "Role based brand access",
-        body: "Admins assign a role and scope it to a subset of their organization's brands — one form, no Yahoo involvement.",
-      },
-      {
-        title: "Two tiered management",
-        body: "Two roles at launch: Admin and Viewer. More granular permissions were scoped for a later release — a deliberate call to avoid delaying launch.",
-      },
-    ],
-    caption:
-      "Add and remove team members, assign roles, control brand access, and manage organizational permissions\n— all without involving Yahoo.",
-    image: {
-      src: "/ypp/videos/UserManagement.webm",
-      alt: "Browsing the user list and reviewing a team member's role and brand access",
-      frame: "plain",
-      type: "video",
-    },
-    expandedPoints: [
-      {
-        label: "Role based brand access",
-        text: "Admins assign a role and scope it to a subset of their organization's brands — one form, no Yahoo involvement.",
-      },
-      {
-        label: "Two tiered management",
-        text: "Two roles at launch: Admin and Viewer. More granular permissions were scoped for a later release — a deliberate call to avoid delaying launch.",
-      },
-    ],
-  },
-
-  // 12. Learnings — copy + prototype link, matching Figma 594:122503
+  // 10. Learnings — copy + prototype link, matching Figma 594:122503
   // (no section number here). The earlier stats column is gone: the new
   // copy explicitly says there's no satisfaction number to point to, so a
   // "76% satisfied" stat beside it would contradict the text.
   {
     kind: "closing",
-    sectionNumber: "11",
+    sectionNumber: "09",
     heading: "Learnings",
     body: [
       "We set publisher satisfaction as the primary success measure and support-ticket volume as the counter-metric. I left the project before the follow-up survey that would have measured either, so I can't point to a number.",
