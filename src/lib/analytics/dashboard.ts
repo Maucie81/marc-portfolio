@@ -490,7 +490,7 @@ function heroPerformance(report: Report) {
   const rows = x.heroes.map((h) => {
     const g = h.stats;
     return [
-      `${esc(h.label)}${h.firstVisitEdition ? ' <span class="tag">first visit</span>' : ""}${g.visits < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
+      `${esc(h.label)}${h.defaultEdition ? ' <span class="tag">default</span>' : ""}${g.visits < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
       fmt(g.visits),
       pct(g.visits, x.heroShown),
       share(g.viewedOne, g.visits),
@@ -503,7 +503,7 @@ function heroPerformance(report: Report) {
   });
   return `<section>
 <h2>Hero performance</h2>
-<p class="muted small">The homepage hero edition each visit had on screen (recorded once per visit, by edition, when at least half of it was in view for half a second) and what those visits went on to do. Shown and Share are out of the ${plural(x.heroShown, "homepage visit")} with a hero recorded${x.heroShown < x.home ? `, of ${fmt(x.home)} measured — the rest jumped or scrolled past it first` : ""}. Opened work: opened a case study. Engaged: median per visit. Acted: reached resume, LinkedIn or contact. Bottom: case-study opens, by those visits, scrolled to the end. Hero 2 is every first-time visitor's edition (later visits draw any of six), so its visitors aren't a like-for-like sample. Nothing here ranks the editions.</p>
+<p class="muted small">The homepage hero edition each visit had on screen (recorded once per visit, by edition, when at least half of it was in view for half a second) and what those visits went on to do. Shown and Share are out of the ${plural(x.heroShown, "homepage visit")} with a hero recorded${x.heroShown < x.home ? `, of ${fmt(x.home)} measured — the rest jumped or scrolled past it first` : ""}. Opened work: opened a case study. Engaged: median per visit. Acted: reached resume, LinkedIn or contact. Bottom: case-study opens, by those visits, scrolled to the end. Hero 2 is the rotation's default: a tab gets it for its whole session when the browser hasn't yet stored the rotation's own "seen" flag (set on its first page load of the site — so usually a browser's first session here, a private window, or after site data is cleared) or can't store anything. Other sessions draw any of the six at random, Hero 2 included. So Hero 2 carries all of those default sessions and isn't a like-for-like sample. This describes the rotation; analytics never reads that flag. Nothing here ranks the editions.</p>
 ${table(
   ["Hero", "Shown", "Share", "Opened work", "Opened 2+", "Engaged", "Acted", "Bottom", "Most common first case study"],
   rows,

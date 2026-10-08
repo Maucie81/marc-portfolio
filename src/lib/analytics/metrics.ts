@@ -854,7 +854,11 @@ function exposureReport(sessions: Session[]) {
       return {
         id,
         label: `Hero ${id.slice(5)}`,
-        firstVisitEdition: Number(id.slice(5)) === HERO_DEFAULT,
+        // The rotation's default edition (hero-editions.ts): what a tab gets
+        // when the browser hasn't stored the rotation's own "seen" flag yet,
+        // or can't store anything. Read from the rotation's rule, never from
+        // anything known about the visitor.
+        defaultEdition: Number(id.slice(5)) === HERO_DEFAULT,
         stats: groupStats(id, group),
         firstCaseStudy: first[0] && (first.length === 1 || first[0][1] > first[1][1]) ? first[0] : null,
       };
