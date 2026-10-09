@@ -158,8 +158,10 @@ export type Block =
       body: string[];
       stats: { value: string; label: string }[];
       /** Small filled-accent link pill under the copy (Figma 837:64875).
-       * `track` is its /analytics action (events.ts ACTIONS). */
-      cta?: { text: string; href: string; track?: string };
+       * `track` is its /analytics action (events.ts ACTIONS);
+       * `hideOnPhones` leaves it off below 768px, for links to something
+       * that doesn't work on a phone. */
+      cta?: { text: string; href: string; track?: string; hideOnPhones?: boolean };
       /** Placeholder caption for the closing image slot (Figma's Outcome
        * frame pairs the copy with its own media placeholder). */
       caption?: string;
@@ -536,6 +538,10 @@ export const blocks: Block[] = [
       text: "Check out the prototype I built with Claude",
       href: "https://ypp-prototype.vercel.app/overview",
       track: "partner_portal",
+      // The prototype is a desktop web app; it isn't usable on a phone.
+      // /analytics leaves phones out of its click rates from the day this
+      // went live (PARTNER_PORTAL_PHONES_HIDDEN in metrics.ts).
+      hideOnPhones: true,
     },
   },
 ];

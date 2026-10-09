@@ -1238,7 +1238,7 @@ function ClosingBlock({
   body: string[];
   stats: { value: string; label: string }[];
   caption?: string;
-  cta?: { text: string; href: string; track?: string };
+  cta?: { text: string; href: string; track?: string; hideOnPhones?: boolean };
 }) {
   const hasStats = stats.length > 0;
   const hasCaption = Boolean(caption);
@@ -1288,7 +1288,7 @@ function ClosingBlock({
               data-track={cta.track}
               data-track-placement={cta.track ? "case-study" : undefined}
               {...copy}
-              className={`cta mt-4 self-start sideways:mt-[calc(92px*var(--cs-scale,1)-1rem)] ${copy.className}`}
+              className={`cta mt-4 self-start sideways:mt-[calc(92px*var(--cs-scale,1)-1rem)] ${cta.hideOnPhones ? "max-md:hidden" : ""} ${copy.className}`}
             >
               {cta.text}
             </a>
