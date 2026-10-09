@@ -159,7 +159,7 @@ The deleted "sheet glide" was a reveal on the sheet; this is a different thing a
 
 ## Mobile and responsive
 
-- **Case studies at ≤900px or with reduced motion:** no pin, no sideways scrolling. Blocks stack in one column (7rem gap). There's no scrubber and no cover rail dots.
+- **Case studies at ≤900px or with reduced motion:** no pin, no sideways scrolling. Blocks stack in one column (7rem gap; 7rem − 20px on phones). No cover rail dots. At ≤900px the scrubber stands on end: a 14px strip down the right edge (inside the 20px story margin, under the 56px header) that follows the page's vertical scroll — 0 at the top, 1 when the story's last block meets the bottom of the screen, fading out over the footer — and tapping or dragging along it scrolls the page there (`STACKED_NARROW` in `HorizontalTrack.tsx`). Reduced motion on a wider screen has no scrubber.
   - Reveals keep their timing but travel 70% as far (`--rv-travel: 0.7` on `.cs-track`): soft reveal ≈ 5.6px, heading ≈ 4px, body 3.5px.
 - **Homepage hero:** the six edition boards at ≥768px; below that, one fixed phone hero (`MobileHero`, Figma 337:2020) with no editions. It plays the same `HERO_SEQUENCE`: the sheet settles, the eyebrow and four statement lines rise from masks, the 51px portrait opens top to bottom (`rv-clip` from `inset(0 0 100% 0)`), and the subline rises. The head script's hold also waits on `.hero-m-portrait img`. Retiring stops a replay when the trees swap at the breakpoint.
 - **Homepage reveals** use the same values at every width (no travel scaling).
@@ -239,7 +239,7 @@ Hover changes color, opacity, a ring, or (CTAs only) a faint drop shadow. Things
 - Hover-only reveals are gated with `@media (hover: hover)` so a tap doesn't leave them stuck open.
 - Hover only adds emphasis; nothing can be reached only by hovering. Anything hover reveals (the CopyEmail tooltip, the More/Less label) also shows on focus-visible.
 - The library scrolls natively (touch, wheel, trackpad).
-- Case studies on touch-sized screens use the stacked layout. The scrubber's `touch-action: none` only applies in sideways mode.
+- Case studies on touch-sized screens use the stacked layout. The scrubber's `touch-action: none` covers only its own strip — on phones the 14px column down the right edge.
 - Proof notes are desktop only.
 
 ## Keyboard and focus
@@ -278,7 +278,7 @@ From the code comments and from directions tried and rejected:
 - **The 28px card settle on content.** It read as sliding into position; cards and blocks use the soft reveal. Only the hero board and its band fills keep 28px.
 - **Per-paragraph triggers** in case studies.
 - **Replaying on re-entry.** Everything plays once.
-- **Animating layout properties in reveals.** The existing exceptions are `ExpandCollapse` (grid rows) and the scrubber marker (`left`).
+- **Animating layout properties in reveals.** The existing exceptions are `ExpandCollapse` (grid rows) and the scrubber marker (`left` on desktop, `top` on the phone strip).
 - **Global smooth scroll** (it fights the pin).
 
 **Don't bring in external defaults.** That means Material or Apple motion specs, generic 100/200/300ms duration scales, spring physics, overshoot, squash and stretch, anticipation, particle or confetti effects, celebratory success animations, parallax, or "delight" moments. None of them are part of this site.

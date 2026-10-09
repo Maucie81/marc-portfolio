@@ -56,11 +56,19 @@ export default function CaseStudyClosing({ links }: { links: CaseStudyLink[] }) 
         >
           Want to see more?
         </p>
-        {/* CTA default buttons, Portfolio-Playground 100:209186 — the
-            closing example in that frame uses them for this pair. */}
+        {/* Text links, Portfolio-Playground 100:206307 (the tertiary CTA:
+            14/24 SemiBold, a 12px arrow 4px on), in accent rather than its
+            ink, per direct request; hover darkens like every accent text
+            link. */}
         {links.map((cs) => (
-          <Link key={cs.slug} href={cs.href} className="cta" data-track="project_nav">
+          <Link
+            key={cs.slug}
+            href={cs.href}
+            className="cta cta-tertiary text-accent hover:text-[var(--accent-deep)]"
+            data-track="project_nav"
+          >
             {cs.title}
+            <CtaArrow />
           </Link>
         ))}
       </div>

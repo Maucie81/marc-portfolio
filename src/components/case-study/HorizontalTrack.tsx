@@ -17,6 +17,11 @@ type Props = {
  * motion, blocks just stack). globals.css switches at the same width. */
 export const SIDEWAYS = "(min-width: 901px) and (prefers-reduced-motion: no-preference)";
 
+/** The stacked layout by width (phones and small tablets), where the
+ * scrubber follows the page's own vertical scroll instead. Reduced motion
+ * on a wider screen also stacks, but keeps no scrubber. */
+const STACKED_NARROW = "(max-width: 900px)";
+
 /** Tick count for the progress scrubber — dense enough to read as a comb,
  * spaced evenly via `justify-content: space-between` so it never needs
  * re-measuring on resize. */
@@ -39,6 +44,7 @@ export default function HorizontalTrack({ children, fade = true }: Props) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const barRef = useRef<HTMLDivElement | null>(null);
   const progressRef = useRef<HTMLDivElement | null>(null);
+  const railRef = useRef<HTMLDivElement | null>(null);
 
   // PageTransition no longer wraps route changes in any fade — navigation
   // is instant, so the shell (background, header, RailDots/BottomRule,
@@ -85,9 +91,16 @@ export default function HorizontalTrack({ children, fade = true }: Props) {
     const track = trackRef.current;
     const bar = barRef.current;
     const progress = progressRef.current;
-    if (!section || !track || !bar || !progress) return;
+    const rail = railRef.current;
+    if (!section || !track || !bar || !progress || !rail) return;
 
     const mm = gsap.matchMedia();
+
+    /** Where a pointer sits along the desktop tick row, 0–1. */
+    const ratioFromEvent = (e: PointerEvent) => {
+      const rect = rail.getBoundingClientRect();
+      return gsap.utils.clamp(0, 1, (e.clientX - rect.left) / rect.width);
+    };
 
     // PageTransition's route-change animation causes this component to
     // genuinely mount, fully unmount, then mount again roughly 500ms later
@@ -150,11 +163,6 @@ export default function HorizontalTrack({ children, fade = true }: Props) {
         // since these listeners are live before the trigger exists (see
         // below) — before creation there's nothing to scrub yet.
         let dragging = false;
-
-        const ratioFromEvent = (e: PointerEvent) => {
-          const rect = progress.getBoundingClientRect();
-          return gsap.utils.clamp(0, 1, (e.clientX - rect.left) / rect.width);
-        };
 
         const scrubTo = (ratio: number) => {
           if (!st) return;
@@ -288,6 +296,75 @@ export default function HorizontalTrack({ children, fade = true }: Props) {
         };
       },
       );
+      // Stacked by width (phones): the same scrubber stood on end down the
+      // right edge (globals.css), on the page's own vertical scroll. 0 at
+      // the top of the page, 1 when the story's last block meets the bottom
+      // of the screen; past that — the footer — it fades away, as it does on
+      // desktop once the pin lets go. Dragging or tapping along it scrolls
+      // the page there (no smoothing to fight).
+      mm.add(STACKED_NARROW, () => {
+        const end = () =>
+          Math.max(1, track.getBoundingClientRect().bottom + window.scrollY - window.innerHeight);
+
+        let raf = 0;
+        const update = () => {
+          raf = 0;
+          const max = end();
+          bar.style.top = `${gsap.utils.clamp(0, 1, window.scrollY / max) * 100}%`;
+          progress.dataset.visible = window.scrollY <= max + 1 ? "true" : "false";
+        };
+        const schedule = () => {
+          if (!raf) raf = requestAnimationFrame(update);
+        };
+
+        let dragging = false;
+        const ratioDown = (e: PointerEvent) => {
+          const rect = rail.getBoundingClientRect();
+          return gsap.utils.clamp(0, 1, (e.clientY - rect.top) / rect.height);
+        };
+        const scrubTo = (ratio: number) =>
+          window.scrollTo({ top: ratio * end(), left: 0, behavior: "instant" });
+        const onPointerDown = (e: PointerEvent) => {
+          dragging = true;
+          progress.setPointerCapture(e.pointerId);
+          progress.dataset.dragging = "true";
+          scrubTo(ratioDown(e));
+        };
+        const onPointerMove = (e: PointerEvent) => {
+          if (dragging) scrubTo(ratioDown(e));
+        };
+        const onPointerUp = (e: PointerEvent) => {
+          if (!dragging) return;
+          dragging = false;
+          progress.dataset.dragging = "false";
+          if (progress.hasPointerCapture(e.pointerId)) progress.releasePointerCapture(e.pointerId);
+        };
+
+        progress.addEventListener("pointerdown", onPointerDown);
+        progress.addEventListener("pointermove", onPointerMove);
+        progress.addEventListener("pointerup", onPointerUp);
+        progress.addEventListener("pointercancel", onPointerUp);
+        window.addEventListener("scroll", schedule, { passive: true });
+        window.addEventListener("resize", schedule);
+        // The story grows as media loads; keep the 0–1 range honest.
+        const ro = new ResizeObserver(schedule);
+        ro.observe(track);
+        update();
+
+        return () => {
+          if (raf) cancelAnimationFrame(raf);
+          progress.removeEventListener("pointerdown", onPointerDown);
+          progress.removeEventListener("pointermove", onPointerMove);
+          progress.removeEventListener("pointerup", onPointerUp);
+          progress.removeEventListener("pointercancel", onPointerUp);
+          window.removeEventListener("scroll", schedule);
+          window.removeEventListener("resize", schedule);
+          ro.disconnect();
+          progress.dataset.dragging = "false";
+          progress.dataset.visible = "true";
+          bar.style.top = "";
+        };
+      });
     }, SETUP_DELAY_MS);
 
     return () => {
@@ -312,12 +389,17 @@ export default function HorizontalTrack({ children, fade = true }: Props) {
         data-visible="true"
         data-dragging="false"
       >
-        <div className="cs-progress-ticks" aria-hidden="true">
-          {PROGRESS_TICKS.map((_, i) => (
-            <span key={i} className="cs-progress-tick" />
-          ))}
+        {/* The tick row and marker share one rail: the whole strip on
+            desktop; on phones, where the strip stands on end, inset from
+            its top and bottom. */}
+        <div ref={railRef} className="cs-progress-rail">
+          <div className="cs-progress-ticks" aria-hidden="true">
+            {PROGRESS_TICKS.map((_, i) => (
+              <span key={i} className="cs-progress-tick" />
+            ))}
+          </div>
+          <div ref={barRef} className="cs-progress-marker" />
         </div>
-        <div ref={barRef} className="cs-progress-marker" />
       </div>
 
       <section ref={sectionRef} className="cs-pin">
