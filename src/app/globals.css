@@ -514,8 +514,9 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 
 /* ----- Phone hero, below 768px (MobileHero) · Figma 337:2020 -----
    The paper is Figma's #faf8f2 sheet at 40% over the page's --bg, with the
-   halftone multiplied in at the same 40% and softened 0.5px. 32px above
-   and below the lockup; 12px between its three parts. */
+   halftone multiplied in at 55% (Figma's 40%, raised per direct request —
+   it barely showed) and softened 0.5px. 32px above and below the lockup;
+   12px between its three parts. */
 .hero-m {
   position: relative;
   isolation: isolate;
@@ -531,7 +532,7 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   inset: 0;
   z-index: -1;
   background: url("/additional-work-texture.webp") center / 1000px auto no-repeat;
-  opacity: 0.4;
+  opacity: 0.55;
   mix-blend-mode: multiply;
   filter: blur(0.5px);
 }
@@ -711,6 +712,14 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   height: max(26rem, 100cqw * 637 / 1124);
   padding: 0 calc(12 * var(--u));
   background: var(--lib-gutter);
+}
+
+/* Phones: a third less window than the 26rem floor, so the library takes
+   less of the scroll (per direct request); the drift shows there's more. */
+@media (max-width: 767.98px) {
+  .lib-window {
+    height: calc(26rem * 2 / 3);
+  }
 }
 
 /* Edge shadows, one per edge: each shows only while there's more sheet
@@ -1214,6 +1223,29 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   color: var(--ink-2);
 }
 
+/* Phones: case-study section headers in the homepage project cards' type
+   (RecentWork.tsx, per direct request) — an 18px bold title trimmed to its
+   caps (like .phone-cap-trim), its eyebrow a 14px muted line 8px under it,
+   SemiBold so it reads apart from the body copy. `.cs-track h2.display`'s
+   tracking is matched in specificity so this wins. */
+@media (max-width: 767.98px) {
+  .cs-track :is(h2, h3).cs-head {
+    font-size: 1.125rem;
+    line-height: 1.5rem;
+    letter-spacing: -0.01em;
+    margin-top: calc(0.376em - 0.5lh);
+    margin-bottom: calc(0.34em - 0.5lh);
+  }
+
+  .cs-head-sub {
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.3125rem;
+    letter-spacing: -0.01em;
+    color: var(--muted);
+  }
+}
+
 /* Quotes/Stats · stat call-out labels and pull-quote text */
 .cs-quote {
   font-family: var(--font-display), system-ui, sans-serif;
@@ -1229,6 +1261,17 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 .cs-pull-quote {
   font-size: 1.25rem;
   line-height: 1.75rem;
+}
+
+/* Phones: stat labels and pull quotes a step down to 16/24, so they sit
+   under the 18px section headings instead of over them (per direct
+   request — they read as huge next to the smaller headings). */
+@media (max-width: 767.98px) {
+  .cs-quote,
+  .cs-pull-quote {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
 }
 
 /* Pull quotes outside the Context/Problem intro stack · Figma 43:3729 (one)
@@ -1523,6 +1566,14 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
 
   .cs-only-horizontal {
     display: none;
+  }
+}
+
+/* Phones: 20px less between sections (per direct request), now that the
+   headings are the homepage cards' 18px. */
+@media (max-width: 767.98px) {
+  .cs-track {
+    gap: calc(7rem - 20px);
   }
 }
 

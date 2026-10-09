@@ -1,6 +1,5 @@
 import { Fragment } from "react";
 import Link from "next/link";
-import SkillRun from "@/components/site/SkillRun";
 import type { Role } from "@/lib/home";
 import { rv, rvGroup } from "@/lib/motion";
 
@@ -10,7 +9,7 @@ import { rv, rvGroup } from "@/lib/motion";
  * columns (56px apart, rows 36px apart), each marked by a numbered accent
  * dot, with small links to that company's case studies under it (any
  * Recent work or Additional work entry that's live); then the skills set in
- * the Figma's four lines with accent "•" dividers, 70px below.
+ * the Figma's rows with accent "•" dividers, 70px below (not on phones).
  *
  * Motion: quieter than Additional work — closer to text becoming visible
  * than entering. The heading only fades; each role fades up 3px over
@@ -50,7 +49,7 @@ export default function CareerHistory({
       <ol
         data-reveal-group
         style={rvGroup(100, { y: 3, ease: "quiet" })}
-        className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-6 md:mt-[60px] md:gap-y-9 lg:grid-cols-[repeat(3,220px)]"
+        className="mt-8 grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-x-14 gap-y-7 md:mt-[60px] md:gap-y-9 lg:grid-cols-[repeat(3,220px)]"
       >
         {roles.map((role, i) => {
           const links = work.filter((w) => w.company === role.company && w.href && !w.comingSoon);
@@ -97,63 +96,37 @@ export default function CareerHistory({
         })}
       </ol>
 
-      {/* Indented by the dot and its gap (16 + 8px, 16 + 10px on phones)
-          so the skills share the company lockups' text edge, per direct
-          request. */}
+      {/* Not on phones (per direct request). Indented 24px (the 16px dot
+          + 8px gap) so the skills share the company lockups' text edge,
+          per direct request. */}
       <div
         data-reveal="view"
         data-reveal-quiet
-        className="rv-fade mt-8 pl-[26px] md:mt-[70px] md:pl-6"
+        className="rv-fade mt-[70px] hidden pl-6 md:block"
         style={rv(0, { dur: 350, ease: "quiet" })}
       >
         <h3 className="text-[16px] font-semibold leading-6 text-ink-2">
           Skills &amp; Specializations
         </h3>
-        {/* md+: the designed rows. Phones: one continuous run, so a skill
-            fills the line above when it fits; skills stay whole and each
-            dot is glued to the skill before it (nbsp), so lines break
-            after a dot, never before one — and SkillRun hides any dot
-            left at a line's end. */}
-        <SkillRun
-          className="pb-1 pt-2 leading-[30px] md:flex md:flex-col md:gap-1.5 md:leading-normal"
-        >
-          {skills.map((line, row) => (
-            <div key={line.join()} className="inline md:flex md:flex-wrap md:items-center md:gap-x-1.5">
+        {/* The designed rows, an accent "•" between the skills in each. */}
+        <div role="list" className="flex flex-col gap-1.5 pb-1 pt-2 leading-normal">
+          {skills.map((line) => (
+            <div key={line.join()} className="flex flex-wrap items-center gap-x-1.5">
               {line.map((skill, i) => (
                 <Fragment key={skill}>
-                  {i > 0 || row > 0 ? (
-                    <>
-                      <span
-                        aria-hidden
-                        data-skill-dot
-                        className={`text-[18px] leading-none text-accent md:w-2 md:text-center ${i === 0 ? "md:hidden" : ""}`}
-                      >
-                        <span className="md:hidden">{"\u00a0"}</span>•
-                      </span>
-                      {/* The last skill is glued to the one before it, so
-                          on phones it never sits alone on the final line. */}
-                      {row === skills.length - 1 && i === line.length - 1 ? (
-                        // A no-break space only on phones: from md up the
-                        // row is a flex line, where it would add a gap.
-                        <span className="md:hidden">{"\u00a0"}</span>
-                      ) : (
-                        " "
-                      )}
-                    </>
+                  {i > 0 ? (
+                    <span aria-hidden className="w-2 text-center text-[18px] leading-none text-accent">
+                      •
+                    </span>
                   ) : null}
-                  {/* Whole skills never split, except one too long for a
-                      phone line. */}
-                  <span
-                    role="listitem"
-                    className={`text-[16px] leading-6 text-ink-2 ${skill.length > 36 ? "" : "whitespace-nowrap"}`}
-                  >
+                  <span role="listitem" className="whitespace-nowrap text-[16px] leading-6 text-ink-2">
                     {skill}
                   </span>
                 </Fragment>
               ))}
             </div>
           ))}
-        </SkillRun>
+        </div>
       </div>
     </>
   );

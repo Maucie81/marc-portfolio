@@ -285,7 +285,7 @@ function PrinciplesBlock({
         <div className="flex w-full flex-col gap-3 sideways:w-[calc(19rem*var(--cs-scale,1))] sideways:shrink-0">
           <div className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" /> : null}
-            <h2 className="display text-[28px] leading-none text-bg sideways:text-[40px]">{heading}</h2>
+            <h2 className="cs-head display text-[28px] leading-none text-bg sideways:text-[40px]">{heading}</h2>
           </div>
           <p className="text-[20px] font-semibold leading-[26px] text-bg [font-family:var(--font-display)]">
             {intro}
@@ -1079,18 +1079,18 @@ function CopyBlock({
       style={{ ["--w" as string]: width ?? "27rem" }}
     >
       {heading ? (
-        <div className="relative mb-5">
+        <div className="relative mb-5 flex flex-col gap-2">
           {sectionNumber ? (
             <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" />
           ) : null}
           <h2
-            className={`display ${
+            className={`cs-head display ${
               sectionNumber ? "text-[2rem] sideways:text-[40px]" : "text-[clamp(1.6rem,2.4vw,2.25rem)]"
-            } ${accent ? "text-accent" : "text-ink"}`}
+            } ${accent ? "text-accent" : "text-ink max-md:text-ink-deep"}`}
           >
             {heading}
           </h2>
-          {eyebrow ? <p className="cs-section-title mt-2">{eyebrow}</p> : null}
+          {eyebrow ? <p className="cs-section-title cs-head-sub">{eyebrow}</p> : null}
         </div>
       ) : null}
       <div className="t-body-sans space-y-4">
@@ -1162,9 +1162,9 @@ function PanelGroupBlocks({
                     {first && sectionNumber ? (
                       <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" />
                     ) : null}
-                    <HeadingTag className="display text-[2rem] sideways:text-[40px]">{heading}</HeadingTag>
+                    <HeadingTag className="cs-head display text-[2rem] max-md:text-ink-deep sideways:text-[40px]">{heading}</HeadingTag>
                   </div>
-                  {eyebrow ? <p className="cs-section-title">{eyebrow}</p> : null}
+                  {eyebrow ? <p className="cs-section-title cs-head-sub">{eyebrow}</p> : null}
                 </div>
                 <div className="flex flex-col gap-3">
                   {/* Figma 521:73526: 40px numeral on a 50px line, 18px to
@@ -1261,7 +1261,7 @@ function ClosingBlock({
           <div {...trigger} className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px" reveal={headingReveal} /> : null}
             <h2
-              className={`display text-[28px] leading-none sideways:text-[40px] ${headingReveal.className}`}
+              className={`cs-head display text-[28px] leading-none max-md:text-ink-deep sideways:text-[40px] ${headingReveal.className}`}
               style={headingReveal.style}
             >
               {heading}
@@ -1303,7 +1303,7 @@ function ClosingBlock({
                 className={`flex items-center gap-6 border-line py-5 ${i === 0 ? "border-y" : "border-b"}`}
               >
                 <p className="cs-quote flex-1">{stat.label}</p>
-                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px]">
+                <p className="display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent max-md:text-[32px] sideways:text-[60px]">
                   {stat.value}
                 </p>
               </div>
@@ -1409,7 +1409,7 @@ export function IntroStackBlock({
         <div className="flex flex-col gap-4">
           <div {...trigger} className="relative">
             {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="41.6px" reveal={headingReveal} /> : null}
-            <h2 className={`display text-[28px] leading-none sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
+            <h2 className={`cs-head display text-[28px] leading-none max-md:text-ink-deep sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
               {heading}
             </h2>
           </div>
@@ -1435,7 +1435,7 @@ export function IntroStackBlock({
               {stat.label}
             </p>
             <p
-              className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px] ${callout.className}`}
+              className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent max-md:text-[32px] sideways:text-[60px] ${callout.className}`}
               style={callout.style}
             >
               {stat.value}
@@ -1546,7 +1546,7 @@ function SectionBlock({
           {stat.label}
         </p>
         <p
-          className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent sideways:text-[60px] ${moving ? statReveal.className : ""}`}
+          className={`display -translate-y-[2.6px] shrink-0 text-right text-[44px] leading-none text-accent max-md:text-[32px] sideways:text-[60px] ${moving ? statReveal.className : ""}`}
           style={moving ? statReveal.style : undefined}
         >
           {stat.value}
@@ -1666,14 +1666,16 @@ function SectionBlock({
         >
           {/* The heading's number, title and eyebrow each carry the reveal
               (the coral number sits above the grain), moving as one. */}
+          {/* Phones: the homepage project cards' type (per direct request)
+              — an 18px title, the eyebrow a smaller muted line under it. */}
           <div {...trigger} className="flex flex-col gap-2">
             <div className="relative">
               {sectionNumber ? <SectionNum number={sectionNumber} titleLineHeight="40px * 1.04" reveal={headingReveal} /> : null}
-              <h2 className={`display text-[2rem] sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
+              <h2 className={`cs-head display text-[2rem] max-md:text-ink-deep sideways:text-[40px] ${headingReveal.className}`} style={headingReveal.style}>
                 {title}
               </h2>
             </div>
-            <p className={`cs-section-title ${headingReveal.className}`} style={headingReveal.style}>
+            <p className={`cs-section-title cs-head-sub ${headingReveal.className}`} style={headingReveal.style}>
               {eyebrow}
             </p>
           </div>

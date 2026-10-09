@@ -193,7 +193,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       // /analytics: the card counts as seen once it's meaningfully on
       // screen (lib/analytics/exposure.ts), by its case study's slug.
       data-track-card={project.href?.startsWith("/work/") ? project.href.slice(6) : undefined}
-      className={`grid scroll-mt-[100px] gap-y-4 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
+      className={`relative grid scroll-mt-[100px] gap-y-4 lg:scroll-mt-[90px] md:gap-x-8 md:gap-y-0 ${
         mediaLeft
           ? "md:grid-cols-[minmax(0,714fr)_minmax(0,379fr)]"
           : "md:grid-cols-[minmax(0,379fr)_minmax(0,714fr)]"
@@ -211,11 +211,12 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         } ${project.copyAlign === "center" ? "md:mb-8 md:self-center" : "md:self-start"}`}
         style={CARD}
       >
-        {/* Phones · Figma 326:4133: company 12, then the title 18, trimmed
-            to its caps like every phone heading, 8px from both. */}
+        {/* Phones · Figma 326:4133: the company in Career history's date
+            style (14px muted, per direct request), then the title 18,
+            trimmed to its caps like every phone heading, 8px from both. */}
         <div className="flex flex-col gap-2 md:gap-1">
           <div className="flex flex-col gap-2">
-            <p className="text-[12px] tracking-[-0.01em] text-muted md:text-[16px] md:font-medium">
+            <p className="text-[14px] tracking-[-0.01em] text-muted md:text-[16px] md:font-medium">
               {project.company}
             </p>
             <h3 className="phone-cap-trim text-[18px] font-bold leading-6 tracking-[-0.01em] text-ink-deep md:text-[20px] md:leading-[1.5]">
@@ -256,6 +257,19 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           overhang={index > 0}
         />
       </div>
+
+      {/* Phones: the whole card opens the case study (per direct request).
+          One link laid over the card, above the device (z-39); the
+          "Project Preview" link under it stays the one keyboards and
+          screen readers use. */}
+      {project.href ? (
+        <Link
+          href={project.href}
+          aria-hidden
+          tabIndex={-1}
+          className="absolute inset-0 z-40 md:hidden"
+        />
+      ) : null}
     </article>
   );
 }

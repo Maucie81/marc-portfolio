@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Suspense, type MouseEvent, useEffect, useRef, useState } from "react";
+import { Suspense, type MouseEvent } from "react";
 import ArrowIcon from "@/components/site/ArrowIcon";
 import BackLink from "@/components/site/BackLink";
 import {
@@ -41,26 +41,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   const activeClass = (key: typeof active) =>
     active === key ? " font-semibold" : "";
 
-  // Phones (<640px) fold Home / Work / Contact / Resume into a menu button. Closes
-  // on a link tap, Escape, or any tap outside the header.
-  const [menuOpen, setMenuOpen] = useState(false);
-  const headerRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setMenuOpen(false);
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (!headerRef.current?.contains(e.target as Node)) setMenuOpen(false);
-    };
-    document.addEventListener("keydown", onKey);
-    document.addEventListener("pointerdown", onPointer);
-    return () => {
-      document.removeEventListener("keydown", onKey);
-      document.removeEventListener("pointerdown", onPointer);
-    };
-  }, [menuOpen]);
-  const closeMenu = () => setMenuOpen(false);
   // The logo goes back to the top of the homepage. This header only shows
   // on the homepage, where a link to "/" alone would stay put (same route),
   // so the scroll is done here; any "#section" left in the address is
@@ -68,7 +48,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   const toTop = (e: MouseEvent<HTMLAnchorElement>) => {
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
-    closeMenu();
     if (location.hash) history.replaceState(history.state, "", "/");
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     window.scrollTo({ top: 0, behavior: reduce ? "instant" : "smooth" });
@@ -83,7 +62,6 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
   return (
     <>
       <header
-        ref={headerRef}
         className="sticky top-0 z-50 bg-white lg:fixed lg:inset-x-0 lg:top-0"
       >
         <div className="relative">
@@ -150,74 +128,17 @@ function HomeHeader({ active }: { active: "home" | "contact" }) {
                 Contact
               </Link>
             </nav>
-            {/* Two 20px strokes that cross into an × when open. 40px hit
-                area, pulled back by negative margins so the header keeps
-                its height and the icon's right edge sits on the content
-                edge. */}
-            <button
-              type="button"
-              onClick={() => setMenuOpen((o) => !o)}
-              aria-expanded={menuOpen}
-              aria-controls="home-menu"
-              aria-label={menuOpen ? "Close menu" : "Open menu"}
-              className="-my-[10px] -mr-[10px] flex size-10 items-center justify-center text-ink-strong sm:hidden"
+            {/* Phones (<640px): no menu, just the résumé (per direct
+                request) — the nav's own type, underlined so it reads as a
+                link on its own, with a 40px tap height. */}
+            <a
+              href={contact.resume}
+              target="_blank"
+              rel="noreferrer"
+              className="-my-[10px] py-[10px] underline decoration-1 underline-offset-[3px] text-[12px] font-normal uppercase leading-[20px] tracking-normal text-ink-strong transition-colors hover:text-accent sm:hidden [font-family:var(--font-mono),ui-monospace,monospace]"
             >
-              <span aria-hidden className="relative block h-[8px] w-5">
-                <span
-                  className={`absolute inset-x-0 h-[1.5px] bg-current transition-transform duration-200 motion-reduce:transition-none ${
-                    menuOpen ? "top-[3.25px] rotate-45" : "top-0"
-                  }`}
-                />
-                <span
-                  className={`absolute inset-x-0 h-[1.5px] bg-current transition-transform duration-200 motion-reduce:transition-none ${
-                    menuOpen ? "top-[3.25px] -rotate-45" : "top-[6.5px]"
-                  }`}
-                />
-              </span>
-            </button>
-          </div>
-          {/* Phone menu: drops from under the header on the same paper,
-              one 48px row per link in the nav's mono uppercase. */}
-          <div
-            id="home-menu"
-            className={`absolute inset-x-0 top-full border-b border-line bg-white transition-[opacity,transform,visibility] duration-200 motion-reduce:transition-none sm:hidden ${
-              menuOpen
-                ? "visible translate-y-0 opacity-100"
-                : "invisible -translate-y-1 opacity-0"
-            }`}
-          >
-            <nav className="flex flex-col px-6 pb-4 md:px-12 text-[16px] font-normal uppercase leading-[24px] tracking-normal text-ink-strong [font-family:var(--font-mono),ui-monospace,monospace]">
-              <Link
-                href="/#hero"
-                onClick={closeMenu}
-                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("home")}`}
-              >
-                Home
-              </Link>
-              <Link
-                href="/#work"
-                onClick={closeMenu}
-                className="border-t border-line py-3 transition-colors hover:text-accent"
-              >
-                Work
-              </Link>
-              <a
-                href={contact.resume}
-                target="_blank"
-                rel="noreferrer"
-                onClick={closeMenu}
-                className="border-t border-line py-3 transition-colors hover:text-accent"
-              >
-                Resume
-              </a>
-              <Link
-                href="/contact"
-                onClick={closeMenu}
-                className={`border-t border-line py-3 transition-colors hover:text-accent${activeClass("contact")}`}
-              >
-                Contact
-              </Link>
-            </nav>
+              Resume
+            </a>
           </div>
           <div className={`pointer-events-none absolute inset-0 hidden lg:block ${SHEET}`}>
             <TopBandChrome />

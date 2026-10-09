@@ -127,7 +127,7 @@ Case-study motion is per page: the `motion` prop on `CaseStudyPage` (Yahoo, Airb
 
 Added on request (2026-10-08) so the window reads as having more in it. Not a reveal: it scrolls the window's own `scrollTop`.
 - starts `AUTO_DELAY` (1200ms) after the window is 60% on screen, once the panel's reveal has finished
-- speed: one window height every `AUTO_WINDOW_SECONDS` (25s), about 16px/s on a phone, linear
+- speed: one window height every `AUTO_WINDOW_SECONDS` (25s), about 11px/s in the phone's shorter window, linear
 - pauses while a mouse is over the window or it's off screen; resumes after
 - stops for good at the bottom of the sheet, or on any wheel, touch, pointer-down or key in the window (opening a photo included)
 - never runs with reduced motion
@@ -163,9 +163,7 @@ The deleted "sheet glide" was a reveal on the sheet; this is a different thing a
   - Reveals keep their timing but travel 70% as far (`--rv-travel: 0.7` on `.cs-track`): soft reveal ≈ 5.6px, heading ≈ 4px, body 3.5px.
 - **Homepage hero:** the six edition boards at ≥768px; below that, one fixed phone hero (`MobileHero`, Figma 337:2020) with no editions. It plays the same `HERO_SEQUENCE`: the sheet settles, the eyebrow and four statement lines rise from masks, the 51px portrait opens top to bottom (`rv-clip` from `inset(0 0 100% 0)`), and the subline rises. The head script's hold also waits on `.hero-m-portrait img`. Retiring stops a replay when the trees swap at the breakpoint.
 - **Homepage reveals** use the same values at every width (no travel scaling).
-- **Phone header menu (<640px):**
-  - drops 4px and fades over 200ms; the burger's strokes rotate into an × over 200ms
-  - closes on a link tap, Escape, or a tap outside
+- **Phone header (<640px):** no menu since 2026-10-08, just a Resume link; nothing in it animates.
 - **iOS Safari:** keep `formatDetection` off in `layout.tsx`. Auto-linked phone numbers caused a hydration error that stripped `data-motion`, which killed all motion. `restoreHtmlAttrs()` is the safety net.
 
 ## Timing and easing
@@ -216,7 +214,6 @@ The deleted "sheet glide" was a reveal on the sheet; this is a different thing a
 | Captions, metadata, Skills, footer, library copy | 0px (opacity only) |
 | Masked lines (hero, library title, cover title) | travel about 1.15em, but under a fixed mask that holds still. They read as type rising from its baseline, not a block moving |
 | Hover | 2px: only the arrow on Additional work's live links |
-| Phone menu | 4px |
 
 The only horizontal motion is the scroll-driven track itself and that 2px arrow.
 
@@ -252,14 +249,13 @@ Hover changes color, opacity, a ring, or (CTAs only) a faint drop shadow. Things
   - Contact fields replace it with a 2px accent bottom rule.
 - **Hover equivalents:** every hover reveal has a focus-visible equivalent (CopyEmail tooltip, More/Less label).
 - **Library:** the window is focusable and scrolls with the arrow keys. The viewer moves focus to its close button; ←/→ step through photos; Esc closes.
-- **Phone menu:** Escape closes it.
 - **Case-study track:** no special keyboard handling. Page keys scroll the page, which drives the track.
 
 ## Reduced motion
 
 - **Motion is opt-in, not killed afterwards.** `MOTION_SCRIPT` and `setMotionMode` never set `data-motion` under `prefers-reduced-motion: reduce`. The reveal CSS is also wrapped in `@media (prefers-reduced-motion: no-preference)`. Every reveal is simply static content.
 - **Case studies** drop the pin and the sideways layout entirely and use the stacked layout (CSS and `gsap.matchMedia` share `SIDEWAYS`).
-- **Transform transitions** carry `motion-reduce:transition-none` (header menu and burger, Additional work arrow). Color and opacity hovers stay.
+- **Transform transitions** carry `motion-reduce:transition-none` (the Additional work arrow). Color and opacity hovers stay.
 - **Don't add** a global `* { animation-duration: 0.01ms !important }` kill switch. It would duplicate the opt-in model.
 - **The reference library drift** checks `prefers-reduced-motion` itself and never starts.
 - **The homepage logo** scrolls back to the top smoothly, or instantly with reduced motion (`toTop` in `PersistentHeader.tsx`).
