@@ -1101,12 +1101,6 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
   cursor: pointer;
 }
 
-/* The tick row and marker's shared box — the strip itself on desktop. */
-.cs-progress-rail {
-  position: absolute;
-  inset: 0;
-}
-
 /* Static comb of tick marks — evenly spaced regardless of viewport width. */
 .cs-progress-ticks {
   position: absolute;
@@ -1566,73 +1560,12 @@ html[data-hero="6"] .hero-edition[data-edition="6"] {
     --rv-travel: 0.7;
   }
 
+  .cs-progress {
+    display: none;
+  }
+
   .cs-only-horizontal {
     display: none;
-  }
-}
-
-/* Reduced motion on a wide screen stacks the story too, but without the
-   scrubber; phones and small tablets keep it (below). */
-@media (min-width: 901px) and (prefers-reduced-motion: reduce) {
-  .cs-progress {
-    display: none;
-  }
-}
-
-/* Stacked by width: the scrubber follows the page's vertical scroll
-   (HorizontalTrack's STACKED_NARROW branch), so it stands on end — a 14px
-   strip down the right edge, inside the story's 20px margin so it covers no
-   copy or media, from under the fixed header to the bottom. Same parts as
-   the desktop strip turned 90°: the rule on its inner edge, ticks hanging
-   off it (half as many), and the marker's pin pointing in from the left.
-   The rail is inset 20px top and bottom so the pin never meets an edge. */
-@media (max-width: 900px) {
-  .cs-progress {
-    top: 56px;
-    right: 0;
-    bottom: 0;
-    left: auto;
-    width: 14px;
-    height: auto;
-    border-top: 0;
-    border-left: 1px solid var(--line);
-  }
-
-  .cs-progress-rail {
-    inset: 20px 0 calc(20px + env(safe-area-inset-bottom));
-  }
-
-  .cs-progress-ticks {
-    flex-direction: column;
-    padding-top: 0;
-    padding-left: 3px;
-  }
-
-  .cs-progress-tick {
-    width: 8px;
-    height: 1px;
-  }
-
-  .cs-progress-tick:nth-child(even) {
-    display: none;
-  }
-
-  .cs-progress-marker {
-    top: 0%;
-    left: 0;
-    width: 12px;
-    height: 2px;
-    transform: translateY(-50%);
-  }
-
-  .cs-progress-marker::before {
-    top: 50%;
-    left: -7px;
-    transform: translateY(-50%);
-    border-top: 5px solid transparent;
-    border-bottom: 5px solid transparent;
-    border-left: 7px solid var(--accent);
-    border-right: 0;
   }
 }
 
