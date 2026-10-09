@@ -7,14 +7,18 @@ import {
   renderMessage,
   type ViewKey,
 } from "@/lib/analytics/dashboard";
-import { buildReport, fetchFrom, isRange, rangeStart, type RangeKey } from "@/lib/analytics/metrics";
+import { DEFAULT_QUERY, buildActivity, parseActivityQuery } from "@/lib/analytics/activity";
+import { renderActivity } from "@/lib/analytics/activity-view";
+import { activityData, buildReport, fetchFrom, isRange, rangeStart, type RangeKey } from "@/lib/analytics/metrics";
 import { renderReportPage } from "@/lib/analytics/report-page";
 import { getVisitStore } from "@/lib/analytics/store";
 
 /**
  * The private analytics dashboard: /analytics (Overview), one URL per view
  * (/analytics/acquisition, /behavior, /content, /audience, /activity) and
- * the printable /analytics/report, all taking ?range=. A route handler
+ * the printable /analytics/report, all taking ?range=. Activity also takes
+ * its filters, sort and page (activity.ts), and answers ?fragment=1 with
+ * just its own content, for the dashboard's script. A route handler
  * rather than a page (like /owner) so it's a bare HTML response: none of
  * the site's chrome, motion or trackers, and it works without JavaScript.
  * Every view of a range is built from one buildReport call, so the
@@ -93,17 +97,13 @@ const locked = () =>
 
 const notFound = () => html(renderMessage("No such view."), 404);
 
-/** Reads what the range needs from the store and works out the report. */
-async function load(range: RangeKey) {
+/** Everything recorded for the range's visits. */
+async function read(range: RangeKey) {
   const nowMs = Date.now();
   const from = fetchFrom(rangeStart(range, nowMs));
 
   const store = getVisitStore();
-  const [visits, events, allTime] = await Promise.all([
-    store.since(from),
-    store.eventsSince(from),
-    store.total(),
-  ]);
+  const [visits, events] = await Promise.all([store.since(from), store.eventsSince(from)]);
   // Engaged time and scroll depth are kept per day, so read only the days
   // that have visits.
   const firstDay = visits.length ? Math.max(from, Date.parse(visits[0].ts)) : null;
@@ -115,24 +115,74 @@ async function load(range: RangeKey) {
           store.depthBetween(firstDay, nowMs),
         ]);
 
-  return { report: buildReport({ visits, events, engaged, depth, range, nowMs }), allTime };
+  return { visits, events, engaged, depth, range, nowMs };
+}
+
+type ActivityData = ReturnType<typeof activityData>;
+
+/** Activity's filter, sort and page changes each reload only its content,
+ * often several in a row. Those reuse the range's visits from the last read
+ * for up to a minute rather than reading the whole range again — so they
+ * also match the rest of the page they were loaded with. A full page load
+ * always reads fresh and refreshes this. Held in this server instance's
+ * memory only, best effort. */
+const REUSE_MS = 60_000;
+const lastRead = new Map<RangeKey, { startMs: number; at: number; data: ActivityData }>();
+
+function remember(range: RangeKey, nowMs: number, data: ActivityData) {
+  lastRead.set(range, { startMs: rangeStart(range, nowMs), at: Date.now(), data });
+}
+
+function recalled(range: RangeKey): ActivityData | null {
+  const hit = lastRead.get(range);
+  const nowMs = Date.now();
+  // A new day moves "Today" and the day ranges, so a read from before
+  // midnight is never reused after it.
+  return hit && nowMs - hit.at < REUSE_MS && hit.startMs === rangeStart(range, nowMs) ? hit.data : null;
 }
 
 export async function GET(request: Request, context: Context) {
   const view = await pageOf(context);
   if (!view) return notFound();
 
+  const params = new URL(request.url).searchParams;
+  const fragment = view === "activity" && params.get("fragment") === "1";
+
   const secret = password();
   if (!secret && process.env.NODE_ENV === "production") return locked();
-  if (secret && !signedIn(request, secret)) return html(renderLogin());
+  if (secret && !signedIn(request, secret)) {
+    // The script falls back to a full page load, which shows the sign-in.
+    return fragment ? html(renderMessage("Signed out."), 401) : html(renderLogin());
+  }
 
-  const asked = new URL(request.url).searchParams.get("range");
-  const { report, allTime } = await load(isRange(asked) ? asked : "7d");
+  const asked = params.get("range");
+  const range = isRange(asked) ? asked : "7d";
+  const query = view === "activity" ? parseActivityQuery(params) : DEFAULT_QUERY;
+
+  if (fragment) {
+    let activity = recalled(range);
+    if (!activity) {
+      const data = await read(range);
+      activity = activityData(data);
+      remember(range, data.nowMs, activity);
+    }
+    return html(renderActivity(buildActivity(activity.sessions, query, activity.legacy), range));
+  }
+
+  const [data, allTime] = await Promise.all([read(range), getVisitStore().total()]);
+  const report = buildReport(data);
+  remember(range, data.nowMs, { sessions: report.sessions, legacy: report.legacy });
 
   return html(
     view === "report"
       ? renderReportPage(report)
-      : renderDashboard({ report, allTime, signOut: Boolean(secret), view }),
+      : renderDashboard({
+          report,
+          allTime,
+          signOut: Boolean(secret),
+          view,
+          activity: buildActivity(report.sessions, query, report.legacy),
+        }),
   );
 }
 

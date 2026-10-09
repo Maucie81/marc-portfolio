@@ -92,6 +92,10 @@ const eastern = (opts: Intl.DateTimeFormatOptions) =>
 export const timeOf = (ms: number | string) =>
   eastern({ month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }).format(new Date(ms));
 
+/** 3:12:04 PM — for steps inside one visit, which are often seconds apart. */
+export const clockOf = (ms: number | string) =>
+  eastern({ hour: "numeric", minute: "2-digit", second: "2-digit" }).format(new Date(ms));
+
 export const dayOf = (ms: number) =>
   eastern({ month: "short", day: "numeric", year: "numeric" }).format(ms);
 

@@ -1,6 +1,8 @@
-import { pageLabel } from "@/lib/page-titles";
+import type { Activity } from "./activity";
+import { ACTIVITY_SCRIPT, activityLinkParams, renderActivity } from "./activity-view";
 import {
   bar,
+  dayOf,
   depthLabel,
   duration,
   empty,
@@ -13,7 +15,6 @@ import {
   ranked,
   share,
   table,
-  timeOf,
 } from "./format";
 import { insightsFor } from "./insights";
 import {
@@ -21,9 +22,9 @@ import {
   LIVE_MS,
   QUICK_BOTTOM_MS,
   RANGES,
+  PARTNER_PORTAL_PHONES_HIDDEN,
   RECENT_MS,
   SMALL_GROUP,
-  sourceOf,
   type RangeKey,
   type Report,
   type TimeStats,
@@ -36,12 +37,14 @@ import {
  *
  * Split into views, each answering one question: Overview (the state of the
  * site at a glance), Acquisition, Behavior, Content, Audience, and Activity
- * for the log-style tables. Every view is rendered from the same report in
- * one response, so switching between them is instant and the numbers can't
- * drift; a few lines of script swap the visible panel and the address bar,
- * and without script each tab is an ordinary link to its own URL. Charts
- * only where shape matters (the trend, funnels, relative reach); everything
- * else is a short ranked table.
+ * (where visits came from, and each visit's own record — activity-view.ts).
+ * Every view is rendered from the same report in one response, so switching
+ * between them is instant and the numbers can't drift; a few lines of script
+ * swap the visible panel and the address bar, and without script each tab
+ * is an ordinary link to its own URL. Activity's filters, sort and page
+ * travel in its URL too, and only its own content reloads when they change.
+ * Charts only where shape matters (the trend, funnels, relative reach);
+ * everything else is a short ranked table.
  */
 
 export const VIEWS = {
@@ -356,12 +359,17 @@ function partnerPortal(report: Report) {
   if (!pp.measured) {
     return `<section><h2>Partner Portal CTA</h2>${empty("Not measured yet: Partner Portal clicks start with the current tracker.")}</section>`;
   }
-  const rows = pp.byDevice.map((d) => [
-    `${esc(d.label)}${d.viewers && d.viewers < SMALL_GROUP ? ' <span class="tag">small sample</span>' : ""}`,
-    fmt(d.viewers),
-    fmt(d.clicked),
-    pct(d.clicked, d.viewers),
-  ]);
+  const hiddenOn = dayOf(PARTNER_PORTAL_PHONES_HIDDEN);
+  const notAvailable = '<span class="muted">Not available</span>';
+  const rows = pp.byDevice.map((d) => {
+    // Phones since the CTA was hidden there: no rate, rather than a 0%.
+    if (!d.viewers && d.hidden) return [esc(d.label), "—", "—", notAvailable];
+    const tags = [
+      d.viewers && d.viewers < SMALL_GROUP ? '<span class="tag">small sample</span>' : "",
+      d.hidden ? `<span class="tag">${fmt(d.hidden)} couldn't see it</span>` : "",
+    ].filter(Boolean);
+    return [`${esc(d.label)}${tags.length ? ` ${tags.join(" ")}` : ""}`, fmt(d.viewers), fmt(d.clicked), pct(d.clicked, d.viewers)];
+  });
   const from = pp.pages.length
     ? pp.pages.map(([page, n]) => `${esc(page)} (${fmt(n)})`).join(", ")
     : "—";
@@ -370,12 +378,12 @@ function partnerPortal(report: Report) {
 <h2>Partner Portal CTA</h2>
 <p class="muted small">The Yahoo case study's "Check out the prototype I built with Claude" link, which opens the prototype in a new tab — a high-intent product interaction, counted apart from resume and contact, once per visit however often it's clicked.${measuredNote(pp.measured, report.visits)}</p>
 <div class="stats">
-<div class="stat"><span class="muted">Visits that clicked</span><b>${fmt(pp.visits)}</b><span class="muted small">${pct(pp.visits, pp.measured)} of ${plural(pp.measured, "measured visit")}</span></div>
-<div class="stat"><span class="muted">Yahoo case-study viewers → clicked</span><b>${pct(pp.viewersClicked, pp.viewers)}</b><span class="muted small">${fmt(pp.viewersClicked)} of ${plural(pp.viewers, "measured viewer")}</span></div>
+<div class="stat"><span class="muted">Visits that clicked</span><b>${fmt(pp.visits)}</b><span class="muted small">${pct(pp.visits, pp.eligible)} of ${plural(pp.eligible, "measured visit")} that could see it</span></div>
+<div class="stat"><span class="muted">Yahoo case-study viewers → clicked</span><b>${pct(pp.viewersClicked, pp.viewers)}</b><span class="muted small">${fmt(pp.viewersClicked)} of ${plural(pp.viewers, "measured viewer")} who could see it</span></div>
 <div class="stat"><span class="muted">Opening the case study → click</span><b>${median(pp.toClick)}</b><span class="muted small">${pp.toClick ? `clock time, median of ${plural(pp.toClick.n, "click")}` : "no clicks yet"}</span></div>
 </div>
 ${table(["Device", "Viewers", "Clicked", "Rate"], rows, [false, true, true, true])}
-<p class="muted small">Viewers: visits that opened the Yahoo case study while CTA clicks were being recorded — earlier Yahoo viewers aren't in the base; rate is clicks ÷ those viewers. Clicked from: ${from}${placements ? ` · placement: ${placements}` : ""}. Engaged time before the click isn't shown: it's stored per page as one total, so time before and after the click can't be told apart.</p>
+<p class="muted small">Viewers: visits that opened the Yahoo case study while CTA clicks were being recorded — earlier Yahoo viewers aren't in the base; rate is clicks ÷ those viewers. Since ${esc(hiddenOn)} the link is hidden on phones (the prototype isn't built for small screens), so phone visits from then on are left out of every rate here and shown as Not available rather than 0%${pp.hiddenViewers ? ` (${plural(pp.hiddenViewers, "phone viewer")} in this period)` : ""}; earlier phone visits saw it and still count, and every recorded click is kept. Window width isn't recorded, so the device stands in for it: a phone held sideways can still see the link (if it clicks, it counts), and a tablet or desktop window narrower than 768px can't, though it's still counted as able to. Clicked from: ${from}${placements ? ` · placement: ${placements}` : ""}. Engaged time before the click isn't shown: it's stored per page as one total, so time before and after the click can't be told apart.</p>
 </section>`;
 }
 
@@ -415,7 +423,7 @@ ${list}
 
 function actions(report: Report) {
   const row = (a: Report["actions"][number]) => [
-    `${esc(a.label)}${a.base < report.visits ? ` <span class="muted small">of ${plural(a.base, "measured visit")}</span>` : ""}`,
+    `${esc(a.label)}${a.base < report.visits ? ` <span class="muted small">of ${plural(a.base, "measured visit")}${a.phonesExcluded ? " that could see it" : ""}</span>` : ""}`,
     fmt(a.visits),
     pct(a.visits, a.base),
   ];
@@ -652,58 +660,9 @@ ${byCaseStudy}
 </section>`;
 }
 
-// ---------- activity ----------
-
-const place = (v: { city: string | null; region: string | null; country: string | null }) =>
-  [v.city, v.region, v.country].filter(Boolean).join(", ") || "Unknown";
-
-function recentVisits(report: Report) {
-  const rows = report.recentVisits.map((s) => [
-    esc(timeOf(s.start)),
-    esc(place(s.first)),
-    esc(s.first.device ?? "—"),
-    esc(s.source),
-    `${esc(s.journey.join(" → "))}${s.hiring ? ' <span class="tag">acted</span>' : ""}`,
-    s.engagedMs === null ? "—" : duration(s.engagedMs),
-  ]);
-  return `<section>
-<h2>Recent visits</h2>
-<p class="muted small">Newest first, with each visit's path (resume, LinkedIn, contact, Proof notes and Partner Portal count as steps). Acted: reached resume, LinkedIn or contact.</p>
-${rows.length ? table(["Started", "Location", "Device", "Source", "Path", "Engaged"], rows, [false, false, false, false, false, true], [false, true, true, true, false, false], ["fit", "", "fit", "fit", "grow", "fit"]) : empty()}
-${report.visits > rows.length ? `<p class="muted small">Latest ${rows.length} of ${fmt(report.visits)}.</p>` : ""}
-</section>`;
-}
-
-function recentActions(report: Report) {
-  const rows = report.recentActions.map((a) => [
-    esc(timeOf(a.ts)),
-    esc(a.label),
-    esc(pageLabel(a.path)),
-    a.target ? esc(a.target) : "—",
-  ]);
-  return `<section>
-<h2>Recent actions</h2>
-${rows.length ? table(["Time", "Action", "On page", "Detail"], rows, [], [false, false, false, true]) : empty("No actions in this period yet.")}
-</section>`;
-}
-
-function recentPageviews(report: Report) {
-  const rows = report.recent.map((v) => [
-    esc(timeOf(v.ts)),
-    esc(place(v)),
-    esc(v.device ?? "—"),
-    esc(sourceOf(v)),
-    esc(pageLabel(v.path)),
-  ]);
-  return `<section>
-<h2>Recent pageviews</h2>
-${rows.length ? `${table(["Time", "Location", "Device", "Source", "Page"], rows, [], [false, true, true, false, false], ["fit", "", "fit", "fit", "grow"])}${report.pageviews > 50 ? `<p class="muted small">Latest 50 of ${fmt(report.pageviews)}.</p>` : ""}` : empty()}
-</section>`;
-}
-
 // ---------- page ----------
 
-function panels(report: Report): Record<ViewKey, string> {
+function panels(report: Report, activity: string): Record<ViewKey, string> {
   const n = report.visits;
   return {
     overview: `
@@ -754,9 +713,8 @@ ${devices(report)}
 ${location(report)}`,
 
     activity: `
-${recentVisits(report)}
-${recentActions(report)}
-${recentPageviews(report)}`,
+${activity}
+<div id="activity-status" class="sr-only" aria-live="polite"></div>`,
   };
 }
 
@@ -896,12 +854,96 @@ form.login { display: grid; gap: 12px; margin-top: 24px; }
 .error { color: #c42b2b; }
 footer { margin-top: 48px; font-size: 13px; }
 footer p { max-width: 720px; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* Activity. With script, collapsed rows (.c) start hidden and the script
+   takes over; without it, everything stays open and the form submits. */
+.js .c, .js .no-js { display: none; }
+html:not(.js) .disclose, html:not(.js) .geo-more, html:not(.js) .chev { display: none; }
+#activity[aria-busy="true"] section { opacity: .55; }
+th a.sort { color: inherit; text-decoration: none; white-space: nowrap; }
+th a.sort:hover { color: var(--text); text-decoration: underline; }
+th[aria-sort] { color: var(--text); }
+.arrow { margin-left: 3px; font-size: 11px; }
+.chev { display: inline-block; width: 0; height: 0; border-left: 5px solid currentColor; border-top: 4px solid transparent; border-bottom: 4px solid transparent; }
+[aria-expanded="true"] > .chev { transform: rotate(90deg); }
+.crumbs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 6px; margin: 14px 0 4px; padding: 8px 12px; border-radius: 8px; background: var(--raised); }
+.crumbs a { color: var(--muted); }
+.crumbs [aria-current] { font-weight: 600; }
+.crumbs .sep { color: var(--muted); }
+.crumbs .clear { margin-left: auto; }
+.approx { display: block; margin-top: 4px; }
+.geo .scroll { margin-top: 12px; }
+.geo-table td:first-child { min-width: 12em; }
+.loc-cell { display: flex; align-items: flex-start; gap: 4px; }
+.lvl-1 .loc-cell { padding-left: 20px; }
+.lvl-2 .loc-cell { padding-left: 40px; }
+a.loc { color: inherit; text-decoration: none; }
+a.loc:hover { text-decoration: underline; }
+.geo-row.sel td { background: var(--raised); }
+.geo-row.sel a.loc { font-weight: 600; }
+.disclose { flex: none; width: 18px; height: 21px; padding: 0; border: 0; border-radius: 4px; background: none; color: var(--muted); line-height: 1; }
+.disclose:hover { color: var(--text); background: var(--raised); }
+.disclose-pad { flex: none; width: 18px; }
+.link-btn { padding: 0; border: 0; background: none; color: var(--muted); font-size: 13px; text-decoration: underline; text-underline-offset: 2px; }
+.link-btn:hover { color: var(--text); }
+.filters { display: grid; gap: 10px; margin: 16px 0 12px; }
+.filter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.filter-grid .search { grid-column: span 2; }
+@media (max-width: 400px) { .filter-grid .search { grid-column: 1 / -1; } }
+.filters select, .filters input[type=search] { display: block; width: 100%; min-width: 0; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--text); font: inherit; font-size: 13px; }
+.filters select.set, .filters input.set { border-color: var(--text); }
+.quick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { position: relative; display: inline-flex; align-items: center; padding: 3px 10px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; cursor: pointer; user-select: none; }
+.chip:hover { border-color: var(--muted); }
+.chip input { position: absolute; inset: 0; margin: 0; opacity: 0; cursor: pointer; }
+.chip:focus-within { outline: 2px solid var(--series); outline-offset: 2px; }
+.chip.on, .chip:has(input:checked) { background: var(--text); color: var(--surface); border-color: var(--text); }
+.quick .reset { margin-left: auto; color: var(--muted); font-size: 13px; }
+.results { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; }
+.results p { margin: 0 0 6px; }
+#v-count:focus { outline: none; }
+.visits, .history { scroll-margin-top: 56px; }
+.history-line { margin-top: 16px; }
+.history-line a, .visits p a { color: var(--text); text-underline-offset: 2px; }
+.visits-table th:first-child, .visits-table td:first-child { padding-left: 8px; }
+.visits-table tr.visit { cursor: pointer; }
+.visits-table tr.visit:hover td, .visits-table tr.visit.open td { background: var(--raised); }
+.visits-table tr.visit.open td { border-bottom-color: transparent; }
+.visit-toggle { display: inline-flex; align-items: center; gap: 7px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; white-space: nowrap; cursor: pointer; }
+.visit-toggle .chev { color: var(--muted); }
+.visits-table tr.tl td { padding: 2px 8px 14px; background: var(--raised); }
+.tl-meta { margin: 0 0 6px; }
+.phone-only { display: none; }
+.timeline { list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.step { display: grid; grid-template-columns: 6.5em 4em minmax(0, 1fr) auto; gap: 2px 12px; padding: 5px 0; border-top: 1px solid var(--line); }
+.step .t, .step .k, .step .e { color: var(--muted); }
+.step .t { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.step .e { text-align: right; }
+.step.action b { font-weight: 600; }
+.step.seen .w { color: var(--muted); }
+.pager { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 4px; font-size: 13px; }
+.pages, .per { display: flex; align-items: center; gap: 10px; }
+.per { gap: 6px; }
+.pager .btn { padding: 4px 10px; }
+.pager .off { color: var(--muted); cursor: default; opacity: .6; }
+.pill { padding: 2px 9px; border: 1px solid var(--line); border-radius: 999px; color: var(--text); text-decoration: none; }
+.pill[aria-current] { background: var(--text); color: var(--surface); border-color: var(--text); }
 /* Phones: low-priority columns drop out rather than squeezing the rest. */
 @media (max-width: 560px) {
   .opt { display: none; }
   td:first-child { min-width: 6.5em; }
   .grow { min-width: 0; }
   .compare td:not(:first-child), .compare th:not(:first-child) { min-width: 4.5em; }
+  .phone-only { display: inline; }
+  .geo-table td:first-child { min-width: 8em; }
+  .geo-table .num .muted { display: none; }
+  .lvl-1 .loc-cell { padding-left: 12px; }
+  .lvl-2 .loc-cell { padding-left: 24px; }
+  .step { grid-template-columns: auto minmax(0, 1fr); }
+  .step .w, .step .e { grid-column: 1 / -1; }
+  .step .e { text-align: left; }
+  .step .e:empty { display: none; }
 }
 @media print {
   .controls, .tabs, .ranges { display: none; }
@@ -916,6 +958,7 @@ function page(title: string, body: string, script = "") {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
 <title>${esc(title)}</title>
+<script>document.documentElement.classList.add("js")</script>
 <style>${STYLE}</style>
 </head>
 <body><main>${body}</main>${script}</body>
@@ -943,7 +986,9 @@ ${error ? `<p class="error">${esc(error)}</p>` : ""}
 const titleOf = (view: ViewKey) => (view === "overview" ? "Analytics" : `Analytics · ${VIEWS[view].label}`);
 
 /** Swaps panels without a reload and keeps the address bar, the range links
- * and the title in step; a modified click (new tab) is left to the browser. */
+ * and the title in step; a modified click (new tab) is left to the browser.
+ * Every tab opens at the top of the page. Activity's filters, sort and page
+ * (the #activity element's data-qs) ride along in its links. */
 const TAB_SCRIPT = `<script>
 (() => {
   const tabs = document.querySelector(".tabs");
@@ -951,18 +996,34 @@ const TAB_SCRIPT = `<script>
   const titles = JSON.parse(tabs.dataset.titles);
   const pathOf = (v) => v === "overview" ? "/analytics" : "/analytics/" + v;
   const viewOf = (path) => path.replace(/\\/+$/, "").split("/")[2] || "overview";
+  function activityQs(page) {
+    const el = document.getElementById("activity");
+    const params = new URLSearchParams(el ? el.dataset.qs : "");
+    if (!page) params.delete("page");
+    const qs = params.toString();
+    return qs ? "&" + qs : "";
+  }
+  const urlOf = (v, r, page) => pathOf(v) + "?range=" + r + (v === "activity" ? activityQs(page) : "");
+  let current = viewOf(location.pathname);
+  function syncLinks() {
+    // A new range starts Activity back on page 1.
+    for (const a of document.querySelectorAll(".ranges a")) a.href = urlOf(current, a.dataset.range, false);
+    const activity = tabs.querySelector('a[data-view="activity"]');
+    if (activity) activity.href = urlOf("activity", range, true);
+  }
   function show(view) {
     const panel = document.getElementById("view-" + view);
     if (!panel) return false;
+    current = view;
     for (const p of document.querySelectorAll(".panel")) p.hidden = p !== panel;
     for (const a of tabs.querySelectorAll("a")) {
       if (a.dataset.view === view) a.setAttribute("aria-current", "page");
       else a.removeAttribute("aria-current");
     }
-    for (const a of document.querySelectorAll(".ranges a")) a.href = pathOf(view) + "?range=" + a.dataset.range;
+    syncLinks();
     document.title = titles[view];
-    const current = tabs.querySelector("[aria-current]");
-    tabs.scrollLeft = current.offsetLeft - (tabs.clientWidth - current.offsetWidth) / 2;
+    const tab = tabs.querySelector("[aria-current]");
+    tabs.scrollLeft = tab.offsetLeft - (tabs.clientWidth - tab.offsetWidth) / 2;
     return true;
   }
   tabs.addEventListener("click", (e) => {
@@ -970,25 +1031,33 @@ const TAB_SCRIPT = `<script>
     if (!a || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     e.preventDefault();
     if (!show(a.dataset.view)) return;
-    history.pushState(null, "", pathOf(a.dataset.view) + "?range=" + range);
-    // Back to the top of the panel if the sticky tabs were carried past it.
-    const top = tabs.offsetTop;
-    if (window.scrollY > top) window.scrollTo(0, top);
+    history.pushState(null, "", urlOf(a.dataset.view, range, true));
+    window.scrollTo(0, 0);
   });
   addEventListener("popstate", () => show(viewOf(location.pathname)));
-  show(viewOf(location.pathname));
+  document.addEventListener("activity:change", syncLinks);
+  show(current);
 })();
 </script>`;
 
-export function renderDashboard(opts: { report: Report; allTime: number; signOut: boolean; view: ViewKey }) {
-  const { report, allTime, signOut, view } = opts;
+export function renderDashboard(opts: {
+  report: Report;
+  allTime: number;
+  signOut: boolean;
+  view: ViewKey;
+  activity: Activity;
+}) {
+  const { report, allTime, signOut, view, activity } = opts;
   const range = report.range;
   const views = Object.keys(VIEWS) as ViewKey[];
+  // Activity's own state, carried in its tab link and (while it's showing)
+  // the range links.
+  const own = (key: ViewKey, page: boolean) => (key === "activity" ? esc(activityLinkParams(activity.query, page)) : "");
 
   const tabs = views
     .map(
       (key) =>
-        `<a href="${viewPath(key)}?range=${range}" data-view="${key}"${key === view ? ' aria-current="page"' : ""}>${VIEWS[key].label}</a>`,
+        `<a href="${viewPath(key)}?range=${range}${own(key, true)}" data-view="${key}"${key === view ? ' aria-current="page"' : ""}>${VIEWS[key].label}</a>`,
     )
     .join("");
   const titles = esc(JSON.stringify(Object.fromEntries(views.map((key) => [key, titleOf(key)]))));
@@ -996,11 +1065,11 @@ export function renderDashboard(opts: { report: Report; allTime: number; signOut
   const ranges = (Object.keys(RANGES) as RangeKey[])
     .map(
       (key) =>
-        `<a href="${viewPath(view)}?range=${key}" data-range="${key}"${key === range ? ' aria-current="page"' : ""}>${RANGES[key].label}</a>`,
+        `<a href="${viewPath(view)}?range=${key}${own(view, false)}" data-range="${key}"${key === range ? ' aria-current="page"' : ""}>${RANGES[key].label}</a>`,
     )
     .join("");
 
-  const content = panels(report);
+  const content = panels(report, renderActivity(activity, range));
   const body = `
 <header>
 <div><h1>Analytics</h1><p class="muted small">${fmt(allTime)} pageviews recorded all time · times are Eastern</p></div>
@@ -1022,5 +1091,5 @@ ${content[key]}
   .join("\n")}
 ${footer(report)}`;
 
-  return page(titleOf(view), body, TAB_SCRIPT);
+  return page(titleOf(view), body, TAB_SCRIPT + ACTIVITY_SCRIPT);
 }

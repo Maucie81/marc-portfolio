@@ -325,7 +325,7 @@ const JOURNEY_ACTION_LABELS: Partial<Record<ActionType, string>> = {
 /** Pages in order, with resume / LinkedIn / contact, Proof notes and
  * Partner Portal actions as steps of their own; repeats in a row collapse,
  * long paths end in "…". */
-function journeyOf(s: Session): string[] {
+export function journeyOf(s: Session): string[] {
   const steps = [
     ...s.views.map((v) => ({ t: Date.parse(v.ts), label: shortLabel(v.path) })),
     ...s.actions
@@ -519,6 +519,7 @@ export function buildReport(opts: {
   const { range, nowMs } = opts;
   const startMs = rangeStart(range, nowMs);
   const pageviews = opts.visits.filter((v) => Date.parse(v.ts) >= startMs);
+  const legacy = withoutVisit(pageviews);
   const sessions = sessionize(opts.visits, opts.events, opts.engaged, opts.depth, startMs);
   const n = sessions.length;
   const count = (test: (s: Session) => boolean) => sessions.filter(test).length;
@@ -622,7 +623,7 @@ export function buildReport(opts: {
     firstPageviewMs: pageviews.length ? Date.parse(pageviews[0].ts) : null,
     unit,
     pageviews: pageviews.length,
-    legacyPageviews: pageviews.filter((v) => !v.sid).length,
+    legacyPageviews: legacy.length,
     visits: n,
     sessionPageviews: sessions.reduce((sum, s) => sum + s.views.length, 0),
     trend: [...trend.values()],
@@ -657,15 +658,23 @@ export function buildReport(opts: {
     },
     journeys,
     // `base` is what a share is out of: every visit, or — for actions only
-    // the newer tracker records — the visits it recorded.
+    // the newer tracker records — the visits it recorded; for the Partner
+    // Portal CTA, only those that could see it (ctaAvailable).
     actions: [
       ...(Object.keys(ACTIONS) as ActionType[]).map((type) => ({
         type: type as ActionType | null,
         label: ACTIONS[type] as string,
         visits: count((s) => s.did.has(type)),
-        base: SEEN_ACTIONS.includes(type) ? seenVisits : n,
+        base:
+          type === "partner_portal"
+            ? count((s) => s.seenTracked && ctaAvailable(s))
+            : SEEN_ACTIONS.includes(type)
+              ? seenVisits
+              : n,
         /** Only recorded by the newer tracker: no base means "not measured". */
         seenOnly: SEEN_ACTIONS.includes(type),
+        /** Phone visits from when the CTA was hidden there are out of the base. */
+        phonesExcluded: type === "partner_portal",
         hiring: HIRING_ACTIONS.includes(type),
         product: PRODUCT_ACTIONS.includes(type),
       })),
@@ -675,6 +684,7 @@ export function buildReport(opts: {
         visits: count((s) => s.views.some((v) => v.path === "/contact")),
         base: n,
         seenOnly: false,
+        phonesExcluded: false,
         hiring: false,
         product: false,
       },
@@ -696,23 +706,6 @@ export function buildReport(opts: {
           : "Unknown",
       ),
     },
-    recent: pageviews.slice(-50).reverse(),
-    recentVisits: sessions
-      .slice(-25)
-      .reverse()
-      .map((s) => ({
-        start: s.start,
-        first: s.first,
-        source: s.source,
-        journey: journeyOf(s),
-        engagedMs: s.timed ? s.engagedMs : null,
-        hiring: s.hiring,
-      })),
-    recentActions: opts.events
-      .filter((e): e is Action => isAction(e.type) && Date.parse(e.ts) >= startMs)
-      .slice(-30)
-      .reverse()
-      .map((e) => ({ ts: e.ts, label: ACTIONS[e.type] ?? e.type, path: e.path, target: e.target })),
     timing: {
       toCaseStudy: timeStats(known(sessions.map(toFirstCaseStudy))),
       toHiring: timeStats(known(sessions.map(toFirstHiring))),
@@ -728,10 +721,39 @@ export function buildReport(opts: {
       recent: activeSince(opts.visits, opts.events, nowMs - RECENT_MS),
     },
     devices: deviceComparison(sessions, caseStudies.map((c) => c.path)),
+    /** Every visit in the range, oldest first — what Activity filters,
+     * sorts and pages through. */
+    sessions,
+    /** Pageviews with no visit attached, oldest first (Activity's
+     * Historical pageviews). */
+    legacy,
   };
 }
 
 export type Report = ReturnType<typeof buildReport>;
+
+/** Pageviews recorded without a visit id: before visits were tracked
+ * (Oct 7, 2026), or by a tab still running the older tracker. Kept as
+ * they are — never grouped into visits. */
+const withoutVisit = (pageviews: Visit[]) => pageviews.filter((v) => !v.sid);
+
+/** What Activity needs, for a request that needs nothing else from the
+ * report: the range's visits (same grouping as buildReport) and its
+ * pageviews without a visit. */
+export function activityData(opts: {
+  visits: Visit[];
+  events: ActionEvent[];
+  engaged: Engaged[];
+  depth: Depth[];
+  range: RangeKey;
+  nowMs: number;
+}) {
+  const startMs = rangeStart(opts.range, opts.nowMs);
+  return {
+    sessions: sessionize(opts.visits, opts.events, opts.engaged, opts.depth, startMs),
+    legacy: withoutVisit(opts.visits.filter((v) => Date.parse(v.ts) >= startMs)),
+  };
+}
 
 // ---------- device behavior ----------
 
@@ -919,28 +941,63 @@ function exposureReport(sessions: Session[]) {
 
 const PARTNER_PORTAL = "/work/yahoo-partner-portal";
 
+/** When the CTA stopped showing on phones: it's hidden below 768px wide
+ * (`hideOnPhones` in ypp.ts) because the prototype isn't built for small
+ * screens. Before this, phones saw it like everyone else, and their
+ * figures stand. This is the moment that change went live — move it if
+ * the change ships later. */
+export const PARTNER_PORTAL_PHONES_HIDDEN = Date.parse("2026-10-09T12:00:00-04:00");
+
+/** Whether the visit could have clicked the CTA. Window width isn't
+ * recorded, so the device stands in for it: a phone visit since the CTA
+ * was hidden there couldn't — unless it clicked anyway (a phone held
+ * sideways is wider than 768px), which proves it could. */
+function ctaAvailable(s: Session) {
+  return s.did.has("partner_portal") || s.first.device !== "mobile" || s.start < PARTNER_PORTAL_PHONES_HIDDEN;
+}
+
+const CTA_DEVICES = [
+  ["Mobile", "mobile"],
+  ["Tablet", "tablet"],
+  ["Desktop", "desktop"],
+] as const;
+
 /** The Yahoo case study's prototype link: who clicked, from where, and how
  * often its viewers did. Every figure — the click-rate base included — is
  * over visits whose tracker records the click (`seen`), so Yahoo viewers
- * from before CTA tracking are never counted as non-clickers. */
+ * from before CTA tracking are never counted as non-clickers; and the rate
+ * bases leave out visits that couldn't see the CTA (ctaAvailable), so a
+ * phone isn't counted as choosing not to click a link it was never shown.
+ * Every recorded click is kept. */
 function partnerPortal(sessions: Session[]) {
   const measured = sessions.filter((s) => s.seenTracked);
+  const eligible = measured.filter(ctaAvailable);
   const clicks = measured.flatMap((s) => {
     const click = s.actions.find((a) => a.type === "partner_portal");
     return click ? [{ s, click }] : [];
   });
-  const viewers = measured.filter((s) => s.caseStudies.has(PARTNER_PORTAL));
+  const yahoo = measured.filter((s) => s.caseStudies.has(PARTNER_PORTAL));
+  const viewers = yahoo.filter(ctaAvailable);
   const clicked = (s: Session) => s.did.has("partner_portal");
   return {
     measured: measured.length,
+    /** Measured visits that could see the CTA: the base for click shares. */
+    eligible: eligible.length,
     visits: clicks.length,
     pages: tally(clicks, ({ click }) => pageLabel(click.path)),
     placements: tally(clicks, ({ click }) => click.target ?? "unknown"),
     viewers: viewers.length,
     viewersClicked: viewers.filter(clicked).length,
-    byDevice: DEVICES.map(([label, device]) => {
+    /** Yahoo viewers on a phone after the CTA was hidden there. */
+    hiddenViewers: yahoo.length - viewers.length,
+    byDevice: CTA_DEVICES.map(([label, device]) => {
       const group = onDevice(viewers, device);
-      return { label, viewers: group.length, clicked: group.filter(clicked).length };
+      return {
+        label,
+        viewers: group.length,
+        clicked: group.filter(clicked).length,
+        hidden: onDevice(yahoo, device).length - group.length,
+      };
     }),
     // Clock time from first opening the case study to the click. Engaged
     // time before the click can't be told apart from time after it (it's

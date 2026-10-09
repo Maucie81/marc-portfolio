@@ -2,6 +2,7 @@ import { funnelSteps, sourceSplit, trendChart, viewPath } from "./dashboard";
 import {
   bar,
   coverage,
+  dayOf,
   duration,
   empty,
   esc,
@@ -19,7 +20,17 @@ import {
   depthLabel,
 } from "./format";
 import { insightsFor } from "./insights";
-import { INTERNAL_SOURCE, LIVE_MS, QUICK_BOTTOM_MS, RANGES, SMALL_GROUP, type RangeKey, type Report, type TimeStats } from "./metrics";
+import {
+  INTERNAL_SOURCE,
+  LIVE_MS,
+  PARTNER_PORTAL_PHONES_HIDDEN,
+  QUICK_BOTTOM_MS,
+  RANGES,
+  SMALL_GROUP,
+  type RangeKey,
+  type Report,
+  type TimeStats,
+} from "./metrics";
 
 /**
  * /analytics/report: the same report as the dashboard, laid out to be read
@@ -257,7 +268,7 @@ function behavior(report: Report) {
     a.seenOnly && !a.base
       ? [esc(a.label), "—", '<span class="muted">Not measured</span>']
       : [
-          `${esc(a.label)}${a.seenOnly && a.base < n ? ` <span class="muted small">of ${fmt(a.base)} measured</span>` : ""}`,
+          `${esc(a.label)}${a.seenOnly && a.base < n ? ` <span class="muted small">of ${fmt(a.base)} measured${a.phonesExcluded ? " that could see it" : ""}</span>` : ""}`,
           fmt(a.visits),
           pct(a.visits, a.base),
         ],
@@ -265,8 +276,8 @@ function behavior(report: Report) {
   const pp = report.partnerPortal;
   const partner = pp.measured
     ? `<p class="muted small">Partner Portal CTA (high-intent product interaction): ${plural(pp.visits, "visit")} clicked${
-        pp.viewers ? ` — ${pct(pp.viewersClicked, pp.viewers)} of measured Yahoo viewers (${fmt(pp.viewersClicked)} of ${fmt(pp.viewers)}; earlier viewers excluded)` : ""
-      }.</p>`
+        pp.viewers ? ` — ${pct(pp.viewersClicked, pp.viewers)} of measured Yahoo viewers who could see it (${fmt(pp.viewersClicked)} of ${fmt(pp.viewers)}; earlier viewers excluded)` : ""
+      }${pp.hiddenViewers ? `; ${plural(pp.hiddenViewers, "phone viewer")} since it was hidden on phones (${esc(dayOf(PARTNER_PORTAL_PHONES_HIDDEN))}) left out, not counted as 0%` : ""}.</p>`
     : "";
   const paths = report.journeys.slice(0, 5);
   return sheet(
@@ -298,7 +309,7 @@ ${homepageReach(report)}
 <div class="block">
 <h3>Actions</h3>
 ${table(["Action", "Visits", "Share"], actionRows, [false, true, true])}
-${untaken.length ? `<p class="muted small">None in this period: ${untaken.map((a) => `${esc(a.label)}${a.seenOnly && a.base < n ? ` (of ${fmt(a.base)} measured)` : ""}`).join(", ")}.</p>` : ""}
+${untaken.length ? `<p class="muted small">None in this period: ${untaken.map((a) => `${esc(a.label)}${a.seenOnly && a.base < n ? ` (of ${fmt(a.base)} measured${a.phonesExcluded ? " that could see it" : ""})` : ""}`).join(", ")}.</p>` : ""}
 ${partner}
 </div>
 </div>
