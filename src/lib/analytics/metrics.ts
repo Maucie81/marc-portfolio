@@ -944,9 +944,10 @@ const PARTNER_PORTAL = "/work/yahoo-partner-portal";
 /** When the CTA stopped showing on phones: it's hidden below 768px wide
  * (`hideOnPhones` in ypp.ts) because the prototype isn't built for small
  * screens. Before this, phones saw it like everyone else, and their
- * figures stand. This is the moment that change went live — move it if
- * the change ships later. */
-export const PARTNER_PORTAL_PHONES_HIDDEN = Date.parse("2026-10-09T12:00:00-04:00");
+ * figures stand. This is when that change was published (it was live
+ * about a minute later, so the odd phone visit in between is left out
+ * rather than counted as a non-click). */
+export const PARTNER_PORTAL_PHONES_HIDDEN = Date.parse("2026-10-09T12:54:00-04:00");
 
 /** Whether the visit could have clicked the CTA. Window width isn't
  * recorded, so the device stands in for it: a phone visit since the CTA
