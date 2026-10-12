@@ -1,4 +1,5 @@
 import { SESSION_ID } from "@/lib/analytics/events";
+import { overLimit } from "@/lib/analytics/limits";
 import { PATH, done, ignored, readBody } from "@/lib/analytics/request";
 import { getVisitStore } from "@/lib/analytics/store";
 
@@ -33,6 +34,9 @@ export async function POST(request: Request) {
   ) {
     return new Response(null, { status: 400 });
   }
+
+  const limited = await overLimit(request, "depth");
+  if (limited) return limited;
 
   try {
     await getVisitStore().addDepth(sid, path, [...new Set(reached as number[])], Date.now());

@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { SESSION_ID } from "@/lib/analytics/events";
+import { overLimit } from "@/lib/analytics/limits";
 import { PATH, clean, done, ignored, readBody } from "@/lib/analytics/request";
 import { getVisitStore } from "@/lib/analytics/store";
 import { browserOf, deviceOf, osOf } from "@/lib/analytics/ua";
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   if (typeof path !== "string" || path.length > 200 || !PATH.test(path)) {
     return new Response(null, { status: 400 });
   }
+
+  const limited = await overLimit(request, "visit");
+  if (limited) return limited;
 
   const ua = request.headers.get("user-agent") ?? "";
   const touch = body.touch === true;

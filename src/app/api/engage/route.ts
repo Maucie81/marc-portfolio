@@ -1,4 +1,5 @@
 import { SESSION_ID } from "@/lib/analytics/events";
+import { overLimit } from "@/lib/analytics/limits";
 import { PATH, done, ignored, readBody } from "@/lib/analytics/request";
 import { getVisitStore } from "@/lib/analytics/store";
 
@@ -15,8 +16,10 @@ import { getVisitStore } from "@/lib/analytics/store";
  * /api/visit.
  */
 
-// Well above one checkpoint's worth; anything bigger isn't from the tracker.
-const MAX_MS = 10 * 60 * 1000;
+// The tracker sends a delta every 30 s, and a stretch it counts ends a minute
+// after the last interaction, so a real one never nears this; anything bigger
+// isn't from the tracker.
+const MAX_MS = 3 * 60 * 1000;
 
 export async function POST(request: Request) {
   if (ignored(request)) return done();
@@ -38,6 +41,9 @@ export async function POST(request: Request) {
   ) {
     return new Response(null, { status: 400 });
   }
+
+  const limited = await overLimit(request, "engage");
+  if (limited) return limited;
 
   try {
     await getVisitStore().addEngaged({ sid, path, ms }, Date.now());

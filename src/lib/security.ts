@@ -115,7 +115,14 @@ export function cleanText(value: string): string {
 
 /* ---------- rate limiting ---------- */
 
-export type Window = { name: string; limit: number; seconds: number };
+export type Window = {
+  name: string;
+  limit: number;
+  seconds: number;
+  /** Counted across every visitor instead of per visitor — a ceiling on the
+   * whole endpoint, whoever is calling. */
+  shared?: boolean;
+};
 
 export type LimitResult = { allowed: true } | { allowed: false; retryAfter: number };
 
@@ -188,7 +195,7 @@ export async function hit(
   subject: string,
   windows: Window[],
 ): Promise<LimitResult> {
-  const keys = windows.map((w) => `rl:${scope}:${w.name}:${subject}`);
+  const keys = windows.map((w) => `rl:${scope}:${w.name}:${w.shared ? "all" : subject}`);
   const client = getRedis();
   if (!client) return memoryHit(keys, windows);
   try {

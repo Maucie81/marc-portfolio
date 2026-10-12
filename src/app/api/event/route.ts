@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { projects } from "@/lib/home";
 import { HERO_ID, SECTIONS, SESSION_ID, isAction, isExposure } from "@/lib/analytics/events";
+import { overLimit } from "@/lib/analytics/limits";
 import { PATH, clean, done, ignored, readBody } from "@/lib/analytics/request";
 import { getVisitStore } from "@/lib/analytics/store";
 
@@ -45,6 +46,9 @@ export async function POST(request: Request) {
   ) {
     return new Response(null, { status: 400 });
   }
+
+  const limited = await overLimit(request, "event");
+  if (limited) return limited;
 
   try {
     await getVisitStore().addEvent({
