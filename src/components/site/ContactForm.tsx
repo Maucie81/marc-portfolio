@@ -19,6 +19,7 @@ export default function ContactForm() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
+  const [trap, setTrap] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -37,7 +38,7 @@ export default function ContactForm() {
       const res = await fetch("/api/contact", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, message }),
+        body: JSON.stringify({ name, email, message, ref_code: trap }),
       });
       const data = await res.json();
 
@@ -80,6 +81,7 @@ export default function ContactForm() {
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Your name"
+          maxLength={100}
           className={fieldClass}
         />
       </div>
@@ -94,6 +96,7 @@ export default function ContactForm() {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@yourname.com"
+          maxLength={254}
           className={fieldClass}
         />
       </div>
@@ -108,7 +111,34 @@ export default function ContactForm() {
           onChange={(e) => setMessage(e.target.value)}
           placeholder="What's on your mind?"
           rows={5}
+          maxLength={5000}
           className={`${fieldClass} min-h-[132px] resize-none lg:min-h-[56px] lg:flex-1`}
+        />
+      </div>
+
+      {/* Honeypot — hidden from people, filled by bots. Inert + aria-hidden
+          keeps it out of the tab order and the accessibility tree; the
+          ignore attributes tell browsers and password managers not to
+          autofill it. */}
+      <div
+        aria-hidden="true"
+        inert
+        className="pointer-events-none absolute -left-[9999px] h-0 w-0 overflow-hidden opacity-0"
+      >
+        <input
+          type="text"
+          name="ref_code"
+          value={trap}
+          onChange={(e) => setTrap(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck={false}
+          data-lpignore="true"
+          data-1p-ignore="true"
+          data-bwignore="true"
+          data-form-type="other"
         />
       </div>
 

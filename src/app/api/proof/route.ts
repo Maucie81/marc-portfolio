@@ -1,4 +1,14 @@
 import { NextResponse } from "next/server";
+import {
+  MAX_EMAIL,
+  PROOF_LIMITS,
+  cleanLine,
+  cleanText,
+  hit,
+  readGuardedJson,
+  tooMany,
+  visitorKey,
+} from "@/lib/security";
 import { getProofStore } from "@/lib/proof/store";
 import {
   newId,
@@ -39,12 +49,8 @@ const unit = (n: unknown): n is number =>
   typeof n === "number" && Number.isFinite(n) && n >= 0 && n <= 1;
 
 export async function POST(request: Request) {
-  let body: Record<string, unknown>;
-  try {
-    body = ((await request.json()) ?? {}) as Record<string, unknown>;
-  } catch {
-    return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
-  }
+  const body = await readGuardedJson(request);
+  if (body instanceof Response) return body;
 
   const { path, anchor, ax, ay, px, py, text, name, email, website } = body;
 
@@ -69,7 +75,11 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.json({ error: "Write a note first." }, { status: 400 });
   }
-  if (text.trim().length > PROOF_MAX_TEXT) {
+  const cleanNote = cleanText(text);
+  if (!cleanNote) {
+    return NextResponse.json({ error: "Write a note first." }, { status: 400 });
+  }
+  if (cleanNote.length > PROOF_MAX_TEXT) {
     return NextResponse.json(
       { error: `Keep it under ${PROOF_MAX_TEXT} characters.` },
       { status: 400 },
@@ -77,10 +87,17 @@ export async function POST(request: Request) {
   }
 
   const cleanName =
-    typeof name === "string" ? name.trim().slice(0, PROOF_MAX_NAME) : "";
-  const cleanEmail = typeof email === "string" ? email.trim() : "";
-  if (cleanEmail && !EMAIL_PATTERN.test(cleanEmail)) {
+    typeof name === "string" ? cleanLine(name).slice(0, PROOF_MAX_NAME) : "";
+  const cleanEmail = typeof email === "string" ? cleanLine(email) : "";
+  if (cleanEmail && (cleanEmail.length > MAX_EMAIL || !EMAIL_PATTERN.test(cleanEmail))) {
     return NextResponse.json({ error: "That email doesn't look right." }, { status: 400 });
+  }
+
+  // Per-IP limit: the per-visitor cap below follows a cookie, which a
+  // script can simply drop.
+  const limited = await hit("proof", visitorKey(request), PROOF_LIMITS);
+  if (!limited.allowed) {
+    return tooMany(limited, "That's a lot of notes in a short time. Try again in a little while.");
   }
 
   const store = getProofStore();
@@ -102,7 +119,7 @@ export async function POST(request: Request) {
     ay,
     px,
     py: Math.max(0, Math.round(py)),
-    text: text.trim(),
+    text: cleanNote,
     ...(cleanName ? { name: cleanName } : {}),
     ...(cleanEmail ? { email: cleanEmail } : {}),
     createdAt: Date.now(),

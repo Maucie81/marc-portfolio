@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { PROOF_EMAIL_DAILY, hitGlobal } from "@/lib/security";
 import { PROOF_COOKIE, PROOF_TTL_SECONDS, type ProofPin } from "./types";
 
 /** Server helpers shared by the /api/proof routes. */
@@ -53,6 +54,15 @@ export async function notifyNewPin(
 ) {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
+
+  // Proof notes have their own daily email budget, kept below the contact
+  // form's so a flood of notes can't crowd out real messages. Over budget,
+  // the note is still saved — only the email is skipped.
+  const budget = await hitGlobal("email:proof", PROOF_EMAIL_DAILY);
+  if (!budget.allowed) {
+    console.warn("[proof] daily email budget reached, note saved without email");
+    return;
+  }
 
   const who = pin.name?.trim() || "Someone";
   const link = `${origin}${pin.path}?pin=${pin.id}`;
