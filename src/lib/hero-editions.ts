@@ -273,11 +273,11 @@ export const HERO_META_LINES = (e: Pick<HeroEdition, "label" | "plate" | "reg">)
  * homepage view in that session — navigating into a case study and back
  * never changes it.
  */
-export const HERO_ROTATION = true;
+export const HERO_ROTATION = false;
 
 /** The first-visit edition, the edition when rotation is off, and the
  * no-script fallback. */
-export const HERO_DEFAULT = 2;
+export const HERO_DEFAULT = 1;
 
 /** This session's edition. */
 const STORAGE_KEY = "mf:hero-edition";

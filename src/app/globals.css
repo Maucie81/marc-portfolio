@@ -421,7 +421,7 @@ paints over it. */
   display: none;
 }
 
-html:not([data-hero]) .hero-edition[data-edition="2"],
+html:not([data-hero]) .hero-edition[data-edition="1"],
 html[data-hero="1"] .hero-edition[data-edition="1"],
 html[data-hero="2"] .hero-edition[data-edition="2"],
 html[data-hero="3"] .hero-edition[data-edition="3"],
