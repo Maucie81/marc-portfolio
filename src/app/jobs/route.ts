@@ -1,8 +1,11 @@
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import {
+  isDecision,
   isManualField,
+  logDecision,
   withCurrent,
+  type FormInput,
   matchManual,
   mergeRoles,
   nextOverlay,
@@ -13,7 +16,7 @@ import {
 } from "@/lib/jobs/merge";
 import { parseQuery, renderJobs, renderLogin, renderMessage } from "@/lib/jobs/render";
 import { getManual, getSnapshot, putManual, type ManualKind } from "@/lib/jobs/store";
-import type { ManualData, ManualRole, Overlay, Snapshot } from "@/lib/jobs/types";
+import type { ManualData, ManualRole, Overlay, Role, Snapshot } from "@/lib/jobs/types";
 
 /**
  * The private job-search dashboard. Same pattern as /analytics (a bare HTML
@@ -108,14 +111,23 @@ export async function GET(request: Request) {
 const csrfToken = (secret: string) =>
   createHmac("sha256", secret).update("mf-jobs-csrf").digest("base64url");
 
-const toRole = (id: string, notice: string) =>
-  new NextResponse(null, {
+const go = (params: Record<string, string>, hash = "") => {
+  const qs = new URLSearchParams(params).toString();
+  return new NextResponse(null, {
     status: 303,
-    headers: {
-      Location: `/jobs?${new URLSearchParams({ role: id, notice }).toString()}`,
-      "Cache-Control": "private, no-store",
-    },
+    headers: { Location: `/jobs${qs ? `?${qs}` : ""}${hash}`, "Cache-Control": "private, no-store" },
   });
+};
+const toRole = (id: string, notice: string) => go({ role: id, notice });
+
+/** New entries get a status from how they came in, so adding one never asks for it. */
+const withDefaultStatus = (form: FormInput): FormInput => ({
+  get(name) {
+    const v = form.get(name);
+    if (name === "status" && !v) return form.get("source") === "recruiter" ? "Recruiter response" : "Discovered";
+    return v;
+  },
+});
 
 const invalid = (message: string, status = 400) =>
   html(renderMessage(`${message} Nothing was saved. Use your browser's Back button to fix it.`), status);
@@ -151,23 +163,30 @@ async function change(request: Request, form: FormData, secret: string) {
   }
   const autoRoles = snapshot?.roles ?? [];
 
-  const save = async <T extends ManualRole | Overlay>(kind: ManualKind, record: T, expected: number, goTo: string, notice: string) => {
+  const save = async <T extends ManualRole | Overlay>(
+    kind: ManualKind,
+    record: T,
+    expected: number,
+    goTo: string,
+    notice: string | (() => NextResponse),
+  ) => {
     try {
       if (!(await putManual(kind, record, expected))) return toRole(goTo, "stale");
     } catch {
       return invalid("Couldn't save to storage.", 502);
     }
-    return toRole(goTo, notice);
+    return typeof notice === "string" ? toRole(goTo, notice) : notice();
   };
 
   if (action === "add") {
     const who = parseIdentity(form);
     if (!who.ok) return invalid(who.error);
-    const fields = parseFields(form);
+    const fields = parseFields(withDefaultStatus(form));
     if (!fields.ok) return invalid(fields.error);
     const record: ManualRole = {
       ...fields.value,
       ...who.value,
+      decisions: fields.value.decision ? logDecision([], fields.value.decision, now) : [],
       id: `m-${randomBytes(5).toString("hex")}`,
       added: todayET(),
       updated: now,
@@ -180,12 +199,54 @@ async function change(request: Request, form: FormData, secret: string) {
   }
 
   const m = manual.roles.find((r) => r.id === id);
+  const merged = mergeRoles(autoRoles, manual);
+
+  if (action === "decide") {
+    const decision = form.get("decision");
+    const kind = form.get("kind");
+    if (!isDecision(decision)) return invalid("Choose interested, undecided or not interested.");
+    const shown = merged.find((r) => r.edit?.kind === kind && r.edit.id === id);
+    if (!shown) return invalid("That opportunity isn't here any more.", 404);
+    const before = shown.decision ?? "undecided";
+    const back = form.get("back");
+    const done = () =>
+      decision === "not" && before !== "not"
+        ? go({ notice: "archived", undo: shown.id, prev: before })
+        : back === "detail"
+          ? toRole(shown.id, "")
+          : back === "archive"
+            ? go({ view: "archive", notice: "restored", restored: shown.id })
+            : go({}, `#r-${encodeURIComponent(shown.id)}`);
+    if (kind === "manual") {
+      if (!m) return invalid("That entry no longer exists.", 404);
+      const record: ManualRole = { ...m, decision, decisions: logDecision(m.decisions, decision, now), updated: now };
+      return save("roles", record, rev, shown.id, done);
+    }
+    const prev = manual.overlays[id] ?? {
+      id,
+      label: { company: shown.company, role: shown.role },
+      fields: {},
+      base: {},
+      updated: now,
+      rev: 0,
+    };
+    const record: Overlay = {
+      ...prev,
+      fields: { ...prev.fields, decision },
+      decisions: logDecision(prev.decisions, decision, now),
+      updated: now,
+    };
+    return save("overlays", record, rev, shown.id, done);
+  }
 
   if (action === "edit-manual") {
     if (!m) return invalid("That entry no longer exists.", 404);
-    const who = parseIdentity(form);
+    // Each form on the page sends only its own fields; everything else keeps its value.
+    const current = merged.find((r) => r.edit?.kind === "manual" && r.edit.id === m.id) ?? ({ ...m } as unknown as Role);
+    const input = withCurrent(form, current);
+    const who = parseIdentity(input);
     if (!who.ok) return invalid(who.error);
-    const fields = parseFields(form, m);
+    const fields = parseFields(input, m);
     if (!fields.ok) return invalid(fields.error);
     const record: ManualRole = { ...m, ...fields.value, ...who.value, updated: now };
     const { merge } = matchManual(record, autoRoles);
@@ -204,7 +265,7 @@ async function change(request: Request, form: FormData, secret: string) {
   }
 
   if (action === "edit" || action === "revert") {
-    const shown = mergeRoles(autoRoles, manual).find((r) => r.edit?.kind === "overlay" && r.edit.id === id);
+    const shown = merged.find((r) => r.edit?.kind === "overlay" && r.edit.id === id);
     if (!shown) return invalid("That role isn't in the current snapshot.", 404);
     const prev = manual.overlays[id];
     if (action === "revert") {

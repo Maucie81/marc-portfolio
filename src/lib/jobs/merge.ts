@@ -1,4 +1,5 @@
 import {
+  DECISIONS,
   END_STATUSES,
   SOURCES,
   STATUSES,
@@ -6,6 +7,8 @@ import {
   type ManualField,
   type ManualFields,
   type ManualRole,
+  type Decision,
+  type DecisionEntry,
   type Overlay,
   type Role,
   type SourceKey,
@@ -23,6 +26,7 @@ import {
  */
 
 export const MANUAL_KEYS: ManualField[] = [
+  "decision",
   "source",
   "status",
   "url",
@@ -37,6 +41,12 @@ export const MANUAL_KEYS: ManualField[] = [
 ];
 
 type Value = string | number | null;
+
+/**
+ * Yours alone: the routine has no value for these, so they're never "overrides" and never
+ * conflict. (`notes` on a card is your notes; the routine's notes are `researchNotes`.)
+ */
+const PERSONAL = new Set<ManualField>(["decision", "notes"]);
 
 /* ---------- matching ---------- */
 
@@ -107,20 +117,21 @@ export function matchManual(m: ManualRole, auto: Role[]): { merge: Role | null; 
   const company = normCompany(m.company);
   const title = normTitle(m.role);
   const certain = pool.filter(
-    (a) => (url && normUrl(a.url) === url) || (normCompany(a.company) === company && normTitle(a.role) === title),
+    (a) => (url && normUrl(a.url) === url) || (!!title && normCompany(a.company) === company && normTitle(a.role) === title),
   );
   if (certain.length === 1) return { merge: certain[0], possible: [] };
   if (certain.length > 1) return { merge: null, possible: certain };
   return {
     merge: null,
-    possible: pool.filter((a) => relatedCompany(a.company, m.company) && overlap(a.role, m.role) >= 0.5),
+    // No title yet: never merge on company alone, but do ask.
+    possible: pool.filter((a) => relatedCompany(a.company, m.company) && (!title || overlap(a.role, m.role) >= 0.5)),
   };
 }
 
 /* ---------- merging ---------- */
 
 const autoValue = (orig: Role, k: ManualField): Value =>
-  k === "source" ? "automated" : k === "recruiter" ? null : (orig[k] as Value);
+  k === "source" ? "automated" : k === "recruiter" || PERSONAL.has(k) ? null : (orig[k] as Value);
 
 const same = (a: Value | undefined, b: Value | undefined) => (a ?? null) === (b ?? null);
 
@@ -131,7 +142,7 @@ function setField(r: Role, k: ManualField, v: Value) {
 function track(r: Role, orig: Role | null, k: ManualField) {
   if (!r.overridden) r.overridden = [];
   if (!r.overridden.includes(k)) r.overridden.push(k);
-  if (orig) {
+  if (orig && !PERSONAL.has(k)) {
     r.autoValues = { ...r.autoValues, [k]: autoValue(orig, k) };
   }
 }
@@ -155,6 +166,8 @@ function applyManual(target: Role, orig: Role, m: ManualRole) {
     track(target, orig, k);
   }
   if (target.overridden?.includes("status")) target.list = listFor(target.status);
+  if (m.nextAction) target.ownNext = true;
+  if (m.decisions?.length) target.decisions = [...(target.decisions ?? []), ...m.decisions];
   target.mergedManualId ??= m.id;
 }
 
@@ -171,11 +184,13 @@ function applyOverlay(target: Role, orig: Role | null, ov: Overlay) {
     setField(target, k, v);
     track(target, orig, k);
     (target.overlayFields ??= []).push(k);
-    if (orig && k in ov.base && !same(ov.base[k], autoValue(orig, k))) {
+    if (orig && !PERSONAL.has(k) && k in ov.base && !same(ov.base[k], autoValue(orig, k))) {
       (target.conflicts ??= []).push({ field: k, auto: autoValue(orig, k) });
     }
   }
   if ("status" in ov.fields) target.list = listFor(target.status);
+  if ("nextAction" in ov.fields) target.ownNext = !!ov.fields.nextAction;
+  if (ov.decisions?.length) target.decisions = [...(target.decisions ?? []), ...ov.decisions];
 }
 
 function manualToRole(m: ManualRole, possible: Role[]): Role {
@@ -202,6 +217,10 @@ function manualToRole(m: ManualRole, possible: Role[]): Role {
     concerns: null,
     caseStudy: null,
     notes: m.notes,
+    researchNotes: null,
+    decision: m.decision ?? null,
+    ownNext: !!m.nextAction,
+    decisions: m.decisions,
     materialsPath: null,
     materials: { resume: "Not started", cover: "Not started", outreach: "Not started" },
     files: [],
@@ -222,6 +241,7 @@ function orphanRole(ov: Overlay): Role {
       added: "",
       updated: ov.updated,
       rev: 0,
+      decision: null,
       source: "automated",
       status: "Discovered",
       url: null,
@@ -248,6 +268,10 @@ function orphanRole(ov: Overlay): Role {
 export function mergeRoles(snapshotRoles: Role[], manual: ManualData): Role[] {
   const out: Role[] = snapshotRoles.map((r) => ({
     ...r,
+    notes: null,
+    researchNotes: r.notes,
+    decision: null,
+    ownNext: false,
     source: "automated",
     recruiter: null,
     edit: { kind: "overlay", id: r.id, rev: 0 },
@@ -341,7 +365,15 @@ export function parseFields(form: FormInput, current?: Partial<ManualFields>): P
   if (typeof status !== "string" || !((STATUSES as readonly string[]).includes(status) || status === currentStatus)) {
     return { ok: false, error: "Choose a status." };
   }
-  const out: Partial<ManualFields> = { source: source as SourceKey, status };
+  const decision = form.get("decision");
+  if (decision !== null && decision !== "" && !(typeof decision === "string" && decision in DECISIONS)) {
+    return { ok: false, error: "Choose interested, undecided or not interested." };
+  }
+  const out: Partial<ManualFields> = {
+    source: source as SourceKey,
+    status,
+    decision: decision ? (decision as Decision) : null,
+  };
   for (const [k, multi] of [
     ["url", false],
     ["location", false],
@@ -386,6 +418,7 @@ export function withCurrent(form: FormInput, current: Role): FormInput {
       if (v !== null) return v;
       const cur = (current as Record<string, unknown>)[name];
       if (name === "source") return current.source ?? "automated";
+      if (name === "decision") return current.decision ?? "";
       if (name === "nextActionDate") return firstDateOf(current.nextActionDate);
       return typeof cur === "string" || typeof cur === "number" ? String(cur) : null;
     },
@@ -399,8 +432,7 @@ export function parseIdentity(form: FormInput): Parsed<{ company: string; role: 
   const role = text(form, "role");
   if (!role.ok) return { ok: false, error: human(role.error) };
   if (!company.value) return { ok: false, error: "Company is required." };
-  if (!role.value) return { ok: false, error: "Position is required." };
-  return { ok: true, value: { company: company.value, role: role.value } };
+  return { ok: true, value: { company: company.value, role: role.value ?? "" } };
 }
 
 /**
@@ -425,8 +457,23 @@ export function nextOverlay(
     // the routine wrote must not count as edited just because the input couldn't hold it.
     if (k === "nextActionDate") current = firstDateOf(current as string | null);
     if (same(submitted[k], current)) continue;
+    // Clearing your next step brings the search's suggestion back rather than blanking it.
+    const clearsToSuggestion =
+      submitted[k] === null &&
+      orig[k as "nextAction"] !== null &&
+      (k === "nextAction" || (k === "nextActionDate" && !fields.nextAction));
+    if (clearsToSuggestion) {
+      delete fields[k];
+      delete base[k];
+      continue;
+    }
     (fields as Record<string, Value>)[k] = submitted[k];
     base[k] = autoValue(orig, k);
+  }
+  // Back on the suggestion: a blank date of your own would otherwise hide the suggestion's date.
+  if (!("nextAction" in fields) && "nextActionDate" in fields && fields.nextActionDate === null) {
+    delete fields.nextActionDate;
+    delete base.nextActionDate;
   }
   return {
     id: prev?.id ?? orig.id,
@@ -452,3 +499,16 @@ export const isManualField = (v: unknown): v is ManualField =>
 
 /** Today's date in New York, where the routine runs. */
 export const todayET = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" });
+
+export const isDecision = (v: unknown): v is Decision => typeof v === "string" && v in DECISIONS;
+
+/** Appends to a decision log, keeping the last 20. */
+export const logDecision = (log: DecisionEntry[] | undefined, decision: Decision, at: string) =>
+  [...(log ?? []), { decision, at }].slice(-20);
+
+/** Display-only: drop the routine's tracking ids, e.g. "(SmartRecruiters 7439…)". */
+export const cleanTitle = (role: string) =>
+  role
+    .replace(/\s*\((?:SmartRecruiters|Req|Greenhouse|Lever|Ashby)\b[^)]*\)/gi, "")
+    .replace(/\s*\(\d{6,}\)/g, "")
+    .trim();

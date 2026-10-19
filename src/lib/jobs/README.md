@@ -17,11 +17,15 @@ Locally (and on previews) the manual hashes live in `.jobs-data/manual.json` (gi
 - **Layers**, lowest first: snapshot role → merged manual entry → overlay (`merge.ts`).
 - **Overlays are sparse.** Only fields that differ from what the card showed are stored. Each stored field keeps `base` (the automated value at edit time). If the routine later changes that field, the card is tagged "automation changed" and the detail view shows both, with "Use automated" to drop the edit.
 - **Role Fit**: an automated score is never replaced. A manual score only fills a missing one, and is labelled "entered by hand".
+- **Interest** (`decision`: interested / undecided / not) is yours alone and independent of recruiting status. Empty means Undecided. "Not interested" moves the card to Archive → You passed; employer-side end states go to Archive → Closed. Each record keeps its last 20 decisions (`decisions`) for the History section.
+- **Notes**: a card's `notes` is only your notes ("My notes"). The routine's notes from `pipeline.md` are shown separately as `researchNotes` under "From the search", so editing yours never hides research. Neither `decision` nor `notes` can conflict with the routine.
+- **Next step**: until you set your own, the card shows the routine's next action as a muted suggestion. Clearing yours brings the suggestion back. Follow-ups list only steps you set.
 - **Status**: internal values are unchanged (`pipeline.md` vocabulary). `Recruiter response` displays as "Recruiter conversation". A status set on the dashboard decides the section: Rejected / Declined / Closed / Withdrawn → Closed, anything else → Active.
 - **Duplicates** (`matchManual`), deterministic, ordered by date added then id:
   1. Confirmed link (`linkedTo`) → merge.
   2. Exactly one certain match (same posting URL, or same company + title after normalising case, punctuation and Inc/LLC suffixes) → merge into the automated card. Manual values win, except Role Fit.
-  3. Several certain matches, or near matches (related company name and ≥50% title-word overlap) → no merge. The manual card shows "possible duplicate" with **Same role: merge** / **Not the same**.
+     A manual entry with no role title never merges on company alone; it's always a near match.
+3. Several certain matches, or near matches (related company name and ≥50% title-word overlap) → no merge. The manual card shows "possible duplicate" with **Same role: merge** / **Not the same**.
 - **Ids change**: if `pipeline.md` moves a role (e.g. under Closed, new id), its overlay re-attaches by company + title. If the role disappears entirely, the overlay becomes its own card tagged "not in latest automated run". Nothing is dropped.
 - **Concurrency**: every record has a `rev`. Writes are compare-and-set (Lua on Redis, a queued write on the file store). A stale form gets "Not saved: this role was changed somewhere else".
 - **Auth**: every write needs the `mf-jobs` cookie, a same-origin request and a CSRF token derived from `JOBS_PASSWORD`. There's no other endpoint that reads manual data.

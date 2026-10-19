@@ -1,365 +1,364 @@
+import { cleanTitle, todayET } from "./merge";
 import {
+  DECISIONS,
   SOURCES,
   STATUSES,
   statusLabel,
   tierOf,
+  type Decision,
   type ManualField,
   type Role,
   type Snapshot,
   type SourceKey,
-  type Tier,
 } from "./types";
 
 /**
- * HTML for the private /jobs page (see src/app/jobs/route.ts). Plain
- * server-rendered markup: no site chrome, scripts or trackers, filters and
- * sorting are a GET form, the role detail is `?role=<id>`. Utilitarian on
- * purpose. Every value comes from markdown files, so all of it is escaped.
+ * HTML for the private /jobs page (see src/app/jobs/route.ts). Server-rendered, no
+ * site chrome or trackers. Built around three questions: what came my way, what do I
+ * think of it, what's my next step. The search's research is kept, one level down.
+ *
+ * Views: Opportunities (default), ?role=<id> detail, ?view=archive, ?view=search,
+ * ?view=add. Every write is a plain POST form; one small inline script only closes
+ * open interest menus. Every value is escaped.
  */
 
 const esc = (value: string | number | null | undefined) =>
   String(value ?? "").replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
-const dash = (value: string | number | null | undefined) =>
-  value === null || value === undefined || value === "" ? "—" : esc(value);
-
-const SORTS = {
-  fit: "Highest Role Fit",
-  interest: "Highest Interest",
-  discovered: "Recently discovered",
-  activity: "Recently active",
-  due: "Next action due soonest",
-} as const;
-type SortKey = keyof typeof SORTS;
-
-const LISTS = { all: "All", active: "Active", watchlist: "Watchlist", passive: "Passive / historical" } as const;
-type ListKey = keyof typeof LISTS;
+const VIEWS = ["list", "archive", "search", "add"] as const;
+type View = (typeof VIEWS)[number];
 
 export type Query = {
+  view: View;
   role: string;
-  sort: SortKey;
-  status: string;
-  tier: string;
-  list: ListKey;
-  company: string;
-  minFit: number;
-  minInterest: number;
   q: string;
-  source: string;
   notice: string;
+  undo: string;
+  prev: string;
+  restored: string;
 };
 
 export function parseQuery(params: URLSearchParams): Query {
-  const sort = params.get("sort") as SortKey;
-  const list = params.get("list") as ListKey;
-  const num = (key: string) => {
-    const n = Number(params.get(key));
-    return Number.isFinite(n) && n > 0 ? Math.min(100, n) : 0;
-  };
+  const view = params.get("view") as View;
   return {
+    view: VIEWS.includes(view) ? view : "list",
     role: params.get("role") ?? "",
-    sort: sort in SORTS ? sort : "fit",
-    status: params.get("status") ?? "",
-    tier: params.get("tier") ?? "",
-    list: list in LISTS ? list : "all",
-    company: params.get("company") ?? "",
-    minFit: num("minFit"),
-    minInterest: num("minInterest"),
     q: (params.get("q") ?? "").slice(0, 80),
-    source: params.get("source") ?? "",
     notice: params.get("notice") ?? "",
+    undo: params.get("undo") ?? "",
+    prev: params.get("prev") ?? "",
+    restored: params.get("restored") ?? "",
   };
 }
-
-const firstDate = (s: string | null) => s?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null;
-
-const byDateDesc = (get: (r: Role) => string | null) => (a: Role, b: Role) => {
-  const x = get(a);
-  const y = get(b);
-  if (x === y) return 0;
-  if (!x) return 1;
-  if (!y) return -1;
-  return x < y ? 1 : -1;
-};
-
-function sortRoles(roles: Role[], sort: SortKey) {
-  const copy = [...roles];
-  switch (sort) {
-    case "fit":
-      return copy.sort((a, b) => (b.roleFit ?? -1) - (a.roleFit ?? -1));
-    case "interest":
-      return copy.sort((a, b) => (b.interest ?? -1) - (a.interest ?? -1));
-    case "discovered":
-      return copy.sort(byDateDesc((r) => firstDate(r.discovered)));
-    case "activity":
-      return copy.sort(byDateDesc((r) => firstDate(r.lastActivity)));
-    case "due":
-      return copy.sort((a, b) => {
-        const x = firstDate(a.nextActionDate);
-        const y = firstDate(b.nextActionDate);
-        if (x === y) return 0;
-        if (!x) return 1;
-        if (!y) return -1;
-        return x < y ? -1 : 1;
-      });
-  }
-}
-
-function filterRoles(roles: Role[], q: Query) {
-  const needle = q.q.trim().toLowerCase();
-  return roles.filter((r) => {
-    if (q.list === "watchlist" || q.list === "passive") return false;
-    if (q.status && r.status !== q.status) return false;
-    if (q.source && (r.source ?? "automated") !== q.source) return false;
-    if (q.tier && tierOf(r.roleFit) !== q.tier) return false;
-    if (q.company && r.company !== q.company) return false;
-    if (q.minFit && (r.roleFit ?? 0) < q.minFit) return false;
-    if (q.minInterest && (r.interest ?? 0) < q.minInterest) return false;
-    if (needle && !`${r.company} ${r.role} ${r.notes ?? ""} ${r.recruiter ?? ""}`.toLowerCase().includes(needle)) return false;
-    return true;
-  });
-}
-
-const tierClass = (t: Tier | null) => (t ? t.toLowerCase().replace(" ", "-") : "none");
-
-/** Role Fit number and its tier label as one unit. */
-function scoreCell(r: Role) {
-  const tier = tierOf(r.roleFit);
-  return r.roleFit === null
-    ? `<span class="fit none"><b>—</b></span>`
-    : `<span class="fit ${tierClass(tier)}"><b>${r.roleFit}</b><i>${esc(tier)}</i></span>`;
-}
-
-/** "VERIFIED OPEN (2026-10-07)" -> a state chip plus the quiet remainder. */
-function verificationChip(value: string | null) {
-  if (!value) return "";
-  const m = /^(VERIFIED OPEN|PROBABLY OPEN|UNVERIFIED|PROBABLY CLOSED|CLOSED|WITHDRAWN|REJECTED)\b\s*(.*)$/i.exec(value);
-  if (!m) return `<span class="chip">${esc(value)}</span>`;
-  const state = m[1].toUpperCase();
-  const cls = state === "VERIFIED OPEN" ? "ok" : state === "PROBABLY OPEN" || state === "UNVERIFIED" ? "mid" : "low";
-  const rest = m[2].replace(/^\((.*)\)$/, "$1");
-  return `<span class="chip ${cls}">${esc(state)}</span>${rest ? `<span class="quiet">${esc(rest)}</span>` : ""}`;
-}
-
-const matClass = (status: string) => esc(status.replace(/\s+/g, "-").toLowerCase());
-
-/** Used in the role detail view. */
-function materialCell(label: string, status: string) {
-  const ready = status === "Draft ready";
-  return `<span class="mat ${matClass(status)}">${esc(status)}</span>${
-    ready ? `<span class="review">AWAITING MARC REVIEW</span>` : ""
-  }`;
-}
-
-/** Compact materials line for a role card: one pill per material, or one quiet line when nothing exists. */
-function materialsLine(r: Role) {
-  const m = r.materials;
-  const parts: [string, string][] = [
-    ["Résumé", m.resume],
-    ["Cover letter", m.cover],
-    ["Outreach", m.outreach],
-  ];
-  if (parts.every(([, s]) => s === "Not started")) {
-    return `<span class="quiet">Materials: not started</span>`;
-  }
-  const pills = parts
-    .map(([label, s]) => `<span class="pill ${matClass(s)}"><span>${esc(label)}</span> ${esc(s)}</span>`)
-    .join("");
-  const review = parts.some(([, s]) => s === "Draft ready") ? `<span class="review">AWAITING MARC REVIEW</span>` : "";
-  return `${pills}${review}`;
-}
-
-function list(items: string[], empty: string) {
-  return items.length
-    ? `<ul class="items">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>`
-    : `<p class="empty">${esc(empty)}</p>`;
-}
-
-function summary(snapshot: Snapshot) {
-  const count = (n: number) => (n ? `<span class="count">${n}</span>` : "");
-  return `<div class="top">
-<section class="card now"><h2>Do now ${count(snapshot.doNow.length)}</h2>${list(snapshot.doNow, "Nothing needs you right now.")}</section>
-<section class="card"><h2>Waiting ${count(snapshot.waiting.length)}</h2>${list(snapshot.waiting, "Nothing waiting.")}</section>
-<section class="card"><h2>New / changed ${count(snapshot.newChanged.length)}</h2>${list(snapshot.newChanged, "No recent changes.")}</section>
-</div>`;
-}
-
-function filters(snapshot: Snapshot, q: Query) {
-  const companies = [...new Set(snapshot.roles.map((r) => r.company))].sort();
-  const opt = (value: string, label: string, current: string) =>
-    `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
-  return `<form class="filters" method="get" action="/jobs">
-<label class="grow">Search<input type="search" name="q" value="${esc(q.q)}" placeholder="company, role, notes"></label>
-<label>Status<select name="status">${opt("", "Any", q.status)}${STATUSES.map((s) => opt(s, statusLabel(s), q.status)).join("")}</select></label>
-<label>Source<select name="source">${opt("", "Any", q.source)}${(Object.keys(SOURCES) as SourceKey[]).map((k) => opt(k, SOURCES[k], q.source)).join("")}</select></label>
-<label>Tier<select name="tier">${opt("", "Any", q.tier)}${(["APPLY NOW", "STRONG PROSPECT", "WATCH"] as const)
-    .map((t) => opt(t, t, q.tier))
-    .join("")}</select></label>
-<label>List<select name="list">${(Object.keys(LISTS) as ListKey[]).map((k) => opt(k, LISTS[k], q.list)).join("")}</select></label>
-<label>Company<select name="company">${opt("", "Any", q.company)}${companies.map((c) => opt(c, c, q.company)).join("")}</select></label>
-<label>Min Role Fit<input type="number" name="minFit" min="0" max="100" value="${q.minFit || ""}"></label>
-<label>Min Interest<input type="number" name="minInterest" min="0" max="10" value="${q.minInterest || ""}"></label>
-<label>Sort<select name="sort">${(Object.keys(SORTS) as SortKey[]).map((k) => opt(k, SORTS[k], q.sort)).join("")}</select></label>
-<div class="actions"><button type="submit">Apply</button><a href="/jobs">Reset</a></div>
-</form>`;
-}
-
-const roleLink = (r: Role, q: Query) => {
-  const params = new URLSearchParams();
-  if (q.sort !== "fit") params.set("sort", q.sort);
-  params.set("role", r.id);
-  return `/jobs?${params.toString()}`;
-};
-
-/** Quiet tags for things that need a decision: possible duplicates, automation changes, dropped roles. */
-function flags(r: Role) {
-  return [
-    r.possible?.length ? `<span class="tag">possible duplicate</span>` : "",
-    r.conflicts?.length ? `<span class="tag">automation changed</span>` : "",
-    r.orphan ? `<span class="tag">not in latest automated run</span>` : "",
-  ].join("");
-}
-
-/** Active roles: one card per role, the primary content of the page. */
-function roleCards(roles: Role[], q: Query) {
-  if (!roles.length) return `<p class="empty">No roles match these filters.</p>`;
-  const date = (label: string, value: string | null) => {
-    const d = firstDate(value);
-    return d ? `<span>${label} ${esc(d)}</span>` : "";
-  };
-  return `<div class="roles">${roles
-    .map(
-      (r) => `<article class="role">
-<div class="who">
-<a class="company" href="${esc(roleLink(r, q))}">${esc(r.company)}</a>
-<div class="title">${esc(r.role)}</div>
-<div class="src">${esc(SOURCES[r.source ?? "automated"])}</div>
-<div class="chips"><span class="chip status">${esc(statusLabel(r.status))}</span>${verificationChip(r.verification)}${
-        r.exception ? `<span class="tag">exception</span>` : ""
-      }${flags(r)}</div>
-</div>
-<div class="score">${scoreCell(r)}<div class="interest">Interest <b>${dash(r.interest)}</b>${r.interest === null ? "" : "/10"}</div></div>
-<div class="next"><div class="label">Next</div><div class="action">${dash(r.nextAction)}</div>${
-        r.nextActionDate ? `<div class="due">${esc(r.nextActionDate)}</div>` : ""
-      }</div>
-<div class="foot"><div class="mats">${materialsLine(r)}</div><div class="dates">${date(r.edit?.kind === "manual" ? "Added" : "Discovered", r.discovered)}${date(
-        "Applied",
-        r.applied,
-      )}${date("Last activity", r.lastActivity)}${
-        r.url ? `<a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">Posting ↗</a>` : ""
-      }</div></div>
-</article>`,
-    )
-    .join("")}</div>`;
-}
-
-/** Closed roles: archived, collapsed by default. */
-function closedList(roles: Role[], q: Query) {
-  if (!roles.length) return "";
-  return `<details class="archive"><summary>Closed <span class="count">${roles.length}</span></summary><ul class="compact">${roles
-    .map(
-      (r) =>
-        `<li><a href="${esc(roleLink(r, q))}">${esc(r.company)}</a>${r.role ? ` — ${esc(r.role)}` : ""} <span class="quiet">${
-          r.edit?.kind === "manual" || r.overridden?.includes("status") ? esc(statusLabel(r.status)) : dash(r.verification)
-        }</span>${flags(r)}</li>`,
-    )
-    .join("")}</ul></details>`;
-}
-
-function watchTable(snapshot: Snapshot, q: Query) {
-  if (q.list !== "all" && q.list !== "watchlist") return "";
-  const needle = q.q.trim().toLowerCase();
-  const rows = snapshot.watchlist.filter((w) => {
-    if (q.company && w.company !== q.company) return false;
-    if (q.minFit && (w.score ?? 0) < q.minFit) return false;
-    if (q.tier && tierOf(w.score) !== q.tier) return false;
-    if (q.status || q.minInterest || q.source) return false; // those fields only exist on pipeline roles
-    return !needle || `${w.company} ${w.role} ${w.notes}`.toLowerCase().includes(needle);
-  });
-  if (!rows.length) return "";
-  return `<section class="secondary"><h2>Watchlist <span class="count">${rows.length}</span></h2><p class="quiet">Strong-fit companies without a current Marc-relevant role, from aligned-companies.md. Not application targets.</p>
-<div class="scroll"><table><thead><tr><th>Company</th><th>Role / status</th><th class="num">Fit</th><th class="opt">Verification</th><th class="opt">Notes</th></tr></thead><tbody>${rows
-    .map(
-      (w) =>
-        `<tr><td class="co">${esc(w.company)}</td><td>${esc(w.role)}</td><td class="num">${w.score ?? "—"}</td><td class="opt">${esc(w.verification)}</td><td class="opt">${esc(w.notes)}</td></tr>`,
-    )
-    .join("")}</tbody></table></div></section>`;
-}
-
-function passiveList(snapshot: Snapshot, q: Query) {
-  if ((q.list !== "all" && q.list !== "passive") || !snapshot.passive.length) return "";
-  return `<details class="archive"${q.list === "passive" ? " open" : ""}><summary>Passive / historical <span class="count">${snapshot.passive.length}</span></summary><ul class="compact">${snapshot.passive
-    .map((i) => `<li>${esc(i)}</li>`)
-    .join("")}</ul></details>`;
-}
-
-/* ---------- manual entry / editing ---------- */
 
 export type EditContext = { csrf: string; editable: boolean };
+
+/* ---------- small helpers ---------- */
+
+const firstDate = (s: string | null | undefined) => s?.match(/\d{4}-\d{2}-\d{2}/)?.[0] ?? null;
+
+function dayLabel(date: string, today: string) {
+  if (date === today) return "Today";
+  const d = new Date(`${date}T12:00:00Z`);
+  const t = new Date(`${today}T12:00:00Z`);
+  const diff = Math.round((d.getTime() - t.getTime()) / 86_400_000);
+  if (diff === 1) return "Tomorrow";
+  const opts: Intl.DateTimeFormatOptions = { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" };
+  if (d.getUTCFullYear() !== t.getUTCFullYear()) opts.year = "numeric";
+  return d.toLocaleDateString("en-US", opts);
+}
+
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "America/New_York" });
+
+const SOURCE_SHORT: Record<SourceKey, string> = {
+  automated: "Search",
+  recruiter: "Recruiter",
+  interest: "Personal interest",
+  network: "Personal network",
+};
+
+const decisionOf = (r: Role): Decision => r.decision ?? "undecided";
+const archived = (r: Role) => decisionOf(r) === "not" || r.list === "closed";
+const title = (r: Role) => cleanTitle(r.role);
 
 const hidden = (fields: Record<string, string | number>) =>
   Object.entries(fields)
     .map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`)
     .join("");
 
-/** The add / edit form. One layout for both; Role Fit is read-only when the automation scored the role. */
-function roleForm(ctx: EditContext, r: Role | null) {
-  const v = (value: string | number | null | undefined) => esc(value ?? "");
-  const opt = (value: string, label: string, current: string) =>
-    `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
-  const status = r?.status ?? "Discovered";
-  const statuses = (STATUSES as readonly string[]).includes(status) ? [...STATUSES] : [status, ...STATUSES];
-  const manual = !r || r.edit?.kind === "manual";
-  const autoFit = r !== null && r.roleFit !== null && !r.manualFit;
-  const meta: Record<string, string | number> = r?.edit
-    ? { action: r.edit.kind === "manual" ? "edit-manual" : "edit", id: r.edit.id, rev: r.edit.rev }
-    : { action: "add" };
-  return `<form class="entry" method="post" action="/jobs">${hidden({ ...meta, csrf: ctx.csrf })}
-${manual ? `<label>Company *<input name="company" required maxlength="120" value="${v(r?.company)}"></label>
-<label>Position *<input name="role" required maxlength="160" value="${v(r?.role)}"></label>` : ""}
-<label>Source *<select name="source" required>${(Object.keys(SOURCES) as SourceKey[])
-    .map((k) => opt(k, SOURCES[k], r?.source ?? (r ? "automated" : "recruiter")))
-    .join("")}</select></label>
-<label>Status *<select name="status" required>${statuses.map((s) => opt(s, statusLabel(s), status)).join("")}</select></label>
-<label>Job posting URL<input name="url" inputmode="url" maxlength="500" value="${v(r?.url)}" placeholder="https://"></label>
-<label>Location / work arrangement<input name="location" maxlength="160" value="${v(r?.location)}"></label>
-<label>Compensation<input name="compensation" maxlength="160" value="${v(r?.compensation)}"></label>
-<label>Recruiter / contact<input name="recruiter" maxlength="200" value="${v(r?.recruiter)}"></label>
-<label>Role Fit${
-    autoFit
-      ? `<input value="${v(r?.roleFit)} (automated)" disabled>`
-      : `<input name="roleFit" type="number" min="0" max="100" value="${v(r?.roleFit)}">`
-  }</label>
-<label>Interest<input name="interest" type="number" min="0" max="10" value="${v(r?.interest)}"></label>
-<label class="wide">Next action<input name="nextAction" maxlength="300" value="${v(r?.nextAction)}"></label>
-<label>Next-action date<input name="nextActionDate" type="date" value="${v(firstDate(r?.nextActionDate ?? null))}"></label>
-<label class="full">Notes<textarea name="notes" rows="${r?.notes ? 5 : 3}" maxlength="4000">${v(r?.notes)}</textarea></label>
-<div class="full actions"><button type="submit">${r ? "Save changes" : "Add role"}</button>${
-    r ? `<span class="quiet">Saved separately from the automated run; it never overwrites these.</span>` : `<span class="quiet">Only company, position, source and status are required. Date added is set automatically.</span>`
-  }</div>
-</form>`;
+const roleHref = (r: Role) => `/jobs?${new URLSearchParams({ role: r.id }).toString()}`;
+
+function matchesSearch(r: Role, q: string) {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return true;
+  return [r.company, r.role, r.notes, r.recruiter, r.nextAction, r.researchNotes, r.location]
+    .join(" ")
+    .toLowerCase()
+    .includes(needle);
 }
 
-function addForm(ctx: EditContext) {
-  if (!ctx.editable) return "";
-  return `<details class="add"><summary>Add a role</summary>${roleForm(ctx, null)}</details>`;
+/* ---------- interest control ---------- */
+
+const DECISION_HINT: Record<Decision, string> = {
+  interested: "Keep it and pursue it",
+  undecided: "Still thinking about it",
+  not: "Move to Archive · you can restore it",
+};
+
+/** One compact pill. Choosing an option submits right away. */
+function interest(r: Role, ctx: EditContext, back: "list" | "detail" | "archive") {
+  const d = decisionOf(r);
+  const pill = `<span class="dot"></span>${esc(DECISIONS[d])}`;
+  if (!ctx.editable || !r.edit) return `<span class="interest is-${d}"><span class="pill">${pill}</span></span>`;
+  const options = (Object.keys(DECISIONS) as Decision[])
+    .map(
+      (k) =>
+        `<button type="submit" name="decision" value="${k}" class="is-${k}${k === d ? " cur" : ""}"><span class="dot"></span><span>${esc(DECISIONS[k])}<small>${esc(DECISION_HINT[k])}</small></span></button>`,
+    )
+    .join("");
+  return `<details class="interest is-${d}"><summary class="pill" aria-label="Interest: ${esc(DECISIONS[d])}">${pill}</summary><form method="post" action="/jobs" class="menu">${hidden({
+    action: "decide",
+    kind: r.edit.kind,
+    id: r.edit.id,
+    rev: r.edit.rev,
+    back,
+    csrf: ctx.csrf,
+  })}${options}</form></details>`;
 }
+
+/* ---------- opportunities list ---------- */
+
+function sortOpen(roles: Role[]) {
+  const rank = (r: Role) => (decisionOf(r) === "interested" ? 0 : 1);
+  const stepRank = (r: Role) => (r.ownNext && r.nextAction ? (firstDate(r.nextActionDate) ? 0 : 1) : 2);
+  return [...roles].sort((a, b) => {
+    const byDecision = rank(a) - rank(b);
+    if (byDecision) return byDecision;
+    const byStep = stepRank(a) - stepRank(b);
+    if (byStep) return byStep;
+    const da = a.ownNext ? firstDate(a.nextActionDate) : null;
+    const db = b.ownNext ? firstDate(b.nextActionDate) : null;
+    if (da && db && da !== db) return da < db ? -1 : 1;
+    const byFit = (b.roleFit ?? -1) - (a.roleFit ?? -1);
+    if (byFit) return byFit;
+    return a.company.localeCompare(b.company);
+  });
+}
+
+function nextStep(r: Role, today: string) {
+  if (!r.nextAction) return `<div class="step none">No next step yet</div>`;
+  const date = firstDate(r.nextActionDate);
+  if (!r.ownNext) {
+    return `<div class="step suggested"><span class="txt">${esc(r.nextAction)}</span><span class="tag">Suggested by the search</span></div>`;
+  }
+  const late = date && date < today;
+  return `<div class="step">${esc(r.nextAction)}${
+    date ? `<span class="when${late ? " late" : date === today ? " today" : ""}">${late ? "Overdue · " : ""}${esc(dayLabel(date, today))}</span>` : ""
+  }</div>`;
+}
+
+function row(r: Role, ctx: EditContext, today: string, back: "list" | "archive", meta?: string) {
+  const role = title(r);
+  return `<div class="row" id="r-${esc(r.id)}">
+<a class="who" href="${esc(roleHref(r))}"><span class="co">${esc(r.company)}</span>${role ? `<span class="role">${esc(role)}</span>` : ""}<span class="src">${esc(
+    meta ?? SOURCE_SHORT[r.source ?? "automated"],
+  )}</span></a>
+${back === "list" ? nextStep(r, today) : `<div class="step"></div>`}
+<div class="pick">${back === "list" || decisionOf(r) === "not" ? interest(r, ctx, back) : ""}</div>
+</div>`;
+}
+
+function followUps(open: Role[], today: string) {
+  const own = open.filter((r) => r.ownNext && r.nextAction);
+  if (!own.length) return null;
+  const dated = own
+    .filter((r) => firstDate(r.nextActionDate))
+    .sort((a, b) => (firstDate(a.nextActionDate)! < firstDate(b.nextActionDate)! ? -1 : 1));
+  const undated = own.filter((r) => !firstDate(r.nextActionDate));
+  const groups: { label: string; cls: string; items: Role[] }[] = [];
+  for (const r of dated) {
+    const d = firstDate(r.nextActionDate)!;
+    const label = d < today ? "Overdue" : dayLabel(d, today);
+    const cls = d < today ? "late" : d === today ? "today" : "";
+    const g = groups.find((x) => x.label === label);
+    if (g) g.items.push(r);
+    else groups.push({ label, cls, items: [r] });
+  }
+  if (undated.length) groups.push({ label: "No date", cls: "", items: undated });
+  const list = groups
+    .map(
+      (g) =>
+        `<li class="day ${g.cls}">${esc(g.label)}</li>${g.items
+          .map((r) => `<li class="item ${g.cls}"><a href="${esc(roleHref(r))}"><b>${esc(r.company)}</b><span>${esc(r.nextAction)}</span></a></li>`)
+          .join("")}`,
+    )
+    .join("");
+  const first = dated[0] ?? undated[0];
+  const firstLabel = firstDate(first.nextActionDate) ? `${firstDate(first.nextActionDate)! < today ? "Overdue" : dayLabel(firstDate(first.nextActionDate)!, today)}: ` : "";
+  return {
+    count: own.length,
+    aside: `<aside><h3 class="label">Follow-ups</h3><ul class="fu">${list}</ul><p class="aside-note">Only next steps you've set. The search's suggestions stay on each opportunity.</p></aside>`,
+    mini: `<details class="fu-mini"><summary><span class="label">Follow-ups ${own.length}</span><span class="t">${esc(firstLabel)}<b>${esc(first.company)}</b>, ${esc(
+      first.nextAction,
+    )}</span></summary><ul class="fu">${list}</ul></details>`,
+  };
+}
+
+function searchBox(q: Query, placeholder: string) {
+  return `<form class="search" method="get" action="/jobs">${q.view !== "list" ? hidden({ view: q.view }) : ""}<input type="search" name="q" value="${esc(q.q)}" placeholder="${esc(placeholder)}" aria-label="Search"></form>${
+    q.q ? `<p class="searching">Showing matches for “${esc(q.q)}” · <a href="/jobs${q.view !== "list" ? `?view=${q.view}` : ""}">Clear</a></p>` : ""
+  }`;
+}
+
+function undoToast(roles: Role[], q: Query, ctx: EditContext) {
+  if (q.notice !== "archived" || !q.undo) return "";
+  const r = roles.find((x) => x.id === q.undo);
+  if (!r?.edit) return "";
+  const prev = q.prev in DECISIONS ? (q.prev as Decision) : "undecided";
+  return `<div class="toast"><span><b>${esc(r.company)}</b> moved to Archive.</span>${
+    ctx.editable
+      ? `<form method="post" action="/jobs">${hidden({ action: "decide", kind: r.edit.kind, id: r.edit.id, rev: r.edit.rev, decision: prev, back: "list", csrf: ctx.csrf })}<button type="submit" class="link">Undo</button></form>`
+      : ""
+  }</div>`;
+}
+
+function listView(snapshot: Snapshot, roles: Role[], q: Query, ctx: EditContext) {
+  const today = todayET();
+  const open = roles.filter((r) => !archived(r));
+  const shown = sortOpen(open.filter((r) => matchesSearch(r, q.q)));
+  const yes = shown.filter((r) => decisionOf(r) === "interested");
+  const maybe = shown.filter((r) => decisionOf(r) !== "interested");
+  const fu = followUps(open, today);
+  const group = (label: string, items: Role[]) =>
+    items.length
+      ? `<section class="group"><h3 class="label">${label} <span class="n">${items.length}</span></h3>${items.map((r) => row(r, ctx, today, "list")).join("")}</section>`
+      : "";
+  const generated = new Date(snapshot.generatedAt);
+  const last = Number.isNaN(generated.getTime())
+    ? ""
+    : ` · last search ${generated.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "America/New_York" })}`;
+  const interestedCount = open.filter((r) => decisionOf(r) === "interested").length;
+  return `<div class="page list">
+<main>
+<div class="head"><h2>Opportunities</h2><p>${open.length} open${interestedCount ? ` · ${interestedCount} interested` : ""}${esc(last)}</p></div>
+${fu?.mini ?? ""}
+${searchBox(q, "Search companies, roles, notes")}
+${undoToast(roles, q, ctx)}
+${shown.length ? `${group("Interested", yes)}${group("Undecided", maybe)}` : `<p class="empty">${q.q ? "Nothing matches." : "No open opportunities. Add one, or check the Archive."}</p>`}
+<div class="foot"><span>From your Mon/Wed/Fri search, plus what you add here.</span><a href="/jobs?view=archive">Archive</a><a href="/jobs?view=search">Search activity</a></div>
+</main>
+${fu?.aside ?? `<aside><h3 class="label">Follow-ups</h3><p class="aside-note">Next steps you set with a date show up here.</p></aside>`}
+</div>`;
+}
+
+/* ---------- archive ---------- */
+
+function archiveView(roles: Role[], q: Query, ctx: EditContext) {
+  const today = todayET();
+  const all = roles.filter((r) => archived(r) && matchesSearch(r, q.q));
+  const passed = all
+    .filter((r) => decisionOf(r) === "not")
+    .sort((a, b) => (lastDecisionAt(b) ?? "").localeCompare(lastDecisionAt(a) ?? ""));
+  const closed = all.filter((r) => decisionOf(r) !== "not");
+  const passedMeta = (r: Role) => {
+    const at = lastDecisionAt(r);
+    return `${SOURCE_SHORT[r.source ?? "automated"]}${at ? ` · passed ${shortDate(at)}` : ""}`;
+  };
+  const closedMeta = (r: Role) =>
+    r.edit?.kind === "manual" || r.overridden?.includes("status") || !r.verification
+      ? statusLabel(r.status)
+      : r.verification.replace(/\s*\(.*$/, "").toLowerCase().replace(/^./, (c) => c.toUpperCase());
+  const restored = q.notice === "restored" ? roles.find((r) => r.id === q.restored) : null;
+  return `<div class="page narrow">
+<div class="head"><h2>Archive</h2><p>Nothing here is deleted. Notes and history stay with each opportunity.</p></div>
+${searchBox(q, "Search the archive")}
+${restored ? `<div class="toast"><span><b>${esc(restored.company)}</b> is back in <a href="/jobs#r-${esc(restored.id)}">Opportunities</a>.</span></div>` : ""}
+<section class="group"><h3 class="label">You passed <span class="n">${passed.length}</span></h3>${
+    passed.length ? passed.map((r) => row(r, ctx, today, "archive", passedMeta(r))).join("") : `<p class="empty">Opportunities you mark Not interested land here.</p>`
+  }</section>
+<section class="group"><h3 class="label">Closed <span class="n">${closed.length}</span></h3><p class="group-note">Closed by the employer, withdrawn, or no longer posted.</p>${
+    closed.length ? closed.map((r) => row(r, ctx, today, "archive", closedMeta(r))).join("") : `<p class="empty">Nothing closed.</p>`
+  }</section>
+</div>`;
+}
+
+const lastDecisionAt = (r: Role) => r.decisions?.[r.decisions.length - 1]?.at ?? null;
+
+/* ---------- search activity ---------- */
+
+function bullets(items: string[], empty: string) {
+  return items.length ? `<ul class="plain">${items.map((i) => `<li>${esc(i)}</li>`).join("")}</ul>` : `<p class="empty">${esc(empty)}</p>`;
+}
+
+function searchView(snapshot: Snapshot) {
+  const generated = new Date(snapshot.generatedAt);
+  const when = Number.isNaN(generated.getTime())
+    ? snapshot.generatedAt
+    : generated.toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" });
+  const watch = snapshot.watchlist.length
+    ? `<div class="scroll"><table><thead><tr><th>Company</th><th>Role / status</th><th class="num">Fit</th><th>Notes</th></tr></thead><tbody>${snapshot.watchlist
+        .map(
+          (w) =>
+            `<tr><td class="co">${esc(w.company)}</td><td>${esc(w.role)}</td><td class="num">${w.score ?? "—"}</td><td>${esc(w.notes)}${
+              w.verification ? ` <span class="faint">(${esc(w.verification)})</span>` : ""
+            }</td></tr>`,
+        )
+        .join("")}</tbody></table></div>`
+    : `<p class="empty">No watchlist companies.</p>`;
+  return `<div class="page narrow">
+<div class="head"><h2>Search activity</h2><p>What the Mon/Wed/Fri search reported. Last run ${esc(when)} ET. Nothing here sends anything.</p></div>
+<details class="sect" open><summary><b>Do now</b><span>${snapshot.doNow.length}</span></summary>${bullets(snapshot.doNow, "Nothing.")}</details>
+<details class="sect"><summary><b>Waiting</b><span>${snapshot.waiting.length}</span></summary>${bullets(snapshot.waiting, "Nothing waiting.")}</details>
+<details class="sect"><summary><b>New / changed</b><span>${snapshot.newChanged.length}</span></summary>${bullets(snapshot.newChanged, "No recent changes.")}</details>
+<details class="sect"><summary><b>Watchlist</b><span>${snapshot.watchlist.length}</span></summary><p class="group-note">Strong-fit companies without a current role, from aligned-companies.md.</p>${watch}</details>
+<details class="sect"><summary><b>Passive / historical</b><span>${snapshot.passive.length}</span></summary>${bullets(snapshot.passive, "None.")}</details>
+</div>`;
+}
+
+/* ---------- add ---------- */
+
+const opt = (value: string, label: string, current: string) =>
+  `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
+
+function addView(ctx: EditContext) {
+  if (!ctx.editable) return `<div class="page narrow"><p class="empty">Adding needs a signed-in session.</p></div>`;
+  const sources = (["recruiter", "network", "interest"] as SourceKey[]).map((k) => opt(k, SOURCES[k], "recruiter")).join("");
+  return `<div class="page narrow">
+<a class="back" href="/jobs">← Opportunities</a>
+<div class="head"><h2>Add an opportunity</h2><p>Only the company is required. Add the rest whenever you know it.</p></div>
+<form class="sheet" method="post" action="/jobs">${hidden({ action: "add", csrf: ctx.csrf })}
+<div class="two"><label>Company<input name="company" required maxlength="120" autofocus></label><label><span>Role <em>if known</em></span><input name="role" maxlength="160"></label></div>
+<div class="two"><label>My interest<select name="decision">${(Object.keys(DECISIONS) as Decision[]).map((k) => opt(k, DECISIONS[k], "undecided")).join("")}</select></label><label>How it came up<select name="source">${sources}</select></label></div>
+<label>My notes<textarea name="notes" rows="6" maxlength="4000" placeholder="What they said, what interests you, what you're unsure about"></textarea></label>
+<div class="next"><label>Next step<input name="nextAction" maxlength="300" placeholder="e.g. Reply to the recruiter"></label><label>Date<input name="nextActionDate" type="date"></label></div>
+<details class="extra"><summary>More details</summary>
+<div class="two"><label>Recruiter / contact<input name="recruiter" maxlength="200"></label><label>Job posting link<input name="url" inputmode="url" maxlength="500" placeholder="https://"></label></div>
+<div class="two"><label>Compensation<input name="compensation" maxlength="160"></label><label>Location / work arrangement<input name="location" maxlength="160"></label></div>
+</details>
+<div class="actions"><button class="btn" type="submit">Add</button><a href="/jobs">Cancel</a></div>
+</form>
+</div>`;
+}
+
+/* ---------- detail ---------- */
 
 const FIELD_LABELS: Record<ManualField, string> = {
-  source: "Source",
-  status: "Status",
-  url: "Role URL",
-  location: "Location / work model",
+  decision: "Interest",
+  source: "How it came up",
+  status: "Application status",
+  url: "Job posting",
+  location: "Location",
   compensation: "Compensation",
   recruiter: "Recruiter / contact",
   roleFit: "Role Fit",
-  interest: "Interest",
+  interest: "Interest estimate",
   notes: "Notes",
-  nextAction: "Next action",
-  nextActionDate: "Next-action date",
+  nextAction: "Next step",
+  nextActionDate: "Next-step date",
 };
 
-const shownValue = (k: ManualField, value: string | number | null | undefined) =>
+const shownValue = (k: ManualField, value: unknown) =>
   value === null || value === undefined || value === ""
     ? "empty"
     : k === "source"
@@ -368,288 +367,482 @@ const shownValue = (k: ManualField, value: string | number | null | undefined) =
         ? statusLabel(String(value))
         : String(value);
 
-/** Manual-edit bookkeeping on the detail view: what's overridden, what the automation now says, undo. */
-function editNotes(r: Role, ctx: EditContext) {
-  const out: string[] = [];
-  if (r.orphan) {
-    out.push(`<p class="note">This role is no longer in the automated run (renamed or removed in pipeline.md). Your edits are kept here.</p>`);
-  }
-  if (r.mergedManualId) {
-    out.push(`<p class="note">Merged with an entry you added by hand. Your values win where they differ; the automated ones are listed below.</p>`);
-  }
+function editedByHand(r: Role, ctx: EditContext) {
   const conflicts = new Map((r.conflicts ?? []).map((c) => [c.field, c.auto]));
   const rows = (r.overridden ?? [])
-    .filter((k) => r.autoValues && k in r.autoValues)
+    .filter((k) => r.autoValues && k in r.autoValues && k !== "nextAction" && k !== "nextActionDate")
     .map((k) => {
-      const auto = shownValue(k, r.autoValues?.[k]);
       const revert =
         ctx.editable && r.edit?.kind === "overlay" && !r.orphan && r.overlayFields?.includes(k)
-          ? `<form method="post" action="/jobs" class="inline">${hidden({ action: "revert", id: r.edit.id, rev: r.edit.rev, field: k, csrf: ctx.csrf })}<button type="submit" class="link">Use automated</button></form>`
+          ? `<form method="post" action="/jobs" class="inline">${hidden({ action: "revert", id: r.edit.id, rev: r.edit.rev, field: k, csrf: ctx.csrf })}<button type="submit" class="link">Use the search's</button></form>`
           : "";
-      return `<li><b>${esc(FIELD_LABELS[k])}</b>: you set ${esc(shownValue(k, r[k as keyof Role] as string | number | null))}; automation ${
-        conflicts.has(k) ? `<strong>has since changed it to</strong>` : "says"
-      } ${esc(auto)}${revert}</li>`;
+      return `<li${conflicts.has(k) ? ` class="conflict"` : ""}><b>${esc(FIELD_LABELS[k])}</b>: yours is ${esc(shownValue(k, r[k as keyof Role]))}; the search ${
+        conflicts.has(k) ? "has since changed it to" : "says"
+      } ${esc(shownValue(k, r.autoValues?.[k]))}${revert}</li>`;
     });
-  if (rows.length) out.push(`<h3>Edited by hand</h3><ul class="compact overrides">${rows.join("")}</ul>`);
-  if (r.possible?.length && r.edit?.kind === "manual") {
-    out.push(`<h3>Possible duplicate</h3><p class="quiet">The automated run has a similar role. Merge only if it's the same opportunity; nothing merges without your confirmation.</p><ul class="compact overrides">${r.possible
-      .map(
-        (p) =>
-          `<li>${esc(p.company)} — ${esc(p.role)}${
-            ctx.editable
-              ? ["link", "not-same"]
-                  .map(
-                    (a) =>
-                      `<form method="post" action="/jobs" class="inline">${hidden({ action: a, id: r.edit!.id, rev: r.edit!.rev, target: p.id, csrf: ctx.csrf })}<button type="submit" class="link">${a === "link" ? "Same role: merge" : "Not the same"}</button></form>`,
-                  )
-                  .join("")
-              : ""
-          }</li>`,
-      )
-      .join("")}</ul>`);
-  }
-  return out.join("");
+  return rows.length ? `<h4>Changed by you</h4><ul class="plain small">${rows.join("")}</ul>` : "";
 }
 
-function detail(snapshot: Snapshot, id: string, q: Query, ctx: EditContext) {
-  const r = snapshot.roles.find((x) => x.id === id);
-  if (!r) return `<section><p class="muted">That role isn't in the current snapshot. <a href="/jobs">Back to list</a></p></section>`;
-  const back = `/jobs${q.sort !== "fit" ? `?sort=${q.sort}` : ""}`;
-  const row = (label: string, value: string | null) =>
-    `<div><dt>${esc(label)}</dt><dd>${value === null || value === "" ? "—" : esc(value)}</dd></div>`;
-  const files = r.files
-    .map((f) =>
-      f.exists
-        ? `<details><summary><code>${esc(f.name)}</code> exists</summary><pre>${esc(f.content ?? "")}</pre></details>`
-        : `<p class="muted small"><code>${esc(f.name)}</code>: does not exist yet</p>`,
-    )
-    .join("");
-  return `<section class="detail">
-<p class="small"><a href="${esc(back)}">← All roles</a></p>
-<h2>${esc(r.company)} — ${esc(r.role)}${r.exception ? ` <span class="tag">confirmed-interest exception</span>` : ""}</h2>
-<dl class="facts">
-${row("Source", SOURCES[r.source ?? "automated"])}
-${row("Status", statusLabel(r.status))}
-${row("Role Fit Score", r.roleFit === null ? null : `${r.roleFit} (${tierOf(r.roleFit)})${r.manualFit ? " · entered by hand" : ""}`)}
-${row("Interest Alignment Score", r.interest === null ? null : `${r.interest} / 10`)}
-${row("Verification", r.verification)}
-<div><dt>Role URL</dt><dd>${r.url ? `<a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">${esc(r.url)}</a>` : "—"}</dd></div>
-${row("Req ID", r.req)}
-${row("Compensation", r.compensation)}
-${row("Location / work model", r.location)}
-${row("Recruiter / contact", r.recruiter ?? null)}
-${row("Why it fits", r.whyItFits)}
-${row("Biggest concerns", r.concerns)}
-${row("Recommended case study", r.caseStudy)}
-${row(r.edit?.kind === "manual" ? "Date added" : "Date discovered", r.discovered)}
-${row("Date applied", r.applied)}
-${row("Last activity", r.lastActivity)}
-${row("Next action", r.nextAction)}
-${row("Next-action date", r.nextActionDate)}
-${row("Notes", r.notes)}
-${row("Materials folder", r.materialsPath)}
-<div><dt>Resume</dt><dd>${materialCell("Resume", r.materials.resume)}</dd></div>
-<div><dt>Cover letter</dt><dd>${materialCell("Cover letter", r.materials.cover)}</dd></div>
-<div><dt>Outreach</dt><dd>${materialCell("Outreach", r.materials.outreach)}</dd></div>
-</dl>
-${editNotes(r, ctx)}
-${ctx.editable ? `<details class="add"><summary>Edit</summary>${roleForm(ctx, r)}</details>` : ""}
-${files ? `<h3>Materials</h3>\n${files}` : ""}
-</section>`;
+function personalForm(r: Role, ctx: EditContext) {
+  const today = todayET();
+  const action = r.edit?.kind === "manual" ? "edit-manual" : "edit";
+  const own = r.ownNext ? r.nextAction : null;
+  const suggestion = !r.ownNext && r.nextAction ? r.nextAction : null;
+  const autoNext = r.autoValues?.nextAction ?? null;
+  const date = r.ownNext ? firstDate(r.nextActionDate) : null;
+  const disabled = ctx.editable && r.edit ? "" : " disabled";
+  return `<form class="mine" method="post" action="/jobs">${
+    r.edit ? hidden({ action, id: r.edit.id, rev: r.edit.rev, csrf: ctx.csrf }) : ""
+  }
+<label class="block"><span class="label">My notes <em>Thoughts, calls, questions</em></span><textarea class="note" name="notes" rows="8" maxlength="4000" placeholder="What you think, what was discussed, what you still want to know"${disabled}>${esc(r.notes)}</textarea></label>
+<div class="block"><span class="label">Next step</span>
+<div class="next"><input name="nextAction" maxlength="300" value="${esc(own)}" placeholder="${esc(suggestion ? "What will you do next?" : "e.g. Ask the recruiter about NYC hybrid expectations")}" aria-label="Next step"${disabled}><input name="nextActionDate" type="date" value="${esc(date)}" aria-label="Next-step date"${disabled}></div>
+${
+  suggestion
+    ? `<p class="suggest">The search suggests: <i>${esc(suggestion)}</i>${firstDate(r.nextActionDate) ? ` · ${esc(dayLabel(firstDate(r.nextActionDate)!, today))}` : ""}</p>`
+    : r.ownNext && typeof autoNext === "string" && autoNext !== own
+      ? `<p class="suggest">The search suggested: <i>${esc(autoNext)}</i></p>`
+      : ""
 }
+</div>
+${ctx.editable && r.edit ? `<div class="actions"><button class="btn" type="submit">Save</button><span class="faint">Saved separately from the search, which never overwrites it.</span></div>` : ""}
+</form>`;
+}
+
+function detailsForm(r: Role, ctx: EditContext) {
+  const editable = ctx.editable && !!r.edit;
+  const action = r.edit?.kind === "manual" ? "edit-manual" : "edit";
+  const statuses = (STATUSES as readonly string[]).includes(r.status) ? [...STATUSES] : [r.status, ...STATUSES];
+  const autoFit = r.roleFit !== null && !r.manualFit;
+  const f = (label: string, input: string, value: string | null) =>
+    `<div><dt>${esc(label)}</dt><dd>${editable ? input : value ? esc(value) : `<span class="faint">—</span>`}</dd></div>`;
+  const text = (name: string, value: string | null | undefined, max: number, extra = "") =>
+    `<input name="${name}" value="${esc(value)}" maxlength="${max}"${extra}>`;
+  const manual = r.edit?.kind === "manual";
+  const summary = [statusLabel(r.status), r.compensation, r.location].filter(Boolean).join(" · ");
+  const open = (r.conflicts?.length ?? 0) > 0 ? " open" : "";
+  return `<details class="sect" id="details"${open}><summary><b>Details</b><span>${esc(summary)}</span></summary>
+<form method="post" action="/jobs">${r.edit ? hidden({ action, id: r.edit.id, rev: r.edit.rev, csrf: ctx.csrf }) : ""}
+<dl class="facts">
+${manual ? f("Company", text("company", r.company, 120, " required"), r.company) + f("Role", text("role", r.role, 160), r.role) : ""}
+${f("Application status", `<select name="status">${statuses.map((s) => opt(s, statusLabel(s), r.status)).join("")}</select>`, statusLabel(r.status))}
+${f("How it came up", `<select name="source">${(Object.keys(SOURCES) as SourceKey[]).map((k) => opt(k, SOURCES[k], r.source ?? "automated")).join("")}</select>`, SOURCES[r.source ?? "automated"])}
+${f("Recruiter / contact", text("recruiter", r.recruiter, 200, ` placeholder="Name, email or LinkedIn"`), r.recruiter ?? null)}
+${f("Job posting", text("url", r.url, 500, ` inputmode="url" placeholder="https://"`), r.url)}
+${f("Compensation", text("compensation", r.compensation, 160), r.compensation)}
+${f("Location", text("location", r.location, 160), r.location)}
+${autoFit ? "" : f("Role Fit", `<input name="roleFit" type="number" min="0" max="100" value="${esc(r.roleFit)}" class="num" placeholder="0–100">`, r.roleFit === null ? null : String(r.roleFit))}
+</dl>
+${editable ? `<div class="actions"><button class="btn quiet" type="submit">Save details</button></div>` : ""}
+</form>
+${editedByHand(r, ctx)}
+</details>`;
+}
+
+function fromSearch(r: Role) {
+  const hasResearch =
+    (r.roleFit !== null && !r.manualFit) || r.verification || r.whyItFits || r.concerns || r.caseStudy || r.researchNotes || r.files.length;
+  if (!hasResearch) return "";
+  const tier = tierOf(r.roleFit);
+  const state = r.verification?.match(/^(VERIFIED OPEN|PROBABLY OPEN|UNVERIFIED|PROBABLY CLOSED|CLOSED|WITHDRAWN|REJECTED)/i)?.[1] ?? null;
+  const pretty = (s: string) => s.toLowerCase().replace(/^./, (c) => c.toUpperCase());
+  const summary = [
+    r.roleFit !== null && !r.manualFit ? `Role Fit ${r.roleFit}` : "",
+    state ? pretty(state) : "",
+    r.researchNotes || r.whyItFits ? "research notes" : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
+  const para = (label: string, value: string | null) => (value ? `<h4>${esc(label)}</h4><p>${esc(value)}</p>` : "");
+  const m = r.materials;
+  const mats = [
+    ["Résumé", m.resume],
+    ["Cover letter", m.cover],
+    ["Outreach", m.outreach],
+  ]
+    .map(([l, s]) => `${l}: ${s.toLowerCase()}${s === "Draft ready" ? " (awaiting your review)" : ""}`)
+    .join(" · ");
+  const files = r.files
+    .filter((f) => f.exists)
+    .map((f) => `<details class="file"><summary><code>${esc(f.name)}</code></summary><pre>${esc(f.content ?? "")}</pre></details>`)
+    .join("");
+  return `<details class="sect"><summary><b>From the search</b><span>${esc(summary)}</span></summary>
+<div class="research">
+<div class="scores">${
+    r.roleFit !== null && !r.manualFit ? `<div><b>${r.roleFit}</b>Role Fit${tier ? ` · ${esc(pretty(tier))}` : ""}</div>` : ""
+  }${r.interest !== null ? `<div><b>${r.interest}/10</b>Interest estimate</div>` : ""}${state ? `<div><b>${esc(pretty(state).replace(/ open$/, ""))}</b>${esc(r.verification!.replace(/^[A-Z ]+\s*/, "").replace(/^\((.*)\)$/, "$1").slice(0, 80) || "Verification")}</div>` : ""}</div>
+${para("Why it fits", r.whyItFits)}${para("Concerns", r.concerns)}${para("Lead with", r.caseStudy)}${para("Research notes", r.researchNotes ?? null)}
+${r.exception ? `<p class="faint">Listed under the Cash App / Block confirmed-interest exception.</p>` : ""}
+<h4>Materials</h4><p>${esc(mats)}</p>${files}
+${r.materialsPath ? `<p class="faint">Folder: <code>${esc(r.materialsPath)}</code></p>` : ""}
+</div>
+</details>`;
+}
+
+function history(r: Role) {
+  const items: [string, string][] = [];
+  for (const d of r.decisions ?? []) items.push([d.at.slice(0, 10), `Marked ${DECISIONS[d.decision].toLowerCase()}`]);
+  const add = (date: string | null | undefined, text: string) => {
+    const d = firstDate(date);
+    if (d) items.push([d, text]);
+  };
+  add(r.discovered, r.edit?.kind === "manual" ? "Added by you" : "Found by the search");
+  add(r.applied, "Applied");
+  add(r.lastActivity, `Last activity${r.lastActivity?.replace(/^\d{4}-\d{2}-\d{2}\s*/, "") ? ` ${r.lastActivity.replace(/^\d{4}-\d{2}-\d{2}\s*/, "")}` : ""}`);
+  if (!items.length) return "";
+  items.sort((a, b) => (a[0] < b[0] ? 1 : a[0] > b[0] ? -1 : 0));
+  const fmt = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+  return `<details class="sect"><summary><b>History</b><span>${esc(items.length)} ${items.length === 1 ? "entry" : "entries"}</span></summary><ul class="history">${items
+    .map(([d, t]) => `<li><time>${esc(fmt(d))}</time><span>${esc(t)}</span></li>`)
+    .join("")}</ul></details>`;
+}
+
+function possibleDuplicate(r: Role, ctx: EditContext) {
+  if (!r.possible?.length || r.edit?.kind !== "manual") return "";
+  return `<div class="callout"><p><b>Is this the same as a role the search found?</b> Nothing merges unless you say so.</p><ul class="plain small">${r.possible
+    .map(
+      (p) =>
+        `<li>${esc(p.company)} — ${esc(cleanTitle(p.role))}${
+          ctx.editable
+            ? (["link", "not-same"] as const)
+                .map(
+                  (a) =>
+                    `<form method="post" action="/jobs" class="inline">${hidden({ action: a, id: r.edit!.id, rev: r.edit!.rev, target: p.id, csrf: ctx.csrf })}<button type="submit" class="link">${
+                      a === "link" ? "Same role: merge" : "Not the same"
+                    }</button></form>`,
+                )
+                .join("")
+            : ""
+        }</li>`,
+    )
+    .join("")}</ul></div>`;
+}
+
+function detailView(roles: Role[], id: string, ctx: EditContext) {
+  const r = roles.find((x) => x.id === id);
+  if (!r) return `<div class="page narrow"><a class="back" href="/jobs">← Opportunities</a><p class="empty" style="margin-top:24px">That opportunity isn't here any more.</p></div>`;
+  const isArchived = archived(r);
+  const role = title(r);
+  const meta = [
+    r.edit?.kind === "manual" ? SOURCES[r.source ?? "recruiter"] : r.source && r.source !== "automated" ? SOURCES[r.source] : "From the search",
+    firstDate(r.discovered) ? `${r.edit?.kind === "manual" ? "added" : "found"} ${shortDate(`${firstDate(r.discovered)}T12:00:00Z`)}` : "",
+  ]
+    .filter(Boolean)
+    .map((s) => esc(s))
+    .join(" · ");
+  return `<div class="page narrow">
+<a class="back" href="${isArchived ? "/jobs?view=archive" : "/jobs"}">← ${isArchived ? "Archive" : "Opportunities"}</a>
+<div class="title"><div><h2>${esc(r.company)}</h2>${role ? `<div class="role">${esc(role)}</div>` : ""}<p class="meta">${meta}${
+    r.url ? ` · <a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">View posting ↗</a>` : ""
+  }${isArchived ? ` · <span>${decisionOf(r) === "not" ? "In Archive (you passed)" : `In Archive (${esc(statusLabel(r.status).toLowerCase())})`}</span>` : ""}</p></div>${interest(r, ctx, "detail")}</div>
+${r.orphan ? `<div class="callout"><p>This role is no longer in the search's results (renamed or removed in pipeline.md). Everything you entered is kept.</p></div>` : ""}
+${r.conflicts?.length ? `<div class="callout"><p>The search has changed something you edited. <a href="#details">Review in Details</a></p></div>` : ""}
+${possibleDuplicate(r, ctx)}
+${personalForm(r, ctx)}
+<div class="more">${detailsForm(r, ctx)}${fromSearch(r)}${history(r)}</div>
+</div>`;
+}
+
+/* ---------- page ---------- */
 
 const STYLE = `
 :root {
   color-scheme: light dark;
-  --surface: #ffffff; --raised: #f5f4f1; --line: #e2e1dc; --text: #111110; --muted: #5c5b57; --link: #1f63b8;
-  --ok: #17663a; --ok-bg: #e6f3ea; --mid: #7a4f00; --mid-bg: #fbefd3; --low: #5c5b57; --low-bg: #ecebe7; --accent: #111110;
+  --surface: #ffffff; --raised: #f5f4f1; --line: #e2e1dc; --text: #111110; --muted: #5c5b57; --faint: #8f8e88; --link: #1f63b8;
+  --ok: #17663a; --ok-bg: #e6f3ea; --late: #a33b1f;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --surface: #171716; --raised: #212120; --line: #343431; --text: #f4f3ef; --muted: #a9a8a0; --link: #7fb2f2;
-    --ok: #74d99a; --ok-bg: #173323; --mid: #ecc56a; --mid-bg: #3a2e12; --low: #a9a8a0; --low-bg: #2b2b29; --accent: #f4f3ef; }
+  :root { --surface: #171716; --raised: #212120; --line: #343431; --text: #f4f3ef; --muted: #a9a8a0; --faint: #7a7973; --link: #7fb2f2;
+    --ok: #74d99a; --ok-bg: #173323; --late: #f0937a; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--surface); color: var(--text); font: 16px/1.5 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
-main { max-width: 1280px; margin: 0 auto; padding: 28px 24px 64px; }
-a { color: var(--link); }
-h1 { font-size: 22px; margin: 0 0 2px; }
-h2 { font-size: 18px; margin: 0 0 12px; display: flex; align-items: baseline; gap: 8px; }
-h3 { font-size: 15px; margin: 20px 0 6px; }
-header { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; }
-section { margin-top: 36px; min-width: 0; }
-.muted { color: var(--muted); }
-.small { font-size: 13px; }
-.quiet { color: var(--muted); font-size: 13px; }
-.empty { color: var(--muted); margin: 0; }
-p { margin: 0 0 8px; }
+a { color: inherit; }
+p { margin: 0; }
+button, input, textarea, select { font: inherit; color: inherit; }
+input, textarea, select { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 15px; width: 100%; }
+input:focus, textarea:focus, select:focus { outline: none; border-color: var(--muted); }
+input:disabled, textarea:disabled { background: var(--raised); color: var(--muted); }
+.label { font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.label em { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--faint); font-size: 12px; margin-left: 6px; }
+.faint { color: var(--faint); }
+.empty { color: var(--muted); font-size: 15px; padding: 18px 0; }
+.btn { display: inline-block; border: 1px solid var(--text); background: var(--text); color: var(--surface); border-radius: 999px; padding: 7px 18px; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; text-decoration: none; }
+.btn.quiet { background: transparent; color: var(--text); border-color: var(--line); }
+button.link { border: 0; background: none; padding: 0; color: var(--link); text-decoration: underline; cursor: pointer; font-size: inherit; }
+form.inline { display: inline; margin-left: 10px; }
 code { font-size: 13px; overflow-wrap: anywhere; }
-pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--raised); padding: 12px; border-radius: 6px; font-size: 13px; }
-.count { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--low-bg); border-radius: 999px; padding: 1px 8px; }
+pre { white-space: pre-wrap; overflow-wrap: anywhere; background: var(--raised); padding: 12px; border-radius: 8px; font-size: 13px; }
 
-/* top: do now / waiting / new */
-.top { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 24px; }
-.card { margin-top: 0; border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
-.card h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 10px; }
-.card.now { border-color: var(--accent); border-left-width: 5px; background: var(--raised); }
-.card.now h2 { color: var(--text); }
-.items { list-style: none; margin: 0; padding: 0; font-size: 14px; }
-.items li { padding: 9px 0; border-top: 1px solid var(--line); overflow-wrap: break-word; }
-.items li:first-child { border-top: 0; padding-top: 0; }
-.items li:last-child { padding-bottom: 0; }
-.card.now .items { font-size: 16px; line-height: 1.5; font-weight: 500; }
+/* header */
+.top { border-bottom: 1px solid var(--line); }
+.bar { max-width: 1120px; margin: 0 auto; padding: 16px 32px; display: flex; align-items: center; gap: 28px; }
+.bar h1 { font-size: 17px; margin: 0; font-weight: 700; letter-spacing: -.01em; }
+.bar h1 a { text-decoration: none; }
+.bar nav { display: flex; gap: 22px; font-size: 14px; }
+.bar nav a { text-decoration: none; color: var(--muted); padding: 4px 0; white-space: nowrap; }
+.bar nav a.on { color: var(--text); font-weight: 600; box-shadow: inset 0 -2px 0 var(--text); }
+.bar nav .n { color: var(--faint); font-weight: 400; margin-left: 3px; }
+.bar .grow { flex: 1; }
+.bar form { margin: 0; }
+.signout { font-size: 13px; color: var(--muted); background: none; border: 0; cursor: pointer; padding: 0; }
 
-/* filter bar */
-.filters { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: end; margin-top: 14px; padding: 10px 12px; background: var(--raised); border-radius: 8px; }
-.filters label { display: grid; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.filters .grow { flex: 1 1 180px; }
-.filters .actions { display: flex; gap: 12px; align-items: center; font-size: 14px; }
-input, select, button { font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; text-transform: none; letter-spacing: 0; }
-input[type=number] { width: 76px; }
-input[type=search] { width: 100%; }
-select { max-width: 170px; }
-button { background: var(--surface); cursor: pointer; padding: 5px 14px; font-weight: 600; }
+/* pages */
+.page { max-width: 1120px; margin: 0 auto; padding: 36px 32px 80px; }
+.page.list { display: grid; grid-template-columns: minmax(0, 1fr) 270px; gap: 56px; align-items: start; }
+.page.narrow { max-width: 760px; }
+.head h2 { font-size: 26px; letter-spacing: -.02em; margin: 0; font-weight: 700; }
+.head p { margin-top: 4px; color: var(--muted); font-size: 14px; }
+.back { font-size: 14px; color: var(--muted); text-decoration: none; display: inline-block; margin-bottom: 22px; }
+.back:hover { color: var(--text); }
+form.search { margin-top: 22px; }
+form.search input { padding: 10px 14px 10px 38px; border-radius: 10px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f8e88' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 3.5 3.5'/%3E%3C/svg%3E") 14px 50% no-repeat; }
+.searching { margin-top: 10px; font-size: 13px; color: var(--muted); }
+.notice, .toast { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; font-size: 14px; color: var(--muted); }
+.toast b { color: var(--text); font-weight: 600; }
+.toast form { display: inline; }
+.notice.error { color: var(--late); }
+.page.banner { padding-top: 20px; padding-bottom: 0; }
+.page.banner .notice { margin-top: 0; }
+.page.banner + .page { padding-top: 20px; }
 
-/* active roles */
-.roles { display: grid; gap: 14px; margin-top: 16px; }
-.role { display: grid; grid-template-columns: minmax(0, 5fr) 150px minmax(0, 6fr); gap: 16px 28px; align-items: start; border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
-.company { font-size: 19px; font-weight: 700; color: var(--text); text-decoration: none; }
-.company:hover { text-decoration: underline; }
-.title { font-size: 15px; margin-top: 2px; overflow-wrap: break-word; }
-.chips { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin-top: 10px; }
-.chip { display: inline-block; font-size: 12px; font-weight: 600; letter-spacing: .02em; padding: 3px 9px; border-radius: 999px; background: var(--low-bg); color: var(--low); white-space: nowrap; }
-.chip.status { background: transparent; border: 1px solid var(--muted); color: var(--text); padding: 2px 9px; }
-.chip.ok { background: var(--ok-bg); color: var(--ok); }
-.chip.mid { background: var(--mid-bg); color: var(--mid); }
-.tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--low-bg); color: var(--muted); font-weight: 400; }
-.fit { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.fit b { font-size: 30px; line-height: 1; font-variant-numeric: tabular-nums; }
-.fit i { font-style: normal; font-size: 11px; font-weight: 700; letter-spacing: .05em; padding: 3px 8px; border-radius: 4px; background: var(--low-bg); color: var(--low); white-space: nowrap; }
-.fit.apply-now i, .fit.strong-prospect i { background: var(--ok-bg); color: var(--ok); }
-.fit.apply-now i { outline: 2px solid var(--ok); }
-.fit.watch i { background: var(--mid-bg); color: var(--mid); }
-.interest { margin-top: 8px; font-size: 13px; color: var(--muted); }
-.interest b { color: var(--text); }
-.next .label, .facts dt { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
-.next .action { font-size: 16px; font-weight: 600; line-height: 1.4; margin-top: 2px; overflow-wrap: break-word; }
-.next .due { font-size: 13px; color: var(--muted); margin-top: 4px; }
-.foot { grid-column: 1 / -1; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 20px; align-items: center; padding-top: 12px; border-top: 1px solid var(--line); }
-.mats { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
-.pill { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 6px; background: var(--low-bg); color: var(--low); }
-.pill span { font-weight: 400; }
-.pill.draft-ready { background: var(--mid-bg); color: var(--mid); }
-.pill.reviewed, .pill.sent { background: var(--ok-bg); color: var(--ok); }
-.dates { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--muted); }
-.mat { font-size: 14px; }
-.mat.not-started, .mat.not-needed { color: var(--muted); }
-.review { font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--mid); margin-left: 4px; }
+/* opportunity rows */
+.group { margin-top: 34px; }
+.group h3 { margin: 0 0 4px; display: flex; gap: 8px; align-items: baseline; }
+.group h3 .n { font-size: 12px; color: var(--faint); font-weight: 500; letter-spacing: 0; }
+.group-note { font-size: 13px; color: var(--faint); margin: 2px 0 6px; }
+.row { position: relative; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 140px; gap: 24px; align-items: start; padding: 18px 0; border-top: 1px solid var(--line); }
+.row:hover { background: linear-gradient(90deg, transparent, var(--raised) 6%, var(--raised) 94%, transparent); }
+.row:target { background: var(--raised); }
+.who { text-decoration: none; display: flex; flex-direction: column; min-width: 0; }
+.who::after { content: ""; position: absolute; inset: 0; }
+.co { font-size: 18px; font-weight: 650; letter-spacing: -.01em; line-height: 1.3; }
+.role { font-size: 15px; line-height: 1.4; margin-top: 2px; }
+.who .src { font-size: 12px; color: var(--faint); margin-top: 6px; }
+.step { font-size: 14px; line-height: 1.45; color: var(--muted); padding-top: 3px; }
+.step .when { display: block; font-size: 12px; color: var(--faint); margin-top: 2px; }
+.step .when.today { color: var(--text); font-weight: 600; }
+.step .when.late { color: var(--late); }
+.step.suggested .txt { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-style: italic; color: var(--faint); font-size: 13px; }
+.step.suggested .tag { display: block; font-size: 11px; color: var(--faint); margin-top: 2px; }
+.step.none { color: var(--faint); font-size: 13px; }
+.pick { justify-self: end; position: relative; z-index: 1; }
+.pick:has(.interest[open]), .title:has(.interest[open]) { z-index: 6; }
+.title { position: relative; }
+.foot { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--line); font-size: 13px; color: var(--muted); display: flex; gap: 22px; flex-wrap: wrap; }
 
-/* watchlist: secondary */
-.secondary h2 { font-size: 15px; color: var(--muted); margin-bottom: 4px; }
+/* interest control */
+.interest { position: relative; display: inline-block; }
+.interest summary { list-style: none; }
+.interest summary::-webkit-details-marker { display: none; }
+.pill { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; padding: 4px 10px 4px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; user-select: none; color: var(--muted); background: var(--surface); }
+summary.pill { cursor: pointer; }
+summary.pill::after { content: ""; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); margin-left: 2px; opacity: .6; }
+.dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--faint); flex: none; }
+.interest.is-interested .pill { color: var(--ok); border-color: var(--ok-bg); background: var(--ok-bg); }
+.is-interested .dot { background: var(--ok); border-color: var(--ok); }
+.is-not .dot { background: linear-gradient(135deg, transparent 43%, var(--faint) 43%, var(--faint) 57%, transparent 57%); }
+.menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 250px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.12); padding: 6px; }
+.menu button { display: flex; width: 100%; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 0; background: none; border-radius: 6px; text-align: left; cursor: pointer; font-size: 14px; }
+.menu button .dot { margin-top: 6px; }
+.menu button:hover, .menu button:focus-visible, .menu button.cur { background: var(--raised); outline: none; }
+.menu small { display: block; color: var(--muted); font-size: 12px; }
+.menu .cur::after { content: "✓"; margin-left: auto; color: var(--muted); }
+
+/* follow-ups */
+aside { position: sticky; top: 24px; padding-top: 6px; }
+aside h3 { margin: 0 0 14px; }
+.fu { list-style: none; margin: 0; padding: 0; }
+.fu .day { font-size: 12px; color: var(--muted); margin: 16px 0 6px; }
+.fu .day:first-child { margin-top: 0; }
+.fu .day.today { color: var(--text); font-weight: 600; }
+.fu .day.late { color: var(--late); font-weight: 600; }
+.fu .item a { display: block; padding: 6px 0 6px 12px; border-left: 2px solid var(--line); font-size: 14px; line-height: 1.4; text-decoration: none; }
+.fu .item.today a { border-left-color: var(--text); }
+.fu .item.late a { border-left-color: var(--late); }
+.fu .item b { display: block; font-weight: 600; font-size: 13px; }
+.fu .item span { color: var(--muted); }
+.fu .item a:hover span { color: var(--text); }
+.aside-note { font-size: 12px; color: var(--faint); margin-top: 18px; line-height: 1.45; }
+.fu-mini { display: none; margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; font-size: 14px; }
+.fu-mini summary { list-style: none; padding: 11px 14px; display: flex; gap: 8px; align-items: baseline; cursor: pointer; }
+.fu-mini summary::-webkit-details-marker { display: none; }
+.fu-mini summary .label { flex: none; }
+.fu-mini summary .t { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.fu-mini summary b { color: var(--text); font-weight: 600; }
+.fu-mini summary::after { content: "›"; margin-left: auto; color: var(--faint); }
+.fu-mini[open] summary::after { transform: rotate(90deg); }
+.fu-mini .fu { padding: 0 14px 14px; }
+
+/* detail */
+.title { display: flex; gap: 20px; align-items: flex-start; justify-content: space-between; }
+.title h2 { font-size: 34px; line-height: 1.1; letter-spacing: -.025em; margin: 0; font-weight: 700; }
+.title .role { font-size: 18px; color: var(--muted); margin-top: 6px; }
+.title .meta { margin-top: 10px; font-size: 13px; color: var(--faint); }
+.title .meta a { color: var(--faint); }
+.callout { margin-top: 24px; padding: 12px 16px; border-radius: 10px; background: var(--raised); font-size: 14px; }
+.callout a { color: var(--link); }
+.callout ul { margin-top: 6px; }
+form.mine { margin-top: 36px; }
+.block { display: block; }
+.block + .block { margin-top: 30px; }
+.note { display: block; margin-top: 10px; border-color: transparent; border-radius: 10px; background: var(--raised); padding: 16px 18px; font-size: 16px; line-height: 1.6; resize: vertical; min-height: 180px; field-sizing: content; }
+.note:hover { border-color: var(--line); }
+.note:focus { background: var(--surface); }
+.next { margin-top: 10px; display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px; }
+.mine .next input { padding: 12px 14px; font-size: 16px; border-radius: 10px; }
+.mine .next input[name=nextAction] { font-weight: 600; }
+.mine .next input[name=nextAction]::placeholder { font-weight: 400; }
+.suggest { margin-top: 8px; font-size: 13px; color: var(--faint); }
+.suggest i { color: var(--muted); }
+.actions { margin-top: 22px; display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; }
+.actions a { color: var(--muted); font-size: 14px; }
+
+.more { margin-top: 52px; border-top: 1px solid var(--line); }
+.sect { border-bottom: 1px solid var(--line); }
+.sect > summary { list-style: none; cursor: pointer; padding: 16px 0; display: flex; align-items: baseline; gap: 12px; }
+.sect > summary::-webkit-details-marker { display: none; }
+.sect > summary::before { content: "›"; color: var(--faint); width: 10px; display: inline-block; flex: none; transition: transform .15s; }
+.sect[open] > summary::before { transform: rotate(90deg); }
+.sect > summary b { font-size: 15px; font-weight: 600; flex: none; }
+.sect > summary span { font-size: 13px; color: var(--faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.sect > :not(summary) { margin-left: 22px; }
+.sect > :last-child { margin-bottom: 22px; }
+.facts { margin: 0; display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 8px 20px; font-size: 14px; }
+.facts div { display: contents; }
+.facts dt { color: var(--muted); padding-top: 7px; }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+.facts input, .facts select { font-size: 14px; padding: 6px 9px; }
+.facts input.num { width: 110px; }
+.sect h4 { font-size: 13px; margin: 18px 0 4px; font-weight: 600; }
+.research { font-size: 14px; color: var(--muted); line-height: 1.55; }
+.research h4 { color: var(--text); }
+.scores { display: flex; flex-wrap: wrap; gap: 14px 30px; }
+.scores div { font-size: 13px; }
+.scores b { display: block; font-size: 20px; color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+details.file summary { cursor: pointer; font-size: 13px; padding: 4px 0; }
+.plain { list-style: none; margin: 0; padding: 0; }
+.plain li { padding: 9px 0; border-top: 1px solid var(--line); font-size: 15px; overflow-wrap: break-word; }
+.plain li:first-child { border-top: 0; }
+.plain.small li { font-size: 13px; color: var(--muted); padding: 6px 0; border: 0; }
+.plain.small b { color: var(--text); font-weight: 600; }
+.plain .conflict b { color: var(--late); }
+.history { list-style: none; margin: 0; padding: 0; font-size: 13px; color: var(--muted); }
+.history li { padding: 4px 0; display: grid; grid-template-columns: 110px 1fr; gap: 8px; }
+.history time { color: var(--faint); }
+
+/* search activity */
 .scroll { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 13px; color: var(--muted); }
-th, td { text-align: left; padding: 7px 16px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; color: var(--muted); }
+th, td { text-align: left; padding: 7px 14px 7px 0; border-bottom: 1px solid var(--line); vertical-align: top; }
 th { font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
-td { overflow-wrap: break-word; }
 td.co { color: var(--text); font-weight: 600; }
 .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
-/* archive: closed + passive */
-.archive { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; color: var(--muted); font-size: 13px; }
-.archive summary { cursor: pointer; font-size: 14px; font-weight: 600; }
-.archive a { color: inherit; }
-.compact { margin: 8px 0 0; padding-left: 18px; line-height: 1.45; }
-.compact li { margin-bottom: 4px; overflow-wrap: break-word; }
+/* add */
+.sheet { margin-top: 28px; display: grid; gap: 18px; }
+.sheet label { display: grid; gap: 6px; font-size: 13px; font-weight: 600; }
+.sheet label em { font-style: normal; font-weight: 400; color: var(--faint); }
+.sheet .two { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.sheet .next { margin-top: 0; }
+.sheet textarea { min-height: 130px; resize: vertical; line-height: 1.55; }
+.extra summary { cursor: pointer; font-size: 14px; color: var(--muted); }
+.extra[open] summary { margin-bottom: 14px; }
+.extra .two + .two { margin-top: 18px; }
 
-/* role detail */
-.detail { border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
-.facts { margin: 12px 0 0; display: grid; gap: 8px; }
-.facts div { display: grid; grid-template-columns: minmax(150px, 24%) 1fr; gap: 12px; padding-top: 8px; border-top: 1px solid var(--line); }
-.facts dt { padding-top: 3px; }
-.facts dd { margin: 0; overflow-wrap: anywhere; }
-details { margin: 8px 0; }
-summary { cursor: pointer; }
-.error { color: #c42b2b; }
-
-/* manual entry / editing */
-.src { font-size: 12px; color: var(--muted); margin-top: 2px; }
-.notice { margin-top: 16px; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; }
-.note { font-size: 14px; color: var(--muted); margin-top: 14px; }
-details.add { margin: 12px 0 0; }
-details.add > summary { font-size: 14px; font-weight: 600; }
-.entry { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 12px; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
-.entry label { display: grid; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
-.entry .wide { grid-column: span 2; }
-.entry .full { grid-column: 1 / -1; }
-.entry input, .entry select, .entry textarea { width: 100%; max-width: none; }
-.entry .actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
-textarea { font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; resize: vertical; text-transform: none; letter-spacing: 0; }
-input:disabled { color: var(--muted); background: var(--raised); }
-form.inline { display: inline; margin-left: 8px; }
-button.link { border: 0; background: none; padding: 0; color: var(--link); font-weight: 400; font-size: 13px; text-decoration: underline; }
-.overrides li { font-size: 13px; color: var(--muted); }
-.overrides b { color: var(--text); font-weight: 600; }
-form.login { display: grid; gap: 12px; margin-top: 24px; }
-input[type=password] { width: 100%; max-width: 320px; padding: 10px 12px; font-size: 16px; }
-footer { margin-top: 48px; font-size: 13px; }
+/* sign in / messages */
+form.login { display: grid; gap: 12px; margin-top: 24px; max-width: 320px; }
+.error { color: var(--late); }
 
 @media (max-width: 900px) {
-  .top { grid-template-columns: 1fr; }
-  .role { grid-template-columns: minmax(0, 1fr) auto; gap: 14px 16px; }
-  .next { grid-column: 1 / -1; }
+  .page.list { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .page.list aside { display: none; }
+  .fu-mini { display: block; }
 }
 @media (max-width: 700px) {
-  main { padding: 20px 16px 48px; }
-  .opt { display: none; }
-  .role { padding: 16px; }
-  .fit { align-items: flex-end; }
-  .score { text-align: right; }
-  .fit b { font-size: 26px; }
-  .filters label { flex: 1 1 130px; }
-  .filters select, input[type=number] { width: 100%; max-width: none; }
-  .facts div { grid-template-columns: 1fr; gap: 2px; }
-  .entry .wide { grid-column: 1 / -1; }
+  .bar { padding: 14px 16px; flex-wrap: wrap; gap: 12px 20px; }
+  .bar nav { order: 3; width: 100%; }
+  .signout { display: none; }
+  .page { padding: 24px 16px 56px; }
+  .row { grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; }
+  .row .step { grid-column: 1; grid-row: 2; padding-top: 0; }
+  .row .pick { grid-row: 1; grid-column: 2; }
+  .title { flex-direction: column; gap: 14px; }
+  .title h2 { font-size: 28px; }
+  .next, .sheet .two { grid-template-columns: 1fr; }
+  .facts { grid-template-columns: 1fr; gap: 2px; }
+  .facts dd { margin-bottom: 10px; }
+  .sect > :not(summary) { margin-left: 0; }
+  .history li { grid-template-columns: 96px 1fr; }
 }
 `;
 
-function page(title: string, body: string) {
+/** Closes other interest menus when one opens, and all of them on an outside click or Escape. */
+const SCRIPT = `
+document.addEventListener("toggle", (e) => {
+  const d = e.target;
+  if (d.classList && d.classList.contains("interest") && d.open)
+    document.querySelectorAll("details.interest[open]").forEach((x) => x !== d && x.removeAttribute("open"));
+}, true);
+document.addEventListener("click", (e) => {
+  document.querySelectorAll("details.interest[open]").forEach((x) => !x.contains(e.target) && x.removeAttribute("open"));
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") document.querySelectorAll("details.interest[open]").forEach((x) => x.removeAttribute("open"));
+});
+`;
+
+function page(pageTitle: string, body: string) {
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex, nofollow">
-<title>${esc(title)}</title>
+<title>${esc(pageTitle)}</title>
 <style>${STYLE}</style>
 </head>
-<body><main>${body}</main></body>
+<body>${body}<script>${SCRIPT}</script></body>
 </html>`;
 }
 
-export function renderMessage(text: string) {
-  return page("Job search", `<h1>Job search</h1><p class="muted" style="margin-top:12px">${esc(text)}</p>`);
-}
-
-export function renderLogin(error = "") {
-  return page(
-    "Job search · Sign in",
-    `<h1>Job search</h1>
-<form class="login" method="post" action="/jobs">
-<label for="password">Password</label>
-<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
-${error ? `<p class="error">${esc(error)}</p>` : ""}
-<div><button type="submit">Sign in</button></div>
-</form>`,
-  );
+function header(active: View | "detail", archiveCount: number, signOut: boolean, editable: boolean) {
+  const link = (view: View, label: string, extra = "") =>
+    `<a href="/jobs${view === "list" ? "" : `?view=${view}`}"${active === view || (view === "list" && active === "detail") ? ` class="on"` : ""}>${label}${extra}</a>`;
+  return `<div class="top"><div class="bar">
+<h1><a href="/jobs">Job search</a></h1>
+<nav>${link("list", "Opportunities")}${link("archive", "Archive", archiveCount ? `<span class="n">${archiveCount}</span>` : "")}${link("search", "Search activity")}</nav>
+<span class="grow"></span>
+${editable ? `<a class="btn" href="/jobs?view=add">+ Add opportunity</a>` : ""}
+${signOut ? `<form method="post" action="/jobs"><input type="hidden" name="logout" value="1"><button type="submit" class="signout">Sign out</button></form>` : ""}
+</div></div>`;
 }
 
 const NOTICES: Record<string, string> = {
   added: "Added.",
   saved: "Saved.",
-  merged: "This matches a role from the automated run, so they're shown as one card. Everything you entered is kept.",
-  possible: "Added. The automated run has a similar role: confirm below whether it's the same opportunity.",
-  reverted: "Back to the automated value.",
-  stale: "Not saved: this role was changed somewhere else (another tab or device) after you opened it. These are the current values; make your change again.",
+  merged: "This matches a role the search found, so they're one opportunity now. Everything you entered is kept.",
+  possible: "Added. The search found something similar; confirm below whether it's the same role.",
+  reverted: "Back to the search's value.",
+  stale: "Not saved: this was changed somewhere else (another tab or device) after you opened it. These are the current values; make your change again.",
 };
+
+export function renderMessage(text: string) {
+  return page("Job search", `<div class="page narrow"><div class="head"><h2>Job search</h2></div><p class="empty">${esc(text)}</p></div>`);
+}
+
+export function renderLogin(error = "") {
+  return page(
+    "Job search · Sign in",
+    `<div class="page narrow"><div class="head"><h2>Job search</h2></div>
+<form class="login" method="post" action="/jobs">
+<label for="password" class="label">Password</label>
+<input id="password" name="password" type="password" autocomplete="current-password" required autofocus>
+${error ? `<p class="error">${esc(error)}</p>` : ""}
+<div><button class="btn" type="submit">Sign in</button></div>
+</form></div>`,
+  );
+}
 
 export function renderJobs(opts: {
   snapshot: Snapshot | null;
@@ -662,34 +855,28 @@ export function renderJobs(opts: {
   const { snapshot, query, signOut } = opts;
   const ctx: EditContext = { csrf: opts.csrf ?? "", editable: Boolean(opts.editable && !opts.manualError) };
   if (!snapshot) {
-    return page(
-      "Job search",
-      `<h1>Job search</h1><p class="muted" style="margin-top:12px">No snapshot yet. Run <code>npm run jobs:sync</code> on your Mac to publish pipeline.md, weekly-actions.md and aligned-companies.md here.</p>`,
-    );
+    return renderMessage("No snapshot yet. Run npm run jobs:sync on your Mac to publish your job search here.");
   }
-  const visible = sortRoles(filterRoles(snapshot.roles, query), query.sort);
-  const active = visible.filter((r) => r.list === "active");
-  const closed = visible.filter((r) => r.list === "closed");
-  const showRoles = query.list === "all" || query.list === "active";
-
-  const generated = new Date(snapshot.generatedAt);
-  const when = Number.isNaN(generated.getTime())
-    ? snapshot.generatedAt
-    : generated.toLocaleString("en-US", { timeZone: "America/New_York", dateStyle: "medium", timeStyle: "short" });
-
-  const body = `
-<header>
-<div><h1>Job search</h1><p class="muted small">Snapshot from ${esc(when)} ET · automated data from pipeline.md, plus roles and edits you add here · nothing here sends or submits anything</p></div>
-${signOut ? `<form method="post" action="/jobs"><input type="hidden" name="logout" value="1"><button type="submit">Sign out</button></form>` : ""}
-</header>
-${summary(snapshot)}
-${opts.manualError ? `<p class="notice error">Couldn't load your manual entries and edits, so editing is off. Automated data below is current.</p>` : ""}
-${NOTICES[query.notice] ? `<p class="notice${query.notice === "stale" ? " error" : ""}">${esc(NOTICES[query.notice])}</p>` : ""}
-${query.role ? detail(snapshot, query.role, query, ctx) : ""}
-${showRoles ? `<section><h2>Active roles <span class="count">${active.length}</span></h2>${filters(snapshot, query)}${addForm(ctx)}${roleCards(active, query)}</section>` : filters(snapshot, query)}
-${watchTable(snapshot, query)}
-${showRoles ? closedList(closed, query) : ""}
-${passiveList(snapshot, query)}
-<footer class="muted"><p>Prepared materials stay marked AWAITING MARC REVIEW until you review them. Outreach shows "Sent" only if pipeline.md says so.</p></footer>`;
-  return page("Job search", body);
+  const roles = snapshot.roles;
+  const archiveCount = roles.filter(archived).length;
+  const active = query.role ? "detail" : query.view;
+  const notice = NOTICES[query.notice]
+    ? `<p class="notice${query.notice === "stale" ? " error" : ""}">${esc(NOTICES[query.notice])}</p>`
+    : "";
+  const warn = opts.manualError
+    ? `<p class="notice error">Couldn't load your own notes and decisions, so editing is off. The search's data below is current.</p>`
+    : "";
+  const body = query.role
+    ? detailView(roles, query.role, ctx)
+    : query.view === "archive"
+      ? archiveView(roles, query, ctx)
+      : query.view === "search"
+        ? searchView(snapshot)
+        : query.view === "add"
+          ? addView(ctx)
+          : listView(snapshot, roles, query, ctx);
+  const wide = !query.role && query.view === "list";
+  const banner = notice || warn ? `<div class="page${wide ? "" : " narrow"} banner">${warn}${notice}</div>` : "";
+  const name = query.role ? roles.find((r) => r.id === query.role)?.company : null;
+  return page(name ? `${name} · Job search` : "Job search", `${header(active, archiveCount, signOut, ctx.editable)}${banner}${body}`);
 }

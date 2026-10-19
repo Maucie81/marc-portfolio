@@ -63,7 +63,24 @@ export type Role = {
   mergedManualId?: string;
   /** An overlay whose automated role is no longer in the snapshot. */
   orphan?: boolean;
+  /** Your call on the opportunity (null = undecided). Independent of recruiting status. */
+  decision?: Decision | null;
+  /** The routine's own notes from pipeline.md. `notes` holds only your notes. */
+  researchNotes?: string | null;
+  /** True when the next step was set by you; otherwise it's the routine's suggestion. */
+  ownNext?: boolean;
+  /** Earlier interest decisions, oldest first. */
+  decisions?: DecisionEntry[];
 };
+
+/** Your interest, set on the dashboard. "not" archives the opportunity; reversible. */
+export const DECISIONS = {
+  interested: "Interested",
+  undecided: "Undecided",
+  not: "Not interested",
+} as const;
+export type Decision = keyof typeof DECISIONS;
+export type DecisionEntry = { decision: Decision; at: string };
 
 /** How an opportunity entered the pipeline. Independent of status. */
 export const SOURCES = {
@@ -76,6 +93,7 @@ export type SourceKey = keyof typeof SOURCES;
 
 /** Fields a person can set by hand, on a manual entry or as an overlay on an automated role. */
 export type ManualFields = {
+  decision: Decision | null;
   source: SourceKey;
   status: string;
   url: string | null;
@@ -105,6 +123,7 @@ export type ManualRole = ManualFields & {
   linkedTo?: string | null;
   /** Automated roles confirmed as NOT the same opportunity. */
   notSame?: string[];
+  decisions?: DecisionEntry[];
 };
 
 /**
@@ -121,6 +140,7 @@ export type Overlay = {
   base: Partial<Record<ManualField, string | number | null>>;
   updated: string;
   rev: number;
+  decisions?: DecisionEntry[];
 };
 
 export type ManualData = { roles: ManualRole[]; overlays: Record<string, Overlay> };
