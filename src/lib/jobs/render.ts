@@ -1,4 +1,14 @@
-import { STATUSES, tierOf, type Role, type Snapshot, type Tier } from "./types";
+import {
+  SOURCES,
+  STATUSES,
+  statusLabel,
+  tierOf,
+  type ManualField,
+  type Role,
+  type Snapshot,
+  type SourceKey,
+  type Tier,
+} from "./types";
 
 /**
  * HTML for the private /jobs page (see src/app/jobs/route.ts). Plain
@@ -35,6 +45,8 @@ export type Query = {
   minFit: number;
   minInterest: number;
   q: string;
+  source: string;
+  notice: string;
 };
 
 export function parseQuery(params: URLSearchParams): Query {
@@ -54,6 +66,8 @@ export function parseQuery(params: URLSearchParams): Query {
     minFit: num("minFit"),
     minInterest: num("minInterest"),
     q: (params.get("q") ?? "").slice(0, 80),
+    source: params.get("source") ?? "",
+    notice: params.get("notice") ?? "",
   };
 }
 
@@ -96,11 +110,12 @@ function filterRoles(roles: Role[], q: Query) {
   return roles.filter((r) => {
     if (q.list === "watchlist" || q.list === "passive") return false;
     if (q.status && r.status !== q.status) return false;
+    if (q.source && (r.source ?? "automated") !== q.source) return false;
     if (q.tier && tierOf(r.roleFit) !== q.tier) return false;
     if (q.company && r.company !== q.company) return false;
     if (q.minFit && (r.roleFit ?? 0) < q.minFit) return false;
     if (q.minInterest && (r.interest ?? 0) < q.minInterest) return false;
-    if (needle && !`${r.company} ${r.role} ${r.notes ?? ""}`.toLowerCase().includes(needle)) return false;
+    if (needle && !`${r.company} ${r.role} ${r.notes ?? ""} ${r.recruiter ?? ""}`.toLowerCase().includes(needle)) return false;
     return true;
   });
 }
@@ -175,7 +190,8 @@ function filters(snapshot: Snapshot, q: Query) {
     `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
   return `<form class="filters" method="get" action="/jobs">
 <label class="grow">Search<input type="search" name="q" value="${esc(q.q)}" placeholder="company, role, notes"></label>
-<label>Status<select name="status">${opt("", "Any", q.status)}${STATUSES.map((s) => opt(s, s, q.status)).join("")}</select></label>
+<label>Status<select name="status">${opt("", "Any", q.status)}${STATUSES.map((s) => opt(s, statusLabel(s), q.status)).join("")}</select></label>
+<label>Source<select name="source">${opt("", "Any", q.source)}${(Object.keys(SOURCES) as SourceKey[]).map((k) => opt(k, SOURCES[k], q.source)).join("")}</select></label>
 <label>Tier<select name="tier">${opt("", "Any", q.tier)}${(["APPLY NOW", "STRONG PROSPECT", "WATCH"] as const)
     .map((t) => opt(t, t, q.tier))
     .join("")}</select></label>
@@ -195,6 +211,15 @@ const roleLink = (r: Role, q: Query) => {
   return `/jobs?${params.toString()}`;
 };
 
+/** Quiet tags for things that need a decision: possible duplicates, automation changes, dropped roles. */
+function flags(r: Role) {
+  return [
+    r.possible?.length ? `<span class="tag">possible duplicate</span>` : "",
+    r.conflicts?.length ? `<span class="tag">automation changed</span>` : "",
+    r.orphan ? `<span class="tag">not in latest automated run</span>` : "",
+  ].join("");
+}
+
 /** Active roles: one card per role, the primary content of the page. */
 function roleCards(roles: Role[], q: Query) {
   if (!roles.length) return `<p class="empty">No roles match these filters.</p>`;
@@ -208,15 +233,16 @@ function roleCards(roles: Role[], q: Query) {
 <div class="who">
 <a class="company" href="${esc(roleLink(r, q))}">${esc(r.company)}</a>
 <div class="title">${esc(r.role)}</div>
-<div class="chips"><span class="chip status">${esc(r.status)}</span>${verificationChip(r.verification)}${
+<div class="src">${esc(SOURCES[r.source ?? "automated"])}</div>
+<div class="chips"><span class="chip status">${esc(statusLabel(r.status))}</span>${verificationChip(r.verification)}${
         r.exception ? `<span class="tag">exception</span>` : ""
-      }</div>
+      }${flags(r)}</div>
 </div>
 <div class="score">${scoreCell(r)}<div class="interest">Interest <b>${dash(r.interest)}</b>${r.interest === null ? "" : "/10"}</div></div>
 <div class="next"><div class="label">Next</div><div class="action">${dash(r.nextAction)}</div>${
         r.nextActionDate ? `<div class="due">${esc(r.nextActionDate)}</div>` : ""
       }</div>
-<div class="foot"><div class="mats">${materialsLine(r)}</div><div class="dates">${date("Discovered", r.discovered)}${date(
+<div class="foot"><div class="mats">${materialsLine(r)}</div><div class="dates">${date(r.edit?.kind === "manual" ? "Added" : "Discovered", r.discovered)}${date(
         "Applied",
         r.applied,
       )}${date("Last activity", r.lastActivity)}${
@@ -233,7 +259,9 @@ function closedList(roles: Role[], q: Query) {
   return `<details class="archive"><summary>Closed <span class="count">${roles.length}</span></summary><ul class="compact">${roles
     .map(
       (r) =>
-        `<li><a href="${esc(roleLink(r, q))}">${esc(r.company)}</a>${r.role ? ` — ${esc(r.role)}` : ""} <span class="quiet">${dash(r.verification)}</span></li>`,
+        `<li><a href="${esc(roleLink(r, q))}">${esc(r.company)}</a>${r.role ? ` — ${esc(r.role)}` : ""} <span class="quiet">${
+          r.edit?.kind === "manual" || r.overridden?.includes("status") ? esc(statusLabel(r.status)) : dash(r.verification)
+        }</span>${flags(r)}</li>`,
     )
     .join("")}</ul></details>`;
 }
@@ -245,7 +273,7 @@ function watchTable(snapshot: Snapshot, q: Query) {
     if (q.company && w.company !== q.company) return false;
     if (q.minFit && (w.score ?? 0) < q.minFit) return false;
     if (q.tier && tierOf(w.score) !== q.tier) return false;
-    if (q.status || q.minInterest) return false; // those fields only exist on pipeline roles
+    if (q.status || q.minInterest || q.source) return false; // those fields only exist on pipeline roles
     return !needle || `${w.company} ${w.role} ${w.notes}`.toLowerCase().includes(needle);
   });
   if (!rows.length) return "";
@@ -265,7 +293,125 @@ function passiveList(snapshot: Snapshot, q: Query) {
     .join("")}</ul></details>`;
 }
 
-function detail(snapshot: Snapshot, id: string, q: Query) {
+/* ---------- manual entry / editing ---------- */
+
+export type EditContext = { csrf: string; editable: boolean };
+
+const hidden = (fields: Record<string, string | number>) =>
+  Object.entries(fields)
+    .map(([k, v]) => `<input type="hidden" name="${esc(k)}" value="${esc(v)}">`)
+    .join("");
+
+/** The add / edit form. One layout for both; Role Fit is read-only when the automation scored the role. */
+function roleForm(ctx: EditContext, r: Role | null) {
+  const v = (value: string | number | null | undefined) => esc(value ?? "");
+  const opt = (value: string, label: string, current: string) =>
+    `<option value="${esc(value)}"${value === current ? " selected" : ""}>${esc(label)}</option>`;
+  const status = r?.status ?? "Discovered";
+  const statuses = (STATUSES as readonly string[]).includes(status) ? [...STATUSES] : [status, ...STATUSES];
+  const manual = !r || r.edit?.kind === "manual";
+  const autoFit = r !== null && r.roleFit !== null && !r.manualFit;
+  const meta: Record<string, string | number> = r?.edit
+    ? { action: r.edit.kind === "manual" ? "edit-manual" : "edit", id: r.edit.id, rev: r.edit.rev }
+    : { action: "add" };
+  return `<form class="entry" method="post" action="/jobs">${hidden({ ...meta, csrf: ctx.csrf })}
+${manual ? `<label>Company *<input name="company" required maxlength="120" value="${v(r?.company)}"></label>
+<label>Position *<input name="role" required maxlength="160" value="${v(r?.role)}"></label>` : ""}
+<label>Source *<select name="source" required>${(Object.keys(SOURCES) as SourceKey[])
+    .map((k) => opt(k, SOURCES[k], r?.source ?? (r ? "automated" : "recruiter")))
+    .join("")}</select></label>
+<label>Status *<select name="status" required>${statuses.map((s) => opt(s, statusLabel(s), status)).join("")}</select></label>
+<label>Job posting URL<input name="url" inputmode="url" maxlength="500" value="${v(r?.url)}" placeholder="https://"></label>
+<label>Location / work arrangement<input name="location" maxlength="160" value="${v(r?.location)}"></label>
+<label>Compensation<input name="compensation" maxlength="160" value="${v(r?.compensation)}"></label>
+<label>Recruiter / contact<input name="recruiter" maxlength="200" value="${v(r?.recruiter)}"></label>
+<label>Role Fit${
+    autoFit
+      ? `<input value="${v(r?.roleFit)} (automated)" disabled>`
+      : `<input name="roleFit" type="number" min="0" max="100" value="${v(r?.roleFit)}">`
+  }</label>
+<label>Interest<input name="interest" type="number" min="0" max="10" value="${v(r?.interest)}"></label>
+<label class="wide">Next action<input name="nextAction" maxlength="300" value="${v(r?.nextAction)}"></label>
+<label>Next-action date<input name="nextActionDate" type="date" value="${v(firstDate(r?.nextActionDate ?? null))}"></label>
+<label class="full">Notes<textarea name="notes" rows="${r?.notes ? 5 : 3}" maxlength="4000">${v(r?.notes)}</textarea></label>
+<div class="full actions"><button type="submit">${r ? "Save changes" : "Add role"}</button>${
+    r ? `<span class="quiet">Saved separately from the automated run; it never overwrites these.</span>` : `<span class="quiet">Only company, position, source and status are required. Date added is set automatically.</span>`
+  }</div>
+</form>`;
+}
+
+function addForm(ctx: EditContext) {
+  if (!ctx.editable) return "";
+  return `<details class="add"><summary>Add a role</summary>${roleForm(ctx, null)}</details>`;
+}
+
+const FIELD_LABELS: Record<ManualField, string> = {
+  source: "Source",
+  status: "Status",
+  url: "Role URL",
+  location: "Location / work model",
+  compensation: "Compensation",
+  recruiter: "Recruiter / contact",
+  roleFit: "Role Fit",
+  interest: "Interest",
+  notes: "Notes",
+  nextAction: "Next action",
+  nextActionDate: "Next-action date",
+};
+
+const shownValue = (k: ManualField, value: string | number | null | undefined) =>
+  value === null || value === undefined || value === ""
+    ? "empty"
+    : k === "source"
+      ? SOURCES[value as SourceKey] ?? String(value)
+      : k === "status"
+        ? statusLabel(String(value))
+        : String(value);
+
+/** Manual-edit bookkeeping on the detail view: what's overridden, what the automation now says, undo. */
+function editNotes(r: Role, ctx: EditContext) {
+  const out: string[] = [];
+  if (r.orphan) {
+    out.push(`<p class="note">This role is no longer in the automated run (renamed or removed in pipeline.md). Your edits are kept here.</p>`);
+  }
+  if (r.mergedManualId) {
+    out.push(`<p class="note">Merged with an entry you added by hand. Your values win where they differ; the automated ones are listed below.</p>`);
+  }
+  const conflicts = new Map((r.conflicts ?? []).map((c) => [c.field, c.auto]));
+  const rows = (r.overridden ?? [])
+    .filter((k) => r.autoValues && k in r.autoValues)
+    .map((k) => {
+      const auto = shownValue(k, r.autoValues?.[k]);
+      const revert =
+        ctx.editable && r.edit?.kind === "overlay" && !r.orphan && r.overlayFields?.includes(k)
+          ? `<form method="post" action="/jobs" class="inline">${hidden({ action: "revert", id: r.edit.id, rev: r.edit.rev, field: k, csrf: ctx.csrf })}<button type="submit" class="link">Use automated</button></form>`
+          : "";
+      return `<li><b>${esc(FIELD_LABELS[k])}</b>: you set ${esc(shownValue(k, r[k as keyof Role] as string | number | null))}; automation ${
+        conflicts.has(k) ? `<strong>has since changed it to</strong>` : "says"
+      } ${esc(auto)}${revert}</li>`;
+    });
+  if (rows.length) out.push(`<h3>Edited by hand</h3><ul class="compact overrides">${rows.join("")}</ul>`);
+  if (r.possible?.length && r.edit?.kind === "manual") {
+    out.push(`<h3>Possible duplicate</h3><p class="quiet">The automated run has a similar role. Merge only if it's the same opportunity; nothing merges without your confirmation.</p><ul class="compact overrides">${r.possible
+      .map(
+        (p) =>
+          `<li>${esc(p.company)} — ${esc(p.role)}${
+            ctx.editable
+              ? ["link", "not-same"]
+                  .map(
+                    (a) =>
+                      `<form method="post" action="/jobs" class="inline">${hidden({ action: a, id: r.edit!.id, rev: r.edit!.rev, target: p.id, csrf: ctx.csrf })}<button type="submit" class="link">${a === "link" ? "Same role: merge" : "Not the same"}</button></form>`,
+                  )
+                  .join("")
+              : ""
+          }</li>`,
+      )
+      .join("")}</ul>`);
+  }
+  return out.join("");
+}
+
+function detail(snapshot: Snapshot, id: string, q: Query, ctx: EditContext) {
   const r = snapshot.roles.find((x) => x.id === id);
   if (!r) return `<section><p class="muted">That role isn't in the current snapshot. <a href="/jobs">Back to list</a></p></section>`;
   const back = `/jobs${q.sort !== "fit" ? `?sort=${q.sort}` : ""}`;
@@ -282,18 +428,20 @@ function detail(snapshot: Snapshot, id: string, q: Query) {
 <p class="small"><a href="${esc(back)}">← All roles</a></p>
 <h2>${esc(r.company)} — ${esc(r.role)}${r.exception ? ` <span class="tag">confirmed-interest exception</span>` : ""}</h2>
 <dl class="facts">
-${row("Status", r.status)}
-${row("Role Fit Score", r.roleFit === null ? null : `${r.roleFit} (${tierOf(r.roleFit)})`)}
+${row("Source", SOURCES[r.source ?? "automated"])}
+${row("Status", statusLabel(r.status))}
+${row("Role Fit Score", r.roleFit === null ? null : `${r.roleFit} (${tierOf(r.roleFit)})${r.manualFit ? " · entered by hand" : ""}`)}
 ${row("Interest Alignment Score", r.interest === null ? null : `${r.interest} / 10`)}
 ${row("Verification", r.verification)}
 <div><dt>Role URL</dt><dd>${r.url ? `<a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">${esc(r.url)}</a>` : "—"}</dd></div>
 ${row("Req ID", r.req)}
 ${row("Compensation", r.compensation)}
 ${row("Location / work model", r.location)}
+${row("Recruiter / contact", r.recruiter ?? null)}
 ${row("Why it fits", r.whyItFits)}
 ${row("Biggest concerns", r.concerns)}
 ${row("Recommended case study", r.caseStudy)}
-${row("Date discovered", r.discovered)}
+${row(r.edit?.kind === "manual" ? "Date added" : "Date discovered", r.discovered)}
 ${row("Date applied", r.applied)}
 ${row("Last activity", r.lastActivity)}
 ${row("Next action", r.nextAction)}
@@ -304,8 +452,9 @@ ${row("Materials folder", r.materialsPath)}
 <div><dt>Cover letter</dt><dd>${materialCell("Cover letter", r.materials.cover)}</dd></div>
 <div><dt>Outreach</dt><dd>${materialCell("Outreach", r.materials.outreach)}</dd></div>
 </dl>
-<h3>Materials</h3>
-${files}
+${editNotes(r, ctx)}
+${ctx.editable ? `<details class="add"><summary>Edit</summary>${roleForm(ctx, r)}</details>` : ""}
+${files ? `<h3>Materials</h3>\n${files}` : ""}
 </section>`;
 }
 
@@ -420,6 +569,25 @@ td.co { color: var(--text); font-weight: 600; }
 details { margin: 8px 0; }
 summary { cursor: pointer; }
 .error { color: #c42b2b; }
+
+/* manual entry / editing */
+.src { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.notice { margin-top: 16px; padding: 10px 12px; border-radius: 8px; background: var(--raised); font-size: 14px; }
+.note { font-size: 14px; color: var(--muted); margin-top: 14px; }
+details.add { margin: 12px 0 0; }
+details.add > summary { font-size: 14px; font-weight: 600; }
+.entry { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px 12px; margin-top: 10px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.entry label { display: grid; gap: 2px; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); }
+.entry .wide { grid-column: span 2; }
+.entry .full { grid-column: 1 / -1; }
+.entry input, .entry select, .entry textarea { width: 100%; max-width: none; }
+.entry .actions { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+textarea { font: inherit; font-size: 14px; color: var(--text); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; resize: vertical; text-transform: none; letter-spacing: 0; }
+input:disabled { color: var(--muted); background: var(--raised); }
+form.inline { display: inline; margin-left: 8px; }
+button.link { border: 0; background: none; padding: 0; color: var(--link); font-weight: 400; font-size: 13px; text-decoration: underline; }
+.overrides li { font-size: 13px; color: var(--muted); }
+.overrides b { color: var(--text); font-weight: 600; }
 form.login { display: grid; gap: 12px; margin-top: 24px; }
 input[type=password] { width: 100%; max-width: 320px; padding: 10px 12px; font-size: 16px; }
 footer { margin-top: 48px; font-size: 13px; }
@@ -439,6 +607,7 @@ footer { margin-top: 48px; font-size: 13px; }
   .filters label { flex: 1 1 130px; }
   .filters select, input[type=number] { width: 100%; max-width: none; }
   .facts div { grid-template-columns: 1fr; gap: 2px; }
+  .entry .wide { grid-column: 1 / -1; }
 }
 `;
 
@@ -473,8 +642,25 @@ ${error ? `<p class="error">${esc(error)}</p>` : ""}
   );
 }
 
-export function renderJobs(opts: { snapshot: Snapshot | null; query: Query; signOut: boolean }) {
+const NOTICES: Record<string, string> = {
+  added: "Added.",
+  saved: "Saved.",
+  merged: "This matches a role from the automated run, so they're shown as one card. Everything you entered is kept.",
+  possible: "Added. The automated run has a similar role: confirm below whether it's the same opportunity.",
+  reverted: "Back to the automated value.",
+  stale: "Not saved: this role was changed somewhere else (another tab or device) after you opened it. These are the current values; make your change again.",
+};
+
+export function renderJobs(opts: {
+  snapshot: Snapshot | null;
+  query: Query;
+  signOut: boolean;
+  csrf?: string;
+  editable?: boolean;
+  manualError?: boolean;
+}) {
   const { snapshot, query, signOut } = opts;
+  const ctx: EditContext = { csrf: opts.csrf ?? "", editable: Boolean(opts.editable && !opts.manualError) };
   if (!snapshot) {
     return page(
       "Job search",
@@ -493,12 +679,14 @@ export function renderJobs(opts: { snapshot: Snapshot | null; query: Query; sign
 
   const body = `
 <header>
-<div><h1>Job search</h1><p class="muted small">Snapshot from ${esc(when)} ET · source of truth is pipeline.md · informational only, nothing here sends or submits anything</p></div>
+<div><h1>Job search</h1><p class="muted small">Snapshot from ${esc(when)} ET · automated data from pipeline.md, plus roles and edits you add here · nothing here sends or submits anything</p></div>
 ${signOut ? `<form method="post" action="/jobs"><input type="hidden" name="logout" value="1"><button type="submit">Sign out</button></form>` : ""}
 </header>
 ${summary(snapshot)}
-${query.role ? detail(snapshot, query.role, query) : ""}
-${showRoles ? `<section><h2>Active roles <span class="count">${active.length}</span></h2>${filters(snapshot, query)}${roleCards(active, query)}</section>` : filters(snapshot, query)}
+${opts.manualError ? `<p class="notice error">Couldn't load your manual entries and edits, so editing is off. Automated data below is current.</p>` : ""}
+${NOTICES[query.notice] ? `<p class="notice${query.notice === "stale" ? " error" : ""}">${esc(NOTICES[query.notice])}</p>` : ""}
+${query.role ? detail(snapshot, query.role, query, ctx) : ""}
+${showRoles ? `<section><h2>Active roles <span class="count">${active.length}</span></h2>${filters(snapshot, query)}${addForm(ctx)}${roleCards(active, query)}</section>` : filters(snapshot, query)}
 ${watchTable(snapshot, query)}
 ${showRoles ? closedList(closed, query) : ""}
 ${passiveList(snapshot, query)}

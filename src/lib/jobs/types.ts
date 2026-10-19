@@ -42,7 +42,88 @@ export type Role = {
   materialsPath: string | null;
   materials: Materials;
   files: MaterialFile[];
+  /* Set only when merged with manual data (src/lib/jobs/merge.ts); never in the snapshot. */
+  source?: SourceKey;
+  recruiter?: string | null;
+  /** True when the Role Fit shown was entered by hand (never replaces an automated score). */
+  manualFit?: boolean;
+  /** Where edits to this card are saved: a manual record, or an overlay on an automated role. */
+  edit?: { kind: "manual" | "overlay"; id: string; rev: number };
+  /** Fields whose value comes from a manual edit rather than the automated snapshot. */
+  overridden?: ManualField[];
+  /** Overridden fields saved as dashboard edits (overlay), which "Use automated" can undo. */
+  overlayFields?: ManualField[];
+  /** Overridden fields the automation has changed since the edit was made. */
+  conflicts?: { field: ManualField; auto: string | number | null }[];
+  /** The automated value behind each overridden field (for the detail view). */
+  autoValues?: Partial<Record<ManualField, string | number | null>>;
+  /** Automated roles that might be the same opportunity, awaiting confirmation. */
+  possible?: { id: string; company: string; role: string }[];
+  /** A manual entry merged into this automated role. */
+  mergedManualId?: string;
+  /** An overlay whose automated role is no longer in the snapshot. */
+  orphan?: boolean;
 };
+
+/** How an opportunity entered the pipeline. Independent of status. */
+export const SOURCES = {
+  automated: "Automated discovery",
+  recruiter: "Recruiter outreach",
+  interest: "Personal interest",
+  network: "Personal network",
+} as const;
+export type SourceKey = keyof typeof SOURCES;
+
+/** Fields a person can set by hand, on a manual entry or as an overlay on an automated role. */
+export type ManualFields = {
+  source: SourceKey;
+  status: string;
+  url: string | null;
+  location: string | null;
+  compensation: string | null;
+  recruiter: string | null;
+  roleFit: number | null;
+  interest: number | null;
+  notes: string | null;
+  nextAction: string | null;
+  nextActionDate: string | null;
+};
+export type ManualField = keyof ManualFields;
+
+/**
+ * An opportunity added on the dashboard. Stored in Redis under jobs:manual:roles
+ * (never written by jobs:sync). `rev` increments on every save (optimistic locking).
+ */
+export type ManualRole = ManualFields & {
+  id: string; // "m-…"
+  company: string;
+  role: string;
+  added: string; // YYYY-MM-DD, set on create
+  updated: string; // ISO timestamp
+  rev: number;
+  /** Automated role confirmed as the same opportunity. */
+  linkedTo?: string | null;
+  /** Automated roles confirmed as NOT the same opportunity. */
+  notSame?: string[];
+};
+
+/**
+ * Sparse manual edits to an automated role, keyed by its snapshot id. Stored under
+ * jobs:manual:overlays. `base` keeps the automated value at the time of each edit,
+ * so a later automated change to an overridden field shows as a conflict.
+ */
+export type Overlay = {
+  id: string;
+  /** Company and role at the time of the edit: re-attaches the overlay if the role's id changes
+   *  (e.g. pipeline.md moves it under Closed) and labels it if the role disappears. */
+  label: { company: string; role: string };
+  fields: Partial<ManualFields>;
+  base: Partial<Record<ManualField, string | number | null>>;
+  updated: string;
+  rev: number;
+};
+
+export type ManualData = { roles: ManualRole[]; overlays: Record<string, Overlay> };
 
 export type WatchRow = {
   company: string;
@@ -73,11 +154,23 @@ export const STATUSES = [
   "Outreach sent",
   "Recruiter response",
   "Interviewing",
+  "Offer",
   "Follow-up due",
   "Rejected",
+  "Declined",
   "Closed",
   "Withdrawn",
 ] as const;
+
+/**
+ * Display names. Internal values stay as pipeline.md writes them, so history and the
+ * routine keep working: "Recruiter response" covers inbound and outbound conversations.
+ */
+export const statusLabel = (status: string) =>
+  status === "Recruiter response" ? "Recruiter conversation" : status;
+
+/** Statuses that move a card into Closed when set on the dashboard. */
+export const END_STATUSES = new Set(["Rejected", "Declined", "Closed", "Withdrawn"]);
 
 export type Tier = "APPLY NOW" | "STRONG PROSPECT" | "WATCH" | "SKIP";
 

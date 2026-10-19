@@ -1,7 +1,19 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import {
+  isManualField,
+  withCurrent,
+  matchManual,
+  mergeRoles,
+  nextOverlay,
+  parseFields,
+  parseIdentity,
+  revertField,
+  todayET,
+} from "@/lib/jobs/merge";
 import { parseQuery, renderJobs, renderLogin, renderMessage } from "@/lib/jobs/render";
-import { getSnapshot } from "@/lib/jobs/store";
+import { getManual, getSnapshot, putManual, type ManualKind } from "@/lib/jobs/store";
+import type { ManualData, ManualRole, Overlay, Snapshot } from "@/lib/jobs/types";
 
 /**
  * The private job-search dashboard. Same pattern as /analytics (a bare HTML
@@ -70,7 +82,144 @@ export async function GET(request: Request) {
   } catch {
     return html(renderMessage("Couldn't read the job-search snapshot. Try again, or re-run npm run jobs:sync."), 502);
   }
-  return html(renderJobs({ snapshot, query, signOut: Boolean(secret) }));
+  let manual: ManualData = { roles: [], overlays: {} };
+  let manualError = false;
+  try {
+    manual = await getManual();
+  } catch {
+    manualError = true; // still show the automated data
+  }
+  if (snapshot) snapshot = { ...snapshot, roles: mergeRoles(snapshot.roles, manual) };
+  return html(
+    renderJobs({
+      snapshot,
+      query,
+      signOut: Boolean(secret),
+      csrf: secret ? csrfToken(secret) : "",
+      manualError,
+      // Without a password (local dev only) the page is read-only.
+      editable: Boolean(secret),
+    }),
+  );
+}
+
+/* ---------- manual changes ---------- */
+
+const csrfToken = (secret: string) =>
+  createHmac("sha256", secret).update("mf-jobs-csrf").digest("base64url");
+
+const toRole = (id: string, notice: string) =>
+  new NextResponse(null, {
+    status: 303,
+    headers: {
+      Location: `/jobs?${new URLSearchParams({ role: id, notice }).toString()}`,
+      "Cache-Control": "private, no-store",
+    },
+  });
+
+const invalid = (message: string, status = 400) =>
+  html(renderMessage(`${message} Nothing was saved. Use your browser's Back button to fix it.`), status);
+
+/**
+ * Add / edit / revert / link. Every action needs the signed-in cookie, a same-origin
+ * request and the per-password CSRF token. Writes only manual records: the automated
+ * snapshot is read, never written, here.
+ */
+async function change(request: Request, form: FormData, secret: string) {
+  if (!signedIn(request, secret)) return html(renderLogin("Sign in again to save changes."), 401);
+  const origin = request.headers.get("origin");
+  if (origin && origin !== "null" && new URL(origin).host !== new URL(request.url).host) {
+    return invalid("Cross-site request refused.", 403);
+  }
+  const given = form.get("csrf");
+  if (typeof given !== "string" || !matches(Buffer.from(given), Buffer.from(csrfToken(secret)))) {
+    return invalid("This page was out of date. Reload /jobs and try again.", 403);
+  }
+
+  const action = form.get("action");
+  const id = String(form.get("id") ?? "");
+  const rev = Number(form.get("rev") ?? 0);
+  if (!Number.isInteger(rev) || rev < 0) return invalid("Bad request.");
+  const now = new Date().toISOString();
+
+  let snapshot: Snapshot | null;
+  let manual: ManualData;
+  try {
+    [snapshot, manual] = await Promise.all([getSnapshot(), getManual()]);
+  } catch {
+    return invalid("Couldn't reach storage.", 502);
+  }
+  const autoRoles = snapshot?.roles ?? [];
+
+  const save = async <T extends ManualRole | Overlay>(kind: ManualKind, record: T, expected: number, goTo: string, notice: string) => {
+    try {
+      if (!(await putManual(kind, record, expected))) return toRole(goTo, "stale");
+    } catch {
+      return invalid("Couldn't save to storage.", 502);
+    }
+    return toRole(goTo, notice);
+  };
+
+  if (action === "add") {
+    const who = parseIdentity(form);
+    if (!who.ok) return invalid(who.error);
+    const fields = parseFields(form);
+    if (!fields.ok) return invalid(fields.error);
+    const record: ManualRole = {
+      ...fields.value,
+      ...who.value,
+      id: `m-${randomBytes(5).toString("hex")}`,
+      added: todayET(),
+      updated: now,
+      rev: 0,
+      linkedTo: null,
+      notSame: [],
+    };
+    const { merge, possible } = matchManual(record, autoRoles);
+    return save("roles", record, 0, merge ? merge.id : record.id, merge ? "merged" : possible.length ? "possible" : "added");
+  }
+
+  const m = manual.roles.find((r) => r.id === id);
+
+  if (action === "edit-manual") {
+    if (!m) return invalid("That entry no longer exists.", 404);
+    const who = parseIdentity(form);
+    if (!who.ok) return invalid(who.error);
+    const fields = parseFields(form, m);
+    if (!fields.ok) return invalid(fields.error);
+    const record: ManualRole = { ...m, ...fields.value, ...who.value, updated: now };
+    const { merge } = matchManual(record, autoRoles);
+    return save("roles", record, rev, merge ? merge.id : m.id, merge ? "merged" : "saved");
+  }
+
+  if (action === "link" || action === "not-same") {
+    if (!m) return invalid("That entry no longer exists.", 404);
+    const target = String(form.get("target") ?? "");
+    if (!autoRoles.some((r) => r.id === target)) return invalid("That automated role is no longer in the snapshot.", 404);
+    const record: ManualRole =
+      action === "link"
+        ? { ...m, linkedTo: target, updated: now }
+        : { ...m, notSame: [...new Set([...(m.notSame ?? []), target])], updated: now };
+    return save("roles", record, rev, action === "link" ? target : m.id, action === "link" ? "merged" : "saved");
+  }
+
+  if (action === "edit" || action === "revert") {
+    const shown = mergeRoles(autoRoles, manual).find((r) => r.edit?.kind === "overlay" && r.edit.id === id);
+    if (!shown) return invalid("That role isn't in the current snapshot.", 404);
+    const prev = manual.overlays[id];
+    if (action === "revert") {
+      const field = form.get("field");
+      if (!prev || !isManualField(field)) return invalid("Nothing to revert.");
+      return save("overlays", revertField(prev, field, now), rev, shown.id, "reverted");
+    }
+    const fields = parseFields(withCurrent(form, shown), shown);
+    if (!fields.ok) return invalid(fields.error);
+    // Orphans (role gone from the snapshot) have no automated values left to protect.
+    const orig = autoRoles.find((r) => r.id === shown.id) ?? { ...shown, roleFit: null };
+    return save("overlays", nextOverlay(prev, orig, shown, fields.value, now), rev, shown.id, "saved");
+  }
+
+  return invalid("Unknown action.");
 }
 
 export async function POST(request: Request) {
@@ -78,6 +227,8 @@ export async function POST(request: Request) {
   if (!secret) return process.env.NODE_ENV === "production" ? locked() : backToDashboard();
 
   const form = await request.formData().catch(() => null);
+
+  if (form?.get("action")) return change(request, form, secret);
 
   if (form?.get("logout")) {
     const res = backToDashboard();
