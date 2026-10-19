@@ -584,10 +584,12 @@ const STYLE = `
   color-scheme: light dark;
   --surface: #ffffff; --raised: #f5f4f1; --line: #e2e1dc; --text: #111110; --muted: #5c5b57; --faint: #8f8e88; --link: #1f63b8;
   --ok: #17663a; --ok-bg: #e6f3ea; --late: #a33b1f;
+  --dot-yes: #1f8a4c; --dot-maybe: #e0a800; --dot-no: #d1432e;
 }
 @media (prefers-color-scheme: dark) {
   :root { --surface: #171716; --raised: #212120; --line: #343431; --text: #f4f3ef; --muted: #a9a8a0; --faint: #7a7973; --link: #7fb2f2;
-    --ok: #74d99a; --ok-bg: #173323; --late: #f0937a; }
+    --ok: #74d99a; --ok-bg: #173323; --late: #f0937a;
+    --dot-yes: #4cc27d; --dot-maybe: #f2c230; --dot-no: #f06a55; }
 }
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--surface); color: var(--text); font: 16px/1.5 system-ui, -apple-system, sans-serif; -webkit-text-size-adjust: 100%; }
@@ -675,10 +677,10 @@ form.search input { padding: 10px 14px 10px 38px; border-radius: 10px; backgroun
 .pill { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; padding: 4px 10px 4px 9px; border-radius: 999px; border: 1px solid var(--line); white-space: nowrap; user-select: none; color: var(--muted); background: var(--surface); }
 summary.pill { cursor: pointer; }
 summary.pill::after { content: ""; width: 5px; height: 5px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg) translateY(-2px); margin-left: 2px; opacity: .6; }
-.dot { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--faint); flex: none; }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--dot-maybe); flex: none; }
 .interest.is-interested .pill { color: var(--ok); border-color: var(--ok-bg); background: var(--ok-bg); }
-.is-interested .dot { background: var(--ok); border-color: var(--ok); }
-.is-not .dot { background: linear-gradient(135deg, transparent 43%, var(--faint) 43%, var(--faint) 57%, transparent 57%); }
+.is-interested .dot { background: var(--dot-yes); }
+.is-not .dot { background: var(--dot-no); }
 .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 5; width: 250px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 8px 28px rgba(0,0,0,.12); padding: 6px; }
 .menu button { display: flex; width: 100%; align-items: flex-start; gap: 10px; padding: 8px 10px; border: 0; background: none; border-radius: 6px; text-align: left; cursor: pointer; font-size: 14px; }
 .menu button .dot { margin-top: 6px; }
