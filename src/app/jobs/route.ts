@@ -210,7 +210,7 @@ async function change(request: Request, form: FormData, secret: string) {
     const before = shown.decision ?? "undecided";
     const back = form.get("back");
     const done = () =>
-      decision === "not" && before !== "not"
+      decision === "not" && before !== "not" && back === "list"
         ? go({ notice: "archived", undo: shown.id, prev: before })
         : back === "detail"
           ? toRole(shown.id, "")

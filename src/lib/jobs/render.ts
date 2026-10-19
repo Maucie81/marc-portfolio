@@ -211,28 +211,31 @@ function searchBox(q: Query, placeholder: string) {
   }`;
 }
 
-function undoToast(roles: Role[], q: Query, ctx: EditContext) {
-  if (q.notice !== "archived" || !q.undo) return "";
-  const r = roles.find((x) => x.id === q.undo);
-  if (!r?.edit) return "";
-  const prev = q.prev in DECISIONS ? (q.prev as Decision) : "undecided";
-  return `<div class="toast"><span><b>${esc(r.company)}</b> moved to Archive.</span>${
-    ctx.editable
-      ? `<form method="post" action="/jobs">${hidden({ action: "decide", kind: r.edit.kind, id: r.edit.id, rev: r.edit.rev, decision: prev, back: "list", csrf: ctx.csrf })}<button type="submit" class="link">Undo</button></form>`
+/** The just-archived opportunity, shown where its row was, with Undo. */
+function undoRow(r: Role, prev: Decision, ctx: EditContext) {
+  return `<div class="row gone" id="r-${esc(r.id)}"><div class="who"><span class="co">${esc(r.company)}</span><span class="src">Moved to Archive</span></div><div class="step"></div><div class="pick">${
+    ctx.editable && r.edit
+      ? `<form method="post" action="/jobs" class="undo">${hidden({ action: "decide", kind: r.edit.kind, id: r.edit.id, rev: r.edit.rev, decision: prev, back: "list", csrf: ctx.csrf })}<button type="submit" class="btn quiet">Undo</button></form>`
       : ""
-  }</div>`;
+  }</div></div>`;
 }
 
 function listView(snapshot: Snapshot, roles: Role[], q: Query, ctx: EditContext) {
   const today = todayET();
   const open = roles.filter((r) => !archived(r));
-  const shown = sortOpen(open.filter((r) => matchesSearch(r, q.q)));
+  // Just archived from this list: keep a placeholder in its old spot so Undo is right there.
+  const gone = q.notice === "archived" ? roles.find((r) => r.id === q.undo && decisionOf(r) === "not" && r.list !== "closed") : undefined;
+  const prev: Decision = q.prev in DECISIONS && q.prev !== "not" ? (q.prev as Decision) : "undecided";
+  const pool = gone ? [...open, { ...gone, decision: prev }] : open;
+  const shown = sortOpen(pool.filter((r) => r.id === gone?.id || matchesSearch(r, q.q)));
   const yes = shown.filter((r) => decisionOf(r) === "interested");
   const maybe = shown.filter((r) => decisionOf(r) !== "interested");
   const fu = followUps(open, today);
   const group = (label: string, items: Role[]) =>
     items.length
-      ? `<section class="group"><h3 class="label">${label} <span class="n">${items.length}</span></h3>${items.map((r) => row(r, ctx, today, "list")).join("")}</section>`
+      ? `<section class="group"><h3 class="label">${label} <span class="n">${items.filter((r) => r.id !== gone?.id).length}</span></h3>${items
+          .map((r) => (r.id === gone?.id ? undoRow(gone, prev, ctx) : row(r, ctx, today, "list")))
+          .join("")}</section>`
       : "";
   const generated = new Date(snapshot.generatedAt);
   const last = Number.isNaN(generated.getTime())
@@ -244,7 +247,6 @@ function listView(snapshot: Snapshot, roles: Role[], q: Query, ctx: EditContext)
 <div class="head"><h2>Opportunities</h2><p>${open.length} open${interestedCount ? ` · ${interestedCount} interested` : ""}${esc(last)}</p></div>
 ${fu?.mini ?? ""}
 ${searchBox(q, "Search companies, roles, notes")}
-${undoToast(roles, q, ctx)}
 ${shown.length ? `${group("Interested", yes)}${group("Undecided", maybe)}` : `<p class="empty">${q.q ? "Nothing matches." : "No open opportunities. Add one, or check the Archive."}</p>`}
 <div class="foot"><span>From your Mon/Wed/Fri search, plus what you add here.</span><a href="/jobs?view=archive">Archive</a><a href="/jobs?view=search">Search activity</a></div>
 </main>
@@ -614,6 +616,9 @@ form.search input { padding: 10px 14px 10px 38px; border-radius: 10px; backgroun
 .row { position: relative; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr) 140px; gap: 24px; align-items: start; padding: 18px 0; border-top: 1px solid var(--line); }
 .row:hover { background: linear-gradient(90deg, transparent, var(--raised) 6%, var(--raised) 94%, transparent); }
 .row:target { background: var(--raised); }
+.row.gone { align-items: center; }
+.row.gone .co { color: var(--faint); }
+.row.gone .btn { padding: 4px 14px; font-size: 13px; }
 .who { text-decoration: none; display: flex; flex-direction: column; min-width: 0; }
 .who::after { content: ""; position: absolute; inset: 0; }
 .co { font-size: 18px; font-weight: 650; letter-spacing: -.01em; line-height: 1.3; }
@@ -779,6 +784,37 @@ form.login { display: grid; gap: 12px; margin-top: 24px; max-width: 320px; }
 
 /** Closes other interest menus when one opens, and all of them on an outside click or Escape. */
 const SCRIPT = `
+// Interest changes save in the background and swap the page in place, so you stay where you were.
+// Without this script the forms still work as normal posts.
+document.addEventListener("submit", async (e) => {
+  const form = e.target;
+  if (!(form instanceof HTMLFormElement) || !form.matches("form.menu, form.undo")) return;
+  e.preventDefault();
+  const data = new URLSearchParams(new FormData(form));
+  const button = e.submitter;
+  if (button && button.name) data.set(button.name, button.value);
+  const y = window.scrollY;
+  try {
+    // getAttribute: a field named "action" shadows form.action
+    const res = await fetch(form.getAttribute("action") || "/jobs", { method: "POST", body: data, credentials: "same-origin" });
+    if (!res.ok) throw new Error(String(res.status));
+    const doc = new DOMParser().parseFromString(await res.text(), "text/html");
+    const script = document.body.querySelector("script");
+    [...document.body.children].forEach((n) => n !== script && n.remove());
+    [...doc.body.children].forEach((n) => n.tagName !== "SCRIPT" && document.body.insertBefore(document.importNode(n, true), script));
+    document.title = doc.title;
+    history.replaceState(null, "", res.url);
+    window.scrollTo(0, y);
+  } catch {
+    // Fall back to an ordinary post (form.submit is shadowed the same way, so call the prototype's).
+    if (button && button.name) {
+      const input = document.createElement("input");
+      input.type = "hidden"; input.name = button.name; input.value = button.value;
+      form.append(input);
+    }
+    HTMLFormElement.prototype.submit.call(form);
+  }
+});
 document.addEventListener("toggle", (e) => {
   const d = e.target;
   if (d.classList && d.classList.contains("interest") && d.open)
