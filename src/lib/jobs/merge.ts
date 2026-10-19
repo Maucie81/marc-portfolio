@@ -1,6 +1,8 @@
 import {
   DECISIONS,
   END_STATUSES,
+  OUTREACH,
+  type OutreachKey,
   SOURCES,
   STATUSES,
   type ManualData,
@@ -38,6 +40,9 @@ export const MANUAL_KEYS: ManualField[] = [
   "notes",
   "nextAction",
   "nextActionDate",
+  "outreach",
+  "outreachUrl",
+  "fitNote",
 ];
 
 type Value = string | number | null;
@@ -46,7 +51,7 @@ type Value = string | number | null;
  * Yours alone: the routine has no value for these, so they're never "overrides" and never
  * conflict. (`notes` on a card is your notes; the routine's notes are `researchNotes`.)
  */
-const PERSONAL = new Set<ManualField>(["decision", "notes"]);
+const PERSONAL = new Set<ManualField>(["decision", "notes", "outreach", "outreachUrl", "fitNote"]);
 
 /* ---------- matching ---------- */
 
@@ -211,6 +216,9 @@ function manualToRole(m: ManualRole, possible: Role[]): Role {
     lastActivity: m.updated.slice(0, 10),
     nextAction: m.nextAction,
     nextActionDate: m.nextActionDate,
+    outreach: m.outreach ?? null,
+    outreachUrl: m.outreachUrl ?? null,
+    fitNote: m.fitNote ?? null,
     compensation: m.compensation,
     location: m.location,
     whyItFits: null,
@@ -253,6 +261,9 @@ function orphanRole(ov: Overlay): Role {
       notes: null,
       nextAction: null,
       nextActionDate: null,
+      outreach: null,
+      outreachUrl: null,
+      fitNote: null,
     },
     [],
   );
@@ -319,6 +330,8 @@ const LIMITS = {
   recruiter: 200,
   notes: 4000,
   nextAction: 300,
+  outreachUrl: 1000,
+  fitNote: 1500,
 } as const;
 
 function text(form: FormInput, name: keyof typeof LIMITS, multiline = false, current?: unknown): Parsed<string | null> {
@@ -349,6 +362,8 @@ const LABELS: Record<string, string> = {
   role: "Position",
   nextAction: "Next action",
   recruiter: "Recruiter / contact",
+  outreachUrl: "Conversation link",
+  fitNote: "Role Fit assessment",
 };
 const human = (e: string) => e.replace(/^(\w+)/, (k) => LABELS[k] ?? k[0].toUpperCase() + k.slice(1));
 
@@ -381,6 +396,8 @@ export function parseFields(form: FormInput, current?: Partial<ManualFields>): P
     ["recruiter", false],
     ["notes", true],
     ["nextAction", false],
+    ["outreachUrl", false],
+    ["fitNote", true],
   ] as const) {
     const r = text(form, k, multi, current?.[k]);
     if (!r.ok) return { ok: false, error: human(r.error) };
@@ -393,6 +410,18 @@ export function parseFields(form: FormInput, current?: Partial<ManualFields>): P
     } catch {}
     if (!ok) return { ok: false, error: "Job posting URL must start with http:// or https://." };
   }
+  if (out.outreachUrl && out.outreachUrl !== current?.outreachUrl) {
+    let ok = false;
+    try {
+      ok = /^https?:$/.test(new URL(out.outreachUrl).protocol);
+    } catch {}
+    if (!ok) return { ok: false, error: "Conversation link must start with http:// or https://." };
+  }
+  const outreach = form.get("outreach");
+  if (outreach !== null && outreach !== "" && !(typeof outreach === "string" && outreach in OUTREACH)) {
+    return { ok: false, error: "Choose an outreach source." };
+  }
+  out.outreach = outreach ? (outreach as OutreachKey) : null;
   const fit = int(form, "roleFit", 100);
   if (!fit.ok) return { ok: false, error: human(fit.error) };
   const interest = int(form, "interest", 10);

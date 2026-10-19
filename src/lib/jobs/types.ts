@@ -65,6 +65,9 @@ export type Role = {
   orphan?: boolean;
   /** Your call on the opportunity (null = undecided). Independent of recruiting status. */
   decision?: Decision | null;
+  outreach?: OutreachKey | null;
+  outreachUrl?: string | null;
+  fitNote?: string | null;
   /** The routine's own notes from pipeline.md. `notes` holds only your notes. */
   researchNotes?: string | null;
   /** True when the next step was set by you; otherwise it's the routine's suggestion. */
@@ -105,8 +108,22 @@ export type ManualFields = {
   notes: string | null;
   nextAction: string | null;
   nextActionDate: string | null;
+  /** Where the recruiter reached you, so you know where to reply. Separate from `source`. */
+  outreach: OutreachKey | null;
+  /** Link to that email thread or LinkedIn conversation, if you have one. */
+  outreachUrl: string | null;
+  /** Your short Role Fit assessment (the score itself is `roleFit`). */
+  fitNote: string | null;
 };
 export type ManualField = keyof ManualFields;
+
+export const OUTREACH = {
+  email: "Email",
+  linkedin: "LinkedIn",
+  interest: "Personal interest",
+  unknown: "Unknown",
+} as const;
+export type OutreachKey = keyof typeof OUTREACH;
 
 /**
  * An opportunity added on the dashboard. Stored in Redis under jobs:manual:roles

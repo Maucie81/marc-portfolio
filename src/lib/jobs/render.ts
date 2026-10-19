@@ -1,6 +1,7 @@
 import { cleanTitle, todayET } from "./merge";
 import {
   DECISIONS,
+  OUTREACH,
   SOURCES,
   STATUSES,
   statusLabel,
@@ -8,6 +9,7 @@ import {
   type Decision,
   type ManualField,
   type Role,
+  type OutreachKey,
   type Snapshot,
   type SourceKey,
 } from "./types";
@@ -92,7 +94,7 @@ const roleHref = (r: Role) => `/jobs?${new URLSearchParams({ role: r.id }).toStr
 function matchesSearch(r: Role, q: string) {
   const needle = q.trim().toLowerCase();
   if (!needle) return true;
-  return [r.company, r.role, r.notes, r.recruiter, r.nextAction, r.researchNotes, r.location]
+  return [r.company, r.role, r.notes, r.fitNote, r.recruiter, r.nextAction, r.researchNotes, r.location]
     .join(" ")
     .toLowerCase()
     .includes(needle);
@@ -335,7 +337,8 @@ function addView(ctx: EditContext) {
 <label>My notes<textarea name="notes" rows="6" maxlength="4000" placeholder="What they said, what interests you, what you're unsure about"></textarea></label>
 <div class="next"><label>Next step<input name="nextAction" maxlength="300" placeholder="e.g. Reply to the recruiter"></label><label>Date<input name="nextActionDate" type="date"></label></div>
 <details class="extra"><summary>More details</summary>
-<div class="two"><label>Recruiter / contact<input name="recruiter" maxlength="200"></label><label>Job posting link<input name="url" inputmode="url" maxlength="500" placeholder="https://"></label></div>
+<div class="two"><label>Recruiter / contact<input name="recruiter" maxlength="200"></label><label>Outreach source<select name="outreach">${outreachOptions(null)}</select></label></div>
+<div class="two"><label>Conversation link<input name="outreachUrl" inputmode="url" maxlength="1000" placeholder="Email or LinkedIn thread, https://"></label><label>Job posting link<input name="url" inputmode="url" maxlength="500" placeholder="https://"></label></div>
 <div class="two"><label>Compensation<input name="compensation" maxlength="160"></label><label>Location / work arrangement<input name="location" maxlength="160"></label></div>
 </details>
 <div class="actions"><button class="btn" type="submit">Add</button><a href="/jobs">Cancel</a></div>
@@ -358,6 +361,9 @@ const FIELD_LABELS: Record<ManualField, string> = {
   notes: "Notes",
   nextAction: "Next step",
   nextActionDate: "Next-step date",
+  outreach: "Outreach source",
+  outreachUrl: "Conversation link",
+  fitNote: "Role Fit assessment",
 };
 
 const shownValue = (k: ManualField, value: unknown) =>
@@ -396,7 +402,9 @@ function personalForm(r: Role, ctx: EditContext) {
   return `<form class="mine" method="post" action="/jobs">${
     r.edit ? hidden({ action, id: r.edit.id, rev: r.edit.rev, csrf: ctx.csrf }) : ""
   }
-<label class="block"><span class="label">My notes <em>Thoughts, calls, questions</em></span><textarea class="note" name="notes" rows="8" maxlength="4000" placeholder="What you think, what was discussed, what you still want to know"${disabled}>${esc(r.notes)}</textarea></label>
+<div class="block"><span class="label">My notes <em>Thoughts, calls, questions</em></span>
+<label class="fit-note"><span class="fit-head">${fitLine(r)}</span><textarea class="note small" name="fitNote" rows="3" maxlength="1500" placeholder="How it lines up: level, ownership, product, NYC hybrid, comp. Note what's unknown."${disabled}>${esc(r.fitNote)}</textarea></label>
+<label class="fit-note"><span class="fit-head">Notes</span><textarea class="note" name="notes" rows="8" maxlength="4000" placeholder="What you think, what was discussed, what you still want to know"${disabled}>${esc(r.notes)}</textarea></label></div>
 <div class="block"><span class="label">Next step</span>
 <div class="next"><input name="nextAction" maxlength="300" value="${esc(own)}" placeholder="${esc(suggestion ? "What will you do next?" : "e.g. Ask the recruiter about NYC hybrid expectations")}" aria-label="Next step"${disabled}><input name="nextActionDate" type="date" value="${esc(date)}" aria-label="Next-step date"${disabled}></div>
 ${
@@ -430,6 +438,8 @@ ${manual ? f("Company", text("company", r.company, 120, " required"), r.company)
 ${f("Application status", `<select name="status">${statuses.map((s) => opt(s, statusLabel(s), r.status)).join("")}</select>`, statusLabel(r.status))}
 ${f("How it came up", `<select name="source">${(Object.keys(SOURCES) as SourceKey[]).map((k) => opt(k, SOURCES[k], r.source ?? "automated")).join("")}</select>`, SOURCES[r.source ?? "automated"])}
 ${f("Recruiter / contact", text("recruiter", r.recruiter, 200, ` placeholder="Name, email or LinkedIn"`), r.recruiter ?? null)}
+${f("Outreach source", `<select name="outreach">${outreachOptions(r.outreach ?? null)}</select>`, r.outreach ? OUTREACH[r.outreach] : null)}
+${f("Conversation link", text("outreachUrl", r.outreachUrl, 1000, ` inputmode="url" placeholder="Email or LinkedIn thread, https://"`), r.outreachUrl ?? null)}
 ${f("Job posting", text("url", r.url, 500, ` inputmode="url" placeholder="https://"`), r.url)}
 ${f("Compensation", text("compensation", r.compensation, 160), r.compensation)}
 ${f("Location", text("location", r.location, 160), r.location)}
@@ -520,6 +530,28 @@ function possibleDuplicate(r: Role, ctx: EditContext) {
     .join("")}</ul></div>`;
 }
 
+function outreachOptions(current: OutreachKey | null) {
+  return `${opt("", "Not set", current ?? "")}${(Object.keys(OUTREACH) as OutreachKey[]).map((k) => opt(k, OUTREACH[k], current ?? "")).join("")}`;
+}
+
+/** "Role Fit 82 · Strong prospect" from the one roleFit value (also editable in Details when it's yours). */
+function fitLine(r: Role) {
+  if (r.roleFit === null) return `Role Fit <span class="faint">Not yet scored</span>`;
+  const tier = tierOf(r.roleFit);
+  const pretty = tier ? ` · ${tier.toLowerCase().replace(/^./, (c) => c.toUpperCase())}` : "";
+  return `Role Fit <b>${r.roleFit}</b>${esc(pretty)}${r.manualFit ? ` <span class="faint">· your score</span>` : ""}`;
+}
+
+/** Role Fit and where to reply, right under the title. */
+function glance(r: Role) {
+  const parts: string[] = [];
+  if (r.outreach) parts.push(esc(OUTREACH[r.outreach]));
+  else parts.push(`<span class="faint">${r.recruiter || r.edit?.kind === "manual" || (r.source && r.source !== "automated") ? "Not recorded" : "None, found by the search"}</span>`);
+  if (r.recruiter) parts.push(esc(r.recruiter));
+  if (r.outreachUrl) parts.push(`<a href="${esc(r.outreachUrl)}" rel="noreferrer noopener" target="_blank">Open conversation ↗</a>`);
+  return `<dl class="glance"><div><dt>Role Fit</dt><dd>${fitLine(r).replace(/^Role Fit /, "")}</dd></div><div><dt>Outreach</dt><dd>${parts.join(" · ")}</dd></div></dl>`;
+}
+
 function detailView(roles: Role[], id: string, ctx: EditContext) {
   const r = roles.find((x) => x.id === id);
   if (!r) return `<div class="page narrow"><a class="back" href="/jobs">← Opportunities</a><p class="empty" style="margin-top:24px">That opportunity isn't here any more.</p></div>`;
@@ -534,7 +566,7 @@ function detailView(roles: Role[], id: string, ctx: EditContext) {
     .join(" · ");
   return `<div class="page narrow">
 <a class="back" href="${isArchived ? "/jobs?view=archive" : "/jobs"}">← ${isArchived ? "Archive" : "Opportunities"}</a>
-<div class="title"><div><h2>${esc(r.company)}</h2>${role ? `<div class="role">${esc(role)}</div>` : ""}<p class="meta">${meta}${
+<div class="title"><div><h2>${esc(r.company)}</h2>${role ? `<div class="role">${esc(role)}</div>` : ""}${glance(r)}<p class="meta">${meta}${
     r.url ? ` · <a href="${esc(r.url)}" rel="noreferrer noopener" target="_blank">View posting ↗</a>` : ""
   }${isArchived ? ` · <span>${decisionOf(r) === "not" ? "In Archive (you passed)" : `In Archive (${esc(statusLabel(r.status).toLowerCase())})`}</span>` : ""}</p></div>${interest(r, ctx, "detail")}</div>
 ${r.orphan ? `<div class="callout"><p>This role is no longer in the search's results (renamed or removed in pipeline.md). Everything you entered is kept.</p></div>` : ""}
@@ -684,6 +716,18 @@ aside h3 { margin: 0 0 14px; }
 .title h2 { font-size: 34px; line-height: 1.1; letter-spacing: -.025em; margin: 0; font-weight: 700; }
 .title .role { font-size: 18px; color: var(--muted); margin-top: 6px; }
 .title .meta { margin-top: 10px; font-size: 13px; color: var(--faint); }
+.glance { margin: 14px 0 0; display: grid; gap: 4px; font-size: 15px; }
+.glance div { display: flex; gap: 10px; align-items: baseline; }
+.glance dt { width: 76px; flex: none; font-size: 11px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--muted); }
+.glance dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.glance b { font-weight: 650; }
+.glance a { color: var(--link); }
+.fit-note { display: block; margin-top: 10px; }
+.fit-head { display: block; font-size: 14px; color: var(--muted); }
+.fit-head b { color: var(--text); font-weight: 650; }
+.note.small { min-height: 72px; font-size: 15px; padding: 12px 16px; margin-top: 6px; }
+.fit-note + .fit-note { margin-top: 16px; }
+.fit-note .note { margin-top: 6px; }
 .title .meta a { color: var(--faint); }
 .callout { margin-top: 24px; padding: 12px 16px; border-radius: 10px; background: var(--raised); font-size: 14px; }
 .callout a { color: var(--link); }
